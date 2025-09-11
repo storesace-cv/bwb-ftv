@@ -16,23 +16,6 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QFont
 
 from ftv.ui.ui_editor_fonte import FTApp
-from ftv.utils.autosave import wire_autosave_aux
-
-# --- DataStore (duas rotas possíveis) ---
-def import_datastore():
-    try:
-        from ftv.data.datastore import DataStore
-        return DataStore, "ftv.data.datastore"
-    except ModuleNotFoundError:
-        pass
-    try:
-        from ftv_project.ftv.data.datastore import DataStore
-        return DataStore, "ftv_project.ftv.data.datastore"
-    except ModuleNotFoundError as e:
-        print("[LAUNCHER][ERRO] Não consegui importar DataStore nem de ftv.data.datastore nem de ftv_project.ftv.data.datastore")
-        print("  sys.path inclui:", sys.path[:3], "…")
-        raise
-
 # --- UI principal ---
 
 def _apply_global_theme(app):
@@ -51,9 +34,8 @@ def main():
     _apply_global_theme(app)
 
     # DataStore
-    DS, origin = import_datastore()
-    print(f"[LAUNCHER] DataStore importado de: {origin}")
-    ds = DS()
+    ds = DataStore()
+    print(f"[LAUNCHER] DataStore importado de: {DataStore.__module__}")
 
     # Janela
     wire_autosave_aux(FTApp, ds)

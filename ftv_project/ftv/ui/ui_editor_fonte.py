@@ -30,7 +30,7 @@
 #    • Menu: QToolButton (InstantPopup) sem caret; Base de Dados / Tabelas / Utilitários; diálogos de gestão nas Tabelas.
 #    • Overlays/cores preservados; navegação centrada no rodapé; scroll vertical; cabeçalho em comentários.
 
-import os, sys, json, sqlite3
+import sys
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QFont, QKeySequence
 from PyQt5.QtWidgets import (
@@ -38,167 +38,10 @@ from PyQt5.QtWidgets import (
     QLabel, QLineEdit, QComboBox, QPushButton, QSizePolicy, QTableWidget,
     QTableWidgetItem, QMessageBox, QScrollArea, QShortcut, QTextEdit, QCheckBox
 )
+from ftv.data.datastore import DataStore
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
 DEV_OVERLAYS = True  # Ctrl+D alterna
-
-# ------------------------ Data Layer ------------------------
-
-class DataStore:
-    def __init__(self, db_path=None):
-        if db_path is None:
-            db_path = os.path.join(".", "databases", "ftv.db")
-        self.db_path = db_path
-        self.demo = False
-        self.conn = None
-        if os.path.exists(db_path):
-            try:
-                self.conn = sqlite3.connect(db_path)
-                self.conn.row_factory = sqlite3.Row
-            except Exception:
-                self.demo = True
-        else:
-            self.demo = True
-        self.ids = self._load_ids()
-        # ——— Auxiliares: proteger load + ligar autosave ———
-        self._aux_ensure_guard()
-        self._aux_wire_autosave()
-    def _load_ids(self):
-        if self.demo or not self.conn:
-            return ["10001", "10002", "10003"]
-        try:
-            cur = self.conn.cursor()
-            cur.execute("SELECT codigo FROM produtos ORDER BY codigo")
-            rows = [r["codigo"] for r in cur.fetchall()]
-            if not rows:
-                cur.execute("SELECT DISTINCT produto_codigo AS codigo FROM fichas_tecnicas ORDER BY produto_codigo")
-                rows = [r["codigo"] for r in cur.fetchall()]
-            return rows or ["10001"]
-        except Exception:
-            return ["10001"]
-
-    def total(self):
-        return len(self.ids)
-
-    def codigo_at(self, idx):
-        if not self.ids: return None
-        idx = max(0, min(idx, len(self.ids)-1))
-        return self.ids[idx]
-
-    def get_produto_info(self, codigo):
-        if self.demo or not self.conn:
-            return {"codigo": codigo, "nome": f"PAPA FIGOS 37,5CL", "familia": "(V) BEBIDAS ALCOOLICAS", "subfamilia": "V. TINTO DOURO"}
-        cur = self.conn.cursor()
-        try:
-            cur.execute("""
-                SELECT p.codigo,
-                       COALESCE(p.nome, ?) AS nome,
-                       COALESCE(p.familia, '') AS familia,
-                       COALESCE(p.subfamilia, '') AS subfamilia,
-                       p.tipo_artigo_cod, p.validade_cod, p.temperatura_cod
-                  FROM produtos p
-                 WHERE p.codigo = ?
-            """, (codigo, codigo))
-            r = cur.fetchone()
-            if r: return dict(r)
-        except Exception:
-            pass
-        return {"codigo": codigo, "nome": codigo, "familia": "", "subfamilia": ""}
-
-    def get_ingredientes(self, codigo):
-        if self.demo or not self.conn:
-            return [
-                {"nome":"PAPA FIGOS 37,5CL (m)", "qtd":1.0, "unidade":"Un", "ppu":5482.93, "total":5482.93, "codigo":"WINE1"},
-            ]
-        cur = self.conn.cursor()
-        try:
-            cur.execute("""
-                SELECT componente_nome AS nome,
-                       COALESCE(qtd,0) AS qtd,
-                       COALESCE(unidade,'') AS unidade,
-                       COALESCE(ppu,0) AS ppu,
-                       CASE WHEN custo IS NOT NULL AND custo<>'' THEN custo
-                            ELSE COALESCE(qtd,0)*COALESCE(ppu,0) END AS total,
-                       componente_codigo AS codigo
-                  FROM fichas_tecnicas
-                 WHERE produto_codigo = ?
-                 ORDER BY ordem
-            """, (codigo,))
-            return [dict(r) for r in cur.fetchall()]
-        except Exception:
-            return []
-
-    def list_active_allergens(self):
-        """Se existir BD com alergenios( id,nome,ativo ), usa; senão tenta allergens.json; fallback lista fixa."""
-        if self.conn and not self.demo:
-            try:
-                cur = self.conn.cursor()
-                cur.execute("SELECT id, nome FROM alergenios WHERE ativo=1 ORDER BY nome")
-                rows = cur.fetchall()
-                if rows:
-                    return [(r["id"], r["nome"]) for r in rows]
-            except Exception:
-                pass
-        # JSON ao lado (facilita testes)
-        json_path = os.path.join(os.path.dirname(__file__), "allergens.json")
-        names = []
-        try:
-            with open(json_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            names = [ (i+1, item["name"]) for i, item in enumerate(data.get("allergens", [])) ]
-        except Exception:
-            names = [(1,"Glúten"),(2,"Crustáceos"),(3,"Ovos"),(4,"Peixe"),(5,"Amendoins"),(6,"Soja"),
-                     (7,"Leite"),(8,"Frutos de casca rija"),(9,"Aipo"),(10,"Mostarda"),(11,"Sementes de sésamo"),
-                     (12,"Dióxido de enxofre e sulfitos"),(13,"Tremoço"),(14,"Moluscos")]
-        return names
-
-
-    def get_pvps(self, codigo):
-        """Devolve PVP1..PVP5 (gross). Na BD atual só existem PVP1 e PVP2; os restantes ficam a None."""
-        if self.demo or not self.conn:
-            return {"pvp1": 5482.93, "pvp2": None, "pvp3": None, "pvp4": None, "pvp5": None}
-        try:
-            cur = self.conn.cursor()
-            cur.execute("""
-                SELECT preco1_g, preco2_g
-                  FROM precos_taxas
-                 WHERE codigo = ?
-              ORDER BY loja ASC
-                 LIMIT 1
-            """, (codigo,))
-            r = cur.fetchone()
-            if not r:
-                return {"pvp1": None, "pvp2": None, "pvp3": None, "pvp4": None, "pvp5": None}
-            p1 = r[0] if r[0] not in (None, "") else None
-            p2 = r[1] if r[1] not in (None, "") else None
-            return {"pvp1": p1, "pvp2": p2, "pvp3": None, "pvp4": None, "pvp5": None}
-        except Exception:
-            return {"pvp1": None, "pvp2": None, "pvp3": None, "pvp4": None, "pvp5": None}
-
-
-    def list_tipos_artigos(self):
-        if self.demo or not self.conn:
-            return [(None,"—"), (1,"MATÉRIA-PRIMA"), (2,"PREPARADO"), (3,"ACABADO")]
-        cur = self.conn.cursor()
-        cur.execute("SELECT cod, descricao FROM tipos_artigos WHERE ativo=1 ORDER BY descricao")
-        rows = cur.fetchall()
-        return [(None,"—")] + [(r[0], r[1]) for r in rows]
-
-    def list_validade(self):
-        if self.demo or not self.conn:
-            return [(None,"—"), (1,"24H"), (2,"48H"), (3,"NO ARTIGO")]
-        cur = self.conn.cursor()
-        cur.execute("SELECT cod, descricao FROM validade WHERE ativo=1 ORDER BY descricao")
-        rows = cur.fetchall()
-        return [(None,"—")] + [(r[0], r[1]) for r in rows]
-
-    def list_temperaturas(self):
-        if self.demo or not self.conn:
-            return [(None,"—"), (1,"-18"), (2,"AMB"), (3,"4/6º")]
-        cur = self.conn.cursor()
-        cur.execute("SELECT cod, descricao FROM temperaturas WHERE ativo=1 ORDER BY descricao")
-        rows = cur.fetchall()
-        return [(None,"—")] + [(r[0], r[1]) for r in rows]
 
 # ------------------------ UI Helpers ------------------------
 
@@ -306,35 +149,37 @@ class Zone(QWidget):
 
 class FTApp(QWidget):
 
-        def _aux_load_selected(self, codigo):
-            """Lê produto_auxiliar e posiciona os CBs sem disparar autosave."""
-            conn = getattr(self.ds, "conn", None)
-            if not conn or not codigo:
-                return
-            cur = conn.cursor()
-            try:
-                cur.execute("SELECT tipo_artigo_id, validade_id, temperatura_id FROM produto_auxiliar WHERE produto_codigo=?", (codigo,))
-                row = cur.fetchone()
-            except Exception:
-                row = None
+    def _aux_load_selected(self, codigo):
+        """Lê produto_auxiliar e posiciona os CBs sem disparar autosave."""
+        conn = getattr(self.ds, "conn", None)
+        if not conn or not codigo:
+            return
+        cur = conn.cursor()
+        try:
+            cur.execute("SELECT tipo_artigo_id, validade_id, temperatura_id FROM produto_auxiliar WHERE produto_codigo=?", (codigo,))
+            row = cur.fetchone()
+        except Exception:
+            row = None
 
-            tid = vid = pid = None
-            if row:
-                tid, vid, pid = row[0], row[1], row[2]
+        tid = vid = pid = None
+        if row:
+            tid, vid, pid = row[0], row[1], row[2]
 
-            for cb, val in ((getattr(self, "cbTipoArtigo", None), tid),
-                            (getattr(self, "cbValidade", None),    vid),
-                            (getattr(self, "cbTemp", None),         pid)):
-                if not cb: continue
-                cb.blockSignals(True)
-                target = 0
-                if val is not None:
-                    for i in range(cb.count()):
-                        if cb.itemData(i) == val:
-                            target = i
-                            break
-                cb.setCurrentIndex(target)
-                cb.blockSignals(False)
+        for cb, val in ((getattr(self, "cbTipoArtigo", None), tid),
+                        (getattr(self, "cbValidade", None),    vid),
+                        (getattr(self, "cbTemp", None),         pid)):
+            if not cb:
+                continue
+            cb.blockSignals(True)
+            target = 0
+            if val is not None:
+                for i in range(cb.count()):
+                    if cb.itemData(i) == val:
+                        target = i
+                        break
+            cb.setCurrentIndex(target)
+            cb.blockSignals(False)
+
     def __init__(self, ds: DataStore):
         super().__init__()
         self.ds = ds
@@ -595,7 +440,9 @@ class FTApp(QWidget):
 
         _select_by_code(self.cbTipos, p.get("tipo_artigo_cod"))
         _select_by_code(self.cbValidade, p.get("validade_cod"))
-        _select_by_code(self.cbTemp, p.get("temperatura_cod"))        self.tbIng.setRowCount(0)
+        _select_by_code(self.cbTemp, p.get("temperatura_cod"))
+
+        self.tbIng.setRowCount(0)
         for row in data:
             r = self.tbIng.rowCount(); self.tbIng.insertRow(r)
             vals = [
@@ -1005,13 +852,16 @@ class FTApp(QWidget):
         print("[AuxUI] _load_record protegido e pipeline de auxiliares ativado.")
     # ================== /AUXILIARES — CANÓNICO (v2) ==================
 
-    # ------------------------ Main ------------------------
 
-    def main():
+# ------------------------ Main ------------------------
+
+def main():
     app = QApplication(sys.argv)
     ds = DataStore()
-    w = FTApp(ds); w.show()
+    w = FTApp(ds)
+    w.show()
     sys.exit(app.exec_())
 
-    if __name__ == "__main__":
+
+if __name__ == "__main__":
     main()
