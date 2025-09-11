@@ -42,7 +42,7 @@ def import_datastore():
         print("  sys.path inclui:", sys.path[:3], "…")
         raise
 
-# --- UI principal ---from ftv.uifrom ftv.uifrom ftv.uifrom ftv.ui import ui_editor_fonte
+# --- UI principal ---
 
 def _apply_global_theme(app):
     try:
