@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from pathlib import Path
+from ..utils.paths import get_project_root
 
 from ..utils import get_project_root
 
