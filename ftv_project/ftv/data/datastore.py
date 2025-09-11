@@ -245,25 +245,28 @@ class DataStore:
         except Exception:
             return False
 
+    def list_validades(self):
+        """
+        Legacy wrapper for :meth:`list_validade`.
 
+        Retained for backward compatibility with older code that expected
+        ``DataStore`` to expose ``list_validades``. Prefer
+        :meth:`list_validade` in new code.
+        """
+        return self.list_validade()
 
-def list_validades(self):
-    cur = self.conn.cursor()
-    cur.execute("SELECT id, descricao FROM validades WHERE ativo=1 ORDER BY id")
-    return cur.fetchall()
+    def get_auxiliares_for(self, codigo):
+        """
+        Legacy wrapper for :meth:`read_auxiliares`.
 
+        Returns a tuple ``(tipo_id, validade_id, temperatura_id)``.
+        """
+        return self.read_auxiliares(codigo)
 
-def get_auxiliares_for(self, codigo):
-    cur = self.conn.cursor()
-    cur.execute("SELECT tipo_artigo_id, validade_id, temperatura_id FROM produto_auxiliar WHERE produto_codigo=?", (codigo,))
-    row = cur.fetchone()
-    if row:
-        return row[0], row[1], row[2]
-    return (None, None, None)
+    def save_auxiliares_for(self, codigo, tipo_id, val_id, temp_id):
+        """
+        Legacy wrapper for :meth:`write_auxiliares`.
 
-
-def save_auxiliares_for(self, codigo, tipo_id, val_id, temp_id):
-    cur = self.conn.cursor()
-    # upsert
-    cur.execute("INSERT INTO produto_auxiliar(produto_codigo, tipo_artigo_id, validade_id, temperatura_id) VALUES(?,?,?,?) ON CONFLICT(produto_codigo) DO UPDATE SET tipo_artigo_id=excluded.tipo_artigo_id, validade_id=excluded.validade_id, temperatura_id=excluded.temperatura_id", (codigo, tipo_id, val_id, temp_id))
-    self.conn.commit()
+        Performs an upsert of the auxiliary information for ``codigo``.
+        """
+        return self.write_auxiliares(codigo, tipo_id, val_id, temp_id)
