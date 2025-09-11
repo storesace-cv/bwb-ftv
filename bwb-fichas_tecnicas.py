@@ -18,6 +18,8 @@ from PyQt5.QtGui import QFont
 from ftv.data.datastore import DataStore
 from ftv.utils.autosave import wire_autosave_aux
 from ftv.ui.ui_editor_fonte import FTApp
+from ftv.data.datastore import DataStore
+from ftv.utils.autosave import wire_autosave_aux
 # --- UI principal ---
 
 def _apply_global_theme(app):
