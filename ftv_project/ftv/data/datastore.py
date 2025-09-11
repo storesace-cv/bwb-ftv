@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from pathlib import Path
+
+from ..utils.paths import get_project_root
 
 class DataStore:
     """
@@ -16,10 +17,7 @@ class DataStore:
         self.demo = bool(demo)
 
         # Caminho default: raiz do projeto /databases/ftv.db
-        try:
-            base = Path(__file__).resolve().parents[3]
-        except Exception:
-            base = Path('.').resolve()
+        base = get_project_root()
 
         if db_path is None:
             db_path = str(base / 'databases' / 'ftv.db')
@@ -178,10 +176,7 @@ class DataStore:
                 pass
 
         # 2) JSON
-        try:
-            base = Path(__file__).resolve().parents[3]
-        except Exception:
-            base = Path(".").resolve()
+        base = get_project_root()
         json_path = base / "allergens.json"
         if json_path.exists():
             try:
