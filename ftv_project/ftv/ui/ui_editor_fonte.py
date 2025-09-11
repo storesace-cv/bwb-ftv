@@ -39,6 +39,8 @@ from PyQt5.QtWidgets import (
     QTableWidgetItem, QMessageBox, QScrollArea, QShortcut, QTextEdit, QCheckBox
 )
 from ftv.data.datastore import DataStore
+from ftv.domain import Product, Ingredient
+from ftv.services import get_product_info, calculate_cost
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
 DEV_OVERLAYS = True  # Ctrl+D alterna
@@ -400,11 +402,11 @@ class FTApp(QWidget):
     # ---------- Carregamento de dados ----------
     def _load_record(self, idx: int):
         codigo = self.ds.codigo_at(idx) or "10001"
-        p = self.ds.get_produto_info(codigo)
-        self.edCodigo.setText(p.get("codigo",""))
-        self.edNome.setText(p.get("nome",""))
-        self.lbFamiliaVal.setText(p.get("familia",""))
-        self.lbSubFamiliaVal.setText(p.get("subfamilia",""))
+        product = get_product_info(self.ds, codigo)
+        self.edCodigo.setText(product.code or "")
+        self.edNome.setText(product.name or "")
+        self.lbFamiliaVal.setText(product.family or "")
+        self.lbSubFamiliaVal.setText(product.subfamily or "")
         # PVPs
         pvps = self.ds.get_pvps(codigo)
         values = [pvps.get("pvp1"), pvps.get("pvp2"), pvps.get("pvp3"), pvps.get("pvp4"), pvps.get("pvp5")]
@@ -438,20 +440,20 @@ class FTApp(QWidget):
                 if combo.itemData(i) == code_value:
                     combo.setCurrentIndex(i); return
 
-        _select_by_code(self.cbTipos, p.get("tipo_artigo_cod"))
-        _select_by_code(self.cbValidade, p.get("validade_cod"))
-        _select_by_code(self.cbTemp, p.get("temperatura_cod"))
+        _select_by_code(self.cbTipos, product.tipo_artigo_cod)
+        _select_by_code(self.cbValidade, product.validade_cod)
+        _select_by_code(self.cbTemp, product.temperatura_cod)
 
         self.tbIng.setRowCount(0)
-        for row in data:
+        for ing in product.ingredients:
             r = self.tbIng.rowCount(); self.tbIng.insertRow(r)
             vals = [
-                str(row.get("nome","")),
-                str(row.get("qtd",0)),
-                str(row.get("unidade","")),
-                f'{row.get("ppu",0):.2f}',
-                f'{row.get("total",0):.2f}',
-                str(row.get("codigo","")),
+                str(ing.name or ""),
+                str(ing.quantity or 0),
+                str(ing.unit or ""),
+                f"{(ing.unit_cost or 0):.2f}",
+                f"{(ing.total_cost or 0):.2f}",
+                str(ing.code or ""),
             ]
             for c, val in enumerate(vals):
                 it = QTableWidgetItem(val); it.setFlags(Qt.ItemIsSelectable|Qt.ItemIsEnabled)
@@ -472,15 +474,33 @@ class FTApp(QWidget):
             print(f"[AuxCanon][ERRO] {e}")
     # ---------- Cálculos ----------
     def _update_costs_from_table(self):
-        """Soma a coluna 'Total' (índice 4) da tabela de ingredientes e escreve em C3.A.A (edCustoTotal)."""
+        """Recalculate total cost using the service layer."""
         try:
-            total = 0.0
+            ingredients = []
             for r in range(self.tbIng.rowCount()):
-                it = self.tbIng.item(r, 4)
-                if not it: continue
-                s = it.text().strip().replace(",", ".")
-                try: total += float(s)
-                except ValueError: pass
+                def cell(col):
+                    it = self.tbIng.item(r, col)
+                    return it.text() if it else ""
+                def parse_f(s):
+                    try:
+                        return float(s.replace(",", "."))
+                    except Exception:
+                        return None
+                ingredients.append(
+                    Ingredient(
+                        name=cell(0),
+                        quantity=parse_f(cell(1)),
+                        unit=cell(2),
+                        unit_cost=parse_f(cell(3)),
+                        total_cost=parse_f(cell(4)),
+                    )
+                )
+            product = Product(
+                code=self.edCodigo.text().strip(),
+                name=self.edNome.text().strip(),
+                ingredients=ingredients,
+            )
+            total = calculate_cost(product)
             self.edCustoTotal.setText(f"{total:.2f}")
         except Exception:
             pass
