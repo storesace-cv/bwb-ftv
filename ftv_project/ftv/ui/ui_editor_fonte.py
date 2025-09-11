@@ -39,6 +39,7 @@ from PyQt5.QtWidgets import (
     QTableWidgetItem, QMessageBox, QScrollArea, QShortcut, QTextEdit, QCheckBox
 )
 from ftv.data.datastore import DataStore
+from ftv.services.products import get_product_info, calculate_cost
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
 DEV_OVERLAYS = True  # Ctrl+D alterna
@@ -184,6 +185,7 @@ class FTApp(QWidget):
         super().__init__()
         self.ds = ds
         self.cur_index = 0
+        self.current_product = None
         self._build_ui()
         self._connect_nav()
         self._load_record(self.cur_index)
@@ -400,58 +402,55 @@ class FTApp(QWidget):
     # ---------- Carregamento de dados ----------
     def _load_record(self, idx: int):
         codigo = self.ds.codigo_at(idx) or "10001"
-        p = self.ds.get_produto_info(codigo)
-        self.edCodigo.setText(p.get("codigo",""))
-        self.edNome.setText(p.get("nome",""))
-        self.lbFamiliaVal.setText(p.get("familia",""))
-        self.lbSubFamiliaVal.setText(p.get("subfamilia",""))
-        # PVPs
-        pvps = self.ds.get_pvps(codigo)
+        product = get_product_info(self.ds, codigo)
+        self.current_product = product
+        self.edCodigo.setText(product.code or "")
+        self.edNome.setText(product.name or "")
+        self.lbFamiliaVal.setText(product.familia or "")
+        self.lbSubFamiliaVal.setText(product.subfamilia or "")
+        pvps = product.pvps
         values = [pvps.get("pvp1"), pvps.get("pvp2"), pvps.get("pvp3"), pvps.get("pvp4"), pvps.get("pvp5")]
         for i, val in enumerate(values):
             txt = "—" if val in (None, "",) else f"{float(val):.2f}"
             if i < len(self.lbPVP):
                 self.lbPVP[i].setText(txt)
 
-
         self.cbTipos.clear(); self.cbValidade.clear(); self.cbTemp.clear()
-        # Preencher combos a partir da BD (ou demo)
-        self.cbTipos.addItems([])  # reset        # Tipos Artigos
+        self.cbTipos.addItems([])
         self.cbTipos.clear()
         for cod, desc in self.ds.list_tipos_artigos():
             self.cbTipos.addItem(desc, cod)
 
-        # Validade
         self.cbValidade.clear()
         for cod, desc in self.ds.list_validade():
             self.cbValidade.addItem(desc, cod)
 
-        # Temperaturas
         self.cbTemp.clear()
         for cod, desc in self.ds.list_temperaturas():
             self.cbTemp.addItem(desc, cod)
 
-        # Pré-selecionar pelos FKs do produto (se existirem)
         def _select_by_code(combo, code_value):
-            if code_value is None: return
+            if code_value is None:
+                return
             for i in range(combo.count()):
                 if combo.itemData(i) == code_value:
-                    combo.setCurrentIndex(i); return
+                    combo.setCurrentIndex(i)
+                    return
 
-        _select_by_code(self.cbTipos, p.get("tipo_artigo_cod"))
-        _select_by_code(self.cbValidade, p.get("validade_cod"))
-        _select_by_code(self.cbTemp, p.get("temperatura_cod"))
+        _select_by_code(self.cbTipos, product.tipo_artigo_cod)
+        _select_by_code(self.cbValidade, product.validade_cod)
+        _select_by_code(self.cbTemp, product.temperatura_cod)
 
         self.tbIng.setRowCount(0)
-        for row in data:
+        for ing in product.ingredients:
             r = self.tbIng.rowCount(); self.tbIng.insertRow(r)
             vals = [
-                str(row.get("nome","")),
-                str(row.get("qtd",0)),
-                str(row.get("unidade","")),
-                f'{row.get("ppu",0):.2f}',
-                f'{row.get("total",0):.2f}',
-                str(row.get("codigo","")),
+                str(ing.name),
+                str(ing.quantity),
+                str(ing.unit),
+                f"{(ing.ppu or 0):.2f}",
+                f"{(ing.total or 0):.2f}",
+                str(ing.code or ""),
             ]
             for c, val in enumerate(vals):
                 it = QTableWidgetItem(val); it.setFlags(Qt.ItemIsSelectable|Qt.ItemIsEnabled)
@@ -460,7 +459,6 @@ class FTApp(QWidget):
         self._apply_ingredient_widths()
         self._update_costs_from_table()
         self.lbPos.setText(f"{self.cur_index+1} / {max(1,self.ds.total())}")
-
 
         # --- Auxiliares: fetch/populate/load (canon) ---
         try:
@@ -474,17 +472,10 @@ class FTApp(QWidget):
     def _update_costs_from_table(self):
         """Soma a coluna 'Total' (índice 4) da tabela de ingredientes e escreve em C3.A.A (edCustoTotal)."""
         try:
-            total = 0.0
-            for r in range(self.tbIng.rowCount()):
-                it = self.tbIng.item(r, 4)
-                if not it: continue
-                s = it.text().strip().replace(",", ".")
-                try: total += float(s)
-                except ValueError: pass
+            total = calculate_cost(self.current_product.ingredients if self.current_product else [])
             self.edCustoTotal.setText(f"{total:.2f}")
         except Exception:
             pass
-
     # ---------- Eventos ----------
     def resizeEvent(self, ev):
         super().resizeEvent(ev)
