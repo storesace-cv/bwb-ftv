@@ -114,6 +114,10 @@ class DataStore:
         try: return self.aux.list_validade()
         except Exception: return [(None, "—")]
 
+    def list_validades(self):
+        """Alias para :meth:`list_validade` mantendo compatibilidade."""
+        return self.list_validade()
+
     def list_temperaturas(self):
         if not self.aux: return [(None, "—")]
         try: return self.aux.list_temperaturas()
@@ -233,9 +237,10 @@ class DataStore:
             return True
         except Exception:
             return False
-        """
-        return self.list_validade()
+    def get_auxiliares_for(self, codigo: str):
+        """Obtém (tipo_id, validade_id, temperatura_id) para um produto."""
+        return self.read_auxiliares(codigo)
 
-    def get_auxiliares_for(self, codigo):
-        """
-        return self.write_auxiliares(codigo, tipo_id, val_id, temp_id)
+    def save_auxiliares_for(self, codigo: str, tipo_id, validade_id, temperatura_id) -> bool:
+        """Guarda auxiliares para um produto. Devolve *True* se bem sucedido."""
+        return self.write_auxiliares(codigo, tipo_id, validade_id, temperatura_id)
