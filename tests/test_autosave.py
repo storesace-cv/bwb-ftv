@@ -34,3 +34,14 @@ def test_ensure_schema_raises_on_error():
     ds = types.SimpleNamespace(conn=BadConn())
     with pytest.raises(sqlite3.Error):
         autosave._ensure_produto_attrs_schema(ds)
+
+
+def test_wrap_preserves_name_and_doc():
+    class DummyFTApp:
+        def _load_record(self, idx):
+            """original doc"""
+
+    ds = DummyDS()
+    autosave.wire_autosave_aux(DummyFTApp, ds)
+    assert DummyFTApp._load_record.__name__ == "_wrap"
+    assert DummyFTApp._load_record.__doc__ == "original doc"

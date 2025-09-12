@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import sqlite3
+from functools import wraps
 
 
 logger = logging.getLogger(__name__)
@@ -174,6 +175,7 @@ def wire_autosave_aux(FTApp_cls, ds):
         except RuntimeError:
             return None
 
+    @wraps(_orig, assigned=("__doc__",))
     def _wrap(self, idx: int):
         _orig(self, idx)
         combos = _find_combo_candidates(self)
