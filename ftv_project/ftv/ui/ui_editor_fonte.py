@@ -183,6 +183,7 @@ class FTApp(QWidget):
         super().__init__()
         self.service = service
         self.cur_index = 0
+        self.current_product = None
         self._build_ui()
         self._connect_nav()
         self._load_record(self.cur_index)
@@ -398,7 +399,6 @@ class FTApp(QWidget):
 
     # ---------- Carregamento de dados ----------
     def _load_record(self, idx: int):
-        # PVPs
         pvps = product.pvps
         values = [pvps.get("pvp1"), pvps.get("pvp2"), pvps.get("pvp3"), pvps.get("pvp4"), pvps.get("pvp5")]
         for i, val in enumerate(values):
@@ -406,30 +406,27 @@ class FTApp(QWidget):
             if i < len(self.lbPVP):
                 self.lbPVP[i].setText(txt)
 
-
         self.cbTipos.clear(); self.cbValidade.clear(); self.cbTemp.clear()
-        # Preencher combos a partir da BD (ou demo)
-        self.cbTipos.addItems([])  # reset        # Tipos Artigos
+        self.cbTipos.addItems([])
         self.cbTipos.clear()
         for cod, desc in self.service.list_tipos_artigos():
             self.cbTipos.addItem(desc, cod)
 
-        # Validade
         self.cbValidade.clear()
         for cod, desc in self.service.list_validade():
             self.cbValidade.addItem(desc, cod)
 
-        # Temperaturas
         self.cbTemp.clear()
         for cod, desc in self.service.list_temperaturas():
             self.cbTemp.addItem(desc, cod)
 
-        # Pré-selecionar pelos FKs do produto (se existirem)
         def _select_by_code(combo, code_value):
-            if code_value is None: return
+            if code_value is None:
+                return
             for i in range(combo.count()):
                 if combo.itemData(i) == code_value:
-                    combo.setCurrentIndex(i); return
+                    combo.setCurrentIndex(i)
+                    return
 
         _select_by_code(self.cbTipos, product.tipo_artigo_cod)
         _select_by_code(self.cbValidade, product.validade_cod)
@@ -448,7 +445,6 @@ class FTApp(QWidget):
         self.edCustoTotal.setText(f"{self.service.calculate_cost(product):.2f}")
         self.lbPos.setText(f"{self.cur_index+1} / {max(1,self.service.total())}")
 
-
         # --- Auxiliares: fetch/populate/load (canon) ---
         try:
             _t,_v,_p = self._aux_fetch_lists()
@@ -461,35 +457,9 @@ class FTApp(QWidget):
     def _update_costs_from_table(self):
         """Recalculate total cost using the service layer."""
         try:
-            ingredients = []
-            for r in range(self.tbIng.rowCount()):
-                def cell(col):
-                    it = self.tbIng.item(r, col)
-                    return it.text() if it else ""
-                def parse_f(s):
-                    try:
-                        return float(s.replace(",", "."))
-                    except Exception:
-                        return None
-                ingredients.append(
-                    Ingredient(
-                        name=cell(0),
-                        quantity=parse_f(cell(1)),
-                        unit=cell(2),
-                        unit_cost=parse_f(cell(3)),
-                        total_cost=parse_f(cell(4)),
-                    )
-                )
-            product = Product(
-                code=self.edCodigo.text().strip(),
-                name=self.edNome.text().strip(),
-                ingredients=ingredients,
-            )
-            total = calculate_cost(product)
             self.edCustoTotal.setText(f"{total:.2f}")
         except Exception:
             pass
-
     # ---------- Eventos ----------
     def resizeEvent(self, ev):
         super().resizeEvent(ev)
