@@ -3,8 +3,8 @@ import json
 import sqlite3
 import pytest
 
-from ftv.data.datastore import DataStore
-from ftv.data.repositories import AuxiliaresRepo
+from data.datastore import DataStore
+from data.repositories import AuxiliaresRepo
 
 
 def _make_datastore():
@@ -81,7 +81,7 @@ def test_list_active_allergens_db():
 
 
 def test_list_active_allergens_json(tmp_path, monkeypatch):
-    import ftv.data.datastore as ds_module
+    import data.datastore as ds_module
 
     monkeypatch.setattr(ds_module, "base", tmp_path)
     (tmp_path / "allergens.json").write_text(
@@ -92,7 +92,7 @@ def test_list_active_allergens_json(tmp_path, monkeypatch):
 
 
 def test_list_active_allergens_default(tmp_path, monkeypatch):
-    import ftv.data.datastore as ds_module
+    import data.datastore as ds_module
 
     monkeypatch.setattr(ds_module, "base", tmp_path)
     ds = ds_module.DataStore(demo=True)

@@ -3,7 +3,7 @@ import sqlite3
 import types
 import pytest
 
-from ftv.utils import autosave
+from utils import autosave
 
 
 class DummyDS:

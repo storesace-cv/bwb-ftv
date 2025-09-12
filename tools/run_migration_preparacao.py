@@ -3,10 +3,10 @@
 
 """
 Fase 3 — Executar migração de preparação (produto_preparacao)
-Uso: python3 ftv_project/ftv/tools/run_migration_preparacao.py
+Uso: python3 tools/run_migration_preparacao.py
 
 - Assume a BD em ./databases/ftv.db
-- Assume o SQL em ./ftv_project/ftv/data/migrations/preparacao.sql
+- Assume o SQL em ./data/migrations/preparacao.sql
   - Não altera UI nem código da app. Apenas cria/valida a tabela necessária.
   - Fornece mensagens de debug detalhadas em caso de erro
     (linha/coluna do SQL e contexto).
@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 
 DB_PATH = Path("databases") / "ftv.db"
-SQL_PATH = Path("ftv_project") / "ftv" / "data" / "migrations" / "preparacao.sql"
+SQL_PATH = Path("data") / "migrations" / "preparacao.sql"
 
 
 logger = logging.getLogger(__name__)

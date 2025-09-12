@@ -3,7 +3,7 @@
 - **Tests**: Run all tests before committing:
 
   ```
-  PYTHONPATH=ftv_project pytest -q
+  PYTHONPATH=. pytest -q
   ```
 
 - **Code style**: Follow PEP 8 conventions. Use [Black](https://black.readthedocs.io/en/stable/) with a maximum line length of 88.
@@ -18,7 +18,7 @@
 - **Project root**: To programmatically locate the repository root, use:
 
   ```python
-  from ftv.utils.paths import get_project_root
+  from utils.paths import get_project_root
   ```
 
 - Keep this file up to date as project practices evolve.

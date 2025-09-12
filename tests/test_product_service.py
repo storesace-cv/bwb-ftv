@@ -1,9 +1,9 @@
 import pytest
 from unittest.mock import MagicMock
 
-from ftv.services.products import calculate_cost, get_product_info
-from ftv.data.datastore import DataStore
-from ftv.domain.models import Ingredient
+from services.products import calculate_cost, get_product_info
+from data.datastore import DataStore
+from domain.models import Ingredient
 
 
 def test_calculate_cost_uses_ppu_when_total_missing():

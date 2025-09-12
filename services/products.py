@@ -2,8 +2,8 @@
 
 from typing import Iterable, List
 
-from ftv.data.datastore import DataStore
-from ftv.domain import Product, Ingredient
+from data.datastore import DataStore
+from domain import Product, Ingredient
 
 
 class ProductService:

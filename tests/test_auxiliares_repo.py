@@ -1,6 +1,6 @@
 import sqlite3
 
-from ftv.data.repositories import AuxiliaresRepo
+from data.repositories import AuxiliaresRepo
 
 
 def _make_repo():
