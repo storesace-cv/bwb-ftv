@@ -23,7 +23,7 @@ from pathlib import Path
 import sys
 import logging
 
-from ftv_project.ftv.utils import get_project_root
+from ftv.utils import get_project_root
 
 import argparse, sqlite3
 
@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 def _load_preparacao_repo():
     try:
-        from ftv_project.ftv.data.repositories import PreparacaoRepo
+        from ftv.data.repositories import PreparacaoRepo
         return PreparacaoRepo
     except Exception:
         logger.exception(
