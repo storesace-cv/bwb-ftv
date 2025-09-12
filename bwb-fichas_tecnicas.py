@@ -12,6 +12,7 @@ from services.products import ProductService  # noqa: E402
 from utils.autosave import wire_autosave_aux  # noqa: E402
 from ui.ui_editor_fonte import FTApp  # noqa: E402
 from ui.startup_dialog import StartupDialog  # noqa: E402
+from utils.paths import get_project_root  # noqa: E402
 
 
 logger = logging.getLogger(__name__)
@@ -52,6 +53,24 @@ def main():
     sys.exit(app.exec_())
 
 
+def configure_logging():
+    root = get_project_root()
+    log_dir = root / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_file = log_dir / "ftv.log"
+
+    handlers = [
+        logging.FileHandler(log_file, encoding="utf-8"),
+        logging.StreamHandler(),
+    ]
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=handlers,
+    )
+
+
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    configure_logging()
     main()
