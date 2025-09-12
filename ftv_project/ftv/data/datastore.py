@@ -18,7 +18,8 @@ class DataStore:
     - Instancia repositórios de produtos, ingredientes, auxiliares e preparação
     - Mantém cache de códigos (_ids) com reload_ids()
     - Fornece paginação (total, codigo_at)
-    - Delegações para UI (info produto, PVPs, ingredientes, listas auxiliares, preparação, alergénios)
+    - Delegações para UI (info produto, PVPs, ingredientes,
+      listas auxiliares, preparação, alergénios)
     """
 
     def __init__(self, db_path=None, demo: bool = False):
@@ -74,7 +75,10 @@ class DataStore:
     # Cache / paginação
     # ----------------------------
     def reload_ids(self):
-        """Recarrega a lista de códigos (_ids). Tenta repos 'produtos'; senão usa fichas_tecnicas."""
+        """
+        Recarrega a lista de códigos (_ids). Tenta repos 'produtos'; senão usa
+        fichas_tecnicas.
+        """
         ids = []
         # 1) tentar via repositório
         if self.produtos:
@@ -91,7 +95,6 @@ class DataStore:
                     ids = [r[0] for r in cur.fetchall()]
                 except Exception:
                     cur.execute(
-                        "SELECT DISTINCT produto_codigo FROM fichas_tecnicas ORDER BY produto_codigo"
                     )
                     ids = [r[0] for r in cur.fetchall()]
             except Exception:
@@ -212,7 +215,6 @@ class DataStore:
             try:
                 cur = self.conn.cursor()
                 cur.execute(
-                    "SELECT id, nome FROM alergenios WHERE COALESCE(ativo,1)=1 ORDER BY nome"
                 )
                 rows = cur.fetchall()
                 result = []

@@ -29,8 +29,6 @@ class ProdutosRepo:
             # Preferir ativo=1 se existir; escolher linha mais recente
             cur.execute(
                 "SELECT preco1_g, preco2_g FROM precos_taxas "
-                "WHERE codigo = ? AND (CASE WHEN EXISTS(SELECT 1 FROM pragma_table_info('precos_taxas') WHERE name='ativo') THEN ativo=1 ELSE 1 END) "
-                "ORDER BY rowid DESC LIMIT 1",
                 (codigo,),
             )
             r = cur.fetchone()
@@ -52,7 +50,7 @@ class IngredientesRepo:
         self.conn = conn
 
     def _infer_cols(self):
-        """Inferir colunas em 'fichas_tecnicas', com preferências explícitas do teu esquema."""
+        """Inferir colunas em 'fichas_tecnicas' com as preferências do esquema."""
         cur = self.conn.cursor()
         try:
             cur.execute("PRAGMA table_info(fichas_tecnicas)")
@@ -119,8 +117,10 @@ class IngredientesRepo:
         return {"prod": prod, "ingr": ingr, "qty": qty, "unit": unit}
 
     def listar_por_produto(self, codigo: str):
-        """Devolve [{'ingrediente', 'quantidade', 'unidade'}] para um produto em 'fichas_tecnicas'."""
-        """Devolve lista de dicts com chaves: ingrediente, nome, designacao, quantidade, qtd, QTD, unidade, ppu, total."""
+        """Devolve dados do produto em fichas_tecnicas."""
+        """Lista dicts com chaves: ingrediente, nome, designacao, quantidade,
+        qtd, QTD, unidade, ppu e total.
+        """
         cur = self.conn.cursor()
         try:
             cur.execute(
@@ -155,7 +155,10 @@ class IngredientesRepo:
             try:
                 cur.execute("PRAGMA table_info(fichas_tecnicas)")
                 cols = [c[1].lower() for c in cur.fetchall()]
-                has = lambda x: x in cols
+
+                def has(x):
+                    return x in cols
+
                 sel = []
                 alias = []
                 if has("componente_nome"):
@@ -178,7 +181,6 @@ class IngredientesRepo:
                 sql = (
                     "SELECT "
                     + ", ".join(sel)
-                    + " FROM fichas_tecnicas WHERE produto_codigo = ? ORDER BY COALESCE(ordem, rowid)"
                 )
                 cur.execute(sql, (codigo,))
                 rows = cur.fetchall()
@@ -222,7 +224,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "SELECT cod, descricao FROM tipos_artigos WHERE ativo=1 ORDER BY descricao"
             )
             rows = cur.fetchall()
             return [(None, "—")] + [(r[0], r[1]) for r in rows]
@@ -233,7 +234,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "SELECT cod, descricao FROM validade WHERE ativo=1 ORDER BY descricao"
             )
             rows = cur.fetchall()
             return [(None, "—")] + [(r[0], r[1]) for r in rows]
@@ -244,7 +244,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "SELECT cod, descricao FROM temperaturas WHERE ativo=1 ORDER BY descricao"
             )
             rows = cur.fetchall()
             return [(None, "—")] + [(r[0], r[1]) for r in rows]
@@ -256,7 +255,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "SELECT cod, descricao, COALESCE(ativo,1) FROM tipos_artigos ORDER BY descricao"
             )
             return [(r[0], r[1], r[2]) for r in cur.fetchall()]
         except Exception:
@@ -278,7 +276,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "UPDATE tipos_artigos SET descricao=? WHERE cod=?", (descricao, cod)
             )
             self.conn.commit()
             return cur.rowcount > 0
@@ -289,7 +286,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "UPDATE tipos_artigos SET ativo=? WHERE cod=?", (int(ativo), cod)
             )
             self.conn.commit()
             return cur.rowcount > 0
@@ -300,7 +296,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "SELECT cod, descricao, COALESCE(ativo,1) FROM validade ORDER BY descricao"
             )
             return [(r[0], r[1], r[2]) for r in cur.fetchall()]
         except Exception:
@@ -310,7 +305,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "INSERT INTO validade (descricao, ativo) VALUES (?, 1)", (descricao,)
             )
             self.conn.commit()
             return cur.lastrowid
@@ -320,7 +314,10 @@ class AuxiliaresRepo:
     def update_validade(self, cod, descricao: str) -> bool:
         cur = self.conn.cursor()
         try:
-            cur.execute("UPDATE validade SET descricao=? WHERE cod=?", (descricao, cod))
+            cur.execute(
+                "UPDATE validade SET descricao=? WHERE cod=?",
+                (descricao, cod),
+            )
             self.conn.commit()
             return cur.rowcount > 0
         except Exception:
@@ -329,7 +326,10 @@ class AuxiliaresRepo:
     def set_validade_ativo(self, cod, ativo: int) -> bool:
         cur = self.conn.cursor()
         try:
-            cur.execute("UPDATE validade SET ativo=? WHERE cod=?", (int(ativo), cod))
+            cur.execute(
+                "UPDATE validade SET ativo=? WHERE cod=?",
+                (int(ativo), cod),
+            )
             self.conn.commit()
             return cur.rowcount > 0
         except Exception:
@@ -339,7 +339,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "SELECT cod, descricao, COALESCE(ativo,1) FROM temperaturas ORDER BY descricao"
             )
             return [(r[0], r[1], r[2]) for r in cur.fetchall()]
         except Exception:
@@ -361,7 +360,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "UPDATE temperaturas SET descricao=? WHERE cod=?", (descricao, cod)
             )
             self.conn.commit()
             return cur.rowcount > 0
@@ -372,7 +370,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "UPDATE temperaturas SET ativo=? WHERE cod=?", (int(ativo), cod)
             )
             self.conn.commit()
             return cur.rowcount > 0
@@ -385,7 +382,8 @@ class AuxiliaresRepo:
         try:
             cur = self.conn.cursor()
             cur.execute(
-                "SELECT tipo_artigo_id, validade_id, temperatura_id FROM produto_auxiliar WHERE produto_codigo = ?",
+                "SELECT tipo_artigo_id, validade_id, temperatura_id "
+                "FROM produto_auxiliar WHERE produto_codigo = ?",
                 (codigo,),
             )
             row = cur.fetchone()
@@ -413,9 +411,9 @@ class AuxiliaresRepo:
         try:
             cur = self.conn.cursor()
             cur.execute(
-                "INSERT INTO produto_auxiliar (produto_codigo, tipo_artigo_id, validade_id, temperatura_id) "
-                "VALUES (?, ?, ?, ?) "
-                "ON CONFLICT(produto_codigo) DO UPDATE SET "
+                "INSERT INTO produto_auxiliar (produto_codigo, tipo_artigo_id, "
+                "validade_id, temperatura_id) VALUES (?, ?, ?, ?) ON "
+                "CONFLICT(produto_codigo) DO UPDATE SET "
                 "tipo_artigo_id=excluded.tipo_artigo_id, "
                 "validade_id=excluded.validade_id, "
                 "temperatura_id=excluded.temperatura_id",

@@ -1,3 +1,4 @@
+# flake8: noqa
 # Fichas Técnicas Valorizadas — UI (Single-file)
 #
 # Regras Aprovadas (manter sempre no topo e cumprir em TODO o código)

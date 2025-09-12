@@ -4,7 +4,6 @@
 # --- Caminhos robustos ---
 import sys
 import logging
-from ftv.utils import get_project_root
 
 # --- Qt ---
 from PyQt5.QtWidgets import QApplication

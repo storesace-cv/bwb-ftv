@@ -25,7 +25,8 @@ import logging
 
 from ftv.utils import get_project_root
 
-import argparse, sqlite3
+import argparse
+import sqlite3
 
 DB_PATH = get_project_root() / "databases" / "ftv.db"
 
@@ -40,7 +41,8 @@ def _load_preparacao_repo():
         return PreparacaoRepo
     except Exception:
         logger.exception(
-            "[TESTE][ERRO] Não consigo importar PreparacaoRepo. Confirme se a Fase 2 foi aplicada corretamente."
+            "[TESTE][ERRO] Não consigo importar PreparacaoRepo. "
+            "Confirme se a Fase 2 foi aplicada corretamente."
         )
         sys.exit(2)
 

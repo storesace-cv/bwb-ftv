@@ -1,5 +1,3 @@
-import sqlite3
-
 from ftv.data.datastore import DataStore
 from ftv.data.repositories import AuxiliaresRepo
 
@@ -17,7 +15,8 @@ def _make_datastore():
         [(1, "24h"), (2, "48h")],
     )
     cur.execute(
-        "CREATE TABLE produto_auxiliar (produto_codigo TEXT PRIMARY KEY, tipo_artigo_id INTEGER, validade_id INTEGER, temperatura_id INTEGER)"
+        "CREATE TABLE produto_auxiliar (produto_codigo TEXT PRIMARY KEY, "
+        "tipo_artigo_id INTEGER, validade_id INTEGER, temperatura_id INTEGER)"
     )
     conn.commit()
     ds.aux = AuxiliaresRepo(conn)

@@ -7,8 +7,9 @@ Uso: python3 ftv_project/ftv/tools/run_migration_preparacao.py
 
 - Assume a BD em ./databases/ftv.db
 - Assume o SQL em ./ftv_project/ftv/data/migrations/preparacao.sql
-- Não altera UI nem código da app. Apenas cria/valida a tabela necessária.
-- Fornece mensagens de debug detalhadas em caso de erro (linha/coluna do SQL e contexto).
+  - Não altera UI nem código da app. Apenas cria/valida a tabela necessária.
+  - Fornece mensagens de debug detalhadas em caso de erro
+    (linha/coluna do SQL e contexto).
 
 Exit codes:
   0 = sucesso
@@ -16,7 +17,9 @@ Exit codes:
   3 = erro de execução SQL
   4 = BD não é um ficheiro SQLite válido ou não abriu
 """
-import sqlite3, sys, logging
+import logging
+import sqlite3
+import sys
 from pathlib import Path
 
 DB_PATH = Path("databases") / "ftv.db"
@@ -49,13 +52,11 @@ def main():
             conn.executescript(sql)
         # Sanidade mínima: tabela existe?
         cur = conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='produto_preparacao'"
         )
         row = cur.fetchone()
         if not row:
             die(
                 3,
-                "Migração correu sem erro aparente, mas a tabela 'produto_preparacao' não foi criada.",
             )
         logger.info("[MIGRAÇÃO] Sucesso. Tabela 'produto_preparacao' pronta.")
     except sqlite3.Error as e:

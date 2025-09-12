@@ -34,7 +34,8 @@ def _read_attrs(ds, codigo):
     try:
         cur = ds.conn.cursor()
         cur.execute(
-            "SELECT tipo_artigo, validade, temperatura FROM produto_attrs WHERE produto_codigo=?",
+            "SELECT tipo_artigo, validade, temperatura FROM produto_attrs "
+            "WHERE produto_codigo=?",
             (codigo,),
         )
         row = cur.fetchone()
@@ -50,7 +51,8 @@ def _write_attr(ds, codigo, campo, valor):
         cur = ds.conn.cursor()
         cur.execute(
             """
-            INSERT INTO produto_attrs (produto_codigo, tipo_artigo, validade, temperatura)
+            INSERT INTO produto_attrs (produto_codigo, tipo_artigo, validade,
+            temperatura)
             VALUES (?, NULL, NULL, NULL)
             ON CONFLICT(produto_codigo) DO NOTHING
             """,
@@ -124,7 +126,7 @@ def _find_combo_candidates(win):
 
 
 def wire_autosave_aux(FTApp_cls, ds):
-    """Envolve ``FTApp._load_record`` para ler/gravar atributos auxiliares automaticamente."""
+    """Envolve ``FTApp._load_record`` para gerir atributos auxiliares."""
     if not hasattr(FTApp_cls, "_load_record"):
         logger.warning(
             "[AutosaveAux][AVISO] FTApp não tem _load_record — nada a fazer."
