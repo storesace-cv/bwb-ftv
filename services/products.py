@@ -264,6 +264,25 @@ def import_from_excel(ds: DataStore | None = None) -> None:
         return
 
     setup_database(conn)
+    for table, fp in files.items():
+        wb = load_workbook(fp, read_only=True, data_only=True)
+        ws = wb.active
+        rows = ws.iter_rows(values_only=True)
+        try:
+            raw_headers = list(next(rows))
+        except StopIteration:
+            wb.close()
+            continue
+        if table == "precos_taxas":
+            mapped = [canonicalize_header(h, table=table) for h in raw_headers]
+            existing = [
+                r[1].lower() for r in conn.execute(f"PRAGMA table_info({table})")
+            ]
+            headers = mapped + [c for c in existing if c not in mapped]
+        else:
+            headers = raw_headers
+        sync_table_schema(conn, table, headers)
+        wb.close()
 
     cur = conn.cursor()
     for tbl in ("produtos", "fichas_tecnicas", "precos_taxas"):

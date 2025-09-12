@@ -29,6 +29,19 @@ Ao importar `FichasTecnicas_base.xlsx` a coluna de custo pode surgir como
 `custo` ou `total`; ambas são automaticamente mapeadas para o campo `total`
 na base de dados.
 
+## Migração de esquema
+
+Para bases de dados já existentes, utilize o script `tools/cleanup_schema.py`
+para sincronizar as tabelas `produtos`, `fichas_tecnicas` e `precos_taxas` com
+os cabeçalhos actuais dos ficheiros Excel. Antes de qualquer alteração é
+criado um backup (`ftv.db.bak`) da base de dados.
+
+```bash
+python tools/cleanup_schema.py
+```
+
+Certifique-se de que os três ficheiros base se encontram em `imports/`.
+
 ## Troubleshooting
 
 Se o ficheiro da base de dados estiver ausente, a aplicação cria
