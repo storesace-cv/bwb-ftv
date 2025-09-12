@@ -3,10 +3,10 @@
 
 # --- Caminhos robustos ---
 import sys
-from pathlib import Path
+from ftv_project.ftv.utils import get_project_root
 
-ROOT = Path(__file__).resolve().parent
-FTV_PROJ = ROOT / "ftv_project"
+FTV_PROJ = get_project_root()
+ROOT = FTV_PROJ.parent
 for p in (FTV_PROJ, ROOT):
     if p.exists() and str(p) not in sys.path:
         sys.path.insert(0, str(p))
@@ -18,8 +18,6 @@ from PyQt5.QtGui import QFont
 from ftv.data.datastore import DataStore
 from ftv.utils.autosave import wire_autosave_aux
 from ftv.ui.ui_editor_fonte import FTApp
-from ftv.data.datastore import DataStore
-from ftv.utils.autosave import wire_autosave_aux
 # --- UI principal ---
 
 def _apply_global_theme(app):

@@ -18,24 +18,33 @@ Exit codes:
   2 = ficheiros em falta
   3 = erro na operação
 """
+__test__ = False
 from pathlib import Path
 import sys
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+
+from ftv_project.ftv.utils import get_project_root
+PROJECT_ROOT = get_project_root()
 
 import argparse, sqlite3, traceback
 
 DB_PATH = Path("databases") / "ftv.db"
 
-# Import direto dos repos (sem alterar a UI)
-try:
-    from ftv_project.ftv.data.repositories import PreparacaoRepo
-except Exception as e:
-    print("[TESTE][ERRO] Não consigo importar PreparacaoRepo. Confirme se a Fase 2 foi aplicada corretamente.", file=sys.stderr)
-    traceback.print_exc()
-    sys.exit(2)
+
+def _load_preparacao_repo():
+    try:
+        from ftv_project.ftv.data.repositories import PreparacaoRepo
+        return PreparacaoRepo
+    except Exception as e:
+        print(
+            "[TESTE][ERRO] Não consigo importar PreparacaoRepo. Confirme se a Fase 2 foi aplicada corretamente.",
+            file=sys.stderr,
+        )
+        traceback.print_exc()
+        sys.exit(2)
 
 def pick_first_codigo(conn):
     try:
@@ -65,6 +74,7 @@ def main():
         sys.exit(2)
 
     try:
+        PreparacaoRepo = _load_preparacao_repo()
         repo = PreparacaoRepo(conn)
 
         codigo = args.codigo
