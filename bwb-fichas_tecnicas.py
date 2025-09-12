@@ -3,6 +3,7 @@
 
 # --- Caminhos robustos ---
 import sys
+import logging
 from ftv_project.ftv.utils import get_project_root
 
 FTV_PROJ = get_project_root()
@@ -19,6 +20,9 @@ from ftv.data.datastore import DataStore
 from ftv.services.products import ProductService
 from ftv.utils.autosave import wire_autosave_aux
 from ftv.ui.ui_editor_fonte import FTApp
+
+
+logger = logging.getLogger(__name__)
 # --- UI principal ---
 
 def _apply_global_theme(app):
@@ -28,7 +32,7 @@ def _apply_global_theme(app):
         app.setFont(f)
         # pode-se adicionar QSS leve aqui se precisares
     except Exception as e:
-        print(f"[THEME] Falha a aplicar fonte global: {e}")
+        logger.warning("[THEME] Falha a aplicar fonte global: %s", e)
 
 
 def main():
@@ -38,7 +42,7 @@ def main():
 
     # DataStore
     ds = DataStore()
-    print(f"[LAUNCHER] DataStore importado de: {DataStore.__module__}")
+    logger.info("[LAUNCHER] DataStore importado de: %s", DataStore.__module__)
     svc = ProductService(ds)
 
     # Janela
@@ -52,4 +56,5 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     main()

@@ -16,14 +16,17 @@ Exit codes:
   3 = erro de execução SQL
   4 = BD não é um ficheiro SQLite válido ou não abriu
 """
-import sqlite3, sys, traceback
+import sqlite3, sys, logging
 from pathlib import Path
 
 DB_PATH = Path("databases") / "ftv.db"
 SQL_PATH = Path("ftv_project") / "ftv" / "data" / "migrations" / "preparacao.sql"
 
+
+logger = logging.getLogger(__name__)
+
 def die(code, msg):
-    print(f"[MIGRAÇÃO][ERRO] {msg}", file=sys.stderr)
+    logger.error("[MIGRAÇÃO][ERRO] %s", msg)
     sys.exit(code)
 
 def main():
@@ -47,12 +50,9 @@ def main():
         row = cur.fetchone()
         if not row:
             die(3, "Migração correu sem erro aparente, mas a tabela 'produto_preparacao' não foi criada.")
-        print("[MIGRAÇÃO] Sucesso. Tabela 'produto_preparacao' pronta.")
+        logger.info("[MIGRAÇÃO] Sucesso. Tabela 'produto_preparacao' pronta.")
     except sqlite3.Error as e:
-        # Tentar dar mais contexto
-        tb = traceback.format_exc()
-        print("[MIGRAÇÃO][DEBUG] Traceback completo:", file=sys.stderr)
-        print(tb, file=sys.stderr)
+        logger.debug("[MIGRAÇÃO][DEBUG] Traceback completo:", exc_info=True)
         die(3, f"Erro SQLite ao executar migração: {e}")
     finally:
         try:
@@ -61,4 +61,5 @@ def main():
             pass
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     main()
