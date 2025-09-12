@@ -211,8 +211,14 @@ def import_from_excel(path: str, ds: DataStore | None = None) -> None:
         except StopIteration:
             wb.close()
             return
-        cols = [h for h in headers if h]
         db_cols = _table_columns(table)
+        if table == "fichas_tecnicas":
+            # Planilhas antigas podem usar 'custo'; mapear para 'total'
+            if "total" in db_cols and "total" not in headers and "custo" in headers:
+                headers = ["total" if h == "custo" else h for h in headers]
+            elif "custo" in db_cols and "custo" not in headers and "total" in headers:
+                headers = ["custo" if h == "total" else h for h in headers]
+        cols = [h for h in headers if h]
         used_cols = [c for c in cols if c in db_cols]
         if not used_cols:
             wb.close()
@@ -375,8 +381,14 @@ def update_from_excel(path: str, ds: DataStore | None = None) -> None:
         except StopIteration:
             wb.close()
             return
-        cols = [h for h in headers if h]
         db_cols = _table_columns(table)
+        if table == "fichas_tecnicas":
+            # Sincronizar nomenclaturas 'custo'/'total'
+            if "total" in db_cols and "total" not in headers and "custo" in headers:
+                headers = ["total" if h == "custo" else h for h in headers]
+            elif "custo" in db_cols and "custo" not in headers and "total" in headers:
+                headers = ["custo" if h == "total" else h for h in headers]
+        cols = [h for h in headers if h]
         used_cols = [c for c in cols if c in db_cols]
         if not used_cols:
             wb.close()

@@ -18,7 +18,7 @@ def ds():
     conn.execute(
         "CREATE TABLE fichas_tecnicas (produto_codigo TEXT, "
         "componente_nome TEXT, qtd REAL, unidade TEXT, "
-        "ppu REAL, custo REAL)"
+        "ppu REAL, total REAL)"
     )
     return ds
 
@@ -151,3 +151,61 @@ def test_preco_taxas_requires_codigo(ds, tmp_path, func):
     svc = ProductService(ds)
     with pytest.raises(ValueError):
         getattr(svc, func)(str(tmp_path))
+
+
+def test_import_maps_custo_to_total(ds, tmp_path):
+    prod = Workbook()
+    ws = prod.active
+    ws.append(["codigo", "nome"])
+    ws.append(["P1", "Produto 1"])
+    prod.save(tmp_path / "Produtos_Base.xlsx")
+
+    ft = Workbook()
+    ws = ft.active
+    ws.append(["produto_codigo", "componente_nome", "qtd", "unidade", "ppu", "custo"])
+    ws.append(["P1", "Ing", 2, "Kg", 3, 6])
+    ft.save(tmp_path / "FichasTecnicas_base.xlsx")
+
+    prec = Workbook()
+    ws = prec.active
+    ws.append(["codigo", "preco1_g"])
+    ws.append(["P1", 1])
+    prec.save(tmp_path / "PreçosTaxas_base.xlsx")
+
+    svc = ProductService(ds)
+    svc.import_from_excel(str(tmp_path))
+    ing = ds.get_ingredientes("P1")[0]
+    assert ing["total"] == 6
+
+
+def test_update_maps_custo_to_total(ds, tmp_path):
+    ds.conn.execute("INSERT INTO produtos (codigo, nome) VALUES ('P1', 'Prod')")
+    ds.conn.execute(
+        "INSERT INTO fichas_tecnicas "
+        "(produto_codigo, componente_nome, qtd, unidade, ppu, total) "
+        "VALUES ('P1', 'Ing', 1, 'Kg', 2, 5)"
+    )
+    ds.reload_ids()
+
+    prod = Workbook()
+    ws = prod.active
+    ws.append(["codigo", "nome"])
+    ws.append(["P1", "Prod"])
+    prod.save(tmp_path / "Produtos_Base.xlsx")
+
+    ft = Workbook()
+    ws = ft.active
+    ws.append(["produto_codigo", "componente_nome", "qtd", "unidade", "ppu", "custo"])
+    ws.append(["P1", "Ing", 3, "Kg", 2, 7])
+    ft.save(tmp_path / "FichasTecnicas_base.xlsx")
+
+    prec = Workbook()
+    ws = prec.active
+    ws.append(["codigo", "preco1_g"])
+    ws.append(["P1", 1])
+    prec.save(tmp_path / "PreçosTaxas_base.xlsx")
+
+    svc = ProductService(ds)
+    svc.update_from_excel(str(tmp_path))
+    ing = ds.get_ingredientes("P1")[0]
+    assert ing["total"] == 7

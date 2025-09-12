@@ -28,6 +28,10 @@ Os ficheiros Excel usados para carregar dados têm nomes fixos e **sensíveis a 
 
 Qualquer alteração, incluindo remoção de acentos ou uso de maiúsculas diferentes, impedirá a importação.
 
+Ao importar `FichasTecnicas_base.xlsx` a coluna de custo pode surgir como
+`custo` ou `total`; ambas são automaticamente mapeadas para o campo `total`
+na base de dados.
+
 ## Troubleshooting
 
 Se o ficheiro da base de dados estiver ausente, a aplicação cria
