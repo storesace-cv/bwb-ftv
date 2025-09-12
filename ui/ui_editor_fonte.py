@@ -915,7 +915,7 @@ class FTApp(QWidget):
         cb_tipo, cb_val, cb_temp = self._aux_find_cbs()
         if not any([cb_tipo, cb_val, cb_temp]):
             return
-        sel = {"tipo_artigo": None, "validade": None, "temperatura": None}
+        tid = vid = pid = None
         try:
             cur = self.service.conn.cursor()
             cur.execute(
@@ -924,23 +924,25 @@ class FTApp(QWidget):
             )
             row = cur.fetchone()
             if row:
-                sel["tipo_artigo"], sel["validade"], sel["temperatura"] = (
-                    row[0],
-                    row[1],
-                    row[2],
-                )
+                tid, vid, pid = row[0], row[1], row[2]
             else:
                 cur.execute(
-                    "SELECT attr, value FROM produto_attrs WHERE produto_codigo=? AND attr IN ('tipo_artigo','validade','temperatura')",
+                    "SELECT tipo_artigo, validade, temperatura FROM produto_attrs WHERE produto_codigo=?",
                     (codigo,),
                 )
-                for a, v in cur.fetchall():
-                    try:
-                        sel[a] = int(v)
-                    except Exception:
-                        sel[a] = None
+                row = cur.fetchone()
+                if row:
+                    tid, vid, pid = row[0], row[1], row[2]
         except Exception as e:
             logger.warning("[AuxUI][AVISO] a ler seleção: %s", e)
+
+        def _as_int(v):
+            try:
+                return int(v) if v is not None else None
+            except Exception:
+                return None
+
+        tid, vid, pid = _as_int(tid), _as_int(vid), _as_int(pid)
 
         def set_by_data(cb, wanted_id):
             if cb is None:
@@ -968,9 +970,9 @@ class FTApp(QWidget):
                 except Exception:
                     pass
 
-        set_by_data(cb_tipo, sel["tipo_artigo"])
-        set_by_data(cb_val, sel["validade"])
-        set_by_data(cb_temp, sel["temperatura"])
+        set_by_data(cb_tipo, tid)
+        set_by_data(cb_val, vid)
+        set_by_data(cb_temp, pid)
 
     def _aux_wire_autosave(self, cbs=None):
         """Wire ``currentIndexChanged`` to persist combo selections.
