@@ -7,7 +7,7 @@ import os
 import sqlite3
 from pathlib import Path
 
-from ..utils import get_project_root
+from utils import get_project_root
 
 base = get_project_root()
 

@@ -4,9 +4,9 @@
 """
 Fase 3 — Teste de fumo para Bloco [B4] Preparação
 Uso (executar como módulo):
-  python -m ftv.tools.test_prep_cli --codigo ABC123 --html "<p>Teste</p>"
-  python -m ftv.tools.test_prep_cli --codigo ABC123 --file ./exemplo.html
-  python -m ftv.tools.test_prep_cli            # tenta descobrir 1º código existente
+  python -m tools.test_prep_cli --codigo ABC123 --html "<p>Teste</p>"
+  python -m tools.test_prep_cli --codigo ABC123 --file ./exemplo.html
+  python -m tools.test_prep_cli            # tenta descobrir 1º código existente
 
 O que faz:
 - Abre <raiz do projeto>/databases/ftv.db (usando get_project_root)
@@ -23,7 +23,7 @@ from pathlib import Path
 import sys
 import logging
 
-from ftv.utils import get_project_root
+from utils import get_project_root
 
 import argparse
 import sqlite3
@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 def _load_preparacao_repo():
     try:
-        from ftv.data.repositories import PreparacaoRepo
+        from data.repositories import PreparacaoRepo
 
         return PreparacaoRepo
     except Exception:

@@ -3,9 +3,9 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ftv_project"
+name = "bwb_ftv"
 version = "0.1.0"
 
 [tool.setuptools.packages.find]
-where = ["ftv_project"]
-include = ["ftv*"]
+where = ["."]
+include = ["*"]

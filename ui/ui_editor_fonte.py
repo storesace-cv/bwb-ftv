@@ -55,8 +55,8 @@ from PyQt5.QtWidgets import (
     QTextEdit,
     QCheckBox,
 )
-from ftv.data.datastore import DataStore
-from ftv.services.products import ProductService
+from data.datastore import DataStore
+from services.products import ProductService
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
 DEV_OVERLAYS = True  # Ctrl+D alterna
@@ -252,7 +252,6 @@ class Zone(QWidget):
 
 
 class FTApp(QWidget):
-
     def _aux_load_selected(self, codigo):
         """Lê produto_auxiliar e posiciona os CBs sem disparar autosave."""
         conn = getattr(self.service, "conn", None)
