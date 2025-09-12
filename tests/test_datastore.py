@@ -1,13 +1,7 @@
 import sqlite3
-import sys
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
-from ftv_project.ftv.data.datastore import DataStore
-from ftv_project.ftv.data.repositories import AuxiliaresRepo
+from ftv.data.datastore import DataStore
+from ftv.data.repositories import AuxiliaresRepo
 
 
 def _make_datastore():
