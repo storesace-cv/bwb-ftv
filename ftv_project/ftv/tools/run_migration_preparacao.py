@@ -25,9 +25,11 @@ SQL_PATH = Path("ftv_project") / "ftv" / "data" / "migrations" / "preparacao.sql
 
 logger = logging.getLogger(__name__)
 
+
 def die(code, msg):
     logger.error("[MIGRAÇÃO][ERRO] %s", msg)
     sys.exit(code)
+
 
 def main():
     if not SQL_PATH.exists():
@@ -46,10 +48,15 @@ def main():
         with conn:
             conn.executescript(sql)
         # Sanidade mínima: tabela existe?
-        cur = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='produto_preparacao'")
+        cur = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='produto_preparacao'"
+        )
         row = cur.fetchone()
         if not row:
-            die(3, "Migração correu sem erro aparente, mas a tabela 'produto_preparacao' não foi criada.")
+            die(
+                3,
+                "Migração correu sem erro aparente, mas a tabela 'produto_preparacao' não foi criada.",
+            )
         logger.info("[MIGRAÇÃO] Sucesso. Tabela 'produto_preparacao' pronta.")
     except sqlite3.Error as e:
         logger.debug("[MIGRAÇÃO][DEBUG] Traceback completo:", exc_info=True)
@@ -59,6 +66,7 @@ def main():
             conn.close()
         except Exception:
             pass
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

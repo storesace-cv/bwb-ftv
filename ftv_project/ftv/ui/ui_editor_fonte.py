@@ -35,12 +35,28 @@ import logging
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QFont, QKeySequence
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox,
-    QLabel, QLineEdit, QComboBox, QPushButton, QSizePolicy, QTableWidget,
-    QTableWidgetItem, QMessageBox, QScrollArea, QShortcut, QTextEdit, QCheckBox
+    QApplication,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QGridLayout,
+    QGroupBox,
+    QLabel,
+    QLineEdit,
+    QComboBox,
+    QPushButton,
+    QSizePolicy,
+    QTableWidget,
+    QTableWidgetItem,
+    QMessageBox,
+    QScrollArea,
+    QShortcut,
+    QTextEdit,
+    QCheckBox,
 )
 from ftv.data.datastore import DataStore
 from ftv.services.products import ProductService
+
 APP_TITLE = "Fichas Técnicas Valorizadas"
 DEV_OVERLAYS = True  # Ctrl+D alterna
 
@@ -49,32 +65,55 @@ logger = logging.getLogger(__name__)
 
 # ------------------------ UI Helpers ------------------------
 
+
 def make_readonly_lineedit(le: QLineEdit, bold=False):
     le.setReadOnly(True)
     le.setFrame(False)
     le.setStyleSheet("border:none; background:transparent;")
-    f = le.font(); f.setBold(bold); le.setFont(f)
+    f = le.font()
+    f.setBold(bold)
+    le.setFont(f)
+
 
 def match_font(lbl: QLabel, ref: QLineEdit):
-    f = QFont(ref.font()); lbl.setFont(f)
+    f = QFont(ref.font())
+    lbl.setFont(f)
+
 
 def stack_combo(title: str):
     w = QWidget()
-    v = QVBoxLayout(w); v.setContentsMargins(0,0,0,0); v.setSpacing(2)
-    lbl = QLabel(title); v.addWidget(lbl, 0, Qt.AlignLeft|Qt.AlignVCenter)
-    cb = QComboBox(); cb.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+    v = QVBoxLayout(w)
+    v.setContentsMargins(0, 0, 0, 0)
+    v.setSpacing(2)
+    lbl = QLabel(title)
+    v.addWidget(lbl, 0, Qt.AlignLeft | Qt.AlignVCenter)
+    cb = QComboBox()
+    cb.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
     v.addWidget(cb, 0)
     return w, cb
 
+
 # ------------------------ Zone (Cell) System ------------------------
 
-def bg_for_level(level:int):
-    colors = ["#eafbf1","#eef5ff","#fff5e8","#f7f0ff","#fff0f0"]
+
+def bg_for_level(level: int):
+    colors = ["#eafbf1", "#eef5ff", "#fff5e8", "#f7f0ff", "#fff0f0"]
     return colors[level % len(colors)] if DEV_OVERLAYS else "transparent"
+
 
 class Zone(QWidget):
     """Célula real (com tag e overlay opcional)."""
-    def __init__(self, tag: str, parent=None, flow="v", margins=8, spacing=6, level:int=0, show_overlays:bool=True):
+
+    def __init__(
+        self,
+        tag: str,
+        parent=None,
+        flow="v",
+        margins=8,
+        spacing=6,
+        level: int = 0,
+        show_overlays: bool = True,
+    ):
         super().__init__(parent)
         self.tag = tag
         self.setObjectName(tag)
@@ -96,7 +135,9 @@ class Zone(QWidget):
 
     def apply_overlays(self, on: bool):
         if on:
-            self.setStyleSheet(f"background:{bg_for_level(self._level)}; border:1px dashed red;")
+            self.setStyleSheet(
+                f"background:{bg_for_level(self._level)}; border:1px dashed red;"
+            )
             self._tag_lbl.show()
         else:
             self.setStyleSheet("")
@@ -104,52 +145,110 @@ class Zone(QWidget):
         for ch in self.findChildren(Zone):
             ch.apply_overlays(on)
 
-    def add(self, w: QWidget, stretch:int=0):
+    def add(self, w: QWidget, stretch: int = 0):
         self.ly.addWidget(w, stretch)
 
-    def add_row(self, label_text: str, value_widget: QWidget, label_minw: int=None, vspacing: int=2):
-        row = QWidget(self); row.setStyleSheet("border:none; background:transparent;")
-        grid = QGridLayout(row); grid.setContentsMargins(0,0,0,0)
-        grid.setHorizontalSpacing(12); grid.setVerticalSpacing(vspacing)
-        grid.setColumnStretch(1,1)
-        lbl = QLabel(label_text, row); lbl.setStyleSheet("border:none; background:transparent;")
+    def add_row(
+        self,
+        label_text: str,
+        value_widget: QWidget,
+        label_minw: int = None,
+        vspacing: int = 2,
+    ):
+        row = QWidget(self)
+        row.setStyleSheet("border:none; background:transparent;")
+        grid = QGridLayout(row)
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setHorizontalSpacing(12)
+        grid.setVerticalSpacing(vspacing)
+        grid.setColumnStretch(1, 1)
+        lbl = QLabel(label_text, row)
+        lbl.setStyleSheet("border:none; background:transparent;")
         lbl.setAlignment(Qt.AlignVCenter | Qt.AlignRight)
-        if label_minw: lbl.setFixedWidth(label_minw)
+        if label_minw:
+            lbl.setFixedWidth(label_minw)
         value_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         try:
-            value_widget.setStyleSheet(value_widget.styleSheet() + "border:none; background:transparent;")
+            value_widget.setStyleSheet(
+                value_widget.styleSheet() + "border:none; background:transparent;"
+            )
         except Exception:
             pass
         grid.addWidget(lbl, 0, 0, alignment=Qt.AlignVCenter | Qt.AlignRight)
         grid.addWidget(value_widget, 0, 1, alignment=Qt.AlignVCenter | Qt.AlignLeft)
         self.ly.addWidget(row)
-        self._labels.append(lbl); self.sync_label_widths()
+        self._labels.append(lbl)
+        self.sync_label_widths()
         return lbl
 
     def sync_label_widths(self):
-        if not self._labels: return
+        if not self._labels:
+            return
         maxw = max(l.sizeHint().width() for l in self._labels)
-        for l in self._labels: l.setFixedWidth(maxw)
+        for l in self._labels:
+            l.setFixedWidth(maxw)
 
-    def split_h(self, ratios=(1,1)):
-        cont = QWidget(self); cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        h = QHBoxLayout(cont); h.setContentsMargins(0,0,0,0); h.setSpacing(self.ly.spacing())
-        left  = Zone(self.tag + ".A", cont, flow='v', margins=4, spacing=self.ly.spacing(), level=self._level+1, show_overlays=DEV_OVERLAYS)
-        right = Zone(self.tag + ".B", cont, flow='v', margins=4, spacing=self.ly.spacing(), level=self._level+1, show_overlays=DEV_OVERLAYS)
-        h.addWidget(left, ratios[0]); h.addWidget(right, ratios[1])
+    def split_h(self, ratios=(1, 1)):
+        cont = QWidget(self)
+        cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        h = QHBoxLayout(cont)
+        h.setContentsMargins(0, 0, 0, 0)
+        h.setSpacing(self.ly.spacing())
+        left = Zone(
+            self.tag + ".A",
+            cont,
+            flow="v",
+            margins=4,
+            spacing=self.ly.spacing(),
+            level=self._level + 1,
+            show_overlays=DEV_OVERLAYS,
+        )
+        right = Zone(
+            self.tag + ".B",
+            cont,
+            flow="v",
+            margins=4,
+            spacing=self.ly.spacing(),
+            level=self._level + 1,
+            show_overlays=DEV_OVERLAYS,
+        )
+        h.addWidget(left, ratios[0])
+        h.addWidget(right, ratios[1])
         self.ly.addWidget(cont, 1)
         return left, right
 
-    def split_v(self, ratios=(1,1)):
-        cont = QWidget(self); cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        v = QVBoxLayout(cont); v.setContentsMargins(0,0,0,0); v.setSpacing(self.ly.spacing())
-        top    = Zone(self.tag + ".1", cont, flow='v', margins=4, spacing=self.ly.spacing(), level=self._level+1, show_overlays=DEV_OVERLAYS)
-        bottom = Zone(self.tag + ".2", cont, flow='v', margins=4, spacing=self.ly.spacing(), level=self._level+1, show_overlays=DEV_OVERLAYS)
-        v.addWidget(top, ratios[0]); v.addWidget(bottom, ratios[1])
+    def split_v(self, ratios=(1, 1)):
+        cont = QWidget(self)
+        cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        v = QVBoxLayout(cont)
+        v.setContentsMargins(0, 0, 0, 0)
+        v.setSpacing(self.ly.spacing())
+        top = Zone(
+            self.tag + ".1",
+            cont,
+            flow="v",
+            margins=4,
+            spacing=self.ly.spacing(),
+            level=self._level + 1,
+            show_overlays=DEV_OVERLAYS,
+        )
+        bottom = Zone(
+            self.tag + ".2",
+            cont,
+            flow="v",
+            margins=4,
+            spacing=self.ly.spacing(),
+            level=self._level + 1,
+            show_overlays=DEV_OVERLAYS,
+        )
+        v.addWidget(top, ratios[0])
+        v.addWidget(bottom, ratios[1])
         self.ly.addWidget(cont, 1)
         return top, bottom
 
+
 # ------------------------ Main App ------------------------
+
 
 class FTApp(QWidget):
 
@@ -160,7 +259,10 @@ class FTApp(QWidget):
             return
         cur = conn.cursor()
         try:
-            cur.execute("SELECT tipo_artigo_id, validade_id, temperatura_id FROM produto_auxiliar WHERE produto_codigo=?", (codigo,))
+            cur.execute(
+                "SELECT tipo_artigo_id, validade_id, temperatura_id FROM produto_auxiliar WHERE produto_codigo=?",
+                (codigo,),
+            )
             row = cur.fetchone()
         except Exception:
             row = None
@@ -169,9 +271,11 @@ class FTApp(QWidget):
         if row:
             tid, vid, pid = row[0], row[1], row[2]
 
-        for cb, val in ((getattr(self, "cbTipoArtigo", None), tid),
-                        (getattr(self, "cbValidade", None),    vid),
-                        (getattr(self, "cbTemp", None),         pid)):
+        for cb, val in (
+            (getattr(self, "cbTipoArtigo", None), tid),
+            (getattr(self, "cbValidade", None), vid),
+            (getattr(self, "cbTemp", None), pid),
+        ):
             if not cb:
                 continue
             cb.blockSignals(True)
@@ -195,106 +299,181 @@ class FTApp(QWidget):
         self._load_record(self.cur_index)
 
     def _section_box(self, title: str, zone: Zone) -> QGroupBox:
-        box = QGroupBox(title); box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        ly = QVBoxLayout(box); ly.setContentsMargins(8,8,8,8); ly.setSpacing(8)
+        box = QGroupBox(title)
+        box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        ly = QVBoxLayout(box)
+        ly.setContentsMargins(8, 8, 8, 8)
+        ly.setSpacing(8)
         ly.addWidget(zone)
         return box
 
     def _build_ui(self):
         self.setWindowTitle(APP_TITLE)
         self.resize(1180, 860)
-        root = QVBoxLayout(self); root.setContentsMargins(8,8,8,8); root.setSpacing(8)
+        root = QVBoxLayout(self)
+        root.setContentsMargins(8, 8, 8, 8)
+        root.setSpacing(8)
 
         # --- Top bar: Overlay (esq) + Menu (dir) ---
-        top = QHBoxLayout(); top.setContentsMargins(0,0,0,0); top.setSpacing(8)
-        self.btOverlay = QPushButton("Overlays: ON"); self.btOverlay.clicked.connect(self._toggle_overlays_btn)
+        top = QHBoxLayout()
+        top.setContentsMargins(0, 0, 0, 0)
+        top.setSpacing(8)
+        self.btOverlay = QPushButton("Overlays: ON")
+        self.btOverlay.clicked.connect(self._toggle_overlays_btn)
         top.addWidget(self.btOverlay, 0, Qt.AlignLeft)
         top.addStretch(1)
         from PyQt5.QtWidgets import QToolButton, QMenu, QAction
-        self.btMenu = QToolButton(); self.btMenu.setText("Menu"); self.btMenu.setPopupMode(QToolButton.InstantPopup)
+
+        self.btMenu = QToolButton()
+        self.btMenu.setText("Menu")
+        self.btMenu.setPopupMode(QToolButton.InstantPopup)
         self.mnuRoot = QMenu(self)
         mBD = QMenu("Base de Dados", self.mnuRoot)
-        actUpdate = QAction("Atualizar BD", self); actReload = QAction("Recarregar Dados", self)
-        mBD.addAction(actUpdate); mBD.addAction(actReload); self.mnuRoot.addMenu(mBD)
+        actUpdate = QAction("Atualizar BD", self)
+        actReload = QAction("Recarregar Dados", self)
+        mBD.addAction(actUpdate)
+        mBD.addAction(actReload)
+        self.mnuRoot.addMenu(mBD)
         mTab = QMenu("Tabelas", self.mnuRoot)
         actTipos = QAction("Tipos Artigos", self)
-        actVal   = QAction("Validade", self)
+        actVal = QAction("Validade", self)
         actTemps = QAction("Temperaturas", self)
-        mTab.addAction(actTipos); mTab.addAction(actVal); mTab.addAction(actTemps)
+        mTab.addAction(actTipos)
+        mTab.addAction(actVal)
+        mTab.addAction(actTemps)
         self.mnuRoot.addMenu(mTab)
         mUtil = QMenu("Utilitários", self.mnuRoot)
-        actTheme = QAction("Tema", self); mUtil.addAction(actTheme); self.mnuRoot.addMenu(mUtil)
+        actTheme = QAction("Tema", self)
+        mUtil.addAction(actTheme)
+        self.mnuRoot.addMenu(mUtil)
         self.btMenu.setMenu(self.mnuRoot)
         # ligações básicas
         actReload.triggered.connect(lambda: self._load_record(self.cur_index))
-        actUpdate.triggered.connect(lambda: QMessageBox.information(self, "Atualizar BD", "Integração de importação/atualização será ligada aqui."))
-        actTipos.triggered.connect(lambda: QMessageBox.information(self, "Tipos de Artigos", f"Ativos: {len(self.service.list_tipos_artigos())-1}"))
-        actVal.triggered.connect(lambda: QMessageBox.information(self, "Validade", f"Ativos: {len(self.service.list_validade())-1}"))
-        actTemps.triggered.connect(lambda: QMessageBox.information(self, "Temperaturas", f"Ativos: {len(self.service.list_temperaturas())-1}"))
-        actTheme.triggered.connect(lambda: QMessageBox.information(self, "Tema", "Alternância de tema pendente."))
+        actUpdate.triggered.connect(
+            lambda: QMessageBox.information(
+                self,
+                "Atualizar BD",
+                "Integração de importação/atualização será ligada aqui.",
+            )
+        )
+        actTipos.triggered.connect(
+            lambda: QMessageBox.information(
+                self,
+                "Tipos de Artigos",
+                f"Ativos: {len(self.service.list_tipos_artigos())-1}",
+            )
+        )
+        actVal.triggered.connect(
+            lambda: QMessageBox.information(
+                self, "Validade", f"Ativos: {len(self.service.list_validade())-1}"
+            )
+        )
+        actTemps.triggered.connect(
+            lambda: QMessageBox.information(
+                self,
+                "Temperaturas",
+                f"Ativos: {len(self.service.list_temperaturas())-1}",
+            )
+        )
+        actTheme.triggered.connect(
+            lambda: QMessageBox.information(
+                self, "Tema", "Alternância de tema pendente."
+            )
+        )
         top.addWidget(self.btMenu, 0, Qt.AlignRight)
         root.addLayout(top)
 
         # --- Conteúdo com scroll vertical ---
-        scroll = QScrollArea(self); scroll.setWidgetResizable(True)
+        scroll = QScrollArea(self)
+        scroll.setWidgetResizable(True)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        page = QWidget(); page_ly = QVBoxLayout(page); page_ly.setContentsMargins(0,0,0,0); page_ly.setSpacing(8)
-        scroll.setWidget(page); page.setMinimumWidth(1100)
+        page = QWidget()
+        page_ly = QVBoxLayout(page)
+        page_ly.setContentsMargins(0, 0, 0, 0)
+        page_ly.setSpacing(8)
+        scroll.setWidget(page)
+        page.setMinimumWidth(1100)
         root.addWidget(scroll, 1)
 
         # ---------------- B1 — Dados Gerais (C1) ----------------
         self.C1 = Zone("C1", self, flow="v", level=0, show_overlays=DEV_OVERLAYS)
         page_ly.addWidget(self._section_box("[B1] - Dados Gerais", self.C1), 0)
 
-        C1A, C1B = self.C1.split_h((3,1))
-        C1A1, C1A2 = C1A.split_v((1,3))
+        C1A, C1B = self.C1.split_h((3, 1))
+        C1A1, C1A2 = C1A.split_v((1, 3))
 
         lbl_w = 110
-        self.edCodigo = QLineEdit(); make_readonly_lineedit(self.edCodigo, False)
-        self.edNome   = QLineEdit(); make_readonly_lineedit(self.edNome, True)
+        self.edCodigo = QLineEdit()
+        make_readonly_lineedit(self.edCodigo, False)
+        self.edNome = QLineEdit()
+        make_readonly_lineedit(self.edNome, True)
         C1A1.add_row("Código:", self.edCodigo, label_minw=lbl_w, vspacing=2)
         C1A1.add_row("Nome do Artigo:", self.edNome, label_minw=lbl_w, vspacing=2)
 
         # C1.A.2        # C1.A.2
-        C1A21, C1A22 = C1A2.split_h((3,1))              # C1.A.2.A (famílias/PVPs) + C1.A.2.B (combos)
+        C1A21, C1A22 = C1A2.split_h(
+            (3, 1)
+        )  # C1.A.2.A (famílias/PVPs) + C1.A.2.B (combos)
         # C1.A.2.A → divide verticalmente: topo (famílias) + base (PVP1..PVP5)
-        C1A21_top, C1A21_base = C1A21.split_v((1,2))
+        C1A21_top, C1A21_base = C1A21.split_v((1, 2))
         C1A21_top.apply_overlays(True)
-        self.lbFamiliaVal = QLabel(""); self.lbSubFamiliaVal = QLabel("")
-        match_font(self.lbFamiliaVal, self.edNome); match_font(self.lbSubFamiliaVal, self.edNome)
+        self.lbFamiliaVal = QLabel("")
+        self.lbSubFamiliaVal = QLabel("")
+        match_font(self.lbFamiliaVal, self.edNome)
+        match_font(self.lbSubFamiliaVal, self.edNome)
         C1A21_top.add_row("Família:", self.lbFamiliaVal, label_minw=lbl_w, vspacing=0)
-        C1A21_top.add_row("Sub-família:", self.lbSubFamiliaVal, label_minw=lbl_w, vspacing=0)
+        C1A21_top.add_row(
+            "Sub-família:", self.lbSubFamiliaVal, label_minw=lbl_w, vspacing=0
+        )
 
         # Base: cinco colunas iguais com PVP1..PVP5 (etiqueta por cima)
-        P1, P2 = C1A21_base.split_h((1,1))
-        P11, P12 = P1.split_h((1,1))
-        P111, P112 = P11.split_h((1,1))
+        P1, P2 = C1A21_base.split_h((1, 1))
+        P11, P12 = P1.split_h((1, 1))
+        P111, P112 = P11.split_h((1, 1))
         # Agora temos 5 zonas: P111, P112, P12.A, P12.B, (criar quinta)
         # Para simplicidade, recriamos com um loop que adiciona 5 colunas iguais
         C1A21_base.ly.takeAt(0)
         C1A21_base.ly.takeAt(0)
         # Reconstruir base em 5 colunas iguais
-        base_cont = QWidget(C1A21_base); base_h = QHBoxLayout(base_cont); base_h.setContentsMargins(0,0,0,0); base_h.setSpacing(C1A21_base.ly.spacing())
+        base_cont = QWidget(C1A21_base)
+        base_h = QHBoxLayout(base_cont)
+        base_h.setContentsMargins(0, 0, 0, 0)
+        base_h.setSpacing(C1A21_base.ly.spacing())
         C1A21_base.ly.addWidget(base_cont, 1)
         self.lbPVP = []
         for i in range(5):
-            col = Zone(f"C1.A.2.A.P{i+1}", base_cont, flow='v', margins=2, spacing=2, level=C1A21_base._level+1, show_overlays=DEV_OVERLAYS)
+            col = Zone(
+                f"C1.A.2.A.P{i+1}",
+                base_cont,
+                flow="v",
+                margins=2,
+                spacing=2,
+                level=C1A21_base._level + 1,
+                show_overlays=DEV_OVERLAYS,
+            )
             lbl = QLabel(f"PVP{i+1}")
-            val = QLabel("—"); make_readonly_lineedit(QLineEdit(), False)  # just to get style, we'll style label
+            val = QLabel("—")
+            make_readonly_lineedit(
+                QLineEdit(), False
+            )  # just to get style, we'll style label
             val.setStyleSheet("border:none; background:transparent; font-weight:600;")
-            col.add(lbl, 0); col.add(val, 0)
+            col.add(lbl, 0)
+            col.add(val, 0)
             self.lbPVP.append(val)
             base_h.addWidget(col, 1)
 
         # Combos diretamente em C1.A.2.B (sem .B.2)
         w_tipos, self.cbTipos = stack_combo("Tipos Artigos")
-        w_val,   self.cbValidade = stack_combo("Validade")
-        w_temp,  self.cbTemp = stack_combo("Temperaturas")
-        C1A22.add(w_tipos); C1A22.add(w_val); C1A22.add(w_temp)
+        w_val, self.cbValidade = stack_combo("Validade")
+        w_temp, self.cbTemp = stack_combo("Temperaturas")
+        C1A22.add(w_tipos)
+        C1A22.add(w_val)
+        C1A22.add(w_temp)
 
         # C1.B — placeholder de preview
-        prev = QLabel("Pré-visualização"); prev.setAlignment(Qt.AlignCenter)
+        prev = QLabel("Pré-visualização")
+        prev.setAlignment(Qt.AlignCenter)
         prev.setStyleSheet("border:1px solid #ccc; padding:8px;")
         C1B.add(prev, 1)
 
@@ -303,7 +482,9 @@ class FTApp(QWidget):
         page_ly.addWidget(self._section_box("[B2] - Ingredientes", self.C2), 0)
 
         self.tbIng = QTableWidget(0, 6, self)
-        self.tbIng.setHorizontalHeaderLabels(["Ingrediente","QTD","U.M.","PPU","Total","Código"])
+        self.tbIng.setHorizontalHeaderLabels(
+            ["Ingrediente", "QTD", "U.M.", "PPU", "Total", "Código"]
+        )
         self.tbIng.verticalHeader().setVisible(False)
         self.tbIng.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.C2.add(self.tbIng, 1)
@@ -315,12 +496,16 @@ class FTApp(QWidget):
 
         C3A = Zone("C3.A", self.C3, flow="v", level=1, show_overlays=DEV_OVERLAYS)
         self.C3.add(C3A, 1)
-        C3AA, C3AB = C3A.split_h((1,1))
+        C3AA, C3AB = C3A.split_h((1, 1))
 
         # C3 swap aplicado: C3.A.A = Custo Total | C3.A.B = "Food Cost:"
-        ct_row = QWidget(); ct_ly = QVBoxLayout(ct_row); ct_ly.setContentsMargins(0,0,0,0); ct_ly.setSpacing(4)
+        ct_row = QWidget()
+        ct_ly = QVBoxLayout(ct_row)
+        ct_ly.setContentsMargins(0, 0, 0, 0)
+        ct_ly.setSpacing(4)
         ct_ly.addWidget(QLabel("Custo Total:"))
-        self.edCustoTotal = QLineEdit(); make_readonly_lineedit(self.edCustoTotal, True)
+        self.edCustoTotal = QLineEdit()
+        make_readonly_lineedit(self.edCustoTotal, True)
         ct_ly.addWidget(self.edCustoTotal)
         C3AA.add(ct_row, 0)
 
@@ -331,13 +516,19 @@ class FTApp(QWidget):
         page_ly.addWidget(self._section_box("[B4] - Preparação", self.C4), 1)
 
         # Simples toolbar "demo" e editor
-        tb = QHBoxLayout(); tb.setContentsMargins(0,0,0,0); tb.setSpacing(6)
-        for txt in ["↥","↶","B","I","U","→","⇔","≡","1.","•"]:
-            b=QPushButton(txt); b.setFixedSize(28,22); tb.addWidget(b)
-        tbw = QWidget(); tbw.setLayout(tb)
+        tb = QHBoxLayout()
+        tb.setContentsMargins(0, 0, 0, 0)
+        tb.setSpacing(6)
+        for txt in ["↥", "↶", "B", "I", "U", "→", "⇔", "≡", "1.", "•"]:
+            b = QPushButton(txt)
+            b.setFixedSize(28, 22)
+            tb.addWidget(b)
+        tbw = QWidget()
+        tbw.setLayout(tb)
         self.C4.add(tbw, 0)
 
-        self.edPrep = QTextEdit(); self.edPrep.setPlaceholderText("— Texto de preparação —")
+        self.edPrep = QTextEdit()
+        self.edPrep.setPlaceholderText("— Texto de preparação —")
         self.C4.add(self.edPrep, 1)
 
         # ---------------- B5 — Nutrição / Alergénios (C5) ----------------
@@ -347,16 +538,20 @@ class FTApp(QWidget):
         self._build_allergens_grid()
 
         # --- Rodapé: navegação centrada + contador ---
-        footer = QHBoxLayout(); footer.setContentsMargins(0,0,0,0); footer.setSpacing(8)
+        footer = QHBoxLayout()
+        footer.setContentsMargins(0, 0, 0, 0)
+        footer.setSpacing(8)
         footer.addStretch(1)
         self.btFirst = QPushButton("◀◀ Primeiro")
-        self.btPrev  = QPushButton("◀ Anterior")
-        self.lbPos   = QLabel("1 / 1")
-        self.btNext  = QPushButton("Seguinte ▶")
-        self.btLast  = QPushButton("Último ▶▶")
-        footer.addWidget(self.btFirst); footer.addWidget(self.btPrev)
+        self.btPrev = QPushButton("◀ Anterior")
+        self.lbPos = QLabel("1 / 1")
+        self.btNext = QPushButton("Seguinte ▶")
+        self.btLast = QPushButton("Último ▶▶")
+        footer.addWidget(self.btFirst)
+        footer.addWidget(self.btPrev)
         footer.addWidget(self.lbPos)
-        footer.addWidget(self.btNext); footer.addWidget(self.btLast)
+        footer.addWidget(self.btNext)
+        footer.addWidget(self.btLast)
         footer.addStretch(1)
         root.addLayout(footer)
 
@@ -367,10 +562,14 @@ class FTApp(QWidget):
     def _build_allergens_grid(self):
         names = self.service.list_active_allergens()
         gridw = QWidget()
-        grid = QGridLayout(gridw); grid.setContentsMargins(0,0,0,0); grid.setHorizontalSpacing(12); grid.setVerticalSpacing(6)
+        grid = QGridLayout(gridw)
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setHorizontalSpacing(12)
+        grid.setVerticalSpacing(6)
         cols = 2
-        for i,(aid, nome) in enumerate(names):
-            r = i//cols; c = i%cols
+        for i, (aid, nome) in enumerate(names):
+            r = i // cols
+            c = i % cols
             cb = QCheckBox(nome)
             grid.addWidget(cb, r, c, alignment=Qt.AlignLeft)
         self.C5.add(gridw, 0)
@@ -379,11 +578,11 @@ class FTApp(QWidget):
     def _setup_ing_columns(self):
         w = max(self.width(), 1100)
         self.tbIng.setColumnHidden(5, True)
-        self.tbIng.setColumnWidth(0, int(w*0.50))
-        self.tbIng.setColumnWidth(1, int(w*0.10))
-        self.tbIng.setColumnWidth(2, int(w*0.10))
-        self.tbIng.setColumnWidth(3, int(w*0.14))
-        self.tbIng.setColumnWidth(4, int(w*0.16))
+        self.tbIng.setColumnWidth(0, int(w * 0.50))
+        self.tbIng.setColumnWidth(1, int(w * 0.10))
+        self.tbIng.setColumnWidth(2, int(w * 0.10))
+        self.tbIng.setColumnWidth(3, int(w * 0.14))
+        self.tbIng.setColumnWidth(4, int(w * 0.16))
 
     def _apply_ingredient_widths(self):
         self._setup_ing_columns()
@@ -393,10 +592,10 @@ class FTApp(QWidget):
         self.btFirst.clicked.connect(lambda: self._goto(0))
         self.btPrev.clicked.connect(lambda: self._go(-1))
         self.btNext.clicked.connect(lambda: self._go(+1))
-        self.btLast.clicked.connect(lambda: self._goto(self.service.total()-1))
+        self.btLast.clicked.connect(lambda: self._goto(self.service.total() - 1))
 
     def _goto(self, idx):
-        self.cur_index = max(0, min(idx, self.service.total()-1))
+        self.cur_index = max(0, min(idx, self.service.total() - 1))
         self._load_record(self.cur_index)
 
     def _go(self, delta):
@@ -415,13 +614,29 @@ class FTApp(QWidget):
         self.lbSubFamiliaVal.setText(product.subfamilia or "")
 
         pvps = product.pvps
-        values = [pvps.get("pvp1"), pvps.get("pvp2"), pvps.get("pvp3"), pvps.get("pvp4"), pvps.get("pvp5")]
+        values = [
+            pvps.get("pvp1"),
+            pvps.get("pvp2"),
+            pvps.get("pvp3"),
+            pvps.get("pvp4"),
+            pvps.get("pvp5"),
+        ]
         for i, val in enumerate(values):
-            txt = "—" if val in (None, "",) else f"{float(val):.2f}"
+            txt = (
+                "—"
+                if val
+                in (
+                    None,
+                    "",
+                )
+                else f"{float(val):.2f}"
+            )
             if i < len(self.lbPVP):
                 self.lbPVP[i].setText(txt)
 
-        self.cbTipos.clear(); self.cbValidade.clear(); self.cbTemp.clear()
+        self.cbTipos.clear()
+        self.cbValidade.clear()
+        self.cbTemp.clear()
         self.cbTipos.addItems([])
         self.cbTipos.clear()
         for cod, desc in self.service.list_tipos_artigos():
@@ -449,11 +664,12 @@ class FTApp(QWidget):
 
         self.tbIng.setRowCount(0)
         for ing in product.ingredients:
-            r = self.tbIng.rowCount(); self.tbIng.insertRow(r)
-            vals = [
-            ]
+            r = self.tbIng.rowCount()
+            self.tbIng.insertRow(r)
+            vals = []
             for c, val in enumerate(vals):
-                it = QTableWidgetItem(val); it.setFlags(Qt.ItemIsSelectable|Qt.ItemIsEnabled)
+                it = QTableWidgetItem(val)
+                it.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                 self.tbIng.setItem(r, c, it)
 
         self._apply_ingredient_widths()
@@ -462,12 +678,13 @@ class FTApp(QWidget):
 
         # --- Auxiliares: fetch/populate/load (canon) ---
         try:
-            _t,_v,_p = self._aux_fetch_lists()
-            self._aux_populate_cbs(_t,_v,_p)
+            _t, _v, _p = self._aux_fetch_lists()
+            self._aux_populate_cbs(_t, _v, _p)
             self._aux_load_selected(codigo)
             self._aux_wire_autosave()
         except Exception as e:
             logger.error("[AuxCanon][ERRO] %s", e)
+
     # ---------- Cálculos ----------
     def _update_costs_from_table(self):
         """Recalculate total cost using the service layer."""
@@ -475,6 +692,7 @@ class FTApp(QWidget):
             self.edCustoTotal.setText(f"{total:.2f}")
         except Exception:
             pass
+
     # ---------- Eventos ----------
     def resizeEvent(self, ev):
         super().resizeEvent(ev)
@@ -484,12 +702,13 @@ class FTApp(QWidget):
         global DEV_OVERLAYS
         DEV_OVERLAYS = not DEV_OVERLAYS
         for z in self.findChildren(Zone):
-            if z.tag.count('.') == 0:
+            if z.tag.count(".") == 0:
                 z.apply_overlays(DEV_OVERLAYS)
 
     def _toggle_overlays_btn(self):
         self._toggle_overlays()
         self.btOverlay.setText(f"Overlays: {'ON' if DEV_OVERLAYS else 'OFF'}")
+
     # ================== AUXILIARES — CANÓNICO (v2) ==================
     def _aux_fetch_lists(self):
         def _aux_fetch_lists(self):
@@ -510,8 +729,12 @@ class FTApp(QWidget):
             def resolve_table(candidates):
                 for t in candidates:
                     try:
-                        cur.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name=?",(t,))
-                        if cur.fetchone(): return t
+                        cur.execute(
+                            f"SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                            (t,),
+                        )
+                        if cur.fetchone():
+                            return t
                     except Exception:
                         pass
                 return None
@@ -526,25 +749,31 @@ class FTApp(QWidget):
                 names = [r[1].lower() for r in rows]
                 # PK candidates
                 id_col = None
-                for cand in ("id","cod","codigo"):
+                for cand in ("id", "cod", "codigo"):
                     if cand in names:
-                        id_col = cand; break
+                        id_col = cand
+                        break
                 if id_col is None:
                     # tenta PK pelo flag
                     for r in rows:
-                        if r[5]: id_col = r[1]; break
+                        if r[5]:
+                            id_col = r[1]
+                            break
                 # Nome candidates
                 name_col = None
-                for cand in ("descricao","nome","designacao"):
+                for cand in ("descricao", "nome", "designacao"):
                     if cand in names:
-                        name_col = cand; break
+                        name_col = cand
+                        break
                 return (id_col, name_col)
 
             def fetch_generic(kind, table_candidates):
                 tbl = resolve_table(table_candidates)
-                if not tbl: return []
+                if not tbl:
+                    return []
                 id_col, name_col = pick_cols(tbl)
-                if not id_col or not name_col: return []
+                if not id_col or not name_col:
+                    return []
                 sql = f"SELECT {id_col}, {name_col} FROM {tbl} WHERE COALESCE(ativo,1)=1 ORDER BY {name_col}"
                 try:
                     cur.execute(sql)
@@ -555,8 +784,10 @@ class FTApp(QWidget):
                             rid = int(r[0])
                         except Exception:
                             # aceita também chave texto
-                            try: rid = int(str(r[0]).strip())
-                            except Exception: continue
+                            try:
+                                rid = int(str(r[0]).strip())
+                            except Exception:
+                                continue
                         nm = str(r[1]).strip()
                         if nm:
                             out.append((rid, nm))
@@ -565,10 +796,9 @@ class FTApp(QWidget):
                     return []
 
             out["tipo_artigo"] = fetch_generic("tipo_artigo", ("tipos_artigos",))
-            out["validade"]    = fetch_generic("validade", ("validade","validades"))
+            out["validade"] = fetch_generic("validade", ("validade", "validades"))
             out["temperatura"] = fetch_generic("temperatura", ("temperaturas",))
             return out
-
 
     def _aux_find_cbs(self):
         """Tenta encontrar os 3 comboboxes. Usa objectName e heurística."""
@@ -581,13 +811,15 @@ class FTApp(QWidget):
                 QComboBox = None
 
         cb_tipo = getattr(self, "cbTipoArtigo", None)
-        cb_val  = getattr(self, "cbValidade", None)
+        cb_val = getattr(self, "cbValidade", None)
         cb_temp = getattr(self, "cbTemp", None)
 
         if QComboBox is not None:
+
             def has_any(t, keys):
                 s = (t or "").lower()
                 return any(k in s for k in keys)
+
             if not (cb_tipo and cb_val and cb_temp):
                 for cb in self.findChildren(QComboBox):
                     name = cb.objectName() or ""
@@ -604,7 +836,7 @@ class FTApp(QWidget):
             """Limpa e repovoa as comboboxes exclusivamente com o que vem da BD."""
             # tenta descobrir widgets já criados
             cb_tipo = getattr(self, "cbTipoArtigo", None)
-            cb_val  = getattr(self, "cbValidade", None)
+            cb_val = getattr(self, "cbValidade", None)
             cb_temp = getattr(self, "cbTemp", None)
 
             try:
@@ -614,7 +846,8 @@ class FTApp(QWidget):
 
             def ensure(cb_attr, hint_names):
                 cb = getattr(self, cb_attr, None)
-                if cb: return cb
+                if cb:
+                    return cb
                 # tenta por objectName heurístico
                 for w in self.findChildren(QComboBox):
                     nm = (w.objectName() or "").lower()
@@ -623,30 +856,32 @@ class FTApp(QWidget):
                         return w
                 return None
 
-            cb_tipo = ensure("cbTipoArtigo", ("tipo","art"))
-            cb_val  = ensure("cbValidade", ("valid",))
+            cb_tipo = ensure("cbTipoArtigo", ("tipo", "art"))
+            cb_val = ensure("cbValidade", ("valid",))
             cb_temp = ensure("cbTemp", ("temp",))
 
             def fill(cb, items):
-                if not cb: return
+                if not cb:
+                    return
                 cb.blockSignals(True)
                 cb.clear()
                 cb.addItem("—", None)
                 seen = set()
                 for rid, nm in items:
                     key = (rid, nm)
-                    if key in seen: continue
+                    if key in seen:
+                        continue
                     seen.add(key)
                     cb.addItem(nm, rid)
                 cb.blockSignals(False)
 
             fill(cb_tipo, lists.get("tipo_artigo", []))
-            fill(cb_val,  lists.get("validade", []))
+            fill(cb_val, lists.get("validade", []))
             fill(cb_temp, lists.get("temperatura", []))
 
-
         def fill(cb, items):
-            if cb is None: return
+            if cb is None:
+                return
             try:
                 cb.blockSignals(True)
             except Exception:
@@ -675,13 +910,23 @@ class FTApp(QWidget):
         sel = {"tipo_artigo": None, "validade": None, "temperatura": None}
         try:
             cur = self.service.conn.cursor()
-            cur.execute("SELECT tipo_artigo_id, validade_id, temperatura_id FROM produto_auxiliar WHERE produto_codigo=?", (codigo,))
+            cur.execute(
+                "SELECT tipo_artigo_id, validade_id, temperatura_id FROM produto_auxiliar WHERE produto_codigo=?",
+                (codigo,),
+            )
             row = cur.fetchone()
             if row:
-                sel["tipo_artigo"], sel["validade"], sel["temperatura"] = row[0], row[1], row[2]
+                sel["tipo_artigo"], sel["validade"], sel["temperatura"] = (
+                    row[0],
+                    row[1],
+                    row[2],
+                )
             else:
-                cur.execute("SELECT attr, value FROM produto_attrs WHERE produto_codigo=? AND attr IN ('tipo_artigo','validade','temperatura')", (codigo,))
-                for a,v in cur.fetchall():
+                cur.execute(
+                    "SELECT attr, value FROM produto_attrs WHERE produto_codigo=? AND attr IN ('tipo_artigo','validade','temperatura')",
+                    (codigo,),
+                )
+                for a, v in cur.fetchall():
                     try:
                         sel[a] = int(v)
                     except Exception:
@@ -690,7 +935,8 @@ class FTApp(QWidget):
             logger.warning("[AuxUI][AVISO] a ler seleção: %s", e)
 
         def set_by_data(cb, wanted_id):
-            if cb is None: return
+            if cb is None:
+                return
             try:
                 cb.blockSignals(True)
             except Exception:
@@ -715,7 +961,7 @@ class FTApp(QWidget):
                     pass
 
         set_by_data(cb_tipo, sel["tipo_artigo"])
-        set_by_data(cb_val,  sel["validade"])
+        set_by_data(cb_val, sel["validade"])
         set_by_data(cb_temp, sel["temperatura"])
 
     def _aux_wire_autosave(self):
@@ -742,28 +988,36 @@ class FTApp(QWidget):
                 tid = getattr(self, "cbTipoArtigo", None)
                 vid = getattr(self, "cbValidade", None)
                 pid = getattr(self, "cbTemp", None)
+
                 def as_id(cb):
-                    if not cb: return None
+                    if not cb:
+                        return None
                     d = cb.currentData()
                     return int(d) if isinstance(d, int) else None
-                T = as_id(tid); V = as_id(vid); P = as_id(pid)
+
+                T = as_id(tid)
+                V = as_id(vid)
+                P = as_id(pid)
                 try:
                     cur = conn.cursor()
-                    cur.execute("""
+                    cur.execute(
+                        """
                         INSERT INTO produto_auxiliar (produto_codigo, tipo_artigo_id, validade_id, temperatura_id)
                         VALUES (?,?,?,?)
                         ON CONFLICT(produto_codigo) DO UPDATE SET
                           tipo_artigo_id=COALESCE(excluded.tipo_artigo_id, tipo_artigo_id),
                           validade_id   =COALESCE(excluded.validade_id   , validade_id),
                           temperatura_id=COALESCE(excluded.temperatura_id, temperatura_id)
-                    """, (codigo, T, V, P))
+                    """,
+                        (codigo, T, V, P),
+                    )
                     conn.commit()
                     # opcional: feedback debug
                     # print(f"[AUX][SAVE] {codigo} -> tipo={T} valid={V} temp={P}")
                 except Exception:
                     conn.rollback()
 
-            for cbname in ("cbTipoArtigo","cbValidade","cbTemp"):
+            for cbname in ("cbTipoArtigo", "cbValidade", "cbTemp"):
                 cb = getattr(self, cbname, None)
                 if cb:
                     try:
@@ -771,9 +1025,10 @@ class FTApp(QWidget):
                     except Exception:
                         pass
 
-
         def saver(kind, cb):
-            if cb is None: return
+            if cb is None:
+                return
+
             def handler(*_):
                 if getattr(self, "_loading", False):
                     return
@@ -793,25 +1048,39 @@ class FTApp(QWidget):
                 if not codigo:
                     return
                 # grava
-                col = {"tipo_artigo":"tipo_artigo_id","validade":"validade_id","temperatura":"temperatura_id"}[kind]
+                col = {
+                    "tipo_artigo": "tipo_artigo_id",
+                    "validade": "validade_id",
+                    "temperatura": "temperatura_id",
+                }[kind]
                 try:
                     cur = self.service.conn.cursor()
                     if value is None:
-                        cur.execute("INSERT INTO produto_auxiliar (produto_codigo) VALUES (?) ON CONFLICT(produto_codigo) DO NOTHING", (codigo,))
-                        cur.execute(f"UPDATE produto_auxiliar SET {col}=NULL WHERE produto_codigo=?", (codigo,))
+                        cur.execute(
+                            "INSERT INTO produto_auxiliar (produto_codigo) VALUES (?) ON CONFLICT(produto_codigo) DO NOTHING",
+                            (codigo,),
+                        )
+                        cur.execute(
+                            f"UPDATE produto_auxiliar SET {col}=NULL WHERE produto_codigo=?",
+                            (codigo,),
+                        )
                     else:
-                        cur.execute(f"""
+                        cur.execute(
+                            f"""
                             INSERT INTO produto_auxiliar (produto_codigo, {col})
                             VALUES (?, ?)
                             ON CONFLICT(produto_codigo) DO UPDATE SET {col}=excluded.{col}
-                        """, (codigo, int(value)))
+                        """,
+                            (codigo, int(value)),
+                        )
                     self.service.conn.commit()
                 except Exception as e:
                     logger.error("[AuxUI][ERRO] gravar %s p/%s: %s", kind, codigo, e)
+
             cb.currentIndexChanged.connect(handler)
 
         saver("tipo_artigo", cb_tipo)
-        saver("validade",    cb_val)
+        saver("validade", cb_val)
         saver("temperatura", cb_temp)
         logger.info("[AuxUI] autosave ligado.")
 
@@ -823,7 +1092,8 @@ class FTApp(QWidget):
         if not callable(orig):
             logger.warning("[AuxUI][AVISO] _load_record ausente.")
             return
-        def wrapped(idx:int):
+
+        def wrapped(idx: int):
             self._loading = True
             try:
                 self._aux_populate_cbs()
@@ -837,13 +1107,16 @@ class FTApp(QWidget):
                 return res
             finally:
                 self._loading = False
+
         setattr(self, "_load_record", wrapped)
         self._aux_guard_wrapped = True
         logger.info("[AuxUI] _load_record protegido e pipeline de auxiliares ativado.")
+
     # ================== /AUXILIARES — CANÓNICO (v2) ==================
 
 
 # ------------------------ Main ------------------------
+
 
 def main():
     app = QApplication(sys.argv)

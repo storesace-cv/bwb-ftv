@@ -19,6 +19,7 @@ from ftv.ui.ui_editor_fonte import FTApp
 logger = logging.getLogger(__name__)
 # --- UI principal ---
 
+
 def _apply_global_theme(app):
     try:
         f = QFont()
