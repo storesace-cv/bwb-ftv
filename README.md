@@ -17,13 +17,13 @@ export FTV_DB_PATH=/caminho/para/custom.db
 
 ## Importação de dados
 
-Os ficheiros Excel usados para carregar dados têm nomes fixos e **sensíveis a acentuação**. Certifique-se de que os seguintes ficheiros estão presentes com estes nomes exatos:
+Para importar ou atualizar dados coloque os três ficheiros Excel dentro do diretório `imports/` na raiz do projeto. Os nomes são fixos e **sensíveis a acentuação**:
 
 - `FichasTecnicas_base.xlsx`
 - `PreçosTaxas_base.xlsx`
 - `Produtos_Base.xlsx`
 
-Qualquer alteração, incluindo remoção de acentos ou uso de maiúsculas diferentes, impedirá a importação.
+No início da operação os ficheiros são validados: se algum estiver em falta ou não tiver extensão `.xlsx`, a importação é interrompida com erro. Após processamento com sucesso, cada ficheiro é movido para `imports/history` com um carimbo temporal (`YYYYMMDDHHMMSS`) anexado ao nome, permitindo manter um histórico de cargas.
 
 Ao importar `FichasTecnicas_base.xlsx` a coluna de custo pode surgir como
 `custo` ou `total`; ambas são automaticamente mapeadas para o campo `total`
