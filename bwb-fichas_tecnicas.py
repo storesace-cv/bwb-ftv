@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QFont
 
 from ftv.data.datastore import DataStore
+from ftv.services.products import ProductService
 from ftv.utils.autosave import wire_autosave_aux
 from ftv.ui.ui_editor_fonte import FTApp
 # --- UI principal ---
@@ -38,11 +39,12 @@ def main():
     # DataStore
     ds = DataStore()
     print(f"[LAUNCHER] DataStore importado de: {DataStore.__module__}")
+    svc = ProductService(ds)
 
     # Janela
     wire_autosave_aux(FTApp, ds)
 
-    win = FTApp(ds=ds)
+    win = FTApp(svc)
     win.show()
 
     # Loop
