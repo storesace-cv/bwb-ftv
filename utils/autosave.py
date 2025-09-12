@@ -28,7 +28,7 @@ def _ensure_produto_attrs_schema(ds):
         ds.conn.commit()
         logger.info("[AutosaveAux] esquema OK (produto_attrs).")
     except sqlite3.Error as exc:
-        logger.error("[AutosaveAux][ERRO] schema: %s", exc)
+        logger.error("[AutosaveAux][ERRO] schema: %s", exc, exc_info=True)
         raise
 
 
@@ -45,7 +45,7 @@ def _read_attrs(ds, codigo):
         if row:
             out["tipo_artigo"], out["validade"], out["temperatura"] = row
     except sqlite3.Error as exc:
-        logger.error("[AutosaveAux][ERRO] read %s: %s", codigo, exc)
+        logger.error("[AutosaveAux][ERRO] read %s: %s", codigo, exc, exc_info=True)
     return out
 
 
@@ -79,7 +79,13 @@ def _write_attr(ds, codigo, campo, valor):
         ds.conn.commit()
         logger.info("[AutosaveAux] gravado %s=%s para %s", campo, valor, codigo)
     except sqlite3.Error as exc:
-        logger.error("[AutosaveAux][ERRO] write %s/%s: %s", campo, codigo, exc)
+        logger.error(
+            "[AutosaveAux][ERRO] write %s/%s: %s",
+            campo,
+            codigo,
+            exc,
+            exc_info=True,
+        )
 
 
 def _find_combo_candidates(win):
@@ -158,7 +164,9 @@ def wire_autosave_aux(FTApp_cls, ds):
                     combo.setCurrentIndex(i)
                     return
         except RuntimeError as exc:
-            logger.error("[AutosaveAux][ERRO] _set_combo_by_data: %s", exc)
+            logger.error(
+                "[AutosaveAux][ERRO] _set_combo_by_data: %s", exc, exc_info=True
+            )
 
     def _get_current_data(combo):
         if combo is None:
@@ -211,7 +219,9 @@ def wire_autosave_aux(FTApp_cls, ds):
                 combo.currentIndexChanged.connect(on_change)
                 setattr(combo, flag, True)
             except RuntimeError as exc:
-                logger.error("[AutosaveAux][ERRO] ligar '%s': %s", campo, exc)
+                logger.error(
+                    "[AutosaveAux][ERRO] ligar '%s': %s", campo, exc, exc_info=True
+                )
 
         ensure_connected(cb_tipos, "tipo_artigo")
         ensure_connected(cb_val, "validade")

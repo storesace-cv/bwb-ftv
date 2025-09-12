@@ -15,6 +15,15 @@ Para alterar o local da base de dados defina a variável de ambiente
 export FTV_DB_PATH=/caminho/para/custom.db
 ```
 
+## Modo de depuração
+
+Para ativar logs detalhados, defina a variável de ambiente `debug` como `0` ao
+iniciar a aplicação:
+
+```bash
+debug=0 python bwb-fichas_tecnicas.py
+```
+
 ## Importação de dados
 
 Para importar ou atualizar dados coloque os três ficheiros Excel dentro do diretório `imports/` na raiz do projeto. Os nomes são fixos e **sensíveis a acentuação**:
