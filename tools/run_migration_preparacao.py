@@ -3,7 +3,8 @@
 
 """
 Fase 3 — Executar migração de preparação (produto_preparacao)
-Uso: python3 tools/run_migration_preparacao.py (pode ser executado a partir de qualquer diretório)
+Uso: python3 tools/run_migration_preparacao.py
+(pode ser executado a partir de qualquer diretório)
 
 - Procura a BD em <root>/databases/ftv.db
 - Procura o SQL em <root>/data/migrations/preparacao.sql
@@ -23,7 +24,7 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-from utils.paths import get_project_root
+from utils.paths import get_project_root  # noqa: E402
 
 base = get_project_root()
 DB_PATH = base / "databases" / "ftv.db"
