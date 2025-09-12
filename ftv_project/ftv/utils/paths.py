@@ -1,4 +1,5 @@
 """Utility helpers for working with project paths."""
+
 from pathlib import Path
 
 

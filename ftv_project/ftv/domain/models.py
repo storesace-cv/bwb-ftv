@@ -29,4 +29,3 @@ class Product:
     temperatura_cod: int | None = None
     pvps: dict = field(default_factory=dict)
     ingredients: List[Ingredient] = field(default_factory=list)
-

@@ -6,6 +6,8 @@ import logging
 
 
 logger = logging.getLogger(__name__)
+
+
 def _ensure_produto_attrs_schema(ds):
     try:
         if getattr(ds, "conn", None) is None:
@@ -55,11 +57,20 @@ def _write_attr(ds, codigo, campo, valor):
             (codigo,),
         )
         if campo == "tipo_artigo":
-            cur.execute("UPDATE produto_attrs SET tipo_artigo=? WHERE produto_codigo=?", (valor, codigo))
+            cur.execute(
+                "UPDATE produto_attrs SET tipo_artigo=? WHERE produto_codigo=?",
+                (valor, codigo),
+            )
         elif campo == "validade":
-            cur.execute("UPDATE produto_attrs SET validade=? WHERE produto_codigo=?", (valor, codigo))
+            cur.execute(
+                "UPDATE produto_attrs SET validade=? WHERE produto_codigo=?",
+                (valor, codigo),
+            )
         elif campo == "temperatura":
-            cur.execute("UPDATE produto_attrs SET temperatura=? WHERE produto_codigo=?", (valor, codigo))
+            cur.execute(
+                "UPDATE produto_attrs SET temperatura=? WHERE produto_codigo=?",
+                (valor, codigo),
+            )
         ds.conn.commit()
         logger.info("[AutosaveAux] gravado %s=%s para %s", campo, valor, codigo)
     except Exception as e:
@@ -96,7 +107,9 @@ def _find_combo_candidates(win):
             return
         for w in win.findChildren(QComboBox):
             try:
-                text_join = " | ".join([w.itemText(i) for i in range(min(w.count(), 8))]).lower()
+                text_join = " | ".join(
+                    [w.itemText(i) for i in range(min(w.count(), 8))]
+                ).lower()
                 if all(c in text_join for c in clue_words):
                     out[key] = w
                     return
@@ -113,7 +126,9 @@ def _find_combo_candidates(win):
 def wire_autosave_aux(FTApp_cls, ds):
     """Envolve ``FTApp._load_record`` para ler/gravar atributos auxiliares automaticamente."""
     if not hasattr(FTApp_cls, "_load_record"):
-        logger.warning("[AutosaveAux][AVISO] FTApp não tem _load_record — nada a fazer.")
+        logger.warning(
+            "[AutosaveAux][AVISO] FTApp não tem _load_record — nada a fazer."
+        )
         return
 
     _ensure_produto_attrs_schema(ds)
@@ -205,4 +220,3 @@ def wire_autosave_aux(FTApp_cls, ds):
 
     FTApp_cls._load_record = _wrap
     logger.info("[AutosaveAux] _load_record envolvido com auto-save.")
-

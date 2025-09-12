@@ -9,6 +9,8 @@ base = get_project_root()
 
 
 logger = logging.getLogger(__name__)
+
+
 class DataStore:
     """
     DataStore mínimo (reconstruído e compatível com UI):
@@ -19,13 +21,14 @@ class DataStore:
     - Delegações para UI (info produto, PVPs, ingredientes, listas auxiliares, preparação, alergénios)
     """
 
-    def __init__(self, db_path=None, demo: bool=False):
+    def __init__(self, db_path=None, demo: bool = False):
         import sqlite3
+
         self.demo = bool(demo)
 
         # Caminho default: raiz do projeto /databases/ftv.db
         if db_path is None:
-            db_path = str(base / 'databases' / 'ftv.db')
+            db_path = str(base / "databases" / "ftv.db")
 
         self.conn = None
         if not self.demo:
@@ -33,7 +36,9 @@ class DataStore:
                 self.conn = sqlite3.connect(db_path)
                 self.conn.row_factory = sqlite3.Row
             except Exception as e:
-                logger.warning("[DataStore][AVISO] Falha a ligar à BD '%s': %s", db_path, e)
+                logger.warning(
+                    "[DataStore][AVISO] Falha a ligar à BD '%s': %s", db_path, e
+                )
                 self.conn = None
 
         # Repositórios
@@ -42,7 +47,13 @@ class DataStore:
         self.aux = None
         self.prep = None
         try:
-            from .repositories import ProdutosRepo, IngredientesRepo, AuxiliaresRepo, PreparacaoRepo
+            from .repositories import (
+                ProdutosRepo,
+                IngredientesRepo,
+                AuxiliaresRepo,
+                PreparacaoRepo,
+            )
+
             if self.conn:
                 self.produtos = ProdutosRepo(self.conn)
                 self.ingredientes = IngredientesRepo(self.conn)
@@ -79,7 +90,9 @@ class DataStore:
                     cur.execute("SELECT DISTINCT codigo FROM produtos ORDER BY codigo")
                     ids = [r[0] for r in cur.fetchall()]
                 except Exception:
-                    cur.execute("SELECT DISTINCT produto_codigo FROM fichas_tecnicas ORDER BY produto_codigo")
+                    cur.execute(
+                        "SELECT DISTINCT produto_codigo FROM fichas_tecnicas ORDER BY produto_codigo"
+                    )
                     ids = [r[0] for r in cur.fetchall()]
             except Exception:
                 ids = []
@@ -90,59 +103,96 @@ class DataStore:
         return len(self._ids)
 
     def codigo_at(self, idx: int):
-        if idx is None: return None
-        if idx < 0 or idx >= len(self._ids): return None
+        if idx is None:
+            return None
+        if idx < 0 or idx >= len(self._ids):
+            return None
         return self._ids[idx]
 
     # ----------------------------
     # Delegações principais
     # ----------------------------
     def get_produto_info(self, codigo: str):
-        if not self.produtos: return {}
-        try: return self.produtos.get_info(codigo)
-        except Exception: return {}
+        if not self.produtos:
+            return {}
+        try:
+            return self.produtos.get_info(codigo)
+        except Exception:
+            return {}
 
     def get_pvps(self, codigo: str):
         if not self.produtos:
-            return {"pvp1": None, "pvp2": None, "pvp3": None, "pvp4": None, "pvp5": None}
-        try: return self.produtos.get_pvps(codigo)
-        except Exception: return {"pvp1": None, "pvp2": None, "pvp3": None, "pvp4": None, "pvp5": None}
+            return {
+                "pvp1": None,
+                "pvp2": None,
+                "pvp3": None,
+                "pvp4": None,
+                "pvp5": None,
+            }
+        try:
+            return self.produtos.get_pvps(codigo)
+        except Exception:
+            return {
+                "pvp1": None,
+                "pvp2": None,
+                "pvp3": None,
+                "pvp4": None,
+                "pvp5": None,
+            }
 
     def get_ingredientes(self, codigo: str):
-        if not self.ingredientes: return []
-        try: return self.ingredientes.listar_por_produto(codigo)
-        except Exception: return []
+        if not self.ingredientes:
+            return []
+        try:
+            return self.ingredientes.listar_por_produto(codigo)
+        except Exception:
+            return []
 
     # Auxiliares (combos na UI)
     def list_tipos_artigos(self):
-        if not self.aux: return [(None, "—")]
-        try: return self.aux.list_tipos_artigos()
-        except Exception: return [(None, "—")]
+        if not self.aux:
+            return [(None, "—")]
+        try:
+            return self.aux.list_tipos_artigos()
+        except Exception:
+            return [(None, "—")]
 
     def list_validade(self):
-        if not self.aux: return [(None, "—")]
-        try: return self.aux.list_validade()
-        except Exception: return [(None, "—")]
+        if not self.aux:
+            return [(None, "—")]
+        try:
+            return self.aux.list_validade()
+        except Exception:
+            return [(None, "—")]
 
     def list_validades(self):
         """Alias para :meth:`list_validade` mantendo compatibilidade."""
         return self.list_validade()
 
     def list_temperaturas(self):
-        if not self.aux: return [(None, "—")]
-        try: return self.aux.list_temperaturas()
-        except Exception: return [(None, "—")]
+        if not self.aux:
+            return [(None, "—")]
+        try:
+            return self.aux.list_temperaturas()
+        except Exception:
+            return [(None, "—")]
 
     # Preparação (B4)
     def get_preparacao_html(self, codigo: str) -> str:
-        if not self.prep: return ""
-        try: return self.prep.get_html(codigo)
-        except Exception: return ""
+        if not self.prep:
+            return ""
+        try:
+            return self.prep.get_html(codigo)
+        except Exception:
+            return ""
 
     def save_preparacao_html(self, codigo: str, html: str) -> None:
-        if not self.prep: return None
-        try: self.prep.upsert_html(codigo, html)
-        except Exception: pass
+        if not self.prep:
+            return None
+        try:
+            self.prep.upsert_html(codigo, html)
+        except Exception:
+            pass
 
     # Alergénios ativos: lista de tuplos (id, nome)
     def list_active_allergens(self):
@@ -161,13 +211,15 @@ class DataStore:
         if self.conn and not self.demo:
             try:
                 cur = self.conn.cursor()
-                cur.execute("SELECT id, nome FROM alergenios WHERE COALESCE(ativo,1)=1 ORDER BY nome")
+                cur.execute(
+                    "SELECT id, nome FROM alergenios WHERE COALESCE(ativo,1)=1 ORDER BY nome"
+                )
                 rows = cur.fetchall()
                 result = []
                 for r in rows or []:
                     try:
                         rid = r["id"] if hasattr(r, "keys") else r[0]
-                        nm  = r["nome"] if hasattr(r, "keys") else r[1]
+                        nm = r["nome"] if hasattr(r, "keys") else r[1]
                     except Exception:
                         try:
                             rid, nm = r[0], r[1]
@@ -175,10 +227,19 @@ class DataStore:
                             rid, nm = None, None
                     if nm is not None and str(nm).strip():
                         try:
-                            rid_int = int(rid) if rid is not None and str(rid).strip() != "" else None
+                            rid_int = (
+                                int(rid)
+                                if rid is not None and str(rid).strip() != ""
+                                else None
+                            )
                         except Exception:
                             rid_int = None
-                        result.append((rid_int if rid_int is not None else len(result)+1, str(nm).strip()))
+                        result.append(
+                            (
+                                rid_int if rid_int is not None else len(result) + 1,
+                                str(nm).strip(),
+                            )
+                        )
                 if result:
                     return result
             except Exception:
@@ -189,8 +250,13 @@ class DataStore:
         if json_path.exists():
             try:
                 import json
+
                 data = json.loads(json_path.read_text(encoding="utf-8"))
-                payload = data.get("alergenios") if isinstance(data, dict) and "alergenios" in data else data
+                payload = (
+                    data.get("alergenios")
+                    if isinstance(data, dict) and "alergenios" in data
+                    else data
+                )
                 items = []
                 if isinstance(payload, list):
                     tmp = []
@@ -204,7 +270,11 @@ class DataStore:
                             if nm and str(nm).strip():
                                 rid = item.get("id")
                                 try:
-                                    rid_int = int(rid) if rid is not None and str(rid).strip() != "" else idx
+                                    rid_int = (
+                                        int(rid)
+                                        if rid is not None and str(rid).strip() != ""
+                                        else idx
+                                    )
                                 except Exception:
                                     rid_int = idx
                                 tmp.append((rid_int, str(nm).strip()))
@@ -217,40 +287,66 @@ class DataStore:
                             items.append((rid, nm))
                 if items:
                     # normalizar ids sequenciais 1..N mantendo ordem
-                    return [(i+1, nm) for i, (_, nm) in enumerate(items)]
+                    return [(i + 1, nm) for i, (_, nm) in enumerate(items)]
             except Exception:
                 pass
 
         # 3) Padrão
         default = [
-            "Glúten", "Crustáceos", "Ovos", "Peixe", "Amendoins", "Soja", "Leite",
-            "Frutos de casca rija", "Aipo", "Mostarda", "Sementes de sésamo",
-            "Dióxido de enxofre e sulfitos", "Tremoço", "Moluscos"
+            "Glúten",
+            "Crustáceos",
+            "Ovos",
+            "Peixe",
+            "Amendoins",
+            "Soja",
+            "Leite",
+            "Frutos de casca rija",
+            "Aipo",
+            "Mostarda",
+            "Sementes de sésamo",
+            "Dióxido de enxofre e sulfitos",
+            "Tremoço",
+            "Moluscos",
         ]
-        return [(i+1, nm) for i, nm in enumerate(default)]
+        return [(i + 1, nm) for i, nm in enumerate(default)]
 
     def _read_auxiliares(self, codigo: str):
         """Lê (tipo_id, validade_id, temperatura_id) a partir do repo Auxiliares."""
-        if getattr(self, 'demo', False) or not getattr(self, 'conn', None) or getattr(self, 'aux', None) is None:
+        if (
+            getattr(self, "demo", False)
+            or not getattr(self, "conn", None)
+            or getattr(self, "aux", None) is None
+        ):
             return (None, None, None)
         try:
             return self.aux.get_produto_auxiliares(codigo)
         except Exception:
             return (None, None, None)
 
-    def _write_auxiliares(self, codigo: str, tipo_id, validade_id, temperatura_id) -> bool:
+    def _write_auxiliares(
+        self, codigo: str, tipo_id, validade_id, temperatura_id
+    ) -> bool:
         """Grava no repo Auxiliares (upsert)."""
-        if getattr(self, 'demo', False) or not getattr(self, 'conn', None) or getattr(self, 'aux', None) is None:
+        if (
+            getattr(self, "demo", False)
+            or not getattr(self, "conn", None)
+            or getattr(self, "aux", None) is None
+        ):
             return False
         try:
-            self.aux.set_produto_auxiliares(codigo, tipo_id, validade_id, temperatura_id)
+            self.aux.set_produto_auxiliares(
+                codigo, tipo_id, validade_id, temperatura_id
+            )
             return True
         except Exception:
             return False
+
     def get_auxiliares_for(self, codigo: str):
         """Obtém (tipo_id, validade_id, temperatura_id) para um produto."""
         return self._read_auxiliares(codigo)
 
-    def save_auxiliares_for(self, codigo: str, tipo_id, validade_id, temperatura_id) -> bool:
+    def save_auxiliares_for(
+        self, codigo: str, tipo_id, validade_id, temperatura_id
+    ) -> bool:
         """Guarda auxiliares para um produto. Devolve *True* se bem sucedido."""
         return self._write_auxiliares(codigo, tipo_id, validade_id, temperatura_id)

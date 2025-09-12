@@ -29,7 +29,14 @@ def test_get_product_info_builds_product_from_datastore():
     ds.get_produto_info.return_value = {"codigo": "P1", "nome": "Produto 1"}
     ds.get_pvps.return_value = {"1": 10.0}
     ds.get_ingredientes.return_value = [
-        {"nome": "Ing1", "qtd": 2, "unidade": "kg", "ppu": 3.0, "total": 6.0, "codigo": "I1"},
+        {
+            "nome": "Ing1",
+            "qtd": 2,
+            "unidade": "kg",
+            "ppu": 3.0,
+            "total": 6.0,
+            "codigo": "I1",
+        },
         {"nome": "Ing2", "qtd": 1, "unidade": "kg", "ppu": 2.0, "codigo": "I2"},
     ]
 
