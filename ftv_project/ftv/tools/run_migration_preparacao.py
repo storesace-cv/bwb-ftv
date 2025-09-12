@@ -36,27 +36,26 @@ def die(code, msg):
 
 def main():
     if not SQL_PATH.exists():
-        die(2, f"SQL de migração em falta: {SQL_PATH}")
+        die(2, f"Ficheiro SQL de migração não encontrado: {SQL_PATH}")
     if not DB_PATH.exists():
-        die(2, f"Base de dados em falta: {DB_PATH}")
+        die(2, f"Base de dados não encontrada: {DB_PATH}")
 
     sql = SQL_PATH.read_text(encoding="utf-8")
 
     try:
         conn = sqlite3.connect(DB_PATH)
     except Exception as e:
-        die(4, f"Falha a abrir a BD: {DB_PATH} :: {e}")
+        die(4, f"Falha ao abrir a base de dados {DB_PATH}: {e}")
 
     try:
         with conn:
             conn.executescript(sql)
         # Sanidade mínima: tabela existe?
-        cur = conn.execute()
-        row = cur.fetchone()
-        if not row:
-            die(
-                3,
-            )
+        try:
+            cur = conn.execute("SELECT 1 FROM produto_preparacao LIMIT 1")
+            cur.fetchone()
+        except sqlite3.Error:
+            die(3, "Tabela 'produto_preparacao' ausente após migração")
         logger.info("[MIGRAÇÃO] Sucesso. Tabela 'produto_preparacao' pronta.")
     except sqlite3.Error as e:
         logger.debug("[MIGRAÇÃO][DEBUG] Traceback completo:", exc_info=True)
