@@ -57,6 +57,7 @@ from PyQt5.QtWidgets import (
 )
 from data.datastore import DataStore
 from services.products import ProductService
+from utils.paths import get_project_root
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
 DEV_OVERLAYS = True  # Ctrl+D alterna
@@ -307,6 +308,51 @@ class FTApp(QWidget):
         ly.addWidget(zone)
         return box
 
+    def _missing_import_files(self) -> list[str]:
+        base = get_project_root() / "imports"
+        files = [
+            base / "Produtos_Base.xlsx",
+            base / "FichasTecnicas_base.xlsx",
+            base / "PreçosTaxas_base.xlsx",
+        ]
+        return [fp.name for fp in files if not fp.exists()]
+
+    def _import_data(self):
+        missing = self._missing_import_files()
+        if missing:
+            QMessageBox.warning(
+                self,
+                "Importar Dados",
+                "Ficheiros em falta: " + ", ".join(sorted(missing)),
+            )
+            return
+        try:
+            self.service.import_from_excel()
+            self._load_record(self.cur_index)
+            QMessageBox.information(self, "Importar Dados", "Importação concluída.")
+        except Exception as exc:  # pragma: no cover - UI feedback only
+            logger.exception("Import failed", exc_info=exc)
+            QMessageBox.critical(self, "Importar Dados", f"Falha na importação: {exc}")
+
+    def _update_data(self):
+        missing = self._missing_import_files()
+        if missing:
+            QMessageBox.warning(
+                self,
+                "Atualizar Dados",
+                "Ficheiros em falta: " + ", ".join(sorted(missing)),
+            )
+            return
+        try:
+            self.service.update_from_excel()
+            self._load_record(self.cur_index)
+            QMessageBox.information(self, "Atualizar Dados", "Atualização concluída.")
+        except Exception as exc:  # pragma: no cover - UI feedback only
+            logger.exception("Update failed", exc_info=exc)
+            QMessageBox.critical(
+                self, "Atualizar Dados", f"Falha na atualização: {exc}"
+            )
+
     def _build_ui(self):
         self.setWindowTitle(APP_TITLE)
         self.resize(1180, 860)
@@ -348,14 +394,8 @@ class FTApp(QWidget):
         self.mnuRoot.addMenu(mUtil)
         self.btMenu.setMenu(self.mnuRoot)
         # ligações básicas
-        actReload.triggered.connect(lambda: self._load_record(self.cur_index))
-        actUpdate.triggered.connect(
-            lambda: QMessageBox.information(
-                self,
-                "Atualizar Dados",
-                "Integração de importação/atualização de dados será ligada aqui.",
-            )
-        )
+        actReload.triggered.connect(self._import_data)
+        actUpdate.triggered.connect(self._update_data)
         actTipos.triggered.connect(
             lambda: QMessageBox.information(
                 self,
