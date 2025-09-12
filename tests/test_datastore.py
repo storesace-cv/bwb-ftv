@@ -110,10 +110,13 @@ def test_context_manager_closes_connection():
         conn.execute("SELECT 1")
 
 
-def test_datastore_connect_failure_raises(tmp_path):
+def test_datastore_creates_missing_path(tmp_path, caplog):
     bad_path = tmp_path / "no" / "db" / "ftv.db"
-    with pytest.raises(sqlite3.Error):
-        DataStore(db_path=str(bad_path))
+    with caplog.at_level(logging.INFO):
+        ds = DataStore(db_path=str(bad_path))
+    assert bad_path.exists()
+    assert ds.conn is not None
+    assert any("Base de dados criada" in r.message for r in caplog.records)
 
 
 def test_get_produto_info_repo_error(caplog):
