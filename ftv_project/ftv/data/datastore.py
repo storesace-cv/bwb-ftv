@@ -81,9 +81,12 @@ class DataStore:
         """
         ids = []
         # 1) tentar via repositório
+        source = None
         if self.produtos:
             try:
                 ids = self.produtos.listar_codigos() or []
+                if ids:
+                    source = "repositorio"
             except Exception:
                 ids = []
         # 2) fallback direto à BD
@@ -93,11 +96,18 @@ class DataStore:
                 try:
                     cur.execute("SELECT DISTINCT codigo FROM produtos ORDER BY codigo")
                     ids = [r[0] for r in cur.fetchall()]
+                    source = "produtos"
                 except Exception:
-                    cur.execute()
+                    cur.execute(
+                        "SELECT DISTINCT produto_codigo FROM fichas_tecnicas "
+                        "ORDER BY produto_codigo"
+                    )
                     ids = [r[0] for r in cur.fetchall()]
+                    source = "fichas_tecnicas"
             except Exception:
                 ids = []
+        if source:
+            logger.info("[DataStore] reload_ids: códigos via %s", source)
         self._ids = [str(x) for x in ids if x not in (None, "")]
         return len(self._ids)
 
