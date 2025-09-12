@@ -53,6 +53,32 @@ class DataStore:
                 self.conn = sqlite3.connect(str(db_path))
                 self.conn.row_factory = sqlite3.Row
                 if not is_memory:
+                    default_db = base / "databases" / "ftv.db"
+                    if db_path.resolve() == default_db.resolve():
+                        from .migration import (
+                            apply_pending_migrations,
+                            get_pending_migrations,
+                        )
+
+                        pending = get_pending_migrations(self.conn)
+                        if pending:
+                            from PyQt5.QtWidgets import QApplication
+                            from ui.startup_dialog import StartupDialog
+
+                            if QApplication.instance() is None:
+                                QApplication([])
+                            choice = StartupDialog(
+                                "Foi detetada uma migração da base de dados."
+                                " Aplicar agora?",
+                                ["Sim", "Não"],
+                            ).get_choice()
+                            if choice == "Sim":
+                                apply_pending_migrations(self.conn)
+                            else:
+                                self.conn.close()
+                                raise RuntimeError(
+                                    "Migração cancelada pelo utilizador."
+                                )
                     self._ensure_required_tables()
             except sqlite3.Error as exc:
                 logger.error("[DataStore] Falha a ligar à BD '%s': %s", db_path, exc)
