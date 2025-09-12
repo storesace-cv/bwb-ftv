@@ -1,6 +1,12 @@
 """Utilities and service layer for product related operations."""
 
+from __future__ import annotations
+
+from pathlib import Path
 from typing import Iterable, List
+import unicodedata
+
+from openpyxl import load_workbook
 
 from data.datastore import DataStore
 from domain import Product, Ingredient
@@ -47,6 +53,22 @@ class ProductService:
         else:
             ingredients = list(product_or_ingredients)
         return calculate_cost(ingredients)
+
+    # -- bulk import ------------------------------------------------------
+    def import_from_excel(self, path: str) -> None:
+        """Import data from Excel files located at ``path``.
+
+        This simply proxies to :func:`import_from_excel` using the instance's
+        :class:`~data.datastore.DataStore`.
+        """
+        import_from_excel(path, self.ds)
+
+    def update_from_excel(self, path: str) -> None:
+        """Update existing products from a spreadsheet.
+
+        Rows are upserted into the ``produtos`` table based on ``codigo``.
+        """
+        _update_from_excel(Path(path), self.ds)
 
 
 def get_product_info(ds: DataStore, codigo: str) -> Product:
@@ -100,3 +122,213 @@ def calculate_cost(ingredients: Iterable[Ingredient]) -> float:
             except (TypeError, ValueError):
                 pass
     return total
+
+
+def import_from_excel(path: str, ds: DataStore | None = None) -> None:
+    """Import product data from a set of Excel files.
+
+    Parameters
+    ----------
+    path:
+        Directory containing the Excel files ``FichasTecnicas_base.xlsx``,
+        ``PreçosTaxas_base.xlsx`` and ``Produtos_Base.xlsx``.
+    ds:
+        Optional :class:`DataStore` to operate on. When omitted a new
+        instance is created with default parameters.
+
+    The function clears existing data from ``produtos``, ``fichas_tecnicas``
+    and ``precos_taxas`` tables and loads the rows from the Excel files.
+    Afterwards ``ds.reload_ids()`` is invoked so that any cached product
+    codes are refreshed.
+    """
+
+    base = Path(path)
+    if not base.exists():
+        raise FileNotFoundError(path)
+
+    # Accept passing the direct path to one of the files; in that case use
+    # its parent directory as the base folder.
+    if base.is_file():
+        if base.suffix.lower() != ".xlsx":
+            raise ValueError("path must have a .xlsx extension")
+        # If the parent directory does not contain the expected base files,
+        # treat this as the simple import case where ``path`` points directly
+        # to a file with product information.
+        parent = base.parent
+        prod_file = parent / "Produtos_Base.xlsx"
+        if prod_file.exists():
+            base = parent
+        else:
+            _import_single_excel(base, ds)
+            return
+
+    # Resolve expected file names (handle possible Unicode normalisation of
+    # "Preços").
+    precos_candidates = [
+        "PreçosTaxas_base.xlsx",
+        "PreçosTaxas_base.xlsx",
+        "PrecosTaxas_base.xlsx",
+    ]
+    files = {
+        "produtos": base / "Produtos_Base.xlsx",
+        "fichas_tecnicas": base / "FichasTecnicas_base.xlsx",
+        "precos_taxas": None,
+    }
+    for cand in precos_candidates:
+        p = base / cand
+        if p.exists():
+            files["precos_taxas"] = p
+            break
+    if files["precos_taxas"] is None:
+        raise FileNotFoundError("PreçosTaxas_base.xlsx not found")
+
+    for fp in files.values():
+        if not fp.exists():
+            raise FileNotFoundError(str(fp))
+        if fp.suffix.lower() != ".xlsx":
+            raise ValueError(f"{fp} is not an .xlsx file")
+
+    ds = ds or DataStore()
+    conn = getattr(ds, "conn", None)
+    if conn is None:
+        return
+
+    cur = conn.cursor()
+    for tbl in ("produtos", "fichas_tecnicas", "precos_taxas"):
+        try:
+            cur.execute(f"DELETE FROM {tbl}")
+        except Exception:
+            # Table might not exist; ignore silently for resilience
+            pass
+    conn.commit()
+
+    def _normalize(text: str) -> str:
+        txt = unicodedata.normalize("NFD", str(text or ""))
+        txt = "".join(c for c in txt if unicodedata.category(c) != "Mn")
+        txt = txt.replace("-", "_").replace("/", "_").replace(" ", "_")
+        txt = txt.replace("(", "").replace(")", "").replace(".", "")
+        return txt.lower()
+
+    def _table_columns(table: str) -> list[str]:
+        cur = conn.execute(f"PRAGMA table_info({table})")
+        return [r[1].lower() for r in cur.fetchall()]
+
+    def _load_insert(file_path: Path, table: str) -> None:
+        wb = load_workbook(file_path, read_only=True, data_only=True)
+        ws = wb.active
+        rows = ws.iter_rows(values_only=True)
+        try:
+            headers = [_normalize(h) for h in next(rows)]
+        except StopIteration:
+            wb.close()
+            return
+        cols = [h for h in headers if h]
+        db_cols = _table_columns(table)
+        used_cols = [c for c in cols if c in db_cols]
+        if not used_cols:
+            wb.close()
+            return
+        placeholders = ",".join(["?"] * len(used_cols))
+        sql = f"INSERT INTO {table} ({','.join(used_cols)}) VALUES ({placeholders})"
+        data: list[tuple] = []
+        for row in rows:
+            row_map = {headers[i]: row[i] for i in range(min(len(headers), len(row)))}
+            data.append(tuple(row_map.get(c) for c in used_cols))
+        if data:
+            conn.executemany(sql, data)
+        wb.close()
+
+    _load_insert(files["produtos"], "produtos")
+    _load_insert(files["fichas_tecnicas"], "fichas_tecnicas")
+    _load_insert(files["precos_taxas"], "precos_taxas")
+    conn.commit()
+    ds.reload_ids()
+
+
+def _import_single_excel(path: Path, ds: DataStore | None) -> None:
+    """Fallback import used for simple single-file spreadsheets.
+
+    The sheet is expected to contain at least ``codigo`` and ``nome`` columns.
+    Existing rows in ``produtos`` are removed before inserting new data.
+    """
+
+    ds = ds or DataStore()
+    conn = getattr(ds, "conn", None)
+    if conn is None:
+        return
+
+    wb = load_workbook(path, read_only=True, data_only=True)
+    ws = wb.active
+    rows = ws.iter_rows(values_only=True)
+    try:
+        headers = [str(h).strip().lower() for h in next(rows)]
+    except StopIteration:
+        wb.close()
+        return
+    try:
+        code_idx = headers.index("codigo")
+    except ValueError:
+        wb.close()
+        return
+    name_idx = headers.index("nome") if "nome" in headers else None
+
+    cur = conn.cursor()
+    cur.execute("DELETE FROM produtos")
+    for row in rows:
+        codigo = row[code_idx]
+        nome = row[name_idx] if name_idx is not None else None
+        cur.execute(
+            "INSERT INTO produtos (codigo, nome) VALUES (?, ?)",
+            (codigo, nome),
+        )
+    conn.commit()
+    wb.close()
+    ds.reload_ids()
+
+
+def _update_from_excel(path: Path, ds: DataStore | None) -> None:
+    """Upsert products from a simple spreadsheet."""
+
+    if not path.exists():
+        raise FileNotFoundError(str(path))
+    if path.suffix.lower() != ".xlsx":
+        raise ValueError("path must have a .xlsx extension")
+
+    ds = ds or DataStore()
+    conn = getattr(ds, "conn", None)
+    if conn is None:
+        return
+
+    wb = load_workbook(path, read_only=True, data_only=True)
+    ws = wb.active
+    rows = ws.iter_rows(values_only=True)
+    try:
+        headers = [str(h).strip().lower() for h in next(rows)]
+    except StopIteration:
+        wb.close()
+        return
+    try:
+        code_idx = headers.index("codigo")
+    except ValueError:
+        wb.close()
+        return
+    name_idx = headers.index("nome") if "nome" in headers else None
+
+    cur = conn.cursor()
+    for row in rows:
+        codigo = row[code_idx]
+        nome = row[name_idx] if name_idx is not None else None
+        cur.execute("SELECT 1 FROM produtos WHERE codigo=?", (codigo,))
+        if cur.fetchone():
+            cur.execute(
+                "UPDATE produtos SET nome=? WHERE codigo=?",
+                (nome, codigo),
+            )
+        else:
+            cur.execute(
+                "INSERT INTO produtos (codigo, nome) VALUES (?, ?)",
+                (codigo, nome),
+            )
+    conn.commit()
+    wb.close()
+    ds.reload_ids()
