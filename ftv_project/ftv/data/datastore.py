@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+"""Data access layer for the FTV project."""
+
+from ..utils.paths import get_project_root
+
+base = get_project_root()
+
+
 class DataStore:
     """
     DataStore mínimo (reconstruído e compatível com UI):
