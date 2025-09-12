@@ -988,11 +988,17 @@ CREATE TABLE produto_auxiliar (
     produto_codigo    TEXT PRIMARY KEY,
     tipo_artigo_cod   INTEGER NULL,
     validade_cod      INTEGER NULL,
-    temperatura_cod   INTEGER NULL, tipo_artigo_id INTEGER, validade_id INTEGER, temperatura_id INTEGER,
+    temperatura_cod   INTEGER NULL,
+    tipo_artigo_id    INTEGER,
+    validade_id       INTEGER,
+    temperatura_id    INTEGER,
     -- FKs suaves (as tabelas podem não existir sempre ou ter dados incompletos)
     FOREIGN KEY (tipo_artigo_cod) REFERENCES tipos_artigos(cod) ON UPDATE CASCADE ON DELETE SET NULL,
     FOREIGN KEY (validade_cod)    REFERENCES validade(cod)       ON UPDATE CASCADE ON DELETE SET NULL,
-    FOREIGN KEY (temperatura_cod) REFERENCES temperaturas(cod)   ON UPDATE CASCADE ON DELETE SET NULL
+    FOREIGN KEY (temperatura_cod) REFERENCES temperaturas(cod)   ON UPDATE CASCADE ON DELETE SET NULL,
+    FOREIGN KEY (tipo_artigo_id)  REFERENCES tipos_artigos(cod)  ON UPDATE CASCADE ON DELETE SET NULL,
+    FOREIGN KEY (validade_id)     REFERENCES validade(cod)       ON UPDATE CASCADE ON DELETE SET NULL,
+    FOREIGN KEY (temperatura_id)  REFERENCES temperaturas(cod)   ON UPDATE CASCADE ON DELETE SET NULL
 );
 INSERT INTO produto_auxiliar VALUES('10001',NULL,NULL,NULL,NULL,3,3);
 DELETE FROM sqlite_sequence;
