@@ -1,2 +1,1 @@
 PyQt5
-# sqlite3 is included in the Python standard library
