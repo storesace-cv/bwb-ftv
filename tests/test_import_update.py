@@ -9,8 +9,11 @@ from services.products import ProductService
 def ds():
     ds = DataStore(":memory:")
     conn = ds.conn
-    # Minimal schema for products
-    conn.execute("CREATE TABLE produtos (codigo TEXT PRIMARY KEY, nome TEXT)")
+    # Minimal schema for products with price columns
+    conn.execute(
+        "CREATE TABLE produtos (codigo TEXT PRIMARY KEY, nome TEXT, "
+        "preco1_g REAL, preco2_g REAL, iva REAL)"
+    )
     # Ingredients table (may be unused but keeps schema closer to real)
     conn.execute(
         "CREATE TABLE fichas_tecnicas (produto_codigo TEXT, "
@@ -36,6 +39,26 @@ def _write_update_excel(path):
     ws.append(["P1", "Produto 1 updated"])
     ws.append(["P3", "Produto 3"])
     wb.save(path)
+
+
+def _write_base_files(base_dir, code_header="codigo", price=1.0):
+    """Create base import/update files, allowing custom code header."""
+    prod_wb = Workbook()
+    ws = prod_wb.active
+    ws.append(["codigo", "nome"])
+    ws.append(["P1", "Produto 1"])
+    prod_wb.save(base_dir / "Produtos_Base.xlsx")
+
+    ft_wb = Workbook()
+    ws = ft_wb.active
+    ws.append(["produto_codigo"])
+    ft_wb.save(base_dir / "FichasTecnicas_base.xlsx")
+
+    prec_wb = Workbook()
+    ws = prec_wb.active
+    ws.append([code_header, "preco1_g"])
+    ws.append(["P1", price])
+    prec_wb.save(base_dir / "PreçosTaxas_base.xlsx")
 
 
 def test_import_from_excel_replaces_database(ds, tmp_path):
@@ -100,3 +123,31 @@ def test_update_from_excel_invalid_format(ds, tmp_path):
     fake.write_text("not excel")
     with pytest.raises(ValueError):
         svc.update_from_excel(str(fake))
+
+
+def test_import_from_excel_uses_produto_codigo(ds, tmp_path):
+    _write_base_files(tmp_path, code_header="produto_codigo", price=2.5)
+    svc = ProductService(ds)
+    svc.import_from_excel(str(tmp_path))
+    info = ds.get_produto_info("P1")
+    assert info["preco1_g"] == 2.5
+
+
+def test_update_from_excel_uses_produto_codigo(ds, tmp_path):
+    ds.conn.execute(
+        "INSERT INTO produtos (codigo, nome, preco1_g) VALUES ('P1', 'X', 1.0)"
+    )
+    ds.reload_ids()
+    _write_base_files(tmp_path, code_header="produto_codigo", price=3.0)
+    svc = ProductService(ds)
+    svc.update_from_excel(str(tmp_path))
+    info = ds.get_produto_info("P1")
+    assert info["preco1_g"] == 3.0
+
+
+@pytest.mark.parametrize("func", ["import_from_excel", "update_from_excel"])
+def test_preco_taxas_requires_codigo(ds, tmp_path, func):
+    _write_base_files(tmp_path, code_header="wrong")
+    svc = ProductService(ds)
+    with pytest.raises(ValueError):
+        getattr(svc, func)(str(tmp_path))

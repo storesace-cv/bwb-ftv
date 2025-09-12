@@ -240,10 +240,13 @@ def import_from_excel(path: str, ds: DataStore | None = None) -> None:
             wb.close()
             return
         db_cols = _table_columns("produtos")
-        if "codigo" not in headers:
+        if "codigo" in headers:
+            idx_cod = headers.index("codigo")
+        elif "produto_codigo" in headers:
+            idx_cod = headers.index("produto_codigo")
+        else:
             wb.close()
-            return
-        idx_cod = headers.index("codigo")
+            raise ValueError("PreçosTaxas_base.xlsx missing 'codigo' column")
         idx_p1 = (
             headers.index("preco1_g")
             if "preco1_g" in headers and "preco1_g" in db_cols
@@ -428,10 +431,13 @@ def update_from_excel(path: str, ds: DataStore | None = None) -> None:
             wb.close()
             return
         db_cols = _table_columns("produtos")
-        if "codigo" not in headers:
+        if "codigo" in headers:
+            idx_cod = headers.index("codigo")
+        elif "produto_codigo" in headers:
+            idx_cod = headers.index("produto_codigo")
+        else:
             wb.close()
-            return
-        idx_cod = headers.index("codigo")
+            raise ValueError("PreçosTaxas_base.xlsx missing 'codigo' column")
         idx_p1 = (
             headers.index("preco1_g")
             if "preco1_g" in headers and "preco1_g" in db_cols
