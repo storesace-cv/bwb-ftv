@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Data access layer for the FTV project."""
 
-from ..utils.paths import get_project_root
+from ..utils import get_project_root
 
 base = get_project_root()
 
