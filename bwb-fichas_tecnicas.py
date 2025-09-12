@@ -4,15 +4,20 @@
 # --- Caminhos robustos ---
 import sys
 import logging
-
-# --- Qt ---
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QFont
+from pathlib import Path
 
-from ftv.data.datastore import DataStore
-from ftv.services.products import ProductService
-from ftv.utils.autosave import wire_autosave_aux
-from ftv.ui.ui_editor_fonte import FTApp
+# Garantir que ``ftv_project`` esteja no ``sys.path`` para permitir execução
+# "out-of-the-box", sem necessidade de configuração prévia de ambiente.
+root_dir = Path(__file__).resolve().parent / "ftv_project"
+if str(root_dir) not in sys.path:
+    sys.path.insert(0, str(root_dir))
+
+from ftv.data.datastore import DataStore  # noqa: E402
+from ftv.services.products import ProductService  # noqa: E402
+from ftv.utils.autosave import wire_autosave_aux  # noqa: E402
+from ftv.ui.ui_editor_fonte import FTApp  # noqa: E402
 
 
 logger = logging.getLogger(__name__)
