@@ -115,8 +115,10 @@ class DataStore:
                             if QApplication.instance() is None:
                                 QApplication([])
                             choice = StartupDialog(
-                                "Foi detetada uma migração da base de dados."
-                                " Aplicar agora?",
+                                (
+                                    "Foi detetada uma migração da base de dados. "
+                                    "Aplicar agora?"
+                                ),
                                 ["Sim", "Não"],
                             ).get_choice()
                             if choice == "Sim":
