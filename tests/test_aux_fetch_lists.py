@@ -41,7 +41,7 @@ sys.modules.setdefault("PyQt5.QtCore", qt_core)
 sys.modules.setdefault("PyQt5.QtGui", qt_gui)
 sys.modules.setdefault("PyQt5.QtWidgets", qt_widgets)
 
-from ui.ui_editor_fonte import FTApp
+from ui.ui_editor_fonte import FTApp  # noqa: E402
 
 
 def _make_app(conn):
