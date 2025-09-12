@@ -128,11 +128,20 @@ class IngredientesRepo:
         """
         cur = self.conn.cursor()
         try:
+            cur.execute("PRAGMA table_info(fichas_tecnicas)")
+            cols = [c[1].lower() for c in cur.fetchall()]
+            if "total" in cols:
+                cost_col = "total"
+            elif "custo" in cols:
+                cost_col = "custo"
+            else:
+                return []
+            order_col = "ordem" if "ordem" in cols else "rowid"
             cur.execute(
-                "SELECT componente_nome, qtd, unidade, ppu, custo "
+                f"SELECT componente_nome, qtd, unidade, ppu, {cost_col} "
                 "FROM fichas_tecnicas "
                 "WHERE produto_codigo = ? "
-                "ORDER BY COALESCE(ordem, rowid)",
+                f"ORDER BY {order_col}",
                 (codigo,),
             )
             rows = cur.fetchall()
@@ -181,12 +190,19 @@ class IngredientesRepo:
                 if has("ppu"):
                     sel.append("ppu")
                     alias.append("ppu")
-                if has("custo"):
+                if has("total"):
+                    sel.append("total")
+                    alias.append("total")
+                elif has("custo"):
                     sel.append("custo")
                     alias.append("total")
                 if not sel:
                     return []
-                sql = "SELECT " + ", ".join(sel)
+                sql = (
+                    "SELECT "
+                    + ", ".join(sel)
+                    + " FROM fichas_tecnicas WHERE produto_codigo=?"
+                )
                 cur.execute(sql, (codigo,))
                 rows = cur.fetchall()
                 out = []
