@@ -6,6 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterable, List
 import unicodedata
+import re
 
 from openpyxl import load_workbook
 
@@ -41,7 +42,10 @@ def canonicalize_header(text: str, table: str | None = None) -> str:
     headers that depend on context (e.g. ``produto_codigo``).
     """
 
-    txt = unicodedata.normalize("NFD", str(text or ""))
+    txt = str(text or "")
+    txt = txt.replace("(não necessário p/ importar)", "")
+    txt = re.sub(r"\s+(\S)", lambda m: m.group(1).upper(), txt)
+    txt = unicodedata.normalize("NFD", txt)
     txt = "".join(c for c in txt if unicodedata.category(c) != "Mn")
     txt = "".join(c for c in txt if c.isalnum()).lower()
 
