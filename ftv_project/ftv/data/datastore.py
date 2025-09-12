@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """Data access layer for the FTV project."""
 
-import logging
-import sqlite3
 import json
+import logging
+import os
+import sqlite3
+from pathlib import Path
 
 from ..utils import get_project_root
 
@@ -30,14 +32,23 @@ class DataStore:
         self.demo = bool(demo)
 
         # Caminho default: raiz do projeto /databases/ftv.db
+        db_path = db_path or os.getenv("FTV_DB_PATH")
         if db_path is None:
-            db_path = str(base / "databases" / "ftv.db")
+            db_path = base / "databases" / "ftv.db"
+        db_path = Path(db_path)
 
         self.conn = None
         if not self.demo:
             try:
-                self.conn = sqlite3.connect(db_path)
+                db_path.parent.mkdir(parents=True, exist_ok=True)
+                creating = not db_path.exists()
+                self.conn = sqlite3.connect(str(db_path))
                 self.conn.row_factory = sqlite3.Row
+                if creating:
+                    logger.info(
+                        "[DataStore] Base de dados criada automaticamente em '%s'",
+                        db_path,
+                    )
             except sqlite3.Error as exc:
                 logger.error("[DataStore] Falha a ligar à BD '%s': %s", db_path, exc)
                 raise
