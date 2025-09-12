@@ -39,8 +39,6 @@ from PyQt5.QtWidgets import (
     QTableWidgetItem, QMessageBox, QScrollArea, QShortcut, QTextEdit, QCheckBox
 )
 from ftv.data.datastore import DataStore
-from ftv.services import ProductService
-
 APP_TITLE = "Fichas Técnicas Valorizadas"
 DEV_OVERLAYS = True  # Ctrl+D alterna
 
@@ -400,12 +398,6 @@ class FTApp(QWidget):
 
     # ---------- Carregamento de dados ----------
     def _load_record(self, idx: int):
-        codigo = self.service.codigo_at(idx) or "10001"
-        product = self.service.get_product(codigo)
-        self.edCodigo.setText(product.code)
-        self.edNome.setText(product.name)
-        self.lbFamiliaVal.setText(product.familia)
-        self.lbSubFamiliaVal.setText(product.subfamilia)
         # PVPs
         pvps = product.pvps
         values = [pvps.get("pvp1"), pvps.get("pvp2"), pvps.get("pvp3"), pvps.get("pvp4"), pvps.get("pvp5")]
@@ -447,12 +439,6 @@ class FTApp(QWidget):
         for ing in product.ingredients:
             r = self.tbIng.rowCount(); self.tbIng.insertRow(r)
             vals = [
-                ing.name,
-                str(ing.quantity),
-                ing.unit,
-                f'{ing.ppu:.2f}',
-                f'{ing.total:.2f}',
-                ing.code or "",
             ]
             for c, val in enumerate(vals):
                 it = QTableWidgetItem(val); it.setFlags(Qt.ItemIsSelectable|Qt.ItemIsEnabled)
@@ -473,15 +459,33 @@ class FTApp(QWidget):
             print(f"[AuxCanon][ERRO] {e}")
     # ---------- Cálculos ----------
     def _update_costs_from_table(self):
-        """Soma a coluna 'Total' (índice 4) da tabela de ingredientes e escreve em C3.A.A (edCustoTotal)."""
+        """Recalculate total cost using the service layer."""
         try:
-            total = 0.0
+            ingredients = []
             for r in range(self.tbIng.rowCount()):
-                it = self.tbIng.item(r, 4)
-                if not it: continue
-                s = it.text().strip().replace(",", ".")
-                try: total += float(s)
-                except ValueError: pass
+                def cell(col):
+                    it = self.tbIng.item(r, col)
+                    return it.text() if it else ""
+                def parse_f(s):
+                    try:
+                        return float(s.replace(",", "."))
+                    except Exception:
+                        return None
+                ingredients.append(
+                    Ingredient(
+                        name=cell(0),
+                        quantity=parse_f(cell(1)),
+                        unit=cell(2),
+                        unit_cost=parse_f(cell(3)),
+                        total_cost=parse_f(cell(4)),
+                    )
+                )
+            product = Product(
+                code=self.edCodigo.text().strip(),
+                name=self.edNome.text().strip(),
+                ingredients=ingredients,
+            )
+            total = calculate_cost(product)
             self.edCustoTotal.setText(f"{total:.2f}")
         except Exception:
             pass
