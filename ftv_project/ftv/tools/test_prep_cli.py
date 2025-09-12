@@ -3,13 +3,13 @@
 
 """
 Fase 3 — Teste de fumo para Bloco [B4] Preparação
-Uso (na raiz do projeto):
-  python3 ftv_project/ftv/tools/test_prep_cli.py --codigo ABC123 --html "<p>Teste</p>"
-  python3 ftv_project/ftv/tools/test_prep_cli.py --codigo ABC123 --file ./exemplo.html
-  python3 ftv_project/ftv/tools/test_prep_cli.py            # tenta descobrir 1º código existente
+Uso (executar como módulo):
+  python -m ftv.tools.test_prep_cli --codigo ABC123 --html "<p>Teste</p>"
+  python -m ftv.tools.test_prep_cli --codigo ABC123 --file ./exemplo.html
+  python -m ftv.tools.test_prep_cli            # tenta descobrir 1º código existente
 
 O que faz:
-- Abre ./databases/ftv.db
+- Abre <raiz do projeto>/databases/ftv.db (usando get_project_root)
 - Usa PreparacaoRepo diretamente (sem UI) para ler e escrever HTML
 - Mostra debug detalhado de cada passo e falhas com traceback
 
@@ -22,16 +22,12 @@ __test__ = False
 from pathlib import Path
 import sys
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
 from ftv_project.ftv.utils import get_project_root
-PROJECT_ROOT = get_project_root()
 
 import argparse, sqlite3, traceback
 
-DB_PATH = Path("databases") / "ftv.db"
+PROJECT_ROOT = get_project_root()
+DB_PATH = PROJECT_ROOT / "databases" / "ftv.db"
 
 
 def _load_preparacao_repo():
