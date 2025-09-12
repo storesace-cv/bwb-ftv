@@ -7,9 +7,6 @@ Por omissão a aplicação utiliza a base de dados SQLite em
 `<raiz do projeto>/databases/ftv.db`. O diretório é criado automaticamente e o
 ficheiro é inicializado caso esteja em falta.
 
-O ficheiro `databases/demo.sql` contém os dados de demonstração oficiais.
-O conteúdo é importado automaticamente para uma base vazia quando
-os utilizadores escolhem "Base demo".
 
 Para alterar o local da base de dados defina a variável de ambiente
 `FTV_DB_PATH` com o caminho completo para o ficheiro desejado:
