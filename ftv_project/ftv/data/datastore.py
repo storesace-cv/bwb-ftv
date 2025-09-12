@@ -233,25 +233,9 @@ class DataStore:
             return True
         except Exception:
             return False
-
-    # ------------------------------------------------------------------
-    # Compatibilidade retroativa
-    # ------------------------------------------------------------------
-    def list_validades(self):
-        """Alias histórico para :meth:`list_validade`.
-
-        Mantido para compatibilidade com versões antigas que
-        invocavam ``list_validades`` fora da classe.
         """
         return self.list_validade()
 
     def get_auxiliares_for(self, codigo):
-        """Alias histórico para :meth:`read_auxiliares`."""
-        return self.read_auxiliares(codigo)
-
-    def save_auxiliares_for(self, codigo, tipo_id, val_id, temp_id):
-        """Alias histórico para :meth:`write_auxiliares`.
-
-        Retorna ``True`` em caso de sucesso, ``False`` caso contrário.
         """
         return self.write_auxiliares(codigo, tipo_id, val_id, temp_id)
