@@ -10,6 +10,7 @@ import unicodedata
 from openpyxl import load_workbook
 
 from data.datastore import DataStore
+from data.migration import setup_database
 from domain import Product, Ingredient
 from utils.paths import get_project_root
 
@@ -169,6 +170,8 @@ def import_from_excel(ds: DataStore | None = None) -> None:
     conn = getattr(ds, "conn", None)
     if conn is None:
         return
+
+    setup_database(conn)
 
     cur = conn.cursor()
     for tbl in ("produtos", "fichas_tecnicas"):
@@ -331,6 +334,8 @@ def update_from_excel(ds: DataStore | None = None) -> None:
     conn = getattr(ds, "conn", None)
     if conn is None:
         return
+
+    setup_database(conn)
 
     def _normalize(text: str) -> str:
         txt = unicodedata.normalize("NFD", str(text or ""))
@@ -500,6 +505,8 @@ def _import_single_excel(path: Path, ds: DataStore | None) -> None:
     if conn is None:
         return
 
+    setup_database(conn)
+
     def _normalize(text: str) -> str:
         txt = unicodedata.normalize("NFD", str(text or ""))
         txt = "".join(c for c in txt if unicodedata.category(c) != "Mn")
@@ -584,6 +591,8 @@ def _update_from_excel(path: Path, ds: DataStore | None) -> None:
     conn = getattr(ds, "conn", None)
     if conn is None:
         return
+
+    setup_database(conn)
 
     def _normalize(text: str) -> str:
         txt = unicodedata.normalize("NFD", str(text or ""))

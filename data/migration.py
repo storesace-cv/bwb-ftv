@@ -47,3 +47,81 @@ def apply_pending_migrations(conn: sqlite3.Connection) -> List[str]:
                 "INSERT INTO schema_version(filename) VALUES (?)", (path.name,)
             )
     return [p.name for p in pending]
+
+
+def ensure_core_tables(conn: sqlite3.Connection) -> None:
+    """Create essential tables if they do not already exist."""
+
+    statements = [
+        (
+            """
+            CREATE TABLE IF NOT EXISTS produtos (
+                codigo TEXT PRIMARY KEY
+            )
+            """
+        ),
+        (
+            """
+            CREATE TABLE IF NOT EXISTS fichas_tecnicas (
+                produto_codigo TEXT
+            )
+            """
+        ),
+        (
+            """
+            CREATE TABLE IF NOT EXISTS alergenios (
+                id    INTEGER PRIMARY KEY,
+                nome  TEXT NOT NULL,
+                ativo INTEGER NOT NULL DEFAULT 1
+            )
+            """
+        ),
+        (
+            """
+            CREATE TABLE IF NOT EXISTS tipos_artigos (
+                cod       INTEGER PRIMARY KEY,
+                descricao TEXT NOT NULL,
+                ativo     INTEGER NOT NULL DEFAULT 1
+            )
+            """
+        ),
+        (
+            """
+            CREATE TABLE IF NOT EXISTS validade (
+                cod       INTEGER PRIMARY KEY,
+                descricao TEXT NOT NULL,
+                ativo     INTEGER NOT NULL DEFAULT 1
+            )
+            """
+        ),
+        (
+            """
+            CREATE TABLE IF NOT EXISTS temperaturas (
+                cod       INTEGER PRIMARY KEY,
+                descricao TEXT NOT NULL,
+                ativo     INTEGER NOT NULL DEFAULT 1
+            )
+            """
+        ),
+        (
+            """
+            CREATE TABLE IF NOT EXISTS produto_auxiliar (
+                produto_codigo TEXT PRIMARY KEY,
+                tipo_artigo_id INTEGER,
+                validade_id    INTEGER,
+                temperatura_id INTEGER
+            )
+            """
+        ),
+    ]
+
+    for stmt in statements:
+        conn.execute(stmt)
+    conn.commit()
+
+
+def setup_database(conn: sqlite3.Connection) -> None:
+    """Run pending migrations and ensure essential tables exist."""
+
+    apply_pending_migrations(conn)
+    ensure_core_tables(conn)

@@ -12,10 +12,12 @@ from utils.paths import get_project_root
 def ds():
     ds = DataStore(":memory:")
     conn = ds.conn
+    conn.execute("DROP TABLE produtos")
     conn.execute(
         "CREATE TABLE produtos (codigo TEXT PRIMARY KEY, nome TEXT, "
         "preco1_g REAL, preco2_g REAL, iva REAL)"
     )
+    conn.execute("DROP TABLE fichas_tecnicas")
     conn.execute(
         "CREATE TABLE fichas_tecnicas (produto_codigo TEXT, "
         "componente_nome TEXT, qtd REAL, unidade TEXT, "
