@@ -68,7 +68,7 @@ class ProductService:
 
         Rows are upserted into the ``produtos`` table based on ``codigo``.
         """
-        _update_from_excel(Path(path), self.ds)
+        update_from_excel(path, self.ds)
 
 
 def get_product_info(ds: DataStore, codigo: str) -> Product:
@@ -241,6 +241,130 @@ def import_from_excel(path: str, ds: DataStore | None = None) -> None:
     _load_insert(files["produtos"], "produtos")
     _load_insert(files["fichas_tecnicas"], "fichas_tecnicas")
     _load_insert(files["precos_taxas"], "precos_taxas")
+    conn.commit()
+    ds.reload_ids()
+
+
+def update_from_excel(path: str, ds: DataStore | None = None) -> None:
+    """Update product data from Excel files.
+
+    ``path`` can point to a directory containing the three base files or to a
+    single spreadsheet with product information.  When a simple spreadsheet is
+    provided only the ``produtos`` table is affected.  In the base files case
+    rows are upserted into ``produtos`` and ``precos_taxas`` and the
+    ``fichas_tecnicas`` table is synchronised per product.
+    """
+
+    base = Path(path)
+    if not base.exists():
+        raise FileNotFoundError(path)
+
+    if base.is_file():
+        if base.suffix.lower() != ".xlsx":
+            raise ValueError("path must have a .xlsx extension")
+        parent = base.parent
+        prod_file = parent / "Produtos_Base.xlsx"
+        if prod_file.exists():
+            base = parent
+        else:
+            _update_from_excel(base, ds)
+            return
+
+    precos_candidates = [
+        "PreçosTaxas_base.xlsx",
+        "PreçosTaxas_base.xlsx",
+        "PrecosTaxas_base.xlsx",
+    ]
+    files = {
+        "produtos": base / "Produtos_Base.xlsx",
+        "fichas_tecnicas": base / "FichasTecnicas_base.xlsx",
+        "precos_taxas": None,
+    }
+    for cand in precos_candidates:
+        p = base / cand
+        if p.exists():
+            files["precos_taxas"] = p
+            break
+    if files["precos_taxas"] is None:
+        raise FileNotFoundError("PreçosTaxas_base.xlsx not found")
+
+    for fp in files.values():
+        if not fp.exists():
+            raise FileNotFoundError(str(fp))
+        if fp.suffix.lower() != ".xlsx":
+            raise ValueError(f"{fp} is not an .xlsx file")
+
+    ds = ds or DataStore()
+    conn = getattr(ds, "conn", None)
+    if conn is None:
+        return
+
+    def _normalize(text: str) -> str:
+        txt = unicodedata.normalize("NFD", str(text or ""))
+        txt = "".join(c for c in txt if unicodedata.category(c) != "Mn")
+        txt = txt.replace("-", "_").replace("/", "_").replace(" ", "_")
+        txt = txt.replace("(", "").replace(")", "").replace(".", "")
+        return txt.lower()
+
+    def _table_columns(table: str) -> list[str]:
+        cur = conn.execute(f"PRAGMA table_info({table})")
+        return [r[1].lower() for r in cur.fetchall()]
+
+    def _upsert(file_path: Path, table: str) -> None:
+        wb = load_workbook(file_path, read_only=True, data_only=True)
+        ws = wb.active
+        rows = ws.iter_rows(values_only=True)
+        try:
+            headers = [_normalize(h) for h in next(rows)]
+        except StopIteration:
+            wb.close()
+            return
+        cols = [h for h in headers if h]
+        db_cols = _table_columns(table)
+        used_cols = [c for c in cols if c in db_cols]
+        if not used_cols:
+            wb.close()
+            return
+        placeholders = ",".join(["?"] * len(used_cols))
+        if table == "fichas_tecnicas":
+            insert_sql = (
+                f"INSERT INTO {table} ({','.join(used_cols)}) VALUES ({placeholders})"
+            )
+            grouped: dict[str, list[tuple]] = {}
+            for row in rows:
+                row_map = {
+                    headers[i]: row[i] for i in range(min(len(headers), len(row)))
+                }
+                codigo = row_map.get("produto_codigo")
+                if codigo is None:
+                    continue
+                grouped.setdefault(codigo, []).append(
+                    tuple(row_map.get(c) for c in used_cols)
+                )
+            for codigo, data in grouped.items():
+                conn.execute(
+                    "DELETE FROM fichas_tecnicas WHERE produto_codigo=?",
+                    (codigo,),
+                )
+                conn.executemany(insert_sql, data)
+        else:
+            sql = (
+                f"INSERT OR REPLACE INTO {table} ({','.join(used_cols)}) "
+                f"VALUES ({placeholders})"
+            )
+            data: list[tuple] = []
+            for row in rows:
+                row_map = {
+                    headers[i]: row[i] for i in range(min(len(headers), len(row)))
+                }
+                data.append(tuple(row_map.get(c) for c in used_cols))
+            if data:
+                conn.executemany(sql, data)
+        wb.close()
+
+    _upsert(files["produtos"], "produtos")
+    _upsert(files["fichas_tecnicas"], "fichas_tecnicas")
+    _upsert(files["precos_taxas"], "precos_taxas")
     conn.commit()
     ds.reload_ids()
 
