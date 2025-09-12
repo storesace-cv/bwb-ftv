@@ -27,8 +27,7 @@ from ftv.utils import get_project_root
 
 import argparse, sqlite3
 
-PROJECT_ROOT = get_project_root()
-DB_PATH = PROJECT_ROOT / "databases" / "ftv.db"
+DB_PATH = get_project_root() / "databases" / "ftv.db"
 
 
 logger = logging.getLogger(__name__)
