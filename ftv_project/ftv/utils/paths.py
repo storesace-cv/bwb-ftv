@@ -4,4 +4,8 @@ from pathlib import Path
 
 def get_project_root() -> Path:
     """Return the root directory of the repository."""
-    return Path(__file__).resolve().parents[2]
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / "pyproject.toml").exists() or (parent / ".git").exists():
+            return parent
+    return here.parents[2]  # fallback
