@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from pathlib import Path
-
 class DataStore:
     """
     DataStore mínimo (reconstruído e compatível com UI):
@@ -16,11 +14,6 @@ class DataStore:
         self.demo = bool(demo)
 
         # Caminho default: raiz do projeto /databases/ftv.db
-        try:
-            base = Path(__file__).resolve().parents[3]
-        except Exception:
-            base = Path('.').resolve()
-
         if db_path is None:
             db_path = str(base / 'databases' / 'ftv.db')
 
@@ -178,10 +171,6 @@ class DataStore:
                 pass
 
         # 2) JSON
-        try:
-            base = Path(__file__).resolve().parents[3]
-        except Exception:
-            base = Path(".").resolve()
         json_path = base / "allergens.json"
         if json_path.exists():
             try:
@@ -244,29 +233,9 @@ class DataStore:
             return True
         except Exception:
             return False
-
-    def list_validades(self):
-        """
-        Legacy wrapper for :meth:`list_validade`.
-
-        Retained for backward compatibility with older code that expected
-        ``DataStore`` to expose ``list_validades``. Prefer
-        :meth:`list_validade` in new code.
         """
         return self.list_validade()
 
     def get_auxiliares_for(self, codigo):
-        """
-        Legacy wrapper for :meth:`read_auxiliares`.
-
-        Returns a tuple ``(tipo_id, validade_id, temperatura_id)``.
-        """
-        return self.read_auxiliares(codigo)
-
-    def save_auxiliares_for(self, codigo, tipo_id, val_id, temp_id):
-        """
-        Legacy wrapper for :meth:`write_auxiliares`.
-
-        Performs an upsert of the auxiliary information for ``codigo``.
         """
         return self.write_auxiliares(codigo, tipo_id, val_id, temp_id)

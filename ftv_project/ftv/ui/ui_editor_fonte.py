@@ -39,7 +39,6 @@ from PyQt5.QtWidgets import (
     QTableWidgetItem, QMessageBox, QScrollArea, QShortcut, QTextEdit, QCheckBox
 )
 from ftv.data.datastore import DataStore
-
 APP_TITLE = "Fichas Técnicas Valorizadas"
 DEV_OVERLAYS = True  # Ctrl+D alterna
 
@@ -151,7 +150,7 @@ class FTApp(QWidget):
 
     def _aux_load_selected(self, codigo):
         """Lê produto_auxiliar e posiciona os CBs sem disparar autosave."""
-        conn = getattr(self.ds, "conn", None)
+        conn = getattr(self.service, "conn", None)
         if not conn or not codigo:
             return
         cur = conn.cursor()
@@ -180,9 +179,9 @@ class FTApp(QWidget):
             cb.setCurrentIndex(target)
             cb.blockSignals(False)
 
-    def __init__(self, ds: DataStore):
+    def __init__(self, service: ProductService):
         super().__init__()
-        self.ds = ds
+        self.service = service
         self.cur_index = 0
         self._build_ui()
         self._connect_nav()
@@ -222,9 +221,9 @@ class FTApp(QWidget):
         # ligações básicas
         actReload.triggered.connect(lambda: self._load_record(self.cur_index))
         actUpdate.triggered.connect(lambda: QMessageBox.information(self, "Atualizar BD", "Integração de importação/atualização será ligada aqui."))
-        actTipos.triggered.connect(lambda: QMessageBox.information(self, "Tipos de Artigos", f"Ativos: {len(self.ds.list_tipos_artigos())-1}"))
-        actVal.triggered.connect(lambda: QMessageBox.information(self, "Validade", f"Ativos: {len(self.ds.list_validade())-1}"))
-        actTemps.triggered.connect(lambda: QMessageBox.information(self, "Temperaturas", f"Ativos: {len(self.ds.list_temperaturas())-1}"))
+        actTipos.triggered.connect(lambda: QMessageBox.information(self, "Tipos de Artigos", f"Ativos: {len(self.service.list_tipos_artigos())-1}"))
+        actVal.triggered.connect(lambda: QMessageBox.information(self, "Validade", f"Ativos: {len(self.service.list_validade())-1}"))
+        actTemps.triggered.connect(lambda: QMessageBox.information(self, "Temperaturas", f"Ativos: {len(self.service.list_temperaturas())-1}"))
         actTheme.triggered.connect(lambda: QMessageBox.information(self, "Tema", "Alternância de tema pendente."))
         top.addWidget(self.btMenu, 0, Qt.AlignRight)
         root.addLayout(top)
@@ -359,7 +358,7 @@ class FTApp(QWidget):
 
     # ---------- Alergénios grid ----------
     def _build_allergens_grid(self):
-        names = self.ds.list_active_allergens()
+        names = self.service.list_active_allergens()
         gridw = QWidget()
         grid = QGridLayout(gridw); grid.setContentsMargins(0,0,0,0); grid.setHorizontalSpacing(12); grid.setVerticalSpacing(6)
         cols = 2
@@ -387,26 +386,20 @@ class FTApp(QWidget):
         self.btFirst.clicked.connect(lambda: self._goto(0))
         self.btPrev.clicked.connect(lambda: self._go(-1))
         self.btNext.clicked.connect(lambda: self._go(+1))
-        self.btLast.clicked.connect(lambda: self._goto(self.ds.total()-1))
+        self.btLast.clicked.connect(lambda: self._goto(self.service.total()-1))
 
     def _goto(self, idx):
-        self.cur_index = max(0, min(idx, self.ds.total()-1))
+        self.cur_index = max(0, min(idx, self.service.total()-1))
         self._load_record(self.cur_index)
 
     def _go(self, delta):
-        self.cur_index = (self.cur_index + delta) % max(1, self.ds.total())
+        self.cur_index = (self.cur_index + delta) % max(1, self.service.total())
         self._load_record(self.cur_index)
 
     # ---------- Carregamento de dados ----------
     def _load_record(self, idx: int):
-        codigo = self.ds.codigo_at(idx) or "10001"
-        p = self.ds.get_produto_info(codigo)
-        self.edCodigo.setText(p.get("codigo",""))
-        self.edNome.setText(p.get("nome",""))
-        self.lbFamiliaVal.setText(p.get("familia",""))
-        self.lbSubFamiliaVal.setText(p.get("subfamilia",""))
         # PVPs
-        pvps = self.ds.get_pvps(codigo)
+        pvps = product.pvps
         values = [pvps.get("pvp1"), pvps.get("pvp2"), pvps.get("pvp3"), pvps.get("pvp4"), pvps.get("pvp5")]
         for i, val in enumerate(values):
             txt = "—" if val in (None, "",) else f"{float(val):.2f}"
@@ -418,17 +411,17 @@ class FTApp(QWidget):
         # Preencher combos a partir da BD (ou demo)
         self.cbTipos.addItems([])  # reset        # Tipos Artigos
         self.cbTipos.clear()
-        for cod, desc in self.ds.list_tipos_artigos():
+        for cod, desc in self.service.list_tipos_artigos():
             self.cbTipos.addItem(desc, cod)
 
         # Validade
         self.cbValidade.clear()
-        for cod, desc in self.ds.list_validade():
+        for cod, desc in self.service.list_validade():
             self.cbValidade.addItem(desc, cod)
 
         # Temperaturas
         self.cbTemp.clear()
-        for cod, desc in self.ds.list_temperaturas():
+        for cod, desc in self.service.list_temperaturas():
             self.cbTemp.addItem(desc, cod)
 
         # Pré-selecionar pelos FKs do produto (se existirem)
@@ -438,28 +431,22 @@ class FTApp(QWidget):
                 if combo.itemData(i) == code_value:
                     combo.setCurrentIndex(i); return
 
-        _select_by_code(self.cbTipos, p.get("tipo_artigo_cod"))
-        _select_by_code(self.cbValidade, p.get("validade_cod"))
-        _select_by_code(self.cbTemp, p.get("temperatura_cod"))
+        _select_by_code(self.cbTipos, product.tipo_artigo_cod)
+        _select_by_code(self.cbValidade, product.validade_cod)
+        _select_by_code(self.cbTemp, product.temperatura_cod)
 
         self.tbIng.setRowCount(0)
-        for row in data:
+        for ing in product.ingredients:
             r = self.tbIng.rowCount(); self.tbIng.insertRow(r)
             vals = [
-                str(row.get("nome","")),
-                str(row.get("qtd",0)),
-                str(row.get("unidade","")),
-                f'{row.get("ppu",0):.2f}',
-                f'{row.get("total",0):.2f}',
-                str(row.get("codigo","")),
             ]
             for c, val in enumerate(vals):
                 it = QTableWidgetItem(val); it.setFlags(Qt.ItemIsSelectable|Qt.ItemIsEnabled)
                 self.tbIng.setItem(r, c, it)
 
         self._apply_ingredient_widths()
-        self._update_costs_from_table()
-        self.lbPos.setText(f"{self.cur_index+1} / {max(1,self.ds.total())}")
+        self.edCustoTotal.setText(f"{self.service.calculate_cost(product):.2f}")
+        self.lbPos.setText(f"{self.cur_index+1} / {max(1,self.service.total())}")
 
 
         # --- Auxiliares: fetch/populate/load (canon) ---
@@ -472,15 +459,33 @@ class FTApp(QWidget):
             print(f"[AuxCanon][ERRO] {e}")
     # ---------- Cálculos ----------
     def _update_costs_from_table(self):
-        """Soma a coluna 'Total' (índice 4) da tabela de ingredientes e escreve em C3.A.A (edCustoTotal)."""
+        """Recalculate total cost using the service layer."""
         try:
-            total = 0.0
+            ingredients = []
             for r in range(self.tbIng.rowCount()):
-                it = self.tbIng.item(r, 4)
-                if not it: continue
-                s = it.text().strip().replace(",", ".")
-                try: total += float(s)
-                except ValueError: pass
+                def cell(col):
+                    it = self.tbIng.item(r, col)
+                    return it.text() if it else ""
+                def parse_f(s):
+                    try:
+                        return float(s.replace(",", "."))
+                    except Exception:
+                        return None
+                ingredients.append(
+                    Ingredient(
+                        name=cell(0),
+                        quantity=parse_f(cell(1)),
+                        unit=cell(2),
+                        unit_cost=parse_f(cell(3)),
+                        total_cost=parse_f(cell(4)),
+                    )
+                )
+            product = Product(
+                code=self.edCodigo.text().strip(),
+                name=self.edNome.text().strip(),
+                ingredients=ingredients,
+            )
+            total = calculate_cost(product)
             self.edCustoTotal.setText(f"{total:.2f}")
         except Exception:
             pass
@@ -512,7 +517,7 @@ class FTApp(QWidget):
             Retorna: {"tipo_artigo":[(id,nome)], "validade":[(id,nome)], "temperatura":[(id,nome)]}
             """
             out = {"tipo_artigo": [], "validade": [], "temperatura": []}
-            conn = getattr(self.ds, "conn", None)
+            conn = getattr(self.service, "conn", None)
             if not conn:
                 return out
             cur = conn.cursor()
@@ -684,7 +689,7 @@ class FTApp(QWidget):
             return
         sel = {"tipo_artigo": None, "validade": None, "temperatura": None}
         try:
-            cur = self.ds.conn.cursor()
+            cur = self.service.conn.cursor()
             cur.execute("SELECT tipo_artigo_id, validade_id, temperatura_id FROM produto_auxiliar WHERE produto_codigo=?", (codigo,))
             row = cur.fetchone()
             if row:
@@ -731,7 +736,7 @@ class FTApp(QWidget):
     def _aux_wire_autosave(self):
         def _aux_wire_autosave(self):
             """Liga currentIndexChanged para gravar em produto_auxiliar (só quando itemData é inteiro)."""
-            conn = getattr(self.ds, "conn", None)
+            conn = getattr(self.service, "conn", None)
             if not conn:
                 return
             try:
@@ -744,7 +749,7 @@ class FTApp(QWidget):
                     return
                 codigo = None
                 try:
-                    codigo = self.ds.codigo_at(self.cur_index)
+                    codigo = self.service.codigo_at(self.cur_index)
                 except Exception:
                     pass
                 if not codigo:
@@ -792,7 +797,7 @@ class FTApp(QWidget):
                 value = None if (idx <= 0 or data in (None, "", "—")) else data
                 # produto visível
                 try:
-                    codigo = self.ds.codigo_at(getattr(self, "cur_index", 0))
+                    codigo = self.service.codigo_at(getattr(self, "cur_index", 0))
                 except Exception:
                     codigo = None
                 if not codigo:
@@ -805,7 +810,7 @@ class FTApp(QWidget):
                 # grava
                 col = {"tipo_artigo":"tipo_artigo_id","validade":"validade_id","temperatura":"temperatura_id"}[kind]
                 try:
-                    cur = self.ds.conn.cursor()
+                    cur = self.service.conn.cursor()
                     if value is None:
                         cur.execute("INSERT INTO produto_auxiliar (produto_codigo) VALUES (?) ON CONFLICT(produto_codigo) DO NOTHING", (codigo,))
                         cur.execute(f"UPDATE produto_auxiliar SET {col}=NULL WHERE produto_codigo=?", (codigo,))
@@ -815,7 +820,7 @@ class FTApp(QWidget):
                             VALUES (?, ?)
                             ON CONFLICT(produto_codigo) DO UPDATE SET {col}=excluded.{col}
                         """, (codigo, int(value)))
-                    self.ds.conn.commit()
+                    self.service.conn.commit()
                 except Exception as e:
                     print(f"[AuxUI][ERRO] gravar {kind} p/{codigo}: {e}")
             cb.currentIndexChanged.connect(handler)
@@ -839,7 +844,7 @@ class FTApp(QWidget):
                 self._aux_populate_cbs()
                 res = orig(idx)
                 try:
-                    codigo = self.ds.codigo_at(getattr(self, "cur_index", 0))
+                    codigo = self.service.codigo_at(getattr(self, "cur_index", 0))
                 except Exception:
                     codigo = None
                 if codigo:
@@ -858,7 +863,8 @@ class FTApp(QWidget):
 def main():
     app = QApplication(sys.argv)
     ds = DataStore()
-    w = FTApp(ds)
+    svc = ProductService(ds)
+    w = FTApp(svc)
     w.show()
     sys.exit(app.exec_())
 
