@@ -51,8 +51,7 @@ def main():
         with conn:
             conn.executescript(sql)
         # Sanidade mínima: tabela existe?
-        cur = conn.execute(
-        )
+        cur = conn.execute()
         row = cur.fetchone()
         if not row:
             die(

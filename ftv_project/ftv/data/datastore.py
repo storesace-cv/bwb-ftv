@@ -94,8 +94,7 @@ class DataStore:
                     cur.execute("SELECT DISTINCT codigo FROM produtos ORDER BY codigo")
                     ids = [r[0] for r in cur.fetchall()]
                 except Exception:
-                    cur.execute(
-                    )
+                    cur.execute()
                     ids = [r[0] for r in cur.fetchall()]
             except Exception:
                 ids = []
@@ -214,8 +213,7 @@ class DataStore:
         if self.conn and not self.demo:
             try:
                 cur = self.conn.cursor()
-                cur.execute(
-                )
+                cur.execute()
                 rows = cur.fetchall()
                 result = []
                 for r in rows or []:
