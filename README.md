@@ -18,6 +18,16 @@ Para alterar o local da base de dados defina a variável de ambiente
 export FTV_DB_PATH=/caminho/para/custom.db
 ```
 
+## Importação de dados
+
+Os ficheiros Excel usados para carregar dados têm nomes fixos e **sensíveis a acentuação**. Certifique-se de que os seguintes ficheiros estão presentes com estes nomes exatos:
+
+- `FichasTecnicas_base.xlsx`
+- `PreçosTaxas_base.xlsx`
+- `Produtos_Base.xlsx`
+
+Qualquer alteração, incluindo remoção de acentos ou uso de maiúsculas diferentes, impedirá a importação.
+
 ## Troubleshooting
 
 Se o ficheiro da base de dados estiver ausente, a aplicação cria
