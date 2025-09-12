@@ -95,8 +95,6 @@ class DataStore:
                     ids = [r[0] for r in cur.fetchall()]
                 except Exception:
                     cur.execute(
-                        "SELECT DISTINCT produto_codigo FROM fichas_tecnicas "
-                        "ORDER BY produto_codigo"
                     )
                     ids = [r[0] for r in cur.fetchall()]
             except Exception:
@@ -217,8 +215,6 @@ class DataStore:
             try:
                 cur = self.conn.cursor()
                 cur.execute(
-                    "SELECT id, nome FROM alergenios "
-                    "WHERE COALESCE(ativo,1)=1 ORDER BY nome"
                 )
                 rows = cur.fetchall()
                 result = []

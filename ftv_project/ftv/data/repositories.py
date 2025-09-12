@@ -29,9 +29,6 @@ class ProdutosRepo:
             # Preferir ativo=1 se existir; escolher linha mais recente
             cur.execute(
                 "SELECT preco1_g, preco2_g FROM precos_taxas "
-                "WHERE codigo = ? AND (CASE WHEN EXISTS("
-                "SELECT 1 FROM pragma_table_info('precos_taxas') WHERE name='ativo') "
-                "THEN ativo=1 ELSE 1 END) ORDER BY rowid DESC LIMIT 1",
                 (codigo,),
             )
             r = cur.fetchone()
@@ -184,8 +181,6 @@ class IngredientesRepo:
                 sql = (
                     "SELECT "
                     + ", ".join(sel)
-                    + " FROM fichas_tecnicas WHERE produto_codigo = ? "
-                    + "ORDER BY COALESCE(ordem, rowid)"
                 )
                 cur.execute(sql, (codigo,))
                 rows = cur.fetchall()
@@ -229,8 +224,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "SELECT cod, descricao FROM tipos_artigos "
-                "WHERE ativo=1 ORDER BY descricao"
             )
             rows = cur.fetchall()
             return [(None, "—")] + [(r[0], r[1]) for r in rows]
@@ -241,8 +234,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "SELECT cod, descricao FROM validade "
-                "WHERE ativo=1 ORDER BY descricao"
             )
             rows = cur.fetchall()
             return [(None, "—")] + [(r[0], r[1]) for r in rows]
@@ -253,8 +244,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "SELECT cod, descricao FROM temperaturas "
-                "WHERE ativo=1 ORDER BY descricao"
             )
             rows = cur.fetchall()
             return [(None, "—")] + [(r[0], r[1]) for r in rows]
@@ -266,8 +255,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "SELECT cod, descricao, COALESCE(ativo,1) FROM tipos_artigos "
-                "ORDER BY descricao"
             )
             return [(r[0], r[1], r[2]) for r in cur.fetchall()]
         except Exception:
@@ -289,8 +276,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "UPDATE tipos_artigos SET descricao=? WHERE cod=?",
-                (descricao, cod),
             )
             self.conn.commit()
             return cur.rowcount > 0
@@ -301,8 +286,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "UPDATE tipos_artigos SET ativo=? WHERE cod=?",
-                (int(ativo), cod),
             )
             self.conn.commit()
             return cur.rowcount > 0
@@ -313,8 +296,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "SELECT cod, descricao, COALESCE(ativo,1) FROM validade "
-                "ORDER BY descricao"
             )
             return [(r[0], r[1], r[2]) for r in cur.fetchall()]
         except Exception:
@@ -324,8 +305,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "INSERT INTO validade (descricao, ativo) VALUES (?, 1)",
-                (descricao,),
             )
             self.conn.commit()
             return cur.lastrowid
@@ -360,8 +339,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "SELECT cod, descricao, COALESCE(ativo,1) FROM temperaturas "
-                "ORDER BY descricao"
             )
             return [(r[0], r[1], r[2]) for r in cur.fetchall()]
         except Exception:
@@ -383,8 +360,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "UPDATE temperaturas SET descricao=? WHERE cod=?",
-                (descricao, cod),
             )
             self.conn.commit()
             return cur.rowcount > 0
@@ -395,8 +370,6 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "UPDATE temperaturas SET ativo=? WHERE cod=?",
-                (int(ativo), cod),
             )
             self.conn.commit()
             return cur.rowcount > 0

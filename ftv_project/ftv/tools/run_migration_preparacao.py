@@ -52,15 +52,11 @@ def main():
             conn.executescript(sql)
         # Sanidade mínima: tabela existe?
         cur = conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND "
-            "name='produto_preparacao'"
         )
         row = cur.fetchone()
         if not row:
             die(
                 3,
-                "Migração correu sem erro aparente, mas a tabela "
-                "'produto_preparacao' não foi criada.",
             )
         logger.info("[MIGRAÇÃO] Sucesso. Tabela 'produto_preparacao' pronta.")
     except sqlite3.Error as e:
