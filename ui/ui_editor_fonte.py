@@ -329,8 +329,8 @@ class FTApp(QWidget):
         self.btMenu.setPopupMode(QToolButton.InstantPopup)
         self.mnuRoot = QMenu(self)
         mBD = QMenu("Base de Dados", self.mnuRoot)
-        actUpdate = QAction("Atualizar BD", self)
-        actReload = QAction("Recarregar Dados", self)
+        actUpdate = QAction("Atualizar Dados", self)
+        actReload = QAction("Importar Dados", self)
         mBD.addAction(actUpdate)
         mBD.addAction(actReload)
         self.mnuRoot.addMenu(mBD)
@@ -352,8 +352,8 @@ class FTApp(QWidget):
         actUpdate.triggered.connect(
             lambda: QMessageBox.information(
                 self,
-                "Atualizar BD",
-                "Integração de importação/atualização será ligada aqui.",
+                "Atualizar Dados",
+                "Integração de importação/atualização de dados será ligada aqui.",
             )
         )
         actTipos.triggered.connect(
