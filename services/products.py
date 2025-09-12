@@ -162,24 +162,12 @@ def import_from_excel(path: str, ds: DataStore | None = None) -> None:
             _import_single_excel(base, ds)
             return
 
-    # Resolve expected file names (handle possible Unicode normalisation of
-    # "Preços").
-    precos_candidates = [
-        "PreçosTaxas_base.xlsx",
-        "PreçosTaxas_base.xlsx",
-        "PrecosTaxas_base.xlsx",
-    ]
     files = {
         "produtos": base / "Produtos_Base.xlsx",
         "fichas_tecnicas": base / "FichasTecnicas_base.xlsx",
-        "precos_taxas": None,
+        "precos_taxas": base / "PreçosTaxas_base.xlsx",
     }
-    for cand in precos_candidates:
-        p = base / cand
-        if p.exists():
-            files["precos_taxas"] = p
-            break
-    if files["precos_taxas"] is None:
+    if not files["precos_taxas"].exists():
         raise FileNotFoundError("PreçosTaxas_base.xlsx not found")
 
     for fp in files.values():
@@ -270,22 +258,12 @@ def update_from_excel(path: str, ds: DataStore | None = None) -> None:
             _update_from_excel(base, ds)
             return
 
-    precos_candidates = [
-        "PreçosTaxas_base.xlsx",
-        "PreçosTaxas_base.xlsx",
-        "PrecosTaxas_base.xlsx",
-    ]
     files = {
         "produtos": base / "Produtos_Base.xlsx",
         "fichas_tecnicas": base / "FichasTecnicas_base.xlsx",
-        "precos_taxas": None,
+        "precos_taxas": base / "PreçosTaxas_base.xlsx",
     }
-    for cand in precos_candidates:
-        p = base / cand
-        if p.exists():
-            files["precos_taxas"] = p
-            break
-    if files["precos_taxas"] is None:
+    if not files["precos_taxas"].exists():
         raise FileNotFoundError("PreçosTaxas_base.xlsx not found")
 
     for fp in files.values():
