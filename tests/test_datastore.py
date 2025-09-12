@@ -92,3 +92,21 @@ def test_context_manager_closes_connection():
     # connection is closed after context
     with pytest.raises(sqlite3.ProgrammingError):
         conn.execute("SELECT 1")
+
+
+def test_datastore_connect_failure_raises(tmp_path):
+    bad_path = tmp_path / "no" / "db" / "ftv.db"
+    with pytest.raises(sqlite3.Error):
+        DataStore(db_path=str(bad_path))
+
+
+def test_get_produto_info_repo_error(caplog):
+    class BadRepo:
+        def get_info(self, _codigo):
+            raise sqlite3.OperationalError("boom")
+
+    ds = DataStore(db_path=":memory:")
+    ds.produtos = BadRepo()
+    with caplog.at_level(logging.ERROR):
+        assert ds.get_produto_info("X") == {}
+    assert any("boom" in r.message for r in caplog.records)

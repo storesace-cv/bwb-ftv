@@ -2,6 +2,8 @@
 """Data access layer for the FTV project."""
 
 import logging
+import sqlite3
+import json
 
 from ..utils import get_project_root
 
@@ -25,8 +27,6 @@ class DataStore:
     """
 
     def __init__(self, db_path=None, demo: bool = False):
-        import sqlite3
-
         self.demo = bool(demo)
 
         # Caminho default: raiz do projeto /databases/ftv.db
@@ -38,11 +38,9 @@ class DataStore:
             try:
                 self.conn = sqlite3.connect(db_path)
                 self.conn.row_factory = sqlite3.Row
-            except Exception as e:
-                logger.warning(
-                    "[DataStore][AVISO] Falha a ligar à BD '%s': %s", db_path, e
-                )
-                self.conn = None
+            except sqlite3.Error as exc:
+                logger.error("[DataStore] Falha a ligar à BD '%s': %s", db_path, exc)
+                raise
 
         # Repositórios
         self.produtos = None
@@ -62,15 +60,15 @@ class DataStore:
                 self.ingredientes = IngredientesRepo(self.conn)
                 self.aux = AuxiliaresRepo(self.conn)
                 self.prep = PreparacaoRepo(self.conn)
-        except Exception as e:
-            logger.warning("[DataStore][AVISO] Falha a instanciar repositórios: %s", e)
+        except (ImportError, sqlite3.Error) as exc:
+            logger.error("[DataStore] Falha a instanciar repositórios: %s", exc)
 
         # Cache de códigos
         self._ids = []
         try:
             self.reload_ids()
-        except Exception as e:
-            logger.warning("[DataStore][AVISO] reload_ids falhou: %s", e)
+        except sqlite3.Error as exc:
+            logger.error("[DataStore] reload_ids falhou: %s", exc)
             self._ids = []
 
     def close(self):
@@ -79,8 +77,8 @@ class DataStore:
         if conn is not None:
             try:
                 conn.close()
-            except Exception as e:
-                logger.warning("[DataStore][AVISO] Falha a fechar a BD: %s", e)
+            except sqlite3.Error as exc:
+                logger.warning("[DataStore] Falha a fechar a BD: %s", exc)
             finally:
                 self.conn = None
 
@@ -107,7 +105,8 @@ class DataStore:
                 ids = self.produtos.listar_codigos() or []
                 if ids:
                     source = "repositorio"
-            except Exception:
+            except sqlite3.Error as exc:
+                logger.error("[DataStore] listar_codigos falhou: %s", exc)
                 ids = []
         # 2) fallback direto à BD
         if not ids and self.conn:
@@ -117,14 +116,16 @@ class DataStore:
                     cur.execute("SELECT DISTINCT codigo FROM produtos ORDER BY codigo")
                     ids = [r[0] for r in cur.fetchall()]
                     source = "produtos"
-                except Exception:
+                except sqlite3.Error as exc:
+                    logger.warning("[DataStore] fallback para fichas_tecnicas: %s", exc)
                     cur.execute(
                         "SELECT DISTINCT produto_codigo FROM fichas_tecnicas "
                         "ORDER BY produto_codigo"
                     )
                     ids = [r[0] for r in cur.fetchall()]
                     source = "fichas_tecnicas"
-            except Exception:
+            except sqlite3.Error as exc:
+                logger.error("[DataStore] reload_ids falhou na BD: %s", exc)
                 ids = []
         if source:
             logger.info("[DataStore] reload_ids: códigos via %s", source)
@@ -149,7 +150,8 @@ class DataStore:
             return {}
         try:
             return self.produtos.get_info(codigo)
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[DataStore] get_produto_info(%s) falhou: %s", codigo, exc)
             return {}
 
     def get_pvps(self, codigo: str):
@@ -163,7 +165,8 @@ class DataStore:
             }
         try:
             return self.produtos.get_pvps(codigo)
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[DataStore] get_pvps(%s) falhou: %s", codigo, exc)
             return {
                 "pvp1": None,
                 "pvp2": None,
@@ -177,7 +180,8 @@ class DataStore:
             return []
         try:
             return self.ingredientes.listar_por_produto(codigo)
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[DataStore] get_ingredientes(%s) falhou: %s", codigo, exc)
             return []
 
     # Auxiliares (combos na UI)
@@ -186,7 +190,8 @@ class DataStore:
             return [(None, "—")]
         try:
             return self.aux.list_tipos_artigos()
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[DataStore] list_tipos_artigos falhou: %s", exc)
             return [(None, "—")]
 
     def list_validade(self):
@@ -194,7 +199,8 @@ class DataStore:
             return [(None, "—")]
         try:
             return self.aux.list_validade()
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[DataStore] list_validade falhou: %s", exc)
             return [(None, "—")]
 
     def list_validades(self):
@@ -206,7 +212,8 @@ class DataStore:
             return [(None, "—")]
         try:
             return self.aux.list_temperaturas()
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[DataStore] list_temperaturas falhou: %s", exc)
             return [(None, "—")]
 
     # Preparação (B4)
@@ -215,7 +222,8 @@ class DataStore:
             return ""
         try:
             return self.prep.get_html(codigo)
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[DataStore] get_preparacao_html(%s) falhou: %s", codigo, exc)
             return ""
 
     def save_preparacao_html(self, codigo: str, html: str) -> None:
@@ -223,8 +231,8 @@ class DataStore:
             return None
         try:
             self.prep.upsert_html(codigo, html)
-        except Exception:
-            pass
+        except sqlite3.Error as exc:
+            logger.error("[DataStore] save_preparacao_html(%s) falhou: %s", codigo, exc)
 
     # Alergénios ativos: lista de tuplos (id, nome)
     def list_active_allergens(self):
@@ -250,10 +258,10 @@ class DataStore:
                     try:
                         rid = r["id"] if hasattr(r, "keys") else r[0]
                         nm = r["nome"] if hasattr(r, "keys") else r[1]
-                    except Exception:
+                    except (KeyError, IndexError, TypeError):
                         try:
                             rid, nm = r[0], r[1]
-                        except Exception:
+                        except (IndexError, TypeError):
                             rid, nm = None, None
                     if nm is not None and str(nm).strip():
                         try:
@@ -262,7 +270,7 @@ class DataStore:
                                 if rid is not None and str(rid).strip() != ""
                                 else None
                             )
-                        except Exception:
+                        except (ValueError, TypeError):
                             rid_int = None
                         result.append(
                             (
@@ -272,15 +280,13 @@ class DataStore:
                         )
                 if result:
                     return result
-            except Exception:
-                pass
+            except sqlite3.Error as exc:
+                logger.error("[DataStore] list_active_allergens BD falhou: %s", exc)
 
         # 2) JSON
         json_path = base / "allergens.json"
         if json_path.exists():
             try:
-                import json
-
                 data = json.loads(json_path.read_text(encoding="utf-8"))
                 payload = (
                     data.get("alergenios")
@@ -305,7 +311,7 @@ class DataStore:
                                         if rid is not None and str(rid).strip() != ""
                                         else idx
                                     )
-                                except Exception:
+                                except (ValueError, TypeError):
                                     rid_int = idx
                                 tmp.append((rid_int, str(nm).strip()))
                     # remover duplicados por nome (case-insensitive), mantendo ordem
@@ -318,8 +324,8 @@ class DataStore:
                 if items:
                     # normalizar ids sequenciais 1..N mantendo ordem
                     return [(i + 1, nm) for i, (_, nm) in enumerate(items)]
-            except Exception:
-                pass
+            except (json.JSONDecodeError, OSError, TypeError, ValueError) as exc:
+                logger.error("[DataStore] list_active_allergens JSON falhou: %s", exc)
 
         # 3) Padrão
         default = [
@@ -350,7 +356,10 @@ class DataStore:
             return (None, None, None)
         try:
             return self.aux.get_produto_auxiliares(codigo)
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error(
+                "[DataStore] get_produto_auxiliares(%s) falhou: %s", codigo, exc
+            )
             return (None, None, None)
 
     def _write_auxiliares(
@@ -368,7 +377,10 @@ class DataStore:
                 codigo, tipo_id, validade_id, temperatura_id
             )
             return True
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error(
+                "[DataStore] set_produto_auxiliares(%s) falhou: %s", codigo, exc
+            )
             return False
 
     def get_auxiliares_for(self, codigo: str):
