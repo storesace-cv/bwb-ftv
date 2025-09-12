@@ -223,7 +223,7 @@ class DataStore:
         if self.conn and not self.demo:
             try:
                 cur = self.conn.cursor()
-                cur.execute()
+                cur.execute("SELECT id, nome FROM alergenios WHERE ativo=1 ORDER BY id")
                 rows = cur.fetchall()
                 result = []
                 for r in rows or []:

@@ -1,4 +1,5 @@
 import logging
+import json
 
 from ftv.data.datastore import DataStore
 from ftv.data.repositories import AuxiliaresRepo
@@ -47,3 +48,36 @@ def test_reload_ids_fallback_to_fichas_tecnicas(caplog):
     assert ds.total() == 2
     assert ds._ids == ["F1", "F2"]
     assert any("fichas_tecnicas" in r.message for r in caplog.records)
+
+
+def test_list_active_allergens_db():
+    ds = DataStore(db_path=":memory:")
+    cur = ds.conn.cursor()
+    cur.execute("CREATE TABLE alergenios (id INTEGER, nome TEXT, ativo INTEGER)")
+    cur.executemany(
+        "INSERT INTO alergenios (id, nome, ativo) VALUES (?, ?, ?)",
+        [(2, "A", 1), (1, "B", 1), (3, "C", 0)],
+    )
+    ds.conn.commit()
+    assert ds.list_active_allergens() == [(1, "B"), (2, "A")]
+
+
+def test_list_active_allergens_json(tmp_path, monkeypatch):
+    import ftv.data.datastore as ds_module
+
+    monkeypatch.setattr(ds_module, "base", tmp_path)
+    (tmp_path / "allergens.json").write_text(
+        json.dumps({"alergenios": ["A", "B"]}), encoding="utf-8"
+    )
+    ds = ds_module.DataStore(demo=True)
+    assert ds.list_active_allergens() == [(1, "A"), (2, "B")]
+
+
+def test_list_active_allergens_default(tmp_path, monkeypatch):
+    import ftv.data.datastore as ds_module
+
+    monkeypatch.setattr(ds_module, "base", tmp_path)
+    ds = ds_module.DataStore(demo=True)
+    items = ds.list_active_allergens()
+    assert len(items) == 14
+    assert items[0] == (1, "Glúten")
