@@ -57,6 +57,9 @@ def configure_logging():
     root = get_project_root()
     log_dir = root / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
+    # ensure import directories exist alongside logging setup
+    imports_dir = root / "imports"
+    (imports_dir / "history").mkdir(parents=True, exist_ok=True)
     log_file = log_dir / "ftv.log"
 
     handlers = [

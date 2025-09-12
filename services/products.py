@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 from typing import Iterable, List
 import unicodedata
@@ -10,6 +11,7 @@ from openpyxl import load_workbook
 
 from data.datastore import DataStore
 from domain import Product, Ingredient
+from utils.paths import get_project_root
 
 
 class ProductService:
@@ -55,20 +57,15 @@ class ProductService:
         return calculate_cost(ingredients)
 
     # -- bulk import ------------------------------------------------------
-    def import_from_excel(self, path: str) -> None:
-        """Import data from Excel files located at ``path``.
+    def import_from_excel(self) -> None:
+        """Import data from Excel files located in the project ``imports`` folder."""
 
-        This simply proxies to :func:`import_from_excel` using the instance's
-        :class:`~data.datastore.DataStore`.
-        """
-        import_from_excel(path, self.ds)
+        import_from_excel(self.ds)
 
-    def update_from_excel(self, path: str) -> None:
-        """Update existing products from a spreadsheet.
+    def update_from_excel(self) -> None:
+        """Update existing products from spreadsheets in the ``imports`` folder."""
 
-        Rows are upserted into the ``produtos`` table based on ``codigo``.
-        """
-        update_from_excel(path, self.ds)
+        update_from_excel(self.ds)
 
 
 def get_product_info(ds: DataStore, codigo: str) -> Product:
@@ -124,56 +121,29 @@ def calculate_cost(ingredients: Iterable[Ingredient]) -> float:
     return total
 
 
-def import_from_excel(path: str, ds: DataStore | None = None) -> None:
-    """Import product data from a set of Excel files.
+def import_from_excel(ds: DataStore | None = None) -> None:
+    """Import product data from Excel files in ``<root>/imports``.
 
-    Parameters
-    ----------
-    path:
-        Directory containing the Excel files ``FichasTecnicas_base.xlsx``,
-        ``PreçosTaxas_base.xlsx`` and ``Produtos_Base.xlsx``.
-    ds:
-        Optional :class:`DataStore` to operate on. When omitted a new
-        instance is created with default parameters.
-
-    Existing data from ``produtos`` and ``fichas_tecnicas`` is cleared before
-    loading the rows from the Excel files.  Price information from
-    ``PreçosTaxas_base.xlsx`` is merged into the ``produtos`` table (columns
-    ``preco1_g``, ``preco2_g`` and ``iva``).  Afterwards ``ds.reload_ids()`` is
-    invoked so that any cached product codes are refreshed.
+    The directory must contain ``FichasTecnicas_base.xlsx``,
+    ``PreçosTaxas_base.xlsx`` and ``Produtos_Base.xlsx``. Existing data in
+    ``produtos`` and ``fichas_tecnicas`` tables is cleared before loading the
+    new rows. Price information is merged from ``PreçosTaxas_base.xlsx``.
     """
 
-    base = Path(path)
-    if not base.exists():
-        raise FileNotFoundError(path)
-
-    # Accept passing the direct path to one of the files; in that case use
-    # its parent directory as the base folder.
-    if base.is_file():
-        if base.suffix.lower() != ".xlsx":
-            raise ValueError("path must have a .xlsx extension")
-        # If the parent directory does not contain the expected base files,
-        # treat this as the simple import case where ``path`` points directly
-        # to a file with product information.
-        parent = base.parent
-        prod_file = parent / "Produtos_Base.xlsx"
-        if prod_file.exists():
-            base = parent
-        else:
-            _import_single_excel(base, ds)
-            return
+    base = get_project_root() / "imports"
+    history_dir = base / "history"
+    base.mkdir(parents=True, exist_ok=True)
+    history_dir.mkdir(parents=True, exist_ok=True)
 
     files = {
         "produtos": base / "Produtos_Base.xlsx",
         "fichas_tecnicas": base / "FichasTecnicas_base.xlsx",
         "precos_taxas": base / "PreçosTaxas_base.xlsx",
     }
-    if not files["precos_taxas"].exists():
-        raise FileNotFoundError("PreçosTaxas_base.xlsx not found")
-
+    missing = [fp.name for fp in files.values() if not fp.exists()]
+    if missing:
+        raise FileNotFoundError("Missing import files: " + ", ".join(sorted(missing)))
     for fp in files.values():
-        if not fp.exists():
-            raise FileNotFoundError(str(fp))
         if fp.suffix.lower() != ".xlsx":
             raise ValueError(f"{fp} is not an .xlsx file")
 
@@ -187,7 +157,6 @@ def import_from_excel(path: str, ds: DataStore | None = None) -> None:
         try:
             cur.execute(f"DELETE FROM {tbl}")
         except Exception:
-            # Table might not exist; ignore silently for resilience
             pass
     conn.commit()
 
@@ -213,7 +182,6 @@ def import_from_excel(path: str, ds: DataStore | None = None) -> None:
             return
         db_cols = _table_columns(table)
         if table == "fichas_tecnicas":
-            # Planilhas antigas podem usar 'custo'; mapear para 'total'
             if "total" in db_cols and "total" not in headers and "custo" in headers:
                 headers = ["total" if h == "custo" else h for h in headers]
             elif "custo" in db_cols and "custo" not in headers and "total" in headers:
@@ -315,44 +283,28 @@ def import_from_excel(path: str, ds: DataStore | None = None) -> None:
     conn.commit()
     ds.reload_ids()
 
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    for fp in files.values():
+        fp.rename(history_dir / f"{fp.name}.{timestamp}")
 
-def update_from_excel(path: str, ds: DataStore | None = None) -> None:
-    """Update product data from Excel files.
 
-    ``path`` can point to a directory containing the three base files or to a
-    single spreadsheet with product information.  When a simple spreadsheet is
-    provided only the ``produtos`` table is affected.  In the base files case
-    rows are upserted into ``produtos`` (including price columns from
-    ``PreçosTaxas_base.xlsx``) and the ``fichas_tecnicas`` table is
-    synchronised per product.
-    """
+def update_from_excel(ds: DataStore | None = None) -> None:
+    """Update product data from Excel files in ``<root>/imports``."""
 
-    base = Path(path)
-    if not base.exists():
-        raise FileNotFoundError(path)
-
-    if base.is_file():
-        if base.suffix.lower() != ".xlsx":
-            raise ValueError("path must have a .xlsx extension")
-        parent = base.parent
-        prod_file = parent / "Produtos_Base.xlsx"
-        if prod_file.exists():
-            base = parent
-        else:
-            _update_from_excel(base, ds)
-            return
+    base = get_project_root() / "imports"
+    history_dir = base / "history"
+    base.mkdir(parents=True, exist_ok=True)
+    history_dir.mkdir(parents=True, exist_ok=True)
 
     files = {
         "produtos": base / "Produtos_Base.xlsx",
         "fichas_tecnicas": base / "FichasTecnicas_base.xlsx",
         "precos_taxas": base / "PreçosTaxas_base.xlsx",
     }
-    if not files["precos_taxas"].exists():
-        raise FileNotFoundError("PreçosTaxas_base.xlsx not found")
-
+    missing = [fp.name for fp in files.values() if not fp.exists()]
+    if missing:
+        raise FileNotFoundError("Missing import files: " + ", ".join(sorted(missing)))
     for fp in files.values():
-        if not fp.exists():
-            raise FileNotFoundError(str(fp))
         if fp.suffix.lower() != ".xlsx":
             raise ValueError(f"{fp} is not an .xlsx file")
 
@@ -383,7 +335,6 @@ def update_from_excel(path: str, ds: DataStore | None = None) -> None:
             return
         db_cols = _table_columns(table)
         if table == "fichas_tecnicas":
-            # Sincronizar nomenclaturas 'custo'/'total'
             if "total" in db_cols and "total" not in headers and "custo" in headers:
                 headers = ["total" if h == "custo" else h for h in headers]
             elif "custo" in db_cols and "custo" not in headers and "total" in headers:
@@ -511,6 +462,10 @@ def update_from_excel(path: str, ds: DataStore | None = None) -> None:
     _merge_prices(files["precos_taxas"])
     conn.commit()
     ds.reload_ids()
+
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    for fp in files.values():
+        fp.rename(history_dir / f"{fp.name}.{timestamp}")
 
 
 def _import_single_excel(path: Path, ds: DataStore | None) -> None:

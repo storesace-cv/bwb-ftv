@@ -1,20 +1,20 @@
+import shutil
 import pytest
 from openpyxl import Workbook
 
 from data.datastore import DataStore
 from services.products import ProductService
+from utils.paths import get_project_root
 
 
 @pytest.fixture
 def ds():
     ds = DataStore(":memory:")
     conn = ds.conn
-    # Minimal schema for products with price columns
     conn.execute(
         "CREATE TABLE produtos (codigo TEXT PRIMARY KEY, nome TEXT, "
         "preco1_g REAL, preco2_g REAL, iva REAL)"
     )
-    # Ingredients table (may be unused but keeps schema closer to real)
     conn.execute(
         "CREATE TABLE fichas_tecnicas (produto_codigo TEXT, "
         "componente_nome TEXT, qtd REAL, unidade TEXT, "
@@ -23,30 +23,25 @@ def ds():
     return ds
 
 
-def _write_import_excel(path):
-    wb = Workbook()
-    ws = wb.active
-    ws.append(["codigo", "nome"])
-    ws.append(["P1", "Produto 1"])
-    ws.append(["P2", "Produto 2"])
-    wb.save(path)
+@pytest.fixture
+def imports_dir():
+    base = get_project_root() / "imports"
+    if base.exists():
+        shutil.rmtree(base)
+    base.mkdir(parents=True, exist_ok=True)
+    (base / "history").mkdir(exist_ok=True)
+    yield base
+    shutil.rmtree(base, ignore_errors=True)
 
 
-def _write_update_excel(path):
-    wb = Workbook()
-    ws = wb.active
-    ws.append(["codigo", "nome"])
-    ws.append(["P1", "Produto 1 updated"])
-    ws.append(["P3", "Produto 3"])
-    wb.save(path)
-
-
-def _write_base_files(base_dir, code_header="codigo", price=1.0):
-    """Create base import/update files, allowing custom code header."""
+def _write_base_files(base_dir, products=None, code_header="codigo", price=1.0):
+    if products is None:
+        products = [("P1", "Produto 1")]
     prod_wb = Workbook()
     ws = prod_wb.active
     ws.append(["codigo", "nome"])
-    ws.append(["P1", "Produto 1"])
+    for code, name in products:
+        ws.append([code, name])
     prod_wb.save(base_dir / "Produtos_Base.xlsx")
 
     ft_wb = Workbook()
@@ -57,128 +52,118 @@ def _write_base_files(base_dir, code_header="codigo", price=1.0):
     prec_wb = Workbook()
     ws = prec_wb.active
     ws.append([code_header, "preco1_g"])
-    ws.append(["P1", price])
+    ws.append([products[0][0], price])
     prec_wb.save(base_dir / "PreçosTaxas_base.xlsx")
 
 
-def test_import_from_excel_replaces_database(ds, tmp_path):
-    # Prepopulate with stale data
+def test_import_from_excel_replaces_database(ds, imports_dir):
     ds.conn.execute("INSERT INTO produtos (codigo, nome) VALUES ('OLD', 'Old')")
     ds.reload_ids()
     svc = ProductService(ds)
-    excel_path = tmp_path / "import.xlsx"
-    _write_import_excel(excel_path)
-
-    svc.import_from_excel(str(excel_path))
+    _write_base_files(imports_dir, products=[("P1", "Produto 1"), ("P2", "Produto 2")])
+    svc.import_from_excel()
     ds.reload_ids()
 
     assert ds.total() == 2
     assert ds.get_produto_info("OLD") == {}
     assert ds.get_produto_info("P1")["nome"] == "Produto 1"
     assert ds.get_produto_info("P2")["nome"] == "Produto 2"
+    assert not (imports_dir / "Produtos_Base.xlsx").exists()
+    hist = {p.name for p in (imports_dir / "history").iterdir()}
+    assert any(name.startswith("Produtos_Base.xlsx") for name in hist)
 
 
-def test_update_from_excel_updates_and_inserts(ds, tmp_path):
+def test_update_from_excel_updates_and_inserts(ds, imports_dir):
     ds.conn.executemany(
         "INSERT INTO produtos (codigo, nome) VALUES (?, ?)",
         [("P1", "Produto 1"), ("P2", "Produto 2")],
     )
     ds.reload_ids()
     svc = ProductService(ds)
-    excel_path = tmp_path / "update.xlsx"
-    _write_update_excel(excel_path)
-
-    svc.update_from_excel(str(excel_path))
+    _write_base_files(
+        imports_dir,
+        products=[("P1", "Produto 1 updated"), ("P3", "Produto 3")],
+    )
+    svc.update_from_excel()
     ds.reload_ids()
 
     assert ds.total() == 3
     assert ds.get_produto_info("P1")["nome"] == "Produto 1 updated"
     assert ds.get_produto_info("P2")["nome"] == "Produto 2"
     assert ds.get_produto_info("P3")["nome"] == "Produto 3"
+    assert not (imports_dir / "Produtos_Base.xlsx").exists()
 
 
-def test_import_from_excel_missing_file(ds):
+def test_import_from_excel_missing_file(ds, imports_dir):
+    _write_base_files(imports_dir)
+    (imports_dir / "PreçosTaxas_base.xlsx").unlink()
     svc = ProductService(ds)
     with pytest.raises(FileNotFoundError):
-        svc.import_from_excel("/no/such/file.xlsx")
+        svc.import_from_excel()
 
 
-def test_import_from_excel_invalid_format(ds, tmp_path):
-    svc = ProductService(ds)
-    fake = tmp_path / "fake.txt"
-    fake.write_text("not excel")
-    with pytest.raises(ValueError):
-        svc.import_from_excel(str(fake))
-
-
-def test_update_from_excel_missing_file(ds):
+def test_update_from_excel_missing_file(ds, imports_dir):
+    _write_base_files(imports_dir)
+    (imports_dir / "FichasTecnicas_base.xlsx").unlink()
     svc = ProductService(ds)
     with pytest.raises(FileNotFoundError):
-        svc.update_from_excel("/no/such/file.xlsx")
+        svc.update_from_excel()
 
 
-def test_update_from_excel_invalid_format(ds, tmp_path):
+def test_import_from_excel_uses_produto_codigo(ds, imports_dir):
+    _write_base_files(imports_dir, code_header="produto_codigo", price=2.5)
     svc = ProductService(ds)
-    fake = tmp_path / "fake.txt"
-    fake.write_text("not excel")
-    with pytest.raises(ValueError):
-        svc.update_from_excel(str(fake))
-
-
-def test_import_from_excel_uses_produto_codigo(ds, tmp_path):
-    _write_base_files(tmp_path, code_header="produto_codigo", price=2.5)
-    svc = ProductService(ds)
-    svc.import_from_excel(str(tmp_path))
+    svc.import_from_excel()
     info = ds.get_produto_info("P1")
     assert info["preco1_g"] == 2.5
 
 
-def test_update_from_excel_uses_produto_codigo(ds, tmp_path):
+def test_update_from_excel_uses_produto_codigo(ds, imports_dir):
     ds.conn.execute(
         "INSERT INTO produtos (codigo, nome, preco1_g) VALUES ('P1', 'X', 1.0)"
     )
     ds.reload_ids()
-    _write_base_files(tmp_path, code_header="produto_codigo", price=3.0)
+    _write_base_files(imports_dir, code_header="produto_codigo", price=3.0)
     svc = ProductService(ds)
-    svc.update_from_excel(str(tmp_path))
+    svc.update_from_excel()
     info = ds.get_produto_info("P1")
     assert info["preco1_g"] == 3.0
 
 
 @pytest.mark.parametrize("func", ["import_from_excel", "update_from_excel"])
-def test_preco_taxas_requires_codigo(ds, tmp_path, func):
-    _write_base_files(tmp_path, code_header="wrong")
+def test_preco_taxas_requires_codigo(ds, imports_dir, func):
+    _write_base_files(imports_dir, code_header="wrong")
     svc = ProductService(ds)
     with pytest.raises(ValueError):
-        getattr(svc, func)(str(tmp_path))
+        getattr(svc, func)()
 
 
-def test_import_maps_custo_to_total(ds, tmp_path):
+def test_import_maps_custo_to_total(ds, imports_dir):
     prod = Workbook()
     ws = prod.active
     ws.append(["codigo", "nome"])
     ws.append(["P1", "Produto 1"])
-    prod.save(tmp_path / "Produtos_Base.xlsx")
+    prod.save(imports_dir / "Produtos_Base.xlsx")
 
     ft = Workbook()
     ws = ft.active
     ws.append(["produto_codigo", "componente_nome", "qtd", "unidade", "ppu", "custo"])
     ws.append(["P1", "Ing", 2, "Kg", 3, 6])
-    ft.save(tmp_path / "FichasTecnicas_base.xlsx")
+    ft.save(imports_dir / "FichasTecnicas_base.xlsx")
 
     prec = Workbook()
     ws = prec.active
     ws.append(["codigo", "preco1_g"])
     ws.append(["P1", 1])
-    prec.save(tmp_path / "PreçosTaxas_base.xlsx")
+    prec.save(imports_dir / "PreçosTaxas_base.xlsx")
 
     svc = ProductService(ds)
-    svc.import_from_excel(str(tmp_path))
+    svc.import_from_excel()
     ing = ds.get_ingredientes("P1")[0]
     assert ing["total"] == 6
 
 
-def test_update_maps_custo_to_total(ds, tmp_path):
+def test_update_maps_custo_to_total(ds, imports_dir):
     ds.conn.execute("INSERT INTO produtos (codigo, nome) VALUES ('P1', 'Prod')")
     ds.conn.execute(
         "INSERT INTO fichas_tecnicas "
@@ -191,21 +176,21 @@ def test_update_maps_custo_to_total(ds, tmp_path):
     ws = prod.active
     ws.append(["codigo", "nome"])
     ws.append(["P1", "Prod"])
-    prod.save(tmp_path / "Produtos_Base.xlsx")
+    prod.save(imports_dir / "Produtos_Base.xlsx")
 
     ft = Workbook()
     ws = ft.active
     ws.append(["produto_codigo", "componente_nome", "qtd", "unidade", "ppu", "custo"])
     ws.append(["P1", "Ing", 3, "Kg", 2, 7])
-    ft.save(tmp_path / "FichasTecnicas_base.xlsx")
+    ft.save(imports_dir / "FichasTecnicas_base.xlsx")
 
     prec = Workbook()
     ws = prec.active
     ws.append(["codigo", "preco1_g"])
     ws.append(["P1", 1])
-    prec.save(tmp_path / "PreçosTaxas_base.xlsx")
+    prec.save(imports_dir / "PreçosTaxas_base.xlsx")
 
     svc = ProductService(ds)
-    svc.update_from_excel(str(tmp_path))
+    svc.update_from_excel()
     ing = ds.get_ingredientes("P1")[0]
     assert ing["total"] == 7
