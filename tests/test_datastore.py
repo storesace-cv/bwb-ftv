@@ -172,33 +172,6 @@ def test_datastore_creates_empty_db(tmp_path, monkeypatch):
     assert names >= {"produtos", "fichas_tecnicas"}
 
 
-def test_datastore_imports_demo_sql(tmp_path, monkeypatch):
-    _stub_dialog(monkeypatch, "Base demo")
-    import data.datastore as ds_module
-
-    monkeypatch.setattr(ds_module, "base", tmp_path)
-    data_dir = tmp_path / "data"
-    db_dir = tmp_path / "databases"
-    data_dir.mkdir()
-    db_dir.mkdir()
-    (data_dir / "schema.sql").write_text(
-        "CREATE TABLE produtos (codigo TEXT PRIMARY KEY);"
-        "CREATE TABLE fichas_tecnicas (produto_codigo TEXT);",
-        encoding="utf-8",
-    )
-    demo_sql = db_dir / "demo.sql"
-    demo_sql.write_text(
-        "INSERT INTO produtos (codigo) VALUES ('D1');"
-        "INSERT INTO fichas_tecnicas (produto_codigo) VALUES ('D1');",
-        encoding="utf-8",
-    )
-
-    ds = ds_module.DataStore()
-    cur = ds.conn.cursor()
-    cur.execute("SELECT codigo FROM produtos")
-    assert cur.fetchone()[0] == "D1"
-
-
 def test_datastore_missing_tables(tmp_path, caplog):
     db_file = tmp_path / "ftv.db"
     conn = sqlite3.connect(str(db_file))

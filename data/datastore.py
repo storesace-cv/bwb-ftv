@@ -29,21 +29,6 @@ def _create_empty_db(db_path: Path) -> None:
         conn.close()
 
 
-def _import_demo_sql(db_path: Path) -> None:
-    """Populate an empty database with official demo data."""
-    demo_file = base / "databases" / "demo.sql"
-    if not demo_file.exists():
-        raise FileNotFoundError(f"Demo SQL not found: {demo_file}")
-    _create_empty_db(db_path)
-    conn = sqlite3.connect(str(db_path))
-    try:
-        sql = demo_file.read_text(encoding="utf-8")
-        conn.executescript(sql)
-        conn.commit()
-    finally:
-        conn.close()
-
-
 class DataStore:
     """
     DataStore mínimo (reconstruído e compatível com UI):
@@ -83,13 +68,11 @@ class DataStore:
                     QApplication([])
                 choice = StartupDialog(
                     "Base de dados não encontrada.",
-                    ["Base vazia", "Base demo"],
+                    ["Base vazia"],
                 ).get_choice()
                 try:
                     if choice == "Base vazia":
                         _create_empty_db(db_path)
-                    elif choice == "Base demo":
-                        _import_demo_sql(db_path)
                     else:
                         logger.error(msg)
                         raise FileNotFoundError(msg)
