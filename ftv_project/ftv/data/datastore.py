@@ -20,6 +20,8 @@ class DataStore:
     - Fornece paginação (total, codigo_at)
     - Delegações para UI (info produto, PVPs, ingredientes,
       listas auxiliares, preparação, alergénios)
+    - Pode ser usado como context manager e possui ``close()`` para encerrar
+      a ligação à BD
     """
 
     def __init__(self, db_path=None, demo: bool = False):
@@ -70,6 +72,24 @@ class DataStore:
         except Exception as e:
             logger.warning("[DataStore][AVISO] reload_ids falhou: %s", e)
             self._ids = []
+
+    def close(self):
+        """Fecha a ligação à base de dados, se existir."""
+        conn = getattr(self, "conn", None)
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception as e:
+                logger.warning("[DataStore][AVISO] Falha a fechar a BD: %s", e)
+            finally:
+                self.conn = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.close()
+        return False
 
     # ----------------------------
     # Cache / paginação
