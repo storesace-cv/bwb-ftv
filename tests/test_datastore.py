@@ -1,6 +1,8 @@
 import logging
 import json
 import sqlite3
+import sys
+import types
 import pytest
 
 from data.datastore import DataStore
@@ -110,11 +112,88 @@ def test_context_manager_closes_connection():
         conn.execute("SELECT 1")
 
 
-def test_datastore_missing_path_errors(tmp_path, caplog):
+def _stub_dialog(monkeypatch, choice):
+    class DummyDialog:
+        calls = 0
+
+        def __init__(self, *a, **k):
+            pass
+
+        def get_choice(self):
+            if DummyDialog.calls == 0:
+                DummyDialog.calls += 1
+                return choice
+            DummyDialog.calls += 1
+            return "Sim"
+
+    dummy_module = types.SimpleNamespace(StartupDialog=DummyDialog)
+    monkeypatch.setitem(sys.modules, "ui.startup_dialog", dummy_module)
+
+    class DummyApp:
+        _inst = None
+
+        def __init__(self, *a, **k):
+            DummyApp._inst = self
+
+        @classmethod
+        def instance(cls):
+            return cls._inst
+
+    qtwidgets = types.SimpleNamespace(QApplication=DummyApp)
+    monkeypatch.setitem(sys.modules, "PyQt5", types.SimpleNamespace())
+    monkeypatch.setitem(sys.modules, "PyQt5.QtWidgets", qtwidgets)
+
+
+def test_datastore_missing_path_errors(tmp_path, caplog, monkeypatch):
+    _stub_dialog(monkeypatch, None)
     bad_path = tmp_path / "no" / "db" / "ftv.db"
     with caplog.at_level(logging.ERROR), pytest.raises(FileNotFoundError):
         DataStore(db_path=str(bad_path))
     assert any("FTV_DB_PATH" in r.message for r in caplog.records)
+
+
+def test_datastore_creates_empty_db(tmp_path, monkeypatch):
+    _stub_dialog(monkeypatch, "Base vazia")
+    import data.datastore as ds_module
+
+    monkeypatch.setattr(ds_module, "base", tmp_path)
+    (tmp_path / "data").mkdir()
+    (tmp_path / "databases").mkdir()
+    (tmp_path / "data" / "schema.sql").write_text(
+        "CREATE TABLE produtos (codigo TEXT PRIMARY KEY);"
+        "CREATE TABLE fichas_tecnicas (produto_codigo TEXT);",
+        encoding="utf-8",
+    )
+
+    ds = ds_module.DataStore()
+    cur = ds.conn.cursor()
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    names = {r[0] for r in cur.fetchall()}
+    assert names >= {"produtos", "fichas_tecnicas"}
+
+
+def test_datastore_copies_demo_db(tmp_path, monkeypatch):
+    _stub_dialog(monkeypatch, "Base demo")
+    import data.datastore as ds_module
+
+    monkeypatch.setattr(ds_module, "base", tmp_path)
+    data_dir = tmp_path / "data"
+    db_dir = tmp_path / "databases"
+    data_dir.mkdir()
+    db_dir.mkdir()
+    demo_db = data_dir / "demo.db"
+    conn = sqlite3.connect(str(demo_db))
+    conn.execute("CREATE TABLE produtos (codigo TEXT PRIMARY KEY)")
+    conn.execute("INSERT INTO produtos (codigo) VALUES ('D1')")
+    conn.execute("CREATE TABLE fichas_tecnicas (produto_codigo TEXT)")
+    conn.execute("INSERT INTO fichas_tecnicas (produto_codigo) VALUES ('D1')")
+    conn.commit()
+    conn.close()
+
+    ds = ds_module.DataStore()
+    cur = ds.conn.cursor()
+    cur.execute("SELECT codigo FROM produtos")
+    assert cur.fetchone()[0] == "D1"
 
 
 def test_datastore_missing_tables(tmp_path, caplog):

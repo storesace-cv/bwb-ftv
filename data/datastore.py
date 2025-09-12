@@ -4,6 +4,7 @@
 import json
 import logging
 import os
+import shutil
 import sqlite3
 from pathlib import Path
 
@@ -13,6 +14,28 @@ base = get_project_root()
 
 
 logger = logging.getLogger(__name__)
+
+
+def _create_empty_db(db_path: Path) -> None:
+    schema_file = base / "data" / "schema.sql"
+    if not schema_file.exists():
+        raise FileNotFoundError(f"Schema file not found: {schema_file}")
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(db_path))
+    try:
+        sql = schema_file.read_text(encoding="utf-8")
+        conn.executescript(sql)
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _copy_demo_db(db_path: Path) -> None:
+    demo_file = base / "data" / "demo.db"
+    if not demo_file.exists():
+        raise FileNotFoundError(f"Demo DB not found: {demo_file}")
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy(demo_file, db_path)
 
 
 class DataStore:
@@ -47,8 +70,26 @@ class DataStore:
                     f"[DataStore] Base de dados não encontrada em '{db_path}'. "
                     "Copie o ficheiro ou defina FTV_DB_PATH."
                 )
-                logger.error(msg)
-                raise FileNotFoundError(msg)
+                from PyQt5.QtWidgets import QApplication
+                from ui.startup_dialog import StartupDialog
+
+                if QApplication.instance() is None:
+                    QApplication([])
+                choice = StartupDialog(
+                    "Base de dados não encontrada.",
+                    ["Base vazia", "Base demo"],
+                ).get_choice()
+                try:
+                    if choice == "Base vazia":
+                        _create_empty_db(db_path)
+                    elif choice == "Base demo":
+                        _copy_demo_db(db_path)
+                    else:
+                        logger.error(msg)
+                        raise FileNotFoundError(msg)
+                except Exception as exc:
+                    logger.error("[DataStore] Falha a preparar BD: %s", exc)
+                    raise FileNotFoundError(msg) from exc
             try:
                 self.conn = sqlite3.connect(str(db_path))
                 self.conn.row_factory = sqlite3.Row
