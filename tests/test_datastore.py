@@ -110,13 +110,22 @@ def test_context_manager_closes_connection():
         conn.execute("SELECT 1")
 
 
-def test_datastore_creates_missing_path(tmp_path, caplog):
+def test_datastore_missing_path_errors(tmp_path, caplog):
     bad_path = tmp_path / "no" / "db" / "ftv.db"
-    with caplog.at_level(logging.INFO):
-        ds = DataStore(db_path=str(bad_path))
-    assert bad_path.exists()
-    assert ds.conn is not None
-    assert any("Base de dados criada" in r.message for r in caplog.records)
+    with caplog.at_level(logging.ERROR), pytest.raises(FileNotFoundError):
+        DataStore(db_path=str(bad_path))
+    assert any("FTV_DB_PATH" in r.message for r in caplog.records)
+
+
+def test_datastore_missing_tables(tmp_path, caplog):
+    db_file = tmp_path / "ftv.db"
+    conn = sqlite3.connect(str(db_file))
+    conn.execute("CREATE TABLE x (id INTEGER)")
+    conn.commit()
+    conn.close()
+    with caplog.at_level(logging.ERROR), pytest.raises(RuntimeError):
+        DataStore(db_path=str(db_file))
+    assert any("Tabelas essenciais em falta" in r.message for r in caplog.records)
 
 
 def test_get_produto_info_repo_error(caplog):
