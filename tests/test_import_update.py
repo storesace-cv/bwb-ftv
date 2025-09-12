@@ -35,7 +35,9 @@ def imports_dir():
     shutil.rmtree(base, ignore_errors=True)
 
 
-def _write_base_files(base_dir, products=None, code_header="codigo", price=1.0):
+def _write_base_files(
+    base_dir, products=None, code_header="codigo", price_header="preco1_g", price=1.0
+):
     if products is None:
         products = [("P1", "Produto 1")]
     prod_wb = Workbook()
@@ -52,7 +54,7 @@ def _write_base_files(base_dir, products=None, code_header="codigo", price=1.0):
 
     prec_wb = Workbook()
     ws = prec_wb.active
-    ws.append([code_header, "preco1_g"])
+    ws.append([code_header, price_header])
     ws.append([products[0][0], price])
     prec_wb.save(base_dir / "PreçosTaxas_base.xlsx")
 
@@ -167,6 +169,36 @@ def test_update_from_excel_uses_produto_codigo(ds, imports_dir):
     svc.update_from_excel()
     info = ds.get_produto_info("P1")
     assert info["preco1_g"] == 3.0
+
+
+def test_import_from_excel_handles_alt_headers(ds, imports_dir):
+    _write_base_files(
+        imports_dir,
+        code_header="Código do Produto",
+        price_header="Preço1 G",
+        price=2.0,
+    )
+    svc = ProductService(ds)
+    svc.import_from_excel()
+    info = ds.get_produto_info("P1")
+    assert info["preco1_g"] == 2.0
+
+
+def test_update_from_excel_handles_alt_headers(ds, imports_dir):
+    ds.conn.execute(
+        "INSERT INTO produtos (codigo, nome, preco1_g) VALUES ('P1', 'X', 1.0)"
+    )
+    ds.reload_ids()
+    _write_base_files(
+        imports_dir,
+        code_header="Código do Produto",
+        price_header="Preço1 G",
+        price=4.0,
+    )
+    svc = ProductService(ds)
+    svc.update_from_excel()
+    info = ds.get_produto_info("P1")
+    assert info["preco1_g"] == 4.0
 
 
 @pytest.mark.parametrize("func", ["import_from_excel", "update_from_excel"])

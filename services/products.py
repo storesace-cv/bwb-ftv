@@ -14,6 +14,24 @@ from domain import Product, Ingredient
 from utils.paths import get_project_root
 
 
+# Maps normalized header variants to canonical database column names.
+HEADER_MAP: dict[str, str] = {
+    "codigo": "codigo",
+    "produto_codigo": "codigo",
+    "codigo_do_produto": "codigo",
+    "cod_produto": "codigo",
+    "preco1_g": "preco1_g",
+    "preco1": "preco1_g",
+    "preco1g": "preco1_g",
+    "preco2_g": "preco2_g",
+    "preco2": "preco2_g",
+    "preco2g": "preco2_g",
+    "iva": "iva",
+    "iva1": "iva",
+    "iva_1": "iva",
+}
+
+
 class ProductService:
     """High level API used by the UI to interact with products and helpers."""
 
@@ -177,6 +195,8 @@ def import_from_excel(ds: DataStore | None = None) -> None:
         rows = ws.iter_rows(values_only=True)
         try:
             headers = [_normalize(h) for h in next(rows)]
+            if table == "produtos":
+                headers = [HEADER_MAP.get(h, h) for h in headers]
         except StopIteration:
             wb.close()
             return
@@ -210,17 +230,18 @@ def import_from_excel(ds: DataStore | None = None) -> None:
         rows = ws.iter_rows(values_only=True)
         try:
             headers = [_normalize(h) for h in next(rows)]
+            headers = [HEADER_MAP.get(h, h) for h in headers]
         except StopIteration:
             wb.close()
             return
         db_cols = _table_columns("produtos")
-        if "codigo" in headers:
-            idx_cod = headers.index("codigo")
-        elif "produto_codigo" in headers:
-            idx_cod = headers.index("produto_codigo")
-        else:
+        if "codigo" not in headers:
             wb.close()
-            raise ValueError("PreçosTaxas_base.xlsx missing 'codigo' column")
+            raise ValueError(
+                "PreçosTaxas_base.xlsx missing 'codigo' column; found: "
+                + ", ".join(headers)
+            )
+        idx_cod = headers.index("codigo")
         idx_p1 = (
             headers.index("preco1_g")
             if "preco1_g" in headers and "preco1_g" in db_cols
@@ -231,11 +252,9 @@ def import_from_excel(ds: DataStore | None = None) -> None:
             if "preco2_g" in headers and "preco2_g" in db_cols
             else None
         )
-        idx_iva = None
-        if "iva" in headers and "iva" in db_cols:
-            idx_iva = headers.index("iva")
-        elif "iva1" in headers and "iva" in db_cols:
-            idx_iva = headers.index("iva1")
+        idx_iva = (
+            headers.index("iva") if "iva" in headers and "iva" in db_cols else None
+        )
         if idx_p1 is None and idx_p2 is None and idx_iva is None:
             wb.close()
             return
@@ -330,6 +349,8 @@ def update_from_excel(ds: DataStore | None = None) -> None:
         rows = ws.iter_rows(values_only=True)
         try:
             headers = [_normalize(h) for h in next(rows)]
+            if table == "produtos":
+                headers = [HEADER_MAP.get(h, h) for h in headers]
         except StopIteration:
             wb.close()
             return
@@ -390,17 +411,18 @@ def update_from_excel(ds: DataStore | None = None) -> None:
         rows = ws.iter_rows(values_only=True)
         try:
             headers = [_normalize(h) for h in next(rows)]
+            headers = [HEADER_MAP.get(h, h) for h in headers]
         except StopIteration:
             wb.close()
             return
         db_cols = _table_columns("produtos")
-        if "codigo" in headers:
-            idx_cod = headers.index("codigo")
-        elif "produto_codigo" in headers:
-            idx_cod = headers.index("produto_codigo")
-        else:
+        if "codigo" not in headers:
             wb.close()
-            raise ValueError("PreçosTaxas_base.xlsx missing 'codigo' column")
+            raise ValueError(
+                "PreçosTaxas_base.xlsx missing 'codigo' column; found: "
+                + ", ".join(headers)
+            )
+        idx_cod = headers.index("codigo")
         idx_p1 = (
             headers.index("preco1_g")
             if "preco1_g" in headers and "preco1_g" in db_cols
@@ -411,11 +433,9 @@ def update_from_excel(ds: DataStore | None = None) -> None:
             if "preco2_g" in headers and "preco2_g" in db_cols
             else None
         )
-        idx_iva = None
-        if "iva" in headers and "iva" in db_cols:
-            idx_iva = headers.index("iva")
-        elif "iva1" in headers and "iva" in db_cols:
-            idx_iva = headers.index("iva1")
+        idx_iva = (
+            headers.index("iva") if "iva" in headers and "iva" in db_cols else None
+        )
         if idx_p1 is None and idx_p2 is None and idx_iva is None:
             wb.close()
             return
@@ -480,19 +500,28 @@ def _import_single_excel(path: Path, ds: DataStore | None) -> None:
     if conn is None:
         return
 
+    def _normalize(text: str) -> str:
+        txt = unicodedata.normalize("NFD", str(text or ""))
+        txt = "".join(c for c in txt if unicodedata.category(c) != "Mn")
+        txt = txt.replace("-", "_").replace("/", "_").replace(" ", "_")
+        txt = txt.replace("(", "").replace(")", "").replace(".", "")
+        return txt.lower()
+
     wb = load_workbook(path, read_only=True, data_only=True)
     ws = wb.active
     rows = ws.iter_rows(values_only=True)
     try:
-        headers = [str(h).strip().lower() for h in next(rows)]
+        headers = [_normalize(h) for h in next(rows)]
+        headers = [HEADER_MAP.get(h, h) for h in headers]
     except StopIteration:
         wb.close()
         return
-    try:
-        code_idx = headers.index("codigo")
-    except ValueError:
+    if "codigo" not in headers:
         wb.close()
-        return
+        raise ValueError(
+            "Spreadsheet missing 'codigo' column; found: " + ", ".join(headers)
+        )
+    code_idx = headers.index("codigo")
     cur = conn.cursor()
     cur.execute("PRAGMA table_info(produtos)")
     db_cols = [r[1].lower() for r in cur.fetchall()]
@@ -509,11 +538,7 @@ def _import_single_excel(path: Path, ds: DataStore | None) -> None:
         if "preco2_g" in headers and "preco2_g" in db_cols
         else None
     )
-    iva_idx = None
-    if "iva" in headers and "iva" in db_cols:
-        iva_idx = headers.index("iva")
-    elif "iva1" in headers and "iva" in db_cols:
-        iva_idx = headers.index("iva1")
+    iva_idx = headers.index("iva") if "iva" in headers and "iva" in db_cols else None
 
     cur.execute("DELETE FROM produtos")
     cols = ["codigo"]
@@ -560,19 +585,28 @@ def _update_from_excel(path: Path, ds: DataStore | None) -> None:
     if conn is None:
         return
 
+    def _normalize(text: str) -> str:
+        txt = unicodedata.normalize("NFD", str(text or ""))
+        txt = "".join(c for c in txt if unicodedata.category(c) != "Mn")
+        txt = txt.replace("-", "_").replace("/", "_").replace(" ", "_")
+        txt = txt.replace("(", "").replace(")", "").replace(".", "")
+        return txt.lower()
+
     wb = load_workbook(path, read_only=True, data_only=True)
     ws = wb.active
     rows = ws.iter_rows(values_only=True)
     try:
-        headers = [str(h).strip().lower() for h in next(rows)]
+        headers = [_normalize(h) for h in next(rows)]
+        headers = [HEADER_MAP.get(h, h) for h in headers]
     except StopIteration:
         wb.close()
         return
-    try:
-        code_idx = headers.index("codigo")
-    except ValueError:
+    if "codigo" not in headers:
         wb.close()
-        return
+        raise ValueError(
+            "Spreadsheet missing 'codigo' column; found: " + ", ".join(headers)
+        )
+    code_idx = headers.index("codigo")
 
     cur = conn.cursor()
     cur.execute("PRAGMA table_info(produtos)")
@@ -590,11 +624,7 @@ def _update_from_excel(path: Path, ds: DataStore | None) -> None:
         if "preco2_g" in headers and "preco2_g" in db_cols
         else None
     )
-    iva_idx = None
-    if "iva" in headers and "iva" in db_cols:
-        iva_idx = headers.index("iva")
-    elif "iva1" in headers and "iva" in db_cols:
-        iva_idx = headers.index("iva1")
+    iva_idx = headers.index("iva") if "iva" in headers and "iva" in db_cols else None
 
     for row in rows:
         codigo = row[code_idx]
