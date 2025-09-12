@@ -157,8 +157,8 @@ def test_import_from_excel_uses_produto_codigo(ds, imports_dir):
     _write_base_files(imports_dir, code_header="produto_codigo", price=2.5)
     svc = ProductService(ds)
     svc.import_from_excel()
-    info = ds.get_produto_info("P1")
-    assert info["preco1_g"] == 2.5
+    pvps = ds.get_pvps("P1")
+    assert pvps["pvp1"] == 2.5
 
 
 def test_update_from_excel_uses_produto_codigo(ds, imports_dir):
@@ -169,8 +169,8 @@ def test_update_from_excel_uses_produto_codigo(ds, imports_dir):
     _write_base_files(imports_dir, code_header="produto_codigo", price=3.0)
     svc = ProductService(ds)
     svc.update_from_excel()
-    info = ds.get_produto_info("P1")
-    assert info["preco1_g"] == 3.0
+    pvps = ds.get_pvps("P1")
+    assert pvps["pvp1"] == 3.0
 
 
 def test_import_from_excel_handles_alt_headers(ds, imports_dir):
@@ -182,8 +182,8 @@ def test_import_from_excel_handles_alt_headers(ds, imports_dir):
     )
     svc = ProductService(ds)
     svc.import_from_excel()
-    info = ds.get_produto_info("P1")
-    assert info["preco1_g"] == 2.0
+    pvps = ds.get_pvps("P1")
+    assert pvps["pvp1"] == 2.0
 
 
 def test_update_from_excel_handles_alt_headers(ds, imports_dir):
@@ -199,8 +199,8 @@ def test_update_from_excel_handles_alt_headers(ds, imports_dir):
     )
     svc = ProductService(ds)
     svc.update_from_excel()
-    info = ds.get_produto_info("P1")
-    assert info["preco1_g"] == 4.0
+    pvps = ds.get_pvps("P1")
+    assert pvps["pvp1"] == 4.0
 
 
 @pytest.mark.parametrize("func", ["import_from_excel", "update_from_excel"])

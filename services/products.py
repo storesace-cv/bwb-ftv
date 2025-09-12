@@ -21,6 +21,7 @@ HEADER_MAP: dict[str, str] = {
     "produto_codigo": "codigo",
     "codigo_do_produto": "codigo",
     "cod_produto": "codigo",
+    "prod_venda": "codigo",
     "preco1_g": "preco1_g",
     "preco1": "preco1_g",
     "preco1g": "preco1_g",
@@ -207,8 +208,9 @@ def import_from_excel(ds: DataStore | None = None) -> None:
 
     The directory must contain ``FichasTecnicas_base.xlsx``,
     ``PreçosTaxas_base.xlsx`` and ``Produtos_Base.xlsx``. Existing data in
-    ``produtos`` and ``fichas_tecnicas`` tables is cleared before loading the
-    new rows. Price information is merged from ``PreçosTaxas_base.xlsx``.
+    ``produtos``, ``fichas_tecnicas`` e ``precos_taxas`` é limpo antes de
+    carregar as novas linhas. A informação de preços é carregada para a tabela
+    ``precos_taxas``.
     """
 
     base = get_project_root() / "imports"
@@ -236,7 +238,7 @@ def import_from_excel(ds: DataStore | None = None) -> None:
     setup_database(conn)
 
     cur = conn.cursor()
-    for tbl in ("produtos", "fichas_tecnicas"):
+    for tbl in ("produtos", "fichas_tecnicas", "precos_taxas"):
         try:
             cur.execute(f"DELETE FROM {tbl}")
         except Exception:
@@ -270,57 +272,65 @@ def import_from_excel(ds: DataStore | None = None) -> None:
     _load_insert(files["produtos"], "produtos")
     _load_insert(files["fichas_tecnicas"], "fichas_tecnicas")
 
-    def _merge_prices(file_path: Path) -> None:
+    def _load_prices(file_path: Path) -> None:
         wb = load_workbook(file_path, read_only=True, data_only=True)
         ws = wb.active
         rows = ws.iter_rows(values_only=True)
         try:
-            xls_headers = list(next(rows))
+            raw_headers = list(next(rows))
         except StopIteration:
             wb.close()
             return
-        existing = [r[1].lower() for r in conn.execute("PRAGMA table_info(produtos)")]
-        sync_table_schema(
-            conn,
-            "produtos",
-            xls_headers + [c for c in existing if c not in xls_headers],
+        price_map = {
+            "preco1_g": "preco_1",
+            "preco1": "preco_1",
+            "preco1g": "preco_1",
+            "preco2_g": "preco_2",
+            "preco2": "preco_2",
+            "preco2g": "preco_2",
+            "preco3_g": "preco_3",
+            "preco3": "preco_3",
+            "preco3g": "preco_3",
+            "preco4_g": "preco_4",
+            "preco4": "preco_4",
+            "preco4g": "preco_4",
+            "preco5_g": "preco_5",
+            "preco5": "preco_5",
+            "preco5g": "preco_5",
+        }
+        mapped = []
+        for h in raw_headers:
+            norm = _normalize(h)
+            mapped.append(price_map.get(norm, HEADER_MAP.get(norm, h)))
+        has_codigo = "codigo" in mapped
+        existing = [
+            r[1].lower() for r in conn.execute("PRAGMA table_info(precos_taxas)")
+        ]
+        headers = sync_table_schema(
+            conn, "precos_taxas", mapped + [c for c in existing if c not in mapped]
         )
-        headers = [_normalize(h) for h in xls_headers]
-        headers = [HEADER_MAP.get(h, h) for h in headers]
-        if "codigo" not in headers:
+        if not has_codigo:
             wb.close()
             raise ValueError(
                 "PreçosTaxas_base.xlsx missing 'codigo' column; found: "
-                + ", ".join(headers)
+                + ", ".join(mapped)
             )
-        cols = [c for c in headers if c and c != "codigo"]
+        cols = [h for h in headers if h]
         if not cols:
             wb.close()
             return
-        cur2 = conn.cursor()
+        conn.execute("DELETE FROM precos_taxas")
+        placeholders = ",".join(["?"] * len(cols))
+        sql = f"INSERT INTO precos_taxas ({','.join(cols)}) VALUES ({placeholders})"
+        data: list[tuple] = []
         for row in rows:
             row_map = {headers[i]: row[i] for i in range(min(len(headers), len(row)))}
-            codigo = row_map.get("codigo")
-            if codigo is None:
-                continue
-            updates = [f"{c}=?" for c in cols]
-            params = [row_map.get(c) for c in cols] + [codigo]
-            cur2.execute(
-                f"UPDATE produtos SET {', '.join(updates)} WHERE codigo=?",
-                params,
-            )
-            if cur2.rowcount == 0:
-                insert_cols = ["codigo"] + cols
-                placeholders = ",".join(["?"] * len(insert_cols))
-                vals = [codigo] + [row_map.get(c) for c in cols]
-                cur2.execute(
-                    f"INSERT INTO produtos ({','.join(insert_cols)}) "
-                    f"VALUES ({placeholders})",
-                    vals,
-                )
+            data.append(tuple(row_map.get(c) for c in cols))
+        if data:
+            conn.executemany(sql, data)
         wb.close()
 
-    _merge_prices(files["precos_taxas"])
+    _load_prices(files["precos_taxas"])
     conn.commit()
     ds.reload_ids()
 
@@ -330,7 +340,11 @@ def import_from_excel(ds: DataStore | None = None) -> None:
 
 
 def update_from_excel(ds: DataStore | None = None) -> None:
-    """Update product data from Excel files in ``<root>/imports``."""
+    """Update product data from Excel files in ``<root>/imports``.
+
+    A informação de preços de ``PreçosTaxas_base.xlsx`` é carregada para a
+    tabela ``precos_taxas``.
+    """
 
     base = get_project_root() / "imports"
     history_dir = base / "history"
@@ -410,57 +424,65 @@ def update_from_excel(ds: DataStore | None = None) -> None:
     _upsert(files["produtos"], "produtos")
     _upsert(files["fichas_tecnicas"], "fichas_tecnicas")
 
-    def _merge_prices(file_path: Path) -> None:
+    def _load_prices(file_path: Path) -> None:
         wb = load_workbook(file_path, read_only=True, data_only=True)
         ws = wb.active
         rows = ws.iter_rows(values_only=True)
         try:
-            xls_headers = list(next(rows))
+            raw_headers = list(next(rows))
         except StopIteration:
             wb.close()
             return
-        existing = [r[1].lower() for r in conn.execute("PRAGMA table_info(produtos)")]
-        sync_table_schema(
-            conn,
-            "produtos",
-            xls_headers + [c for c in existing if c not in xls_headers],
+        price_map = {
+            "preco1_g": "preco_1",
+            "preco1": "preco_1",
+            "preco1g": "preco_1",
+            "preco2_g": "preco_2",
+            "preco2": "preco_2",
+            "preco2g": "preco_2",
+            "preco3_g": "preco_3",
+            "preco3": "preco_3",
+            "preco3g": "preco_3",
+            "preco4_g": "preco_4",
+            "preco4": "preco_4",
+            "preco4g": "preco_4",
+            "preco5_g": "preco_5",
+            "preco5": "preco_5",
+            "preco5g": "preco_5",
+        }
+        mapped = []
+        for h in raw_headers:
+            norm = _normalize(h)
+            mapped.append(price_map.get(norm, HEADER_MAP.get(norm, h)))
+        has_codigo = "codigo" in mapped
+        existing = [
+            r[1].lower() for r in conn.execute("PRAGMA table_info(precos_taxas)")
+        ]
+        headers = sync_table_schema(
+            conn, "precos_taxas", mapped + [c for c in existing if c not in mapped]
         )
-        headers = [_normalize(h) for h in xls_headers]
-        headers = [HEADER_MAP.get(h, h) for h in headers]
-        if "codigo" not in headers:
+        if not has_codigo:
             wb.close()
             raise ValueError(
                 "PreçosTaxas_base.xlsx missing 'codigo' column; found: "
-                + ", ".join(headers)
+                + ", ".join(mapped)
             )
-        cols = [c for c in headers if c and c != "codigo"]
+        cols = [h for h in headers if h]
         if not cols:
             wb.close()
             return
-        cur2 = conn.cursor()
+        conn.execute("DELETE FROM precos_taxas")
+        placeholders = ",".join(["?"] * len(cols))
+        sql = f"INSERT INTO precos_taxas ({','.join(cols)}) VALUES ({placeholders})"
+        data: list[tuple] = []
         for row in rows:
             row_map = {headers[i]: row[i] for i in range(min(len(headers), len(row)))}
-            codigo = row_map.get("codigo")
-            if codigo is None:
-                continue
-            updates = [f"{c}=?" for c in cols]
-            params = [row_map.get(c) for c in cols] + [codigo]
-            cur2.execute(
-                f"UPDATE produtos SET {', '.join(updates)} WHERE codigo=?",
-                params,
-            )
-            if cur2.rowcount == 0:
-                insert_cols = ["codigo"] + cols
-                placeholders = ",".join(["?"] * len(insert_cols))
-                vals = [codigo] + [row_map.get(c) for c in cols]
-                cur2.execute(
-                    f"INSERT INTO produtos ({','.join(insert_cols)}) "
-                    f"VALUES ({placeholders})",
-                    vals,
-                )
+            data.append(tuple(row_map.get(c) for c in cols))
+        if data:
+            conn.executemany(sql, data)
         wb.close()
 
-    _merge_prices(files["precos_taxas"])
+    _load_prices(files["precos_taxas"])
     conn.commit()
     ds.reload_ids()
 

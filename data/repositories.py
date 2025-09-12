@@ -27,17 +27,31 @@ class ProdutosRepo:
         return {}
 
     def get_pvps(self, codigo: str):
-        """Devolve {'pvp1', 'pvp2', 'pvp3', 'pvp4', 'pvp5'} a partir de produtos."""
+        """Devolve {'pvp1', 'pvp2', 'pvp3', 'pvp4', 'pvp5'} a partir de precos_taxas."""
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "SELECT preco1_g, preco2_g FROM produtos WHERE codigo = ?",
+                "SELECT preco_1, preco_2, preco_3, preco_4, preco_5 "
+                "FROM precos_taxas WHERE codigo = ?",
                 (codigo,),
             )
             r = cur.fetchone()
-            p1 = r[0] if r and r[0] not in (None, "") else None
-            p2 = r[1] if r and r[1] not in (None, "") else None
-            return {"pvp1": p1, "pvp2": p2, "pvp3": None, "pvp4": None, "pvp5": None}
+            vals = []
+            for i in range(5):
+                val = r[i] if r and r[i] not in (None, "") else None
+                if isinstance(val, str):
+                    try:
+                        val = float(val)
+                    except ValueError:
+                        pass
+                vals.append(val)
+            return {
+                "pvp1": vals[0],
+                "pvp2": vals[1],
+                "pvp3": vals[2],
+                "pvp4": vals[3],
+                "pvp5": vals[4],
+            }
         except sqlite3.Error as exc:
             logger.error("[ProdutosRepo] get_pvps(%s) falhou: %s", codigo, exc)
             return {

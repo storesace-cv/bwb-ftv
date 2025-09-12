@@ -171,6 +171,7 @@ class DataStore:
         required = {
             "produtos": {"codigo"},
             "fichas_tecnicas": {"produto_codigo"},
+            "precos_taxas": {"codigo"},
             "alergenios": {"id", "nome", "ativo"},
             "tipos_artigos": {"cod", "descricao", "ativo"},
             "validade": {"cod", "descricao", "ativo"},
