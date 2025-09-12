@@ -4,13 +4,7 @@
 # --- Caminhos robustos ---
 import sys
 import logging
-from ftv_project.ftv.utils import get_project_root
-
-FTV_PROJ = get_project_root()
-ROOT = FTV_PROJ.parent
-for p in (FTV_PROJ, ROOT):
-    if p.exists() and str(p) not in sys.path:
-        sys.path.insert(0, str(p))
+from ftv.utils import get_project_root
 
 # --- Qt ---
 from PyQt5.QtWidgets import QApplication
