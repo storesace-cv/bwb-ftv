@@ -14,52 +14,80 @@ from data.migration import setup_database
 from domain import Product, Ingredient
 from utils.paths import get_project_root
 
-
 # Maps normalized header variants to canonical database column names.
-HEADER_MAP: dict[str, str] = {
-    "codigo": "codigo",
-    "produto_codigo": "codigo",
-    "codigo_do_produto": "codigo",
-    "cod_produto": "codigo",
-    "prod_venda": "codigo",
-    "preco1_g": "preco1_g",
-    "preco1": "preco1_g",
-    "preco1g": "preco1_g",
-    "preco2_g": "preco2_g",
-    "preco2": "preco2_g",
-    "preco2g": "preco2_g",
-    "iva": "iva",
-    "iva1": "iva",
-    "iva_1": "iva",
-}
+#
+# ``canonicalize_header`` removes accents and non-alphanumeric characters from
+# spreadsheet headers. Critical aliases that must map to existing database
+# columns are handled explicitly:
+#
+# - ``Codigo do Produto`` / ``produto_codigo`` / ``cod_produto`` / ``prod venda``
+#   → ``codigo``
+# - ``preco1`` / ``preco1 g`` → ``preco_1`` or ``preco1_g``
+# - ``preco2`` / ``preco2 g`` → ``preco_2`` or ``preco2_g``
+# - ``preco3`` / ``preco3 g`` → ``preco_3`` or ``preco3_g``
+# - ``preco4`` / ``preco4 g`` → ``preco_4`` or ``preco4_g``
+# - ``preco5`` / ``preco5 g`` → ``preco_5`` or ``preco5_g``
+# - ``Iva 1`` → ``iva_1``
+# - ``Iva 2`` → ``iva_2``
+# - ``Custo`` → ``total``
 
 
-def _normalize(text: str) -> str:
-    """Return a normalized, ASCII-only, lower-case header name."""
+def canonicalize_header(text: str, table: str | None = None) -> str:
+    """Return a canonical column name for a spreadsheet header.
+
+    The transformation removes accents and any non-alphanumeric characters while
+    lowercasing the result. Specific aliases are mapped to existing database
+    column names as documented above. ``table`` can be used to disambiguate
+    headers that depend on context (e.g. ``produto_codigo``).
+    """
+
     txt = unicodedata.normalize("NFD", str(text or ""))
     txt = "".join(c for c in txt if unicodedata.category(c) != "Mn")
-    txt = txt.replace("-", "_").replace("/", "_").replace(" ", "_")
-    txt = txt.replace("(", "").replace(")", "").replace(".", "")
-    return txt.lower()
+    txt = "".join(c for c in txt if c.isalnum()).lower()
+
+    aliases = {
+        "codigodoproduto": "codigo",
+        "codproduto": "codigo",
+        "prodvenda": "codigo",
+        "preco1": "preco_1",
+        "preco2": "preco_2",
+        "preco3": "preco_3",
+        "preco4": "preco_4",
+        "preco5": "preco_5",
+        "iva1": "iva_1",
+        "iva2": "iva_2",
+        "isencaoiva": "isencao_iva",
+        "custo": "total",
+        "componentenome": "componente_nome",
+    }
+
+    if txt == "produtocodigo":
+        return "produto_codigo" if table == "fichas_tecnicas" else "codigo"
+    if txt == "preco1g":
+        return "preco1_g" if table == "produtos" else "preco_1"
+    if txt == "preco2g":
+        return "preco2_g" if table == "produtos" else "preco_2"
+    if txt == "preco3g":
+        return "preco3_g" if table == "produtos" else "preco_3"
+    if txt == "preco4g":
+        return "preco4_g" if table == "produtos" else "preco_4"
+    if txt == "preco5g":
+        return "preco5_g" if table == "produtos" else "preco_5"
+
+    return aliases.get(txt, txt)
 
 
 def sync_table_schema(conn, table: str, headers: list[str]) -> list[str]:
     """Synchronize SQLite table schema with headers from a spreadsheet.
 
-    The ``headers`` are normalized (and mapped via :data:`HEADER_MAP` for
-    ``produtos``) before being compared with existing table columns. Missing
-    columns are added and obsolete ones trigger a table recreation so that the
-    resulting schema matches the spreadsheet exactly.
+    The ``headers`` are canonicalized before being compared with existing table
+    columns. Missing columns are added and obsolete ones trigger a table
+    recreation so that the resulting schema matches the spreadsheet exactly.
     """
 
     cur = conn.cursor()
 
-    norm_headers: list[str] = []
-    for h in headers:
-        nh = _normalize(h)
-        if table == "produtos":
-            nh = HEADER_MAP.get(nh, nh)
-        norm_headers.append(nh)
+    norm_headers: list[str] = [canonicalize_header(h, table=table) for h in headers]
 
     cur.execute(f"PRAGMA table_info({table})")
     info_rows = cur.fetchall()
@@ -281,27 +309,7 @@ def import_from_excel(ds: DataStore | None = None) -> None:
         except StopIteration:
             wb.close()
             return
-        price_map = {
-            "preco1_g": "preco_1",
-            "preco1": "preco_1",
-            "preco1g": "preco_1",
-            "preco2_g": "preco_2",
-            "preco2": "preco_2",
-            "preco2g": "preco_2",
-            "preco3_g": "preco_3",
-            "preco3": "preco_3",
-            "preco3g": "preco_3",
-            "preco4_g": "preco_4",
-            "preco4": "preco_4",
-            "preco4g": "preco_4",
-            "preco5_g": "preco_5",
-            "preco5": "preco_5",
-            "preco5g": "preco_5",
-        }
-        mapped = []
-        for h in raw_headers:
-            norm = _normalize(h)
-            mapped.append(price_map.get(norm, HEADER_MAP.get(norm, h)))
+        mapped = [canonicalize_header(h, table="precos_taxas") for h in raw_headers]
         has_codigo = "codigo" in mapped
         existing = [
             r[1].lower() for r in conn.execute("PRAGMA table_info(precos_taxas)")
@@ -433,27 +441,7 @@ def update_from_excel(ds: DataStore | None = None) -> None:
         except StopIteration:
             wb.close()
             return
-        price_map = {
-            "preco1_g": "preco_1",
-            "preco1": "preco_1",
-            "preco1g": "preco_1",
-            "preco2_g": "preco_2",
-            "preco2": "preco_2",
-            "preco2g": "preco_2",
-            "preco3_g": "preco_3",
-            "preco3": "preco_3",
-            "preco3g": "preco_3",
-            "preco4_g": "preco_4",
-            "preco4": "preco_4",
-            "preco4g": "preco_4",
-            "preco5_g": "preco_5",
-            "preco5": "preco_5",
-            "preco5g": "preco_5",
-        }
-        mapped = []
-        for h in raw_headers:
-            norm = _normalize(h)
-            mapped.append(price_map.get(norm, HEADER_MAP.get(norm, h)))
+        mapped = [canonicalize_header(h, table="precos_taxas") for h in raw_headers]
         has_codigo = "codigo" in mapped
         existing = [
             r[1].lower() for r in conn.execute("PRAGMA table_info(precos_taxas)")
@@ -505,19 +493,11 @@ def _import_single_excel(path: Path, ds: DataStore | None) -> None:
 
     setup_database(conn)
 
-    def _normalize(text: str) -> str:
-        txt = unicodedata.normalize("NFD", str(text or ""))
-        txt = "".join(c for c in txt if unicodedata.category(c) != "Mn")
-        txt = txt.replace("-", "_").replace("/", "_").replace(" ", "_")
-        txt = txt.replace("(", "").replace(")", "").replace(".", "")
-        return txt.lower()
-
     wb = load_workbook(path, read_only=True, data_only=True)
     ws = wb.active
     rows = ws.iter_rows(values_only=True)
     try:
-        headers = [_normalize(h) for h in next(rows)]
-        headers = [HEADER_MAP.get(h, h) for h in headers]
+        headers = [canonicalize_header(h, table="produtos") for h in next(rows)]
     except StopIteration:
         wb.close()
         return
@@ -592,19 +572,11 @@ def _update_from_excel(path: Path, ds: DataStore | None) -> None:
 
     setup_database(conn)
 
-    def _normalize(text: str) -> str:
-        txt = unicodedata.normalize("NFD", str(text or ""))
-        txt = "".join(c for c in txt if unicodedata.category(c) != "Mn")
-        txt = txt.replace("-", "_").replace("/", "_").replace(" ", "_")
-        txt = txt.replace("(", "").replace(")", "").replace(".", "")
-        return txt.lower()
-
     wb = load_workbook(path, read_only=True, data_only=True)
     ws = wb.active
     rows = ws.iter_rows(values_only=True)
     try:
-        headers = [_normalize(h) for h in next(rows)]
-        headers = [HEADER_MAP.get(h, h) for h in headers]
+        headers = [canonicalize_header(h, table="produtos") for h in next(rows)]
     except StopIteration:
         wb.close()
         return
