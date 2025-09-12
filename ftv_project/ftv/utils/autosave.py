@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 
+
+logger = logging.getLogger(__name__)
 def _ensure_produto_attrs_schema(ds):
     try:
         if getattr(ds, "conn", None) is None:
@@ -19,9 +22,9 @@ def _ensure_produto_attrs_schema(ds):
             """
         )
         ds.conn.commit()
-        print("[AutosaveAux] esquema OK (produto_attrs).")
+        logger.info("[AutosaveAux] esquema OK (produto_attrs).")
     except Exception as e:
-        print(f"[AutosaveAux][ERRO] schema: {e}")
+        logger.error("[AutosaveAux][ERRO] schema: %s", e)
 
 
 def _read_attrs(ds, codigo):
@@ -36,7 +39,7 @@ def _read_attrs(ds, codigo):
         if row:
             out["tipo_artigo"], out["validade"], out["temperatura"] = row
     except Exception as e:
-        print(f"[AutosaveAux][ERRO] read {codigo}: {e}")
+        logger.error("[AutosaveAux][ERRO] read %s: %s", codigo, e)
     return out
 
 
@@ -58,9 +61,9 @@ def _write_attr(ds, codigo, campo, valor):
         elif campo == "temperatura":
             cur.execute("UPDATE produto_attrs SET temperatura=? WHERE produto_codigo=?", (valor, codigo))
         ds.conn.commit()
-        print(f"[AutosaveAux] gravado {campo}={valor} para {codigo}")
+        logger.info("[AutosaveAux] gravado %s=%s para %s", campo, valor, codigo)
     except Exception as e:
-        print(f"[AutosaveAux][ERRO] write {campo}/{codigo}: {e}")
+        logger.error("[AutosaveAux][ERRO] write %s/%s: %s", campo, codigo, e)
 
 
 def _find_combo_candidates(win):
@@ -110,7 +113,7 @@ def _find_combo_candidates(win):
 def wire_autosave_aux(FTApp_cls, ds):
     """Envolve ``FTApp._load_record`` para ler/gravar atributos auxiliares automaticamente."""
     if not hasattr(FTApp_cls, "_load_record"):
-        print("[AutosaveAux][AVISO] FTApp não tem _load_record — nada a fazer.")
+        logger.warning("[AutosaveAux][AVISO] FTApp não tem _load_record — nada a fazer.")
         return
 
     _ensure_produto_attrs_schema(ds)
@@ -135,7 +138,7 @@ def wire_autosave_aux(FTApp_cls, ds):
                     combo.setCurrentIndex(i)
                     return
         except Exception as e:
-            print(f"[AutosaveAux][ERRO] _set_combo_by_data: {e}")
+            logger.error("[AutosaveAux][ERRO] _set_combo_by_data: %s", e)
 
     def _get_current_data(combo):
         if combo is None:
@@ -194,12 +197,12 @@ def wire_autosave_aux(FTApp_cls, ds):
                 combo.currentIndexChanged.connect(on_change)
                 setattr(combo, flag, True)
             except Exception as e:
-                print(f"[AutosaveAux][ERRO] ligar '{campo}': {e}")
+                logger.error("[AutosaveAux][ERRO] ligar '%s': %s", campo, e)
 
         ensure_connected(cb_tipos, "tipo_artigo")
         ensure_connected(cb_val, "validade")
         ensure_connected(cb_temp, "temperatura")
 
     FTApp_cls._load_record = _wrap
-    print("[AutosaveAux] _load_record envolvido com auto-save.")
+    logger.info("[AutosaveAux] _load_record envolvido com auto-save.")
 

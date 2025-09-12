@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 """Data access layer for the FTV project."""
 
+import logging
+
 from ..utils import get_project_root
 
 base = get_project_root()
 
 
+logger = logging.getLogger(__name__)
 class DataStore:
     """
     DataStore mínimo (reconstruído e compatível com UI):
@@ -30,7 +33,7 @@ class DataStore:
                 self.conn = sqlite3.connect(db_path)
                 self.conn.row_factory = sqlite3.Row
             except Exception as e:
-                print(f"[DataStore][AVISO] Falha a ligar à BD '{db_path}': {e}")
+                logger.warning("[DataStore][AVISO] Falha a ligar à BD '%s': %s", db_path, e)
                 self.conn = None
 
         # Repositórios
@@ -46,14 +49,14 @@ class DataStore:
                 self.aux = AuxiliaresRepo(self.conn)
                 self.prep = PreparacaoRepo(self.conn)
         except Exception as e:
-            print(f"[DataStore][AVISO] Falha a instanciar repositórios: {e}")
+            logger.warning("[DataStore][AVISO] Falha a instanciar repositórios: %s", e)
 
         # Cache de códigos
         self._ids = []
         try:
             self.reload_ids()
         except Exception as e:
-            print(f"[DataStore][AVISO] reload_ids falhou: {e}")
+            logger.warning("[DataStore][AVISO] reload_ids falhou: %s", e)
             self._ids = []
 
     # ----------------------------

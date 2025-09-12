@@ -21,25 +21,27 @@ Exit codes:
 __test__ = False
 from pathlib import Path
 import sys
+import logging
 
 from ftv_project.ftv.utils import get_project_root
 
-import argparse, sqlite3, traceback
+import argparse, sqlite3
 
 PROJECT_ROOT = get_project_root()
 DB_PATH = PROJECT_ROOT / "databases" / "ftv.db"
+
+
+logger = logging.getLogger(__name__)
 
 
 def _load_preparacao_repo():
     try:
         from ftv_project.ftv.data.repositories import PreparacaoRepo
         return PreparacaoRepo
-    except Exception as e:
-        print(
-            "[TESTE][ERRO] Não consigo importar PreparacaoRepo. Confirme se a Fase 2 foi aplicada corretamente.",
-            file=sys.stderr,
+    except Exception:
+        logger.exception(
+            "[TESTE][ERRO] Não consigo importar PreparacaoRepo. Confirme se a Fase 2 foi aplicada corretamente."
         )
-        traceback.print_exc()
         sys.exit(2)
 
 def pick_first_codigo(conn):
@@ -48,7 +50,7 @@ def pick_first_codigo(conn):
         row = cur.fetchone()
         return row[0] if row else None
     except Exception:
-        traceback.print_exc()
+        logger.exception("Erro ao obter primeiro código")
         return None
 
 def main():
@@ -60,13 +62,13 @@ def main():
     args = ap.parse_args()
 
     if not DB_PATH.exists():
-        print(f"[TESTE][ERRO] Base de dados não encontrada: {DB_PATH}", file=sys.stderr)
+        logger.error("[TESTE][ERRO] Base de dados não encontrada: %s", DB_PATH)
         sys.exit(2)
 
     try:
         conn = sqlite3.connect(DB_PATH)
     except Exception as e:
-        print(f"[TESTE][ERRO] Falha a abrir a BD: {DB_PATH} :: {e}", file=sys.stderr)
+        logger.error("[TESTE][ERRO] Falha a abrir a BD: %s :: %s", DB_PATH, e)
         sys.exit(2)
 
     try:
@@ -77,13 +79,13 @@ def main():
         if not codigo:
             codigo = pick_first_codigo(conn)
             if not codigo:
-                print("[TESTE][ERRO] Não foi possível descobrir um código em 'produtos'.", file=sys.stderr)
+                logger.error("[TESTE][ERRO] Não foi possível descobrir um código em 'produtos'.")
                 sys.exit(3)
-            print(f"[TESTE] Usar código detetado: {codigo}")
+            logger.info("[TESTE] Usar código detetado: %s", codigo)
 
-        print(f"[TESTE] Ler HTML atual de '{codigo}'...")
+        logger.info("[TESTE] Ler HTML atual de '%s'...", codigo)
         before = repo.get_html(codigo)
-        print(f"[TESTE] HTML atual (primeiros 120 chars): {before[:120]!r}")
+        logger.debug("[TESTE] HTML atual (primeiros 120 chars): %r", before[:120])
 
         if args.html or args.file:
             new_html = args.html
@@ -91,27 +93,26 @@ def main():
                 try:
                     new_html = Path(args.file).read_text(encoding="utf-8")
                 except Exception as e:
-                    print(f"[TESTE][ERRO] Falha a ler ficheiro {args.file}: {e}", file=sys.stderr)
+                    logger.error("[TESTE][ERRO] Falha a ler ficheiro %s: %s", args.file, e)
                     sys.exit(3)
 
-            print(f"[TESTE] A gravar novo HTML ({len(new_html)} chars)...")
+            logger.info("[TESTE] A gravar novo HTML (%d chars)...", len(new_html))
             repo.upsert_html(codigo, new_html)
-            print("[TESTE] Gravado. A reler...")
+            logger.info("[TESTE] Gravado. A reler...")
             after = repo.get_html(codigo)
             ok = (after == new_html)
-            print(f"[TESTE] Comparação pós-gravação: {'OK' if ok else 'FALHOU'}")
+            logger.info("[TESTE] Comparação pós-gravação: %s", "OK" if ok else "FALHOU")
             if not ok:
-                print("[TESTE][ERRO] O HTML lido não corresponde ao gravado.", file=sys.stderr)
+                logger.error("[TESTE][ERRO] O HTML lido não corresponde ao gravado.")
                 sys.exit(3)
         else:
-            print("[TESTE] Sem --html/--file: nada para gravar (apenas leitura).")
+            logger.info("[TESTE] Sem --html/--file: nada para gravar (apenas leitura).")
 
-        print("[TESTE] Sucesso.")
+        logger.info("[TESTE] Sucesso.")
         sys.exit(0)
 
-    except Exception as e:
-        print("[TESTE][ERRO] Exceção inesperada:", file=sys.stderr)
-        traceback.print_exc()
+    except Exception:
+        logger.exception("[TESTE][ERRO] Exceção inesperada:")
         sys.exit(3)
     finally:
         try:
@@ -120,4 +121,5 @@ def main():
             pass
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     main()

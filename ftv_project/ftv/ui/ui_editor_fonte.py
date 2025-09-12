@@ -31,6 +31,7 @@
 #    • Overlays/cores preservados; navegação centrada no rodapé; scroll vertical; cabeçalho em comentários.
 
 import sys
+import logging
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QFont, QKeySequence
 from PyQt5.QtWidgets import (
@@ -42,6 +43,9 @@ from ftv.data.datastore import DataStore
 from ftv.services.products import ProductService
 APP_TITLE = "Fichas Técnicas Valorizadas"
 DEV_OVERLAYS = True  # Ctrl+D alterna
+
+
+logger = logging.getLogger(__name__)
 
 # ------------------------ UI Helpers ------------------------
 
@@ -454,7 +458,7 @@ class FTApp(QWidget):
             self._aux_load_selected(codigo)
             self._aux_wire_autosave()
         except Exception as e:
-            print(f"[AuxCanon][ERRO] {e}")
+            logger.error("[AuxCanon][ERRO] %s", e)
     # ---------- Cálculos ----------
     def _update_costs_from_table(self):
         """Recalculate total cost using the service layer."""
@@ -674,7 +678,7 @@ class FTApp(QWidget):
                     except Exception:
                         sel[a] = None
         except Exception as e:
-            print(f"[AuxUI][AVISO] a ler seleção: {e}")
+            logger.warning("[AuxUI][AVISO] a ler seleção: %s", e)
 
         def set_by_data(cb, wanted_id):
             if cb is None: return
@@ -794,13 +798,13 @@ class FTApp(QWidget):
                         """, (codigo, int(value)))
                     self.service.conn.commit()
                 except Exception as e:
-                    print(f"[AuxUI][ERRO] gravar {kind} p/{codigo}: {e}")
+                    logger.error("[AuxUI][ERRO] gravar %s p/%s: %s", kind, codigo, e)
             cb.currentIndexChanged.connect(handler)
 
         saver("tipo_artigo", cb_tipo)
         saver("validade",    cb_val)
         saver("temperatura", cb_temp)
-        print("[AuxUI] autosave ligado.")
+        logger.info("[AuxUI] autosave ligado.")
 
     def _aux_ensure_guard(self):
         """Envolve _load_record com guarda self._loading True/False e injeta pipeline dos auxiliares."""
@@ -808,7 +812,7 @@ class FTApp(QWidget):
             return
         orig = getattr(self, "_load_record", None)
         if not callable(orig):
-            print("[AuxUI][AVISO] _load_record ausente.")
+            logger.warning("[AuxUI][AVISO] _load_record ausente.")
             return
         def wrapped(idx:int):
             self._loading = True
@@ -826,7 +830,7 @@ class FTApp(QWidget):
                 self._loading = False
         setattr(self, "_load_record", wrapped)
         self._aux_guard_wrapped = True
-        print("[AuxUI] _load_record protegido e pipeline de auxiliares ativado.")
+        logger.info("[AuxUI] _load_record protegido e pipeline de auxiliares ativado.")
     # ================== /AUXILIARES — CANÓNICO (v2) ==================
 
 
@@ -842,4 +846,5 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     main()
