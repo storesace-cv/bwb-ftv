@@ -38,7 +38,9 @@ class ProductService:
         return get_product_info(self.ds, codigo)
 
     # -- cost calculations ------------------------------------------------
-    def calculate_cost(self, product_or_ingredients: Iterable[Ingredient] | Product) -> float:
+    def calculate_cost(
+        self, product_or_ingredients: Iterable[Ingredient] | Product
+    ) -> float:
         """Calculate total cost from a Product or iterable of Ingredients."""
         if isinstance(product_or_ingredients, Product):
             ingredients = product_or_ingredients.ingredients
@@ -57,7 +59,10 @@ def get_product_info(ds: DataStore, codigo: str) -> Product:
     for row in ing_rows:
         ingredients.append(
             Ingredient(
-                name=row.get("nome") or row.get("ingrediente") or row.get("designacao") or "",
+                name=row.get("nome")
+                or row.get("ingrediente")
+                or row.get("designacao")
+                or "",
                 quantity=row.get("qtd") or row.get("quantidade") or row.get("QTD") or 0,
                 unit=row.get("unidade") or "",
                 ppu=row.get("ppu"),

@@ -7,8 +7,9 @@ Uso: python3 ftv_project/ftv/tools/run_migration_preparacao.py
 
 - Assume a BD em ./databases/ftv.db
 - Assume o SQL em ./ftv_project/ftv/data/migrations/preparacao.sql
-- Não altera UI nem código da app. Apenas cria/valida a tabela necessária.
-- Fornece mensagens de debug detalhadas em caso de erro (linha/coluna do SQL e contexto).
+  - Não altera UI nem código da app. Apenas cria/valida a tabela necessária.
+  - Fornece mensagens de debug detalhadas em caso de erro
+    (linha/coluna do SQL e contexto).
 
 Exit codes:
   0 = sucesso
@@ -16,7 +17,9 @@ Exit codes:
   3 = erro de execução SQL
   4 = BD não é um ficheiro SQLite válido ou não abriu
 """
-import sqlite3, sys, logging
+import logging
+import sqlite3
+import sys
 from pathlib import Path
 
 DB_PATH = Path("databases") / "ftv.db"
@@ -25,9 +28,11 @@ SQL_PATH = Path("ftv_project") / "ftv" / "data" / "migrations" / "preparacao.sql
 
 logger = logging.getLogger(__name__)
 
+
 def die(code, msg):
     logger.error("[MIGRAÇÃO][ERRO] %s", msg)
     sys.exit(code)
+
 
 def main():
     if not SQL_PATH.exists():
@@ -46,10 +51,17 @@ def main():
         with conn:
             conn.executescript(sql)
         # Sanidade mínima: tabela existe?
-        cur = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='produto_preparacao'")
+        cur = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND "
+            "name='produto_preparacao'"
+        )
         row = cur.fetchone()
         if not row:
-            die(3, "Migração correu sem erro aparente, mas a tabela 'produto_preparacao' não foi criada.")
+            die(
+                3,
+                "Migração correu sem erro aparente, mas a tabela "
+                "'produto_preparacao' não foi criada.",
+            )
         logger.info("[MIGRAÇÃO] Sucesso. Tabela 'produto_preparacao' pronta.")
     except sqlite3.Error as e:
         logger.debug("[MIGRAÇÃO][DEBUG] Traceback completo:", exc_info=True)
@@ -59,6 +71,7 @@ def main():
             conn.close()
         except Exception:
             pass
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

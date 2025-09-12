@@ -4,7 +4,6 @@
 # --- Caminhos robustos ---
 import sys
 import logging
-from ftv.utils import get_project_root
 
 # --- Qt ---
 from PyQt5.QtWidgets import QApplication
@@ -18,6 +17,7 @@ from ftv.ui.ui_editor_fonte import FTApp
 
 logger = logging.getLogger(__name__)
 # --- UI principal ---
+
 
 def _apply_global_theme(app):
     try:

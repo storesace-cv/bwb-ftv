@@ -1,6 +1,7 @@
 # Auto-gerado pela Fase 2 — repositories
 import sqlite3
 
+
 class ProdutosRepo:
     def __init__(self, conn: sqlite3.Connection):
         self.conn = conn
@@ -17,7 +18,7 @@ class ProdutosRepo:
         row = cur.fetchone()
         if not row:
             return {}
-        if hasattr(row, 'keys'):
+        if hasattr(row, "keys"):
             return {k: row[k] for k in row.keys()}
         return {}
 
@@ -28,16 +29,23 @@ class ProdutosRepo:
             # Preferir ativo=1 se existir; escolher linha mais recente
             cur.execute(
                 "SELECT preco1_g, preco2_g FROM precos_taxas "
-                "WHERE codigo = ? AND (CASE WHEN EXISTS(SELECT 1 FROM pragma_table_info('precos_taxas') WHERE name='ativo') THEN ativo=1 ELSE 1 END) "
-                "ORDER BY rowid DESC LIMIT 1",
-                (codigo,)
+                "WHERE codigo = ? AND (CASE WHEN EXISTS("
+                "SELECT 1 FROM pragma_table_info('precos_taxas') WHERE name='ativo') "
+                "THEN ativo=1 ELSE 1 END) ORDER BY rowid DESC LIMIT 1",
+                (codigo,),
             )
             r = cur.fetchone()
-            p1 = r[0] if r and r[0] not in (None, '') else None
-            p2 = r[1] if r and r[1] not in (None, '') else None
-            return {'pvp1': p1, 'pvp2': p2, 'pvp3': None, 'pvp4': None, 'pvp5': None}
+            p1 = r[0] if r and r[0] not in (None, "") else None
+            p2 = r[1] if r and r[1] not in (None, "") else None
+            return {"pvp1": p1, "pvp2": p2, "pvp3": None, "pvp4": None, "pvp5": None}
         except Exception:
-            return {'pvp1': None, 'pvp2': None, 'pvp3': None, 'pvp4': None, 'pvp5': None}
+            return {
+                "pvp1": None,
+                "pvp2": None,
+                "pvp3": None,
+                "pvp4": None,
+                "pvp5": None,
+            }
 
 
 class IngredientesRepo:
@@ -45,7 +53,7 @@ class IngredientesRepo:
         self.conn = conn
 
     def _infer_cols(self):
-        """Inferir colunas em 'fichas_tecnicas', com preferências explícitas do teu esquema."""
+        """Inferir colunas em 'fichas_tecnicas' com as preferências do esquema."""
         cur = self.conn.cursor()
         try:
             cur.execute("PRAGMA table_info(fichas_tecnicas)")
@@ -53,30 +61,69 @@ class IngredientesRepo:
         except Exception:
             return None
 
-        def has(name): return name in cols
+        def has(name):
+            return name in cols
+
         def pick(cands):
             for c in cands:
-                if c in cols: return c
+                if c in cols:
+                    return c
             # heurística por prefixos
             for c in cols:
-                for pref in ('produto_', 'artigo_', 'codigo_', 'cod_', 'fk_'):
-                    if c.startswith(pref) and any(k in c for k in ('produto','artigo','codigo','cod')):
+                for pref in ("produto_", "artigo_", "codigo_", "cod_", "fk_"):
+                    if c.startswith(pref) and any(
+                        k in c for k in ("produto", "artigo", "codigo", "cod")
+                    ):
                         return c
             return None
 
         # Preferências baseadas no teu schema real
-        prod = 'produto_codigo' if has('produto_codigo') else pick(['codigo_produto','produto','artigo','codigo','cod_produto','codartigo','fk_produto'])
+        prod = (
+            "produto_codigo"
+            if has("produto_codigo")
+            else pick(
+                [
+                    "codigo_produto",
+                    "produto",
+                    "artigo",
+                    "codigo",
+                    "cod_produto",
+                    "codartigo",
+                    "fk_produto",
+                ]
+            )
+        )
         # ingrediente: prefere 'componente_nome'; admite alternativas
-        ingr = 'componente_nome' if has('componente_nome') else pick(['ingrediente','ingredientes','designacao','componente','descricao','nome_ingrediente','componente_codigo'])
+        ingr = (
+            "componente_nome"
+            if has("componente_nome")
+            else pick(
+                [
+                    "ingrediente",
+                    "ingredientes",
+                    "designacao",
+                    "componente",
+                    "descricao",
+                    "nome_ingrediente",
+                    "componente_codigo",
+                ]
+            )
+        )
         # quantidade & unidade
-        qty  = 'qtd' if has('qtd') else pick(['quantidade','qtde','quant','qte'])
-        unit = 'unidade' if has('unidade') else pick(['unid','unidade_medida','uom','und','unidad'])
+        qty = "qtd" if has("qtd") else pick(["quantidade", "qtde", "quant", "qte"])
+        unit = (
+            "unidade"
+            if has("unidade")
+            else pick(["unid", "unidade_medida", "uom", "und", "unidad"])
+        )
 
-        return {'prod': prod, 'ingr': ingr, 'qty': qty, 'unit': unit}
+        return {"prod": prod, "ingr": ingr, "qty": qty, "unit": unit}
 
     def listar_por_produto(self, codigo: str):
-        """Devolve [{'ingrediente', 'quantidade', 'unidade'}] para um produto em 'fichas_tecnicas'."""
-        """Devolve lista de dicts com chaves: ingrediente, nome, designacao, quantidade, qtd, QTD, unidade, ppu, total."""
+        """Devolve dados do produto em fichas_tecnicas."""
+        """Lista dicts com chaves: ingrediente, nome, designacao, quantidade,
+        qtd, QTD, unidade, ppu e total.
+        """
         cur = self.conn.cursor()
         try:
             cur.execute(
@@ -84,7 +131,7 @@ class IngredientesRepo:
                 "FROM fichas_tecnicas "
                 "WHERE produto_codigo = ? "
                 "ORDER BY COALESCE(ordem, rowid)",
-                (codigo,)
+                (codigo,),
             )
             rows = cur.fetchall()
             out = []
@@ -95,15 +142,15 @@ class IngredientesRepo:
                 ppu = r[3]
                 total = r[4]
                 item = {
-                    'ingrediente': nome,
-                    'nome': nome,
-                    'designacao': nome,
-                    'quantidade': qtd,
-                    'qtd': qtd,
-                    'QTD': qtd,
-                    'unidade': unidade,
-                    'ppu': ppu,
-                    'total': total,
+                    "ingrediente": nome,
+                    "nome": nome,
+                    "designacao": nome,
+                    "quantidade": qtd,
+                    "qtd": qtd,
+                    "QTD": qtd,
+                    "unidade": unidade,
+                    "ppu": ppu,
+                    "total": total,
                 }
                 out.append(item)
             return out
@@ -111,31 +158,61 @@ class IngredientesRepo:
             try:
                 cur.execute("PRAGMA table_info(fichas_tecnicas)")
                 cols = [c[1].lower() for c in cur.fetchall()]
-                has = lambda x: x in cols
+
+                def has(x):
+                    return x in cols
+
                 sel = []
                 alias = []
-                if has('componente_nome'): sel.append('componente_nome'); alias.append('nome')
-                if has('qtd'): sel.append('qtd'); alias.append('qtd')
-                if has('unidade'): sel.append('unidade'); alias.append('unidade')
-                if has('ppu'): sel.append('ppu'); alias.append('ppu')
-                if has('custo'): sel.append('custo'); alias.append('total')
+                if has("componente_nome"):
+                    sel.append("componente_nome")
+                    alias.append("nome")
+                if has("qtd"):
+                    sel.append("qtd")
+                    alias.append("qtd")
+                if has("unidade"):
+                    sel.append("unidade")
+                    alias.append("unidade")
+                if has("ppu"):
+                    sel.append("ppu")
+                    alias.append("ppu")
+                if has("custo"):
+                    sel.append("custo")
+                    alias.append("total")
                 if not sel:
                     return []
-                sql = "SELECT " + ", ".join(sel) + " FROM fichas_tecnicas WHERE produto_codigo = ? ORDER BY COALESCE(ordem, rowid)"
+                sql = (
+                    "SELECT "
+                    + ", ".join(sel)
+                    + " FROM fichas_tecnicas WHERE produto_codigo = ? "
+                    + "ORDER BY COALESCE(ordem, rowid)"
+                )
                 cur.execute(sql, (codigo,))
                 rows = cur.fetchall()
                 out = []
                 for r in rows:
-                    base = {'ingrediente': None, 'nome': None, 'designacao': None, 'quantidade': None, 'qtd': None, 'QTD': None, 'unidade': None, 'ppu': None, 'total': None}
+                    base = {
+                        "ingrediente": None,
+                        "nome": None,
+                        "designacao": None,
+                        "quantidade": None,
+                        "qtd": None,
+                        "QTD": None,
+                        "unidade": None,
+                        "ppu": None,
+                        "total": None,
+                    }
                     tmp = {}
                     for i, a in enumerate(alias):
                         tmp[a] = r[i]
                     # preencher aliases
-                    if 'nome' in tmp and tmp['nome'] is not None:
-                        base['ingrediente'] = base['nome'] = base['designacao'] = tmp['nome']
-                    if 'qtd' in tmp and tmp['qtd'] is not None:
-                        base['quantidade'] = base['qtd'] = base['QTD'] = tmp['qtd']
-                    for k in ('unidade','ppu','total'):
+                    if "nome" in tmp and tmp["nome"] is not None:
+                        base["ingrediente"] = base["nome"] = base["designacao"] = tmp[
+                            "nome"
+                        ]
+                    if "qtd" in tmp and tmp["qtd"] is not None:
+                        base["quantidade"] = base["qtd"] = base["QTD"] = tmp["qtd"]
+                    for k in ("unidade", "ppu", "total"):
                         if k in tmp:
                             base[k] = tmp[k]
                     out.append(base)
@@ -151,7 +228,10 @@ class AuxiliaresRepo:
     def list_tipos_artigos(self):
         cur = self.conn.cursor()
         try:
-            cur.execute("SELECT cod, descricao FROM tipos_artigos WHERE ativo=1 ORDER BY descricao")
+            cur.execute(
+                "SELECT cod, descricao FROM tipos_artigos "
+                "WHERE ativo=1 ORDER BY descricao"
+            )
             rows = cur.fetchall()
             return [(None, "—")] + [(r[0], r[1]) for r in rows]
         except Exception:
@@ -160,7 +240,10 @@ class AuxiliaresRepo:
     def list_validade(self):
         cur = self.conn.cursor()
         try:
-            cur.execute("SELECT cod, descricao FROM validade WHERE ativo=1 ORDER BY descricao")
+            cur.execute(
+                "SELECT cod, descricao FROM validade "
+                "WHERE ativo=1 ORDER BY descricao"
+            )
             rows = cur.fetchall()
             return [(None, "—")] + [(r[0], r[1]) for r in rows]
         except Exception:
@@ -169,7 +252,10 @@ class AuxiliaresRepo:
     def list_temperaturas(self):
         cur = self.conn.cursor()
         try:
-            cur.execute("SELECT cod, descricao FROM temperaturas WHERE ativo=1 ORDER BY descricao")
+            cur.execute(
+                "SELECT cod, descricao FROM temperaturas "
+                "WHERE ativo=1 ORDER BY descricao"
+            )
             rows = cur.fetchall()
             return [(None, "—")] + [(r[0], r[1]) for r in rows]
         except Exception:
@@ -179,7 +265,10 @@ class AuxiliaresRepo:
     def list_tipos_artigos_admin(self):
         cur = self.conn.cursor()
         try:
-            cur.execute("SELECT cod, descricao, COALESCE(ativo,1) FROM tipos_artigos ORDER BY descricao")
+            cur.execute(
+                "SELECT cod, descricao, COALESCE(ativo,1) FROM tipos_artigos "
+                "ORDER BY descricao"
+            )
             return [(r[0], r[1], r[2]) for r in cur.fetchall()]
         except Exception:
             return []
@@ -187,7 +276,10 @@ class AuxiliaresRepo:
     def add_tipo_artigo(self, descricao: str):
         cur = self.conn.cursor()
         try:
-            cur.execute("INSERT INTO tipos_artigos (descricao, ativo) VALUES (?, 1)", (descricao,))
+            cur.execute(
+                "INSERT INTO tipos_artigos (descricao, ativo) VALUES (?, 1)",
+                (descricao,),
+            )
             self.conn.commit()
             return cur.lastrowid
         except Exception:
@@ -196,7 +288,10 @@ class AuxiliaresRepo:
     def update_tipo_artigo(self, cod, descricao: str) -> bool:
         cur = self.conn.cursor()
         try:
-            cur.execute("UPDATE tipos_artigos SET descricao=? WHERE cod=?", (descricao, cod))
+            cur.execute(
+                "UPDATE tipos_artigos SET descricao=? WHERE cod=?",
+                (descricao, cod),
+            )
             self.conn.commit()
             return cur.rowcount > 0
         except Exception:
@@ -205,7 +300,10 @@ class AuxiliaresRepo:
     def set_tipo_artigo_ativo(self, cod, ativo: int) -> bool:
         cur = self.conn.cursor()
         try:
-            cur.execute("UPDATE tipos_artigos SET ativo=? WHERE cod=?", (int(ativo), cod))
+            cur.execute(
+                "UPDATE tipos_artigos SET ativo=? WHERE cod=?",
+                (int(ativo), cod),
+            )
             self.conn.commit()
             return cur.rowcount > 0
         except Exception:
@@ -214,7 +312,10 @@ class AuxiliaresRepo:
     def list_validade_admin(self):
         cur = self.conn.cursor()
         try:
-            cur.execute("SELECT cod, descricao, COALESCE(ativo,1) FROM validade ORDER BY descricao")
+            cur.execute(
+                "SELECT cod, descricao, COALESCE(ativo,1) FROM validade "
+                "ORDER BY descricao"
+            )
             return [(r[0], r[1], r[2]) for r in cur.fetchall()]
         except Exception:
             return []
@@ -222,7 +323,10 @@ class AuxiliaresRepo:
     def add_validade(self, descricao: str):
         cur = self.conn.cursor()
         try:
-            cur.execute("INSERT INTO validade (descricao, ativo) VALUES (?, 1)", (descricao,))
+            cur.execute(
+                "INSERT INTO validade (descricao, ativo) VALUES (?, 1)",
+                (descricao,),
+            )
             self.conn.commit()
             return cur.lastrowid
         except Exception:
@@ -231,7 +335,10 @@ class AuxiliaresRepo:
     def update_validade(self, cod, descricao: str) -> bool:
         cur = self.conn.cursor()
         try:
-            cur.execute("UPDATE validade SET descricao=? WHERE cod=?", (descricao, cod))
+            cur.execute(
+                "UPDATE validade SET descricao=? WHERE cod=?",
+                (descricao, cod),
+            )
             self.conn.commit()
             return cur.rowcount > 0
         except Exception:
@@ -240,7 +347,10 @@ class AuxiliaresRepo:
     def set_validade_ativo(self, cod, ativo: int) -> bool:
         cur = self.conn.cursor()
         try:
-            cur.execute("UPDATE validade SET ativo=? WHERE cod=?", (int(ativo), cod))
+            cur.execute(
+                "UPDATE validade SET ativo=? WHERE cod=?",
+                (int(ativo), cod),
+            )
             self.conn.commit()
             return cur.rowcount > 0
         except Exception:
@@ -249,7 +359,10 @@ class AuxiliaresRepo:
     def list_temperaturas_admin(self):
         cur = self.conn.cursor()
         try:
-            cur.execute("SELECT cod, descricao, COALESCE(ativo,1) FROM temperaturas ORDER BY descricao")
+            cur.execute(
+                "SELECT cod, descricao, COALESCE(ativo,1) FROM temperaturas "
+                "ORDER BY descricao"
+            )
             return [(r[0], r[1], r[2]) for r in cur.fetchall()]
         except Exception:
             return []
@@ -257,7 +370,10 @@ class AuxiliaresRepo:
     def add_temperatura(self, descricao: str):
         cur = self.conn.cursor()
         try:
-            cur.execute("INSERT INTO temperaturas (descricao, ativo) VALUES (?, 1)", (descricao,))
+            cur.execute(
+                "INSERT INTO temperaturas (descricao, ativo) VALUES (?, 1)",
+                (descricao,),
+            )
             self.conn.commit()
             return cur.lastrowid
         except Exception:
@@ -266,7 +382,10 @@ class AuxiliaresRepo:
     def update_temperatura(self, cod, descricao: str) -> bool:
         cur = self.conn.cursor()
         try:
-            cur.execute("UPDATE temperaturas SET descricao=? WHERE cod=?", (descricao, cod))
+            cur.execute(
+                "UPDATE temperaturas SET descricao=? WHERE cod=?",
+                (descricao, cod),
+            )
             self.conn.commit()
             return cur.rowcount > 0
         except Exception:
@@ -275,7 +394,10 @@ class AuxiliaresRepo:
     def set_temperatura_ativo(self, cod, ativo: int) -> bool:
         cur = self.conn.cursor()
         try:
-            cur.execute("UPDATE temperaturas SET ativo=? WHERE cod=?", (int(ativo), cod))
+            cur.execute(
+                "UPDATE temperaturas SET ativo=? WHERE cod=?",
+                (int(ativo), cod),
+            )
             self.conn.commit()
             return cur.rowcount > 0
         except Exception:
@@ -287,27 +409,38 @@ class AuxiliaresRepo:
         try:
             cur = self.conn.cursor()
             cur.execute(
-                "SELECT tipo_artigo_id, validade_id, temperatura_id FROM produto_auxiliar WHERE produto_codigo = ?",
+                "SELECT tipo_artigo_id, validade_id, temperatura_id "
+                "FROM produto_auxiliar WHERE produto_codigo = ?",
                 (codigo,),
             )
             row = cur.fetchone()
             if not row:
                 return (None, None, None)
             try:
-                return (row["tipo_artigo_id"], row["validade_id"], row["temperatura_id"])
+                return (
+                    row["tipo_artigo_id"],
+                    row["validade_id"],
+                    row["temperatura_id"],
+                )
             except Exception:
-                return (row[0] if len(row)>0 else None, row[1] if len(row)>1 else None, row[2] if len(row)>2 else None)
+                return (
+                    row[0] if len(row) > 0 else None,
+                    row[1] if len(row) > 1 else None,
+                    row[2] if len(row) > 2 else None,
+                )
         except Exception:
             return (None, None, None)
 
-    def set_produto_auxiliares(self, codigo: str, tipo_artigo_id, validade_id, temperatura_id) -> None:
+    def set_produto_auxiliares(
+        self, codigo: str, tipo_artigo_id, validade_id, temperatura_id
+    ) -> None:
         """Upsert para a tabela produto_auxiliar."""
         try:
             cur = self.conn.cursor()
             cur.execute(
-                "INSERT INTO produto_auxiliar (produto_codigo, tipo_artigo_id, validade_id, temperatura_id) "
-                "VALUES (?, ?, ?, ?) "
-                "ON CONFLICT(produto_codigo) DO UPDATE SET "
+                "INSERT INTO produto_auxiliar (produto_codigo, tipo_artigo_id, "
+                "validade_id, temperatura_id) VALUES (?, ?, ?, ?) ON "
+                "CONFLICT(produto_codigo) DO UPDATE SET "
                 "tipo_artigo_id=excluded.tipo_artigo_id, "
                 "validade_id=excluded.validade_id, "
                 "temperatura_id=excluded.temperatura_id",
@@ -317,13 +450,16 @@ class AuxiliaresRepo:
         except Exception:
             pass
 
+
 class PreparacaoRepo:
     def __init__(self, conn: sqlite3.Connection):
         self.conn = conn
 
     def get_html(self, codigo: str) -> str:
         cur = self.conn.cursor()
-        cur.execute("SELECT html FROM produto_preparacao WHERE produto_codigo = ?", (codigo,))
+        cur.execute(
+            "SELECT html FROM produto_preparacao WHERE produto_codigo = ?", (codigo,)
+        )
         row = cur.fetchone()
         return row[0] if row and row[0] else ""
 

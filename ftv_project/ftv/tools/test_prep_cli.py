@@ -25,7 +25,8 @@ import logging
 
 from ftv.utils import get_project_root
 
-import argparse, sqlite3
+import argparse
+import sqlite3
 
 DB_PATH = get_project_root() / "databases" / "ftv.db"
 
@@ -36,12 +37,15 @@ logger = logging.getLogger(__name__)
 def _load_preparacao_repo():
     try:
         from ftv.data.repositories import PreparacaoRepo
+
         return PreparacaoRepo
     except Exception:
         logger.exception(
-            "[TESTE][ERRO] Não consigo importar PreparacaoRepo. Confirme se a Fase 2 foi aplicada corretamente."
+            "[TESTE][ERRO] Não consigo importar PreparacaoRepo. "
+            "Confirme se a Fase 2 foi aplicada corretamente."
         )
         sys.exit(2)
+
 
 def pick_first_codigo(conn):
     try:
@@ -52,9 +56,12 @@ def pick_first_codigo(conn):
         logger.exception("Erro ao obter primeiro código")
         return None
 
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--codigo", help="Código do produto (se omisso, tenta obter o 1º existente).")
+    ap.add_argument(
+        "--codigo", help="Código do produto (se omisso, tenta obter o 1º existente)."
+    )
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--html", help="HTML a gravar")
     g.add_argument("--file", help="Ficheiro com HTML a gravar")
@@ -78,7 +85,9 @@ def main():
         if not codigo:
             codigo = pick_first_codigo(conn)
             if not codigo:
-                logger.error("[TESTE][ERRO] Não foi possível descobrir um código em 'produtos'.")
+                logger.error(
+                    "[TESTE][ERRO] Não foi possível descobrir um código em 'produtos'."
+                )
                 sys.exit(3)
             logger.info("[TESTE] Usar código detetado: %s", codigo)
 
@@ -92,14 +101,16 @@ def main():
                 try:
                     new_html = Path(args.file).read_text(encoding="utf-8")
                 except Exception as e:
-                    logger.error("[TESTE][ERRO] Falha a ler ficheiro %s: %s", args.file, e)
+                    logger.error(
+                        "[TESTE][ERRO] Falha a ler ficheiro %s: %s", args.file, e
+                    )
                     sys.exit(3)
 
             logger.info("[TESTE] A gravar novo HTML (%d chars)...", len(new_html))
             repo.upsert_html(codigo, new_html)
             logger.info("[TESTE] Gravado. A reler...")
             after = repo.get_html(codigo)
-            ok = (after == new_html)
+            ok = after == new_html
             logger.info("[TESTE] Comparação pós-gravação: %s", "OK" if ok else "FALHOU")
             if not ok:
                 logger.error("[TESTE][ERRO] O HTML lido não corresponde ao gravado.")
@@ -118,6 +129,7 @@ def main():
             conn.close()
         except Exception:
             pass
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
