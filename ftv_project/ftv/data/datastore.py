@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-from pathlib import Path
-from ..utils.paths import get_project_root
-
-from ..utils import get_project_root
-
 class DataStore:
     """
     DataStore mínimo (reconstruído e compatível com UI):
@@ -19,11 +14,6 @@ class DataStore:
         self.demo = bool(demo)
 
         # Caminho default: raiz do projeto /databases/ftv.db
-        try:
-            base = get_project_root()
-        except Exception:
-            base = Path(".").resolve()
-
         if db_path is None:
             db_path = str(base / 'databases' / 'ftv.db')
 
@@ -181,10 +171,6 @@ class DataStore:
                 pass
 
         # 2) JSON
-        try:
-            base = get_project_root()
-        except Exception:
-            base = Path(".").resolve()
         json_path = base / "allergens.json"
         if json_path.exists():
             try:
