@@ -226,7 +226,7 @@ class DataStore:
         ]
         return [(i+1, nm) for i, nm in enumerate(default)]
 
-    def read_auxiliares(self, codigo: str):
+    def _read_auxiliares(self, codigo: str):
         """Lê (tipo_id, validade_id, temperatura_id) a partir do repo Auxiliares."""
         if getattr(self, 'demo', False) or not getattr(self, 'conn', None) or getattr(self, 'aux', None) is None:
             return (None, None, None)
@@ -235,7 +235,7 @@ class DataStore:
         except Exception:
             return (None, None, None)
 
-    def write_auxiliares(self, codigo: str, tipo_id, validade_id, temperatura_id) -> bool:
+    def _write_auxiliares(self, codigo: str, tipo_id, validade_id, temperatura_id) -> bool:
         """Grava no repo Auxiliares (upsert)."""
         if getattr(self, 'demo', False) or not getattr(self, 'conn', None) or getattr(self, 'aux', None) is None:
             return False
@@ -246,8 +246,8 @@ class DataStore:
             return False
     def get_auxiliares_for(self, codigo: str):
         """Obtém (tipo_id, validade_id, temperatura_id) para um produto."""
-        return self.read_auxiliares(codigo)
+        return self._read_auxiliares(codigo)
 
     def save_auxiliares_for(self, codigo: str, tipo_id, validade_id, temperatura_id) -> bool:
         """Guarda auxiliares para um produto. Devolve *True* se bem sucedido."""
-        return self.write_auxiliares(codigo, tipo_id, validade_id, temperatura_id)
+        return self._write_auxiliares(codigo, tipo_id, validade_id, temperatura_id)
