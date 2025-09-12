@@ -27,12 +27,11 @@ class ProdutosRepo:
         return {}
 
     def get_pvps(self, codigo: str):
-        """Devolve {'pvp1', 'pvp2', 'pvp3', 'pvp4', 'pvp5'} a partir de precos_taxas."""
+        """Devolve {'pvp1', 'pvp2', 'pvp3', 'pvp4', 'pvp5'} a partir de produtos."""
         cur = self.conn.cursor()
         try:
-            # Preferir ativo=1 se existir; escolher linha mais recente
             cur.execute(
-                "SELECT preco1_g, preco2_g FROM precos_taxas WHERE codigo = ?",
+                "SELECT preco1_g, preco2_g FROM produtos WHERE codigo = ?",
                 (codigo,),
             )
             r = cur.fetchone()
