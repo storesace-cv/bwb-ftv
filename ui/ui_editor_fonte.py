@@ -718,8 +718,8 @@ class FTApp(QWidget):
 
         # --- Auxiliares: fetch/populate/load (canon) ---
         try:
-            _t, _v, _p = self._aux_fetch_lists()
-            self._aux_populate_cbs(_t, _v, _p)
+            lists = self._aux_fetch_lists()
+            self._aux_populate_cbs(lists)
             self._aux_load_selected(codigo)
             self._aux_wire_autosave()
         except Exception as e:
@@ -751,94 +751,92 @@ class FTApp(QWidget):
 
     # ================== AUXILIARES — CANÓNICO (v2) ==================
     def _aux_fetch_lists(self):
-        def _aux_fetch_lists(self):
-            """
-            Lê listas canónicas a partir da BD, resolvendo nomes de tabelas/colunas:
-            - Tabelas: tipos_artigos; validade/validades; temperaturas
-            - PK: id|cod|codigo
-            - Nome: descricao|nome|designacao
-            Apenas registos ativos (COALESCE(ativo,1)=1).
-            Retorna: {"tipo_artigo":[(id,nome)], "validade":[(id,nome)], "temperatura":[(id,nome)]}
-            """
-            out = {"tipo_artigo": [], "validade": [], "temperatura": []}
-            conn = getattr(self.service, "conn", None)
-            if not conn:
-                return out
-            cur = conn.cursor()
+        """Retrieve canonical lists from the database.
 
-            def resolve_table(candidates):
-                for t in candidates:
-                    try:
-                        cur.execute(
-                            f"SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-                            (t,),
-                        )
-                        if cur.fetchone():
-                            return t
-                    except Exception:
-                        pass
-                return None
+        The method resolves table and column names dynamically and only
+        returns active records (``COALESCE(ativo,1)=1``).  The returned
+        structure is a dictionary with the keys ``tipo_artigo``,
+        ``validade`` and ``temperatura`` mapping to ``[(id, nome)]``
+        tuples.
+        """
 
-            def pick_cols(table):
-                # devolve (id_col, name_col) ou (None,None)
-                try:
-                    cur.execute(f"PRAGMA table_info({table})")
-                    rows = cur.fetchall()
-                except Exception:
-                    return (None, None)
-                names = [r[1].lower() for r in rows]
-                # PK candidates
-                id_col = None
-                for cand in ("id", "cod", "codigo"):
-                    if cand in names:
-                        id_col = cand
-                        break
-                if id_col is None:
-                    # tenta PK pelo flag
-                    for r in rows:
-                        if r[5]:
-                            id_col = r[1]
-                            break
-                # Nome candidates
-                name_col = None
-                for cand in ("descricao", "nome", "designacao"):
-                    if cand in names:
-                        name_col = cand
-                        break
-                return (id_col, name_col)
-
-            def fetch_generic(kind, table_candidates):
-                tbl = resolve_table(table_candidates)
-                if not tbl:
-                    return []
-                id_col, name_col = pick_cols(tbl)
-                if not id_col or not name_col:
-                    return []
-                sql = f"SELECT {id_col}, {name_col} FROM {tbl} WHERE COALESCE(ativo,1)=1 ORDER BY {name_col}"
-                try:
-                    cur.execute(sql)
-                    res = cur.fetchall()
-                    out = []
-                    for r in res:
-                        try:
-                            rid = int(r[0])
-                        except Exception:
-                            # aceita também chave texto
-                            try:
-                                rid = int(str(r[0]).strip())
-                            except Exception:
-                                continue
-                        nm = str(r[1]).strip()
-                        if nm:
-                            out.append((rid, nm))
-                    return out
-                except Exception:
-                    return []
-
-            out["tipo_artigo"] = fetch_generic("tipo_artigo", ("tipos_artigos",))
-            out["validade"] = fetch_generic("validade", ("validade", "validades"))
-            out["temperatura"] = fetch_generic("temperatura", ("temperaturas",))
+        out = {"tipo_artigo": [], "validade": [], "temperatura": []}
+        conn = getattr(self.service, "conn", None)
+        if not conn:
             return out
+        cur = conn.cursor()
+
+        def resolve_table(candidates):
+            for table in candidates:
+                try:
+                    cur.execute(
+                        "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                        (table,),
+                    )
+                    if cur.fetchone():
+                        return table
+                except Exception:
+                    pass
+            return None
+
+        def pick_cols(table):
+            try:
+                cur.execute(f"PRAGMA table_info({table})")
+                rows = cur.fetchall()
+            except Exception:
+                return None, None
+            names = [r[1].lower() for r in rows]
+            id_col = None
+            for cand in ("id", "cod", "codigo"):
+                if cand in names:
+                    id_col = cand
+                    break
+            if id_col is None:
+                for r in rows:
+                    if r[5]:
+                        id_col = r[1]
+                        break
+            name_col = None
+            for cand in ("descricao", "nome", "designacao"):
+                if cand in names:
+                    name_col = cand
+                    break
+            return id_col, name_col
+
+        def fetch_generic(table_candidates):
+            tbl = resolve_table(table_candidates)
+            if not tbl:
+                return []
+            id_col, name_col = pick_cols(tbl)
+            if not id_col or not name_col:
+                return []
+            sql = (
+                f"SELECT {id_col}, {name_col} FROM {tbl} "
+                f"WHERE COALESCE(ativo,1)=1 ORDER BY {name_col}"
+            )
+            try:
+                cur.execute(sql)
+                rows = cur.fetchall()
+            except Exception:
+                return []
+            result = []
+            for r in rows:
+                try:
+                    rid = int(r[0])
+                except Exception:
+                    try:
+                        rid = int(str(r[0]).strip())
+                    except Exception:
+                        continue
+                name = str(r[1]).strip()
+                if name:
+                    result.append((rid, name))
+            return result
+
+        out["tipo_artigo"] = fetch_generic(("tipos_artigos",))
+        out["validade"] = fetch_generic(("validade", "validades"))
+        out["temperatura"] = fetch_generic(("temperaturas",))
+        return out
 
     def _aux_find_cbs(self):
         """Tenta encontrar os 3 comboboxes. Usa objectName e heurística."""
@@ -871,53 +869,9 @@ class FTApp(QWidget):
                         cb_temp = cb
         return cb_tipo, cb_val, cb_temp
 
-    def _aux_populate_cbs(self):
-        def _aux_populate_cbs(self, lists):
-            """Limpa e repovoa as comboboxes exclusivamente com o que vem da BD."""
-            # tenta descobrir widgets já criados
-            cb_tipo = getattr(self, "cbTipoArtigo", None)
-            cb_val = getattr(self, "cbValidade", None)
-            cb_temp = getattr(self, "cbTemp", None)
-
-            try:
-                from PyQt5.QtWidgets import QComboBox
-            except Exception:
-                from PySide6.QtWidgets import QComboBox
-
-            def ensure(cb_attr, hint_names):
-                cb = getattr(self, cb_attr, None)
-                if cb:
-                    return cb
-                # tenta por objectName heurístico
-                for w in self.findChildren(QComboBox):
-                    nm = (w.objectName() or "").lower()
-                    if any(h in nm for h in hint_names):
-                        setattr(self, cb_attr, w)
-                        return w
-                return None
-
-            cb_tipo = ensure("cbTipoArtigo", ("tipo", "art"))
-            cb_val = ensure("cbValidade", ("valid",))
-            cb_temp = ensure("cbTemp", ("temp",))
-
-            def fill(cb, items):
-                if not cb:
-                    return
-                cb.blockSignals(True)
-                cb.clear()
-                cb.addItem("—", None)
-                seen = set()
-                for rid, nm in items:
-                    key = (rid, nm)
-                    if key in seen:
-                        continue
-                    seen.add(key)
-                    cb.addItem(nm, rid)
-                cb.blockSignals(False)
-
-            fill(cb_tipo, lists.get("tipo_artigo", []))
-            fill(cb_val, lists.get("validade", []))
-            fill(cb_temp, lists.get("temperatura", []))
+    def _aux_populate_cbs(self, lists):
+        """Populate the combo boxes with canonical lists."""
+        cb_tipo, cb_val, cb_temp = self._aux_find_cbs()
 
         def fill(cb, items):
             if cb is None:
@@ -928,19 +882,18 @@ class FTApp(QWidget):
                 pass
             try:
                 cb.clear()
-                # placeholder "—" (None)
                 cb.addItem("—", None)
-                for i, name in items:
-                    cb.addItem(str(name), int(i))
+                for rid, name in items:
+                    cb.addItem(str(name), int(rid))
             finally:
                 try:
                     cb.blockSignals(False)
                 except Exception:
                     pass
 
-        fill(cb_tipo, lists["tipo_artigo"])
-        fill(cb_val, lists["validade"])
-        fill(cb_temp, lists["temperatura"])
+        fill(cb_tipo, lists.get("tipo_artigo", []))
+        fill(cb_val, lists.get("validade", []))
+        fill(cb_temp, lists.get("temperatura", []))
 
     def _aux_load_selected(self, codigo):
         """Posiciona os comboboxes na seleção gravada (produto_auxiliar ou produto_attrs)."""
@@ -1136,7 +1089,8 @@ class FTApp(QWidget):
         def wrapped(idx: int):
             self._loading = True
             try:
-                self._aux_populate_cbs()
+                lists = self._aux_fetch_lists()
+                self._aux_populate_cbs(lists)
                 res = orig(idx)
                 try:
                     codigo = self.service.codigo_at(getattr(self, "cur_index", 0))
