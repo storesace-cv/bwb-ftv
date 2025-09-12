@@ -1,3 +1,5 @@
+import logging
+
 from ftv.data.datastore import DataStore
 from ftv.data.repositories import AuxiliaresRepo
 
@@ -29,3 +31,19 @@ def test_list_validades_and_auxiliares_rw():
     assert ds.get_auxiliares_for("P1") == (None, None, None)
     assert ds.save_auxiliares_for("P1", 10, 1, 20)
     assert ds.get_auxiliares_for("P1") == (10, 1, 20)
+
+
+def test_reload_ids_fallback_to_fichas_tecnicas(caplog):
+    ds = DataStore(db_path=":memory:")
+    cur = ds.conn.cursor()
+    cur.execute("CREATE TABLE fichas_tecnicas (produto_codigo TEXT)")
+    cur.executemany(
+        "INSERT INTO fichas_tecnicas (produto_codigo) VALUES (?)",
+        [("F1",), ("F2",)],
+    )
+    ds.conn.commit()
+    with caplog.at_level(logging.INFO):
+        ds.reload_ids()
+    assert ds.total() == 2
+    assert ds._ids == ["F1", "F2"]
+    assert any("fichas_tecnicas" in r.message for r in caplog.records)
