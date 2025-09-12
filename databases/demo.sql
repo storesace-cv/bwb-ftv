@@ -986,21 +986,15 @@ CREATE TABLE produto_attrs (
 INSERT INTO produto_attrs VALUES('10001','—','—','—');
 CREATE TABLE produto_auxiliar (
     produto_codigo    TEXT PRIMARY KEY,
-    tipo_artigo_cod   INTEGER NULL,
-    validade_cod      INTEGER NULL,
-    temperatura_cod   INTEGER NULL,
     tipo_artigo_id    INTEGER,
     validade_id       INTEGER,
     temperatura_id    INTEGER,
     -- FKs suaves (as tabelas podem não existir sempre ou ter dados incompletos)
-    FOREIGN KEY (tipo_artigo_cod) REFERENCES tipos_artigos(cod) ON UPDATE CASCADE ON DELETE SET NULL,
-    FOREIGN KEY (validade_cod)    REFERENCES validade(cod)       ON UPDATE CASCADE ON DELETE SET NULL,
-    FOREIGN KEY (temperatura_cod) REFERENCES temperaturas(cod)   ON UPDATE CASCADE ON DELETE SET NULL,
     FOREIGN KEY (tipo_artigo_id)  REFERENCES tipos_artigos(cod)  ON UPDATE CASCADE ON DELETE SET NULL,
     FOREIGN KEY (validade_id)     REFERENCES validade(cod)       ON UPDATE CASCADE ON DELETE SET NULL,
     FOREIGN KEY (temperatura_id)  REFERENCES temperaturas(cod)   ON UPDATE CASCADE ON DELETE SET NULL
 );
-INSERT INTO produto_auxiliar VALUES('10001',NULL,NULL,NULL,NULL,3,3);
+INSERT INTO produto_auxiliar VALUES('10001',NULL,3,3);
 DELETE FROM sqlite_sequence;
 INSERT INTO sqlite_sequence VALUES('tipos_artigos',8);
 INSERT INTO sqlite_sequence VALUES('validade',3);
@@ -1015,20 +1009,17 @@ CREATE INDEX ix_temperaturas_ativo ON temperaturas(ativo);
 CREATE INDEX ix_prod_validade ON produtos(validade_cod);
 CREATE INDEX ix_prod_temperatura ON produtos(temperatura_cod);
 CREATE INDEX idx_produto_preparacao_codigo ON produto_preparacao(produto_codigo);
-CREATE INDEX idx_produto_auxiliar_tipo   ON produto_auxiliar(tipo_artigo_cod);
-CREATE INDEX idx_produto_auxiliar_valid  ON produto_auxiliar(validade_cod);
-CREATE INDEX idx_produto_auxiliar_temp   ON produto_auxiliar(temperatura_cod);
 CREATE TRIGGER trg_pa_upd_wide_sync_aux
 AFTER UPDATE ON produto_attrs
 BEGIN
     INSERT OR IGNORE INTO produto_auxiliar(produto_codigo) VALUES (NEW.produto_codigo);
     UPDATE produto_auxiliar
-       SET tipo_artigo_cod = CASE WHEN NEW.tipo_artigo IS NULL OR TRIM(NEW.tipo_artigo) IN ('','—') THEN NULL ELSE CAST(NEW.tipo_artigo AS INTEGER) END,
-        validade_cod = CASE WHEN NEW.validade IS NULL OR TRIM(NEW.validade) IN ('','—') THEN NULL ELSE CAST(NEW.validade AS INTEGER) END,
-        temperatura_cod = CASE WHEN NEW.temperatura IS NULL OR TRIM(NEW.temperatura) IN ('','—') THEN NULL ELSE CAST(NEW.temperatura AS INTEGER) END
+       SET tipo_artigo_id = CASE WHEN NEW.tipo_artigo IS NULL OR TRIM(NEW.tipo_artigo) IN ('','—') THEN NULL ELSE CAST(NEW.tipo_artigo AS INTEGER) END,
+           validade_id = CASE WHEN NEW.validade IS NULL OR TRIM(NEW.validade) IN ('','—') THEN NULL ELSE CAST(NEW.validade AS INTEGER) END,
+           temperatura_id = CASE WHEN NEW.temperatura IS NULL OR TRIM(NEW.temperatura) IN ('','—') THEN NULL ELSE CAST(NEW.temperatura AS INTEGER) END
      WHERE produto_codigo = NEW.produto_codigo;
 END;
-CREATE INDEX idx_prod_aux_tipo ON produto_auxiliar(tipo_artigo_id);
-CREATE INDEX idx_prod_aux_valid ON produto_auxiliar(validade_id);
-CREATE INDEX idx_prod_aux_temp ON produto_auxiliar(temperatura_id);
+CREATE INDEX idx_produto_auxiliar_tipo   ON produto_auxiliar(tipo_artigo_id);
+CREATE INDEX idx_produto_auxiliar_valid  ON produto_auxiliar(validade_id);
+CREATE INDEX idx_produto_auxiliar_temp   ON produto_auxiliar(temperatura_id);
 COMMIT;
