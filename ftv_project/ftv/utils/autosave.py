@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import sqlite3
 
 
 logger = logging.getLogger(__name__)
@@ -25,8 +26,9 @@ def _ensure_produto_attrs_schema(ds):
         )
         ds.conn.commit()
         logger.info("[AutosaveAux] esquema OK (produto_attrs).")
-    except Exception as e:
-        logger.error("[AutosaveAux][ERRO] schema: %s", e)
+    except sqlite3.Error as exc:
+        logger.error("[AutosaveAux][ERRO] schema: %s", exc)
+        raise
 
 
 def _read_attrs(ds, codigo):
@@ -41,8 +43,8 @@ def _read_attrs(ds, codigo):
         row = cur.fetchone()
         if row:
             out["tipo_artigo"], out["validade"], out["temperatura"] = row
-    except Exception as e:
-        logger.error("[AutosaveAux][ERRO] read %s: %s", codigo, e)
+    except sqlite3.Error as exc:
+        logger.error("[AutosaveAux][ERRO] read %s: %s", codigo, exc)
     return out
 
 
@@ -75,8 +77,8 @@ def _write_attr(ds, codigo, campo, valor):
             )
         ds.conn.commit()
         logger.info("[AutosaveAux] gravado %s=%s para %s", campo, valor, codigo)
-    except Exception as e:
-        logger.error("[AutosaveAux][ERRO] write %s/%s: %s", campo, codigo, e)
+    except sqlite3.Error as exc:
+        logger.error("[AutosaveAux][ERRO] write %s/%s: %s", campo, codigo, exc)
 
 
 def _find_combo_candidates(win):
@@ -115,7 +117,7 @@ def _find_combo_candidates(win):
                 if all(c in text_join for c in clue_words):
                     out[key] = w
                     return
-            except Exception:
+            except RuntimeError:
                 pass
 
     pick_by_clues("tipos", ["—"])
@@ -154,8 +156,8 @@ def wire_autosave_aux(FTApp_cls, ds):
                 if combo.itemText(i) == tv:
                     combo.setCurrentIndex(i)
                     return
-        except Exception as e:
-            logger.error("[AutosaveAux][ERRO] _set_combo_by_data: %s", e)
+        except RuntimeError as exc:
+            logger.error("[AutosaveAux][ERRO] _set_combo_by_data: %s", exc)
 
     def _get_current_data(combo):
         if combo is None:
@@ -169,7 +171,7 @@ def wire_autosave_aux(FTApp_cls, ds):
             if data is None:
                 return combo.currentText() or None
             return data
-        except Exception:
+        except RuntimeError:
             return None
 
     def _wrap(self, idx: int):
@@ -181,16 +183,9 @@ def wire_autosave_aux(FTApp_cls, ds):
             combos["temp"],
         )
 
-        codigo = None
-        try:
-            codigo = self.ds.codigo_at(idx)
-        except Exception:
-            pass
+        codigo = self.ds.codigo_at(idx)
         if not codigo:
-            try:
-                codigo = self.ds.codigo_at(self.cur_index)
-            except Exception:
-                pass
+            codigo = self.ds.codigo_at(getattr(self, "cur_index", 0))
         if not codigo:
             return
 
@@ -213,8 +208,8 @@ def wire_autosave_aux(FTApp_cls, ds):
             try:
                 combo.currentIndexChanged.connect(on_change)
                 setattr(combo, flag, True)
-            except Exception as e:
-                logger.error("[AutosaveAux][ERRO] ligar '%s': %s", campo, e)
+            except RuntimeError as exc:
+                logger.error("[AutosaveAux][ERRO] ligar '%s': %s", campo, exc)
 
         ensure_connected(cb_tipos, "tipo_artigo")
         ensure_connected(cb_val, "validade")

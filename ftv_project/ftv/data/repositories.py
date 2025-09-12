@@ -1,5 +1,9 @@
 # Auto-gerado pela Fase 2 — repositories
+import logging
 import sqlite3
+
+
+logger = logging.getLogger(__name__)
 
 
 class ProdutosRepo:
@@ -35,7 +39,8 @@ class ProdutosRepo:
             p1 = r[0] if r and r[0] not in (None, "") else None
             p2 = r[1] if r and r[1] not in (None, "") else None
             return {"pvp1": p1, "pvp2": p2, "pvp3": None, "pvp4": None, "pvp5": None}
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[ProdutosRepo] get_pvps(%s) falhou: %s", codigo, exc)
             return {
                 "pvp1": None,
                 "pvp2": None,
@@ -55,7 +60,8 @@ class IngredientesRepo:
         try:
             cur.execute("PRAGMA table_info(fichas_tecnicas)")
             cols = [r[1].lower() for r in cur.fetchall()]
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[IngredientesRepo] _infer_cols falhou: %s", exc)
             return None
 
         def has(name):
@@ -151,7 +157,10 @@ class IngredientesRepo:
                 }
                 out.append(item)
             return out
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error(
+                "[IngredientesRepo] listar_por_produto(%s) falhou: %s", codigo, exc
+            )
             try:
                 cur.execute("PRAGMA table_info(fichas_tecnicas)")
                 cols = [c[1].lower() for c in cur.fetchall()]
@@ -209,7 +218,12 @@ class IngredientesRepo:
                             base[k] = tmp[k]
                     out.append(base)
                 return out
-            except Exception:
+            except sqlite3.Error as exc2:
+                logger.error(
+                    "[IngredientesRepo] fallback listar_por_produto(%s) falhou: %s",
+                    codigo,
+                    exc2,
+                )
                 return []
 
 
@@ -225,7 +239,8 @@ class AuxiliaresRepo:
             )
             rows = cur.fetchall()
             return [(None, "—")] + [(r[0], r[1]) for r in rows]
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[AuxiliaresRepo] list_tipos_artigos falhou: %s", exc)
             return [(None, "—")]
 
     def list_validade(self):
@@ -236,7 +251,8 @@ class AuxiliaresRepo:
             )
             rows = cur.fetchall()
             return [(None, "—")] + [(r[0], r[1]) for r in rows]
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[AuxiliaresRepo] list_validade falhou: %s", exc)
             return [(None, "—")]
 
     def list_temperaturas(self):
@@ -247,7 +263,8 @@ class AuxiliaresRepo:
             )
             rows = cur.fetchall()
             return [(None, "—")] + [(r[0], r[1]) for r in rows]
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[AuxiliaresRepo] list_temperaturas falhou: %s", exc)
             return [(None, "—")]
 
     # --- Métodos administrativos adicionados (CRUD) ---
@@ -256,7 +273,8 @@ class AuxiliaresRepo:
         try:
             cur.execute("SELECT cod, descricao, ativo FROM tipos_artigos ORDER BY cod")
             return [(r[0], r[1], r[2]) for r in cur.fetchall()]
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[AuxiliaresRepo] list_tipos_artigos_admin falhou: %s", exc)
             return []
 
     def add_tipo_artigo(self, descricao: str):
@@ -268,7 +286,8 @@ class AuxiliaresRepo:
             )
             self.conn.commit()
             return cur.lastrowid
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[AuxiliaresRepo] add_tipo_artigo falhou: %s", exc)
             return None
 
     def update_tipo_artigo(self, cod, descricao: str) -> bool:
@@ -280,7 +299,8 @@ class AuxiliaresRepo:
             )
             self.conn.commit()
             return cur.rowcount > 0
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[AuxiliaresRepo] update_tipo_artigo(%s) falhou: %s", cod, exc)
             return False
 
     def set_tipo_artigo_ativo(self, cod, ativo: int) -> bool:
@@ -292,7 +312,10 @@ class AuxiliaresRepo:
             )
             self.conn.commit()
             return cur.rowcount > 0
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error(
+                "[AuxiliaresRepo] set_tipo_artigo_ativo(%s) falhou: %s", cod, exc
+            )
             return False
 
     def list_validade_admin(self):
@@ -300,7 +323,8 @@ class AuxiliaresRepo:
         try:
             cur.execute("SELECT cod, descricao, ativo FROM validade ORDER BY cod")
             return [(r[0], r[1], r[2]) for r in cur.fetchall()]
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[AuxiliaresRepo] list_validade_admin falhou: %s", exc)
             return []
 
     def add_validade(self, descricao: str):
@@ -312,7 +336,8 @@ class AuxiliaresRepo:
             )
             self.conn.commit()
             return cur.lastrowid
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[AuxiliaresRepo] add_validade falhou: %s", exc)
             return None
 
     def update_validade(self, cod, descricao: str) -> bool:
@@ -324,7 +349,8 @@ class AuxiliaresRepo:
             )
             self.conn.commit()
             return cur.rowcount > 0
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[AuxiliaresRepo] update_validade(%s) falhou: %s", cod, exc)
             return False
 
     def set_validade_ativo(self, cod, ativo: int) -> bool:
@@ -336,7 +362,8 @@ class AuxiliaresRepo:
             )
             self.conn.commit()
             return cur.rowcount > 0
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[AuxiliaresRepo] set_validade_ativo(%s) falhou: %s", cod, exc)
             return False
 
     def list_temperaturas_admin(self):
@@ -344,7 +371,8 @@ class AuxiliaresRepo:
         try:
             cur.execute("SELECT cod, descricao, ativo FROM temperaturas ORDER BY cod")
             return [(r[0], r[1], r[2]) for r in cur.fetchall()]
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[AuxiliaresRepo] list_temperaturas_admin falhou: %s", exc)
             return []
 
     def add_temperatura(self, descricao: str):
@@ -356,7 +384,8 @@ class AuxiliaresRepo:
             )
             self.conn.commit()
             return cur.lastrowid
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[AuxiliaresRepo] add_temperatura falhou: %s", exc)
             return None
 
     def update_temperatura(self, cod, descricao: str) -> bool:
@@ -368,7 +397,8 @@ class AuxiliaresRepo:
             )
             self.conn.commit()
             return cur.rowcount > 0
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error("[AuxiliaresRepo] update_temperatura(%s) falhou: %s", cod, exc)
             return False
 
     def set_temperatura_ativo(self, cod, ativo: int) -> bool:
@@ -380,7 +410,10 @@ class AuxiliaresRepo:
             )
             self.conn.commit()
             return cur.rowcount > 0
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error(
+                "[AuxiliaresRepo] set_temperatura_ativo(%s) falhou: %s", cod, exc
+            )
             return False
 
     # --- Produto Auxiliar (tabela canónica de FK de auxiliares) ---
@@ -402,13 +435,16 @@ class AuxiliaresRepo:
                     row["validade_id"],
                     row["temperatura_id"],
                 )
-            except Exception:
+            except (KeyError, IndexError, TypeError):
                 return (
                     row[0] if len(row) > 0 else None,
                     row[1] if len(row) > 1 else None,
                     row[2] if len(row) > 2 else None,
                 )
-        except Exception:
+        except sqlite3.Error as exc:
+            logger.error(
+                "[AuxiliaresRepo] get_produto_auxiliares(%s) falhou: %s", codigo, exc
+            )
             return (None, None, None)
 
     def set_produto_auxiliares(
@@ -427,8 +463,10 @@ class AuxiliaresRepo:
                 (codigo, tipo_artigo_id, validade_id, temperatura_id),
             )
             self.conn.commit()
-        except Exception:
-            pass
+        except sqlite3.Error as exc:
+            logger.error(
+                "[AuxiliaresRepo] set_produto_auxiliares(%s) falhou: %s", codigo, exc
+            )
 
 
 class PreparacaoRepo:
