@@ -4,7 +4,6 @@
 import json
 import logging
 import os
-import shutil
 import sqlite3
 from pathlib import Path
 
@@ -30,12 +29,19 @@ def _create_empty_db(db_path: Path) -> None:
         conn.close()
 
 
-def _copy_demo_db(db_path: Path) -> None:
-    demo_file = base / "data" / "demo.db"
+def _import_demo_sql(db_path: Path) -> None:
+    """Populate an empty database with official demo data."""
+    demo_file = base / "databases" / "demo.sql"
     if not demo_file.exists():
-        raise FileNotFoundError(f"Demo DB not found: {demo_file}")
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy(demo_file, db_path)
+        raise FileNotFoundError(f"Demo SQL not found: {demo_file}")
+    _create_empty_db(db_path)
+    conn = sqlite3.connect(str(db_path))
+    try:
+        sql = demo_file.read_text(encoding="utf-8")
+        conn.executescript(sql)
+        conn.commit()
+    finally:
+        conn.close()
 
 
 class DataStore:
@@ -83,7 +89,7 @@ class DataStore:
                     if choice == "Base vazia":
                         _create_empty_db(db_path)
                     elif choice == "Base demo":
-                        _copy_demo_db(db_path)
+                        _import_demo_sql(db_path)
                     else:
                         logger.error(msg)
                         raise FileNotFoundError(msg)
