@@ -254,7 +254,7 @@ class AuxiliaresRepo:
     def list_tipos_artigos_admin(self):
         cur = self.conn.cursor()
         try:
-            cur.execute()
+            cur.execute("SELECT cod, descricao, ativo FROM tipos_artigos ORDER BY cod")
             return [(r[0], r[1], r[2]) for r in cur.fetchall()]
         except Exception:
             return []
@@ -274,7 +274,10 @@ class AuxiliaresRepo:
     def update_tipo_artigo(self, cod, descricao: str) -> bool:
         cur = self.conn.cursor()
         try:
-            cur.execute()
+            cur.execute(
+                "UPDATE tipos_artigos SET descricao=? WHERE cod=?",
+                (descricao, cod),
+            )
             self.conn.commit()
             return cur.rowcount > 0
         except Exception:
@@ -283,7 +286,10 @@ class AuxiliaresRepo:
     def set_tipo_artigo_ativo(self, cod, ativo: int) -> bool:
         cur = self.conn.cursor()
         try:
-            cur.execute()
+            cur.execute(
+                "UPDATE tipos_artigos SET ativo=? WHERE cod=?",
+                (int(ativo), cod),
+            )
             self.conn.commit()
             return cur.rowcount > 0
         except Exception:
@@ -292,7 +298,7 @@ class AuxiliaresRepo:
     def list_validade_admin(self):
         cur = self.conn.cursor()
         try:
-            cur.execute()
+            cur.execute("SELECT cod, descricao, ativo FROM validade ORDER BY cod")
             return [(r[0], r[1], r[2]) for r in cur.fetchall()]
         except Exception:
             return []
@@ -300,7 +306,10 @@ class AuxiliaresRepo:
     def add_validade(self, descricao: str):
         cur = self.conn.cursor()
         try:
-            cur.execute()
+            cur.execute(
+                "INSERT INTO validade (descricao, ativo) VALUES (?, 1)",
+                (descricao,),
+            )
             self.conn.commit()
             return cur.lastrowid
         except Exception:
@@ -333,7 +342,7 @@ class AuxiliaresRepo:
     def list_temperaturas_admin(self):
         cur = self.conn.cursor()
         try:
-            cur.execute()
+            cur.execute("SELECT cod, descricao, ativo FROM temperaturas ORDER BY cod")
             return [(r[0], r[1], r[2]) for r in cur.fetchall()]
         except Exception:
             return []
@@ -353,7 +362,10 @@ class AuxiliaresRepo:
     def update_temperatura(self, cod, descricao: str) -> bool:
         cur = self.conn.cursor()
         try:
-            cur.execute()
+            cur.execute(
+                "UPDATE temperaturas SET descricao=? WHERE cod=?",
+                (descricao, cod),
+            )
             self.conn.commit()
             return cur.rowcount > 0
         except Exception:
@@ -362,7 +374,10 @@ class AuxiliaresRepo:
     def set_temperatura_ativo(self, cod, ativo: int) -> bool:
         cur = self.conn.cursor()
         try:
-            cur.execute()
+            cur.execute(
+                "UPDATE temperaturas SET ativo=? WHERE cod=?",
+                (int(ativo), cod),
+            )
             self.conn.commit()
             return cur.rowcount > 0
         except Exception:
