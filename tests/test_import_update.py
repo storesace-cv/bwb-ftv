@@ -1,3 +1,4 @@
+import re
 import shutil
 import pytest
 from openpyxl import Workbook
@@ -98,16 +99,54 @@ def test_import_from_excel_missing_file(ds, imports_dir):
     _write_base_files(imports_dir)
     (imports_dir / "PreçosTaxas_base.xlsx").unlink()
     svc = ProductService(ds)
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(FileNotFoundError) as exc:
         svc.import_from_excel()
+    assert "PreçosTaxas_base.xlsx" in str(exc.value)
 
 
 def test_update_from_excel_missing_file(ds, imports_dir):
     _write_base_files(imports_dir)
     (imports_dir / "FichasTecnicas_base.xlsx").unlink()
     svc = ProductService(ds)
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(FileNotFoundError) as exc:
         svc.update_from_excel()
+    assert "FichasTecnicas_base.xlsx" in str(exc.value)
+
+
+def test_import_moves_files_to_history_with_timestamp(ds, imports_dir):
+    svc = ProductService(ds)
+    _write_base_files(imports_dir)
+    svc.import_from_excel()
+    hist_files = list((imports_dir / "history").iterdir())
+    assert len(hist_files) == 3
+    expected = [
+        "Produtos_Base.xlsx",
+        "FichasTecnicas_base.xlsx",
+        "PreçosTaxas_base.xlsx",
+    ]
+    for name in expected:
+        assert not (imports_dir / name).exists()
+        match = [p for p in hist_files if p.name.startswith(f"{name}.")]
+        assert match
+        assert re.fullmatch(rf"{re.escape(name)}\.\d{{14}}", match[0].name)
+
+
+def test_update_moves_files_to_history_with_timestamp(ds, imports_dir):
+    svc = ProductService(ds)
+    _write_base_files(imports_dir)
+    svc.update_from_excel()
+    hist_files = list((imports_dir / "history").iterdir())
+    assert len(hist_files) == 3
+    expected = [
+        "Produtos_Base.xlsx",
+        "FichasTecnicas_base.xlsx",
+        "PreçosTaxas_base.xlsx",
+    ]
+    for name in expected:
+        assert not (imports_dir / name).exists()
+        match = [p for p in hist_files if p.name.startswith(f"{name}.")]
+        assert match
+        assert re.fullmatch(rf"{re.escape(name)}\.\d{{14}}", match[0].name)
 
 
 def test_import_from_excel_uses_produto_codigo(ds, imports_dir):
