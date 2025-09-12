@@ -39,16 +39,21 @@ class DataStore:
 
         self.conn = None
         if not self.demo:
+            is_memory = str(db_path) == ":memory:" or str(db_path).startswith(
+                "file::memory:"
+            )
+            if not is_memory and not db_path.exists():
+                msg = (
+                    f"[DataStore] Base de dados não encontrada em '{db_path}'. "
+                    "Copie o ficheiro ou defina FTV_DB_PATH."
+                )
+                logger.error(msg)
+                raise FileNotFoundError(msg)
             try:
-                db_path.parent.mkdir(parents=True, exist_ok=True)
-                creating = not db_path.exists()
                 self.conn = sqlite3.connect(str(db_path))
                 self.conn.row_factory = sqlite3.Row
-                if creating:
-                    logger.info(
-                        "[DataStore] Base de dados criada automaticamente em '%s'",
-                        db_path,
-                    )
+                if not is_memory:
+                    self._ensure_required_tables()
             except sqlite3.Error as exc:
                 logger.error("[DataStore] Falha a ligar à BD '%s': %s", db_path, exc)
                 raise
@@ -99,6 +104,31 @@ class DataStore:
     def __exit__(self, exc_type, exc, tb):
         self.close()
         return False
+
+    def _ensure_required_tables(self):
+        """Verifica se tabelas essenciais existem na base de dados."""
+        required = {"produtos", "fichas_tecnicas"}
+        try:
+            cur = self.conn.cursor()
+            existing = set()
+            for name in required:
+                cur.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                    (name,),
+                )
+                row = cur.fetchone()
+                if row:
+                    existing.add(row[0])
+        except sqlite3.Error as exc:
+            logger.error("[DataStore] Falha ao verificar tabelas essenciais: %s", exc)
+            raise
+        missing = required - existing
+        if missing:
+            msg = "[DataStore] Tabelas essenciais em falta: " + ", ".join(
+                sorted(missing)
+            )
+            logger.error(msg)
+            raise RuntimeError(msg)
 
     # ----------------------------
     # Cache / paginação
