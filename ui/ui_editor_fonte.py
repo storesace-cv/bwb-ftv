@@ -719,9 +719,10 @@ class FTApp(QWidget):
         # --- Auxiliares: fetch/populate/load (canon) ---
         try:
             lists = self._aux_fetch_lists()
-            self._aux_populate_cbs(lists)
+            cbs = self._aux_find_cbs()
+            self._aux_populate_cbs(lists, cbs)
             self._aux_load_selected(codigo)
-            self._aux_wire_autosave()
+            self._aux_wire_autosave(cbs)
         except Exception as e:
             logger.error("[AuxCanon][ERRO] %s", e)
 
@@ -869,9 +870,22 @@ class FTApp(QWidget):
                         cb_temp = cb
         return cb_tipo, cb_val, cb_temp
 
-    def _aux_populate_cbs(self, lists):
-        """Populate the combo boxes with canonical lists."""
-        cb_tipo, cb_val, cb_temp = self._aux_find_cbs()
+    def _aux_populate_cbs(self, lists, cbs=None):
+        """Populate the combo boxes with canonical lists.
+
+        Parameters
+        ----------
+        lists: dict
+            Mapping of auxiliary types to ``[(id, name)]`` records.
+        cbs: tuple[QComboBox, QComboBox, QComboBox] | None
+            Optional comboboxes for ``tipo_artigo``, ``validade`` and
+            ``temperatura``. If ``None`` they are resolved via
+            ``_aux_find_cbs``.
+        """
+
+        if cbs is None:
+            cbs = self._aux_find_cbs()
+        cb_tipo, cb_val, cb_temp = cbs
 
         def fill(cb, items):
             if cb is None:
@@ -894,6 +908,7 @@ class FTApp(QWidget):
         fill(cb_tipo, lists.get("tipo_artigo", []))
         fill(cb_val, lists.get("validade", []))
         fill(cb_temp, lists.get("temperatura", []))
+        return cbs
 
     def _aux_load_selected(self, codigo):
         """Posiciona os comboboxes na seleção gravada (produto_auxiliar ou produto_attrs)."""
@@ -957,66 +972,23 @@ class FTApp(QWidget):
         set_by_data(cb_val, sel["validade"])
         set_by_data(cb_temp, sel["temperatura"])
 
-    def _aux_wire_autosave(self):
-        def _aux_wire_autosave(self):
-            """Liga currentIndexChanged para gravar em produto_auxiliar (só quando itemData é inteiro)."""
-            conn = getattr(self.service, "conn", None)
-            if not conn:
-                return
-            try:
-                from PyQt5.QtCore import QObject
-            except Exception:
-                from PySide6.QtCore import QObject
+    def _aux_wire_autosave(self, cbs=None):
+        """Wire ``currentIndexChanged`` to persist combo selections.
 
-            def save_current():
-                if getattr(self, "_loading", False):
-                    return
-                codigo = None
-                try:
-                    codigo = self.service.codigo_at(self.cur_index)
-                except Exception:
-                    pass
-                if not codigo:
-                    return
-                tid = getattr(self, "cbTipoArtigo", None)
-                vid = getattr(self, "cbValidade", None)
-                pid = getattr(self, "cbTemp", None)
+        Parameters
+        ----------
+        cbs: tuple[QComboBox, QComboBox, QComboBox] | None
+            Optional comboboxes for ``tipo_artigo``, ``validade`` and
+            ``temperatura``. If ``None`` they are resolved via
+            ``_aux_find_cbs``.
+        """
 
-                def as_id(cb):
-                    if not cb:
-                        return None
-                    d = cb.currentData()
-                    return int(d) if isinstance(d, int) else None
-
-                T = as_id(tid)
-                V = as_id(vid)
-                P = as_id(pid)
-                try:
-                    cur = conn.cursor()
-                    cur.execute(
-                        """
-                        INSERT INTO produto_auxiliar (produto_codigo, tipo_artigo_id, validade_id, temperatura_id)
-                        VALUES (?,?,?,?)
-                        ON CONFLICT(produto_codigo) DO UPDATE SET
-                          tipo_artigo_id=COALESCE(excluded.tipo_artigo_id, tipo_artigo_id),
-                          validade_id   =COALESCE(excluded.validade_id   , validade_id),
-                          temperatura_id=COALESCE(excluded.temperatura_id, temperatura_id)
-                    """,
-                        (codigo, T, V, P),
-                    )
-                    conn.commit()
-                    # opcional: feedback debug
-                    # print(f"[AUX][SAVE] {codigo} -> tipo={T} valid={V} temp={P}")
-                except Exception:
-                    conn.rollback()
-
-            for cbname in ("cbTipoArtigo", "cbValidade", "cbTemp"):
-                cb = getattr(self, cbname, None)
-                if cb:
-                    try:
-                        cb.currentIndexChanged.connect(save_current)
-                    except Exception:
-                        pass
+        if cbs is None:
+            cbs = self._aux_find_cbs()
+        cb_tipo, cb_val, cb_temp = cbs
+        conn = getattr(self.service, "conn", None)
+        if not conn:
+            return
 
         def saver(kind, cb):
             if cb is None:
@@ -1047,7 +1019,7 @@ class FTApp(QWidget):
                     "temperatura": "temperatura_id",
                 }[kind]
                 try:
-                    cur = self.service.conn.cursor()
+                    cur = conn.cursor()
                     if value is None:
                         cur.execute(
                             "INSERT INTO produto_auxiliar (produto_codigo) VALUES (?) ON CONFLICT(produto_codigo) DO NOTHING",
@@ -1066,7 +1038,7 @@ class FTApp(QWidget):
                         """,
                             (codigo, int(value)),
                         )
-                    self.service.conn.commit()
+                    conn.commit()
                 except Exception as e:
                     logger.error("[AuxUI][ERRO] gravar %s p/%s: %s", kind, codigo, e)
 
@@ -1090,7 +1062,8 @@ class FTApp(QWidget):
             self._loading = True
             try:
                 lists = self._aux_fetch_lists()
-                self._aux_populate_cbs(lists)
+                cbs = self._aux_find_cbs()
+                self._aux_populate_cbs(lists, cbs)
                 res = orig(idx)
                 try:
                     codigo = self.service.codigo_at(getattr(self, "cur_index", 0))
@@ -1098,6 +1071,7 @@ class FTApp(QWidget):
                     codigo = None
                 if codigo:
                     self._aux_load_selected(codigo)
+                self._aux_wire_autosave(cbs)
                 return res
             finally:
                 self._loading = False
