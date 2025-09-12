@@ -1,5 +1,7 @@
 import logging
 import json
+import sqlite3
+import pytest
 
 from ftv.data.datastore import DataStore
 from ftv.data.repositories import AuxiliaresRepo
@@ -81,3 +83,12 @@ def test_list_active_allergens_default(tmp_path, monkeypatch):
     items = ds.list_active_allergens()
     assert len(items) == 14
     assert items[0] == (1, "Glúten")
+
+
+def test_context_manager_closes_connection():
+    with DataStore(db_path=":memory:") as ds:
+        conn = ds.conn
+        conn.execute("CREATE TABLE x (id INTEGER)")
+    # connection is closed after context
+    with pytest.raises(sqlite3.ProgrammingError):
+        conn.execute("SELECT 1")
