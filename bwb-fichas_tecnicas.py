@@ -4,6 +4,7 @@
 # --- Caminhos robustos ---
 import sys
 import logging
+import os
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QFont
 
@@ -60,18 +61,20 @@ def configure_logging():
     # ensure import directories exist alongside logging setup
     imports_dir = root / "imports"
     (imports_dir / "history").mkdir(parents=True, exist_ok=True)
-    log_file = log_dir / "ftv.log"
 
-    handlers = [
-        logging.FileHandler(log_file, encoding="utf-8"),
-        logging.StreamHandler(),
-    ]
-
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=handlers,
-    )
+    if os.getenv("debug") == "0":
+        log_file = log_dir / "ftv.log"
+        handlers = [
+            logging.FileHandler(log_file, encoding="utf-8"),
+            logging.StreamHandler(),
+        ]
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            handlers=handlers,
+        )
+    else:
+        logging.getLogger().addHandler(logging.NullHandler())
 
 
 if __name__ == "__main__":
