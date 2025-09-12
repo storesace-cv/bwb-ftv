@@ -995,11 +995,6 @@ CREATE TABLE produto_auxiliar (
     FOREIGN KEY (temperatura_cod) REFERENCES temperaturas(cod)   ON UPDATE CASCADE ON DELETE SET NULL
 );
 INSERT INTO produto_auxiliar VALUES('10001',NULL,NULL,NULL,NULL,3,3);
-CREATE TABLE validades(
-                    id INTEGER PRIMARY KEY,
-                    descricao TEXT NOT NULL,
-                    ativo INTEGER NOT NULL DEFAULT 1
-                );
 DELETE FROM sqlite_sequence;
 INSERT INTO sqlite_sequence VALUES('tipos_artigos',8);
 INSERT INTO sqlite_sequence VALUES('validade',3);
