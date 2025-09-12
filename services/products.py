@@ -136,10 +136,11 @@ def import_from_excel(path: str, ds: DataStore | None = None) -> None:
         Optional :class:`DataStore` to operate on. When omitted a new
         instance is created with default parameters.
 
-    The function clears existing data from ``produtos``, ``fichas_tecnicas``
-    and ``precos_taxas`` tables and loads the rows from the Excel files.
-    Afterwards ``ds.reload_ids()`` is invoked so that any cached product
-    codes are refreshed.
+    Existing data from ``produtos`` and ``fichas_tecnicas`` is cleared before
+    loading the rows from the Excel files.  Price information from
+    ``PreçosTaxas_base.xlsx`` is merged into the ``produtos`` table (columns
+    ``preco1_g``, ``preco2_g`` and ``iva``).  Afterwards ``ds.reload_ids()`` is
+    invoked so that any cached product codes are refreshed.
     """
 
     base = Path(path)
@@ -182,7 +183,7 @@ def import_from_excel(path: str, ds: DataStore | None = None) -> None:
         return
 
     cur = conn.cursor()
-    for tbl in ("produtos", "fichas_tecnicas", "precos_taxas"):
+    for tbl in ("produtos", "fichas_tecnicas"):
         try:
             cur.execute(f"DELETE FROM {tbl}")
         except Exception:
@@ -228,7 +229,80 @@ def import_from_excel(path: str, ds: DataStore | None = None) -> None:
 
     _load_insert(files["produtos"], "produtos")
     _load_insert(files["fichas_tecnicas"], "fichas_tecnicas")
-    _load_insert(files["precos_taxas"], "precos_taxas")
+
+    def _merge_prices(file_path: Path) -> None:
+        wb = load_workbook(file_path, read_only=True, data_only=True)
+        ws = wb.active
+        rows = ws.iter_rows(values_only=True)
+        try:
+            headers = [_normalize(h) for h in next(rows)]
+        except StopIteration:
+            wb.close()
+            return
+        db_cols = _table_columns("produtos")
+        if "codigo" not in headers:
+            wb.close()
+            return
+        idx_cod = headers.index("codigo")
+        idx_p1 = (
+            headers.index("preco1_g")
+            if "preco1_g" in headers and "preco1_g" in db_cols
+            else None
+        )
+        idx_p2 = (
+            headers.index("preco2_g")
+            if "preco2_g" in headers and "preco2_g" in db_cols
+            else None
+        )
+        idx_iva = None
+        if "iva" in headers and "iva" in db_cols:
+            idx_iva = headers.index("iva")
+        elif "iva1" in headers and "iva" in db_cols:
+            idx_iva = headers.index("iva1")
+        if idx_p1 is None and idx_p2 is None and idx_iva is None:
+            wb.close()
+            return
+        cur2 = conn.cursor()
+        for row in rows:
+            codigo = row[idx_cod]
+            if codigo is None:
+                continue
+            updates = []
+            params = []
+            if idx_p1 is not None:
+                updates.append("preco1_g=?")
+                params.append(row[idx_p1])
+            if idx_p2 is not None:
+                updates.append("preco2_g=?")
+                params.append(row[idx_p2])
+            if idx_iva is not None:
+                updates.append("iva=?")
+                params.append(row[idx_iva])
+            params.append(codigo)
+            cur2.execute(
+                f"UPDATE produtos SET {', '.join(updates)} WHERE codigo=?",
+                params,
+            )
+            if cur2.rowcount == 0:
+                cols = ["codigo"]
+                vals = [codigo]
+                if idx_p1 is not None:
+                    cols.append("preco1_g")
+                    vals.append(row[idx_p1])
+                if idx_p2 is not None:
+                    cols.append("preco2_g")
+                    vals.append(row[idx_p2])
+                if idx_iva is not None:
+                    cols.append("iva")
+                    vals.append(row[idx_iva])
+                placeholders = ",".join(["?"] * len(vals))
+                cur2.execute(
+                    f"INSERT INTO produtos ({','.join(cols)}) VALUES ({placeholders})",
+                    vals,
+                )
+        wb.close()
+
+    _merge_prices(files["precos_taxas"])
     conn.commit()
     ds.reload_ids()
 
@@ -239,8 +313,9 @@ def update_from_excel(path: str, ds: DataStore | None = None) -> None:
     ``path`` can point to a directory containing the three base files or to a
     single spreadsheet with product information.  When a simple spreadsheet is
     provided only the ``produtos`` table is affected.  In the base files case
-    rows are upserted into ``produtos`` and ``precos_taxas`` and the
-    ``fichas_tecnicas`` table is synchronised per product.
+    rows are upserted into ``produtos`` (including price columns from
+    ``PreçosTaxas_base.xlsx``) and the ``fichas_tecnicas`` table is
+    synchronised per product.
     """
 
     base = Path(path)
@@ -342,7 +417,80 @@ def update_from_excel(path: str, ds: DataStore | None = None) -> None:
 
     _upsert(files["produtos"], "produtos")
     _upsert(files["fichas_tecnicas"], "fichas_tecnicas")
-    _upsert(files["precos_taxas"], "precos_taxas")
+
+    def _merge_prices(file_path: Path) -> None:
+        wb = load_workbook(file_path, read_only=True, data_only=True)
+        ws = wb.active
+        rows = ws.iter_rows(values_only=True)
+        try:
+            headers = [_normalize(h) for h in next(rows)]
+        except StopIteration:
+            wb.close()
+            return
+        db_cols = _table_columns("produtos")
+        if "codigo" not in headers:
+            wb.close()
+            return
+        idx_cod = headers.index("codigo")
+        idx_p1 = (
+            headers.index("preco1_g")
+            if "preco1_g" in headers and "preco1_g" in db_cols
+            else None
+        )
+        idx_p2 = (
+            headers.index("preco2_g")
+            if "preco2_g" in headers and "preco2_g" in db_cols
+            else None
+        )
+        idx_iva = None
+        if "iva" in headers and "iva" in db_cols:
+            idx_iva = headers.index("iva")
+        elif "iva1" in headers and "iva" in db_cols:
+            idx_iva = headers.index("iva1")
+        if idx_p1 is None and idx_p2 is None and idx_iva is None:
+            wb.close()
+            return
+        cur2 = conn.cursor()
+        for row in rows:
+            codigo = row[idx_cod]
+            if codigo is None:
+                continue
+            updates = []
+            params = []
+            if idx_p1 is not None:
+                updates.append("preco1_g=?")
+                params.append(row[idx_p1])
+            if idx_p2 is not None:
+                updates.append("preco2_g=?")
+                params.append(row[idx_p2])
+            if idx_iva is not None:
+                updates.append("iva=?")
+                params.append(row[idx_iva])
+            params.append(codigo)
+            cur2.execute(
+                f"UPDATE produtos SET {', '.join(updates)} WHERE codigo=?",
+                params,
+            )
+            if cur2.rowcount == 0:
+                cols = ["codigo"]
+                vals = [codigo]
+                if idx_p1 is not None:
+                    cols.append("preco1_g")
+                    vals.append(row[idx_p1])
+                if idx_p2 is not None:
+                    cols.append("preco2_g")
+                    vals.append(row[idx_p2])
+                if idx_iva is not None:
+                    cols.append("iva")
+                    vals.append(row[idx_iva])
+                placeholders = ",".join(["?"] * len(vals))
+                cur2.execute(
+                    f"INSERT INTO produtos ({','.join(cols)}) VALUES ({placeholders})",
+                    vals,
+                )
+        wb.close()
+
+    _merge_prices(files["precos_taxas"])
     conn.commit()
     ds.reload_ids()
 
@@ -372,17 +520,55 @@ def _import_single_excel(path: Path, ds: DataStore | None) -> None:
     except ValueError:
         wb.close()
         return
-    name_idx = headers.index("nome") if "nome" in headers else None
-
     cur = conn.cursor()
+    cur.execute("PRAGMA table_info(produtos)")
+    db_cols = [r[1].lower() for r in cur.fetchall()]
+    name_idx = (
+        headers.index("nome") if "nome" in headers and "nome" in db_cols else None
+    )
+    p1_idx = (
+        headers.index("preco1_g")
+        if "preco1_g" in headers and "preco1_g" in db_cols
+        else None
+    )
+    p2_idx = (
+        headers.index("preco2_g")
+        if "preco2_g" in headers and "preco2_g" in db_cols
+        else None
+    )
+    iva_idx = None
+    if "iva" in headers and "iva" in db_cols:
+        iva_idx = headers.index("iva")
+    elif "iva1" in headers and "iva" in db_cols:
+        iva_idx = headers.index("iva1")
+
     cur.execute("DELETE FROM produtos")
+    cols = ["codigo"]
+    if name_idx is not None:
+        cols.append("nome")
+    if p1_idx is not None:
+        cols.append("preco1_g")
+    if p2_idx is not None:
+        cols.append("preco2_g")
+    if iva_idx is not None:
+        cols.append("iva")
+    placeholders = ",".join(["?"] * len(cols))
+    sql = f"INSERT INTO produtos ({','.join(cols)}) VALUES ({placeholders})"
+
     for row in rows:
         codigo = row[code_idx]
-        nome = row[name_idx] if name_idx is not None else None
-        cur.execute(
-            "INSERT INTO produtos (codigo, nome) VALUES (?, ?)",
-            (codigo, nome),
-        )
+        if codigo is None:
+            continue
+        vals = [codigo]
+        if name_idx is not None:
+            vals.append(row[name_idx])
+        if p1_idx is not None:
+            vals.append(row[p1_idx])
+        if p2_idx is not None:
+            vals.append(row[p2_idx])
+        if iva_idx is not None:
+            vals.append(row[iva_idx])
+        cur.execute(sql, vals)
     conn.commit()
     wb.close()
     ds.reload_ids()
@@ -414,22 +600,75 @@ def _update_from_excel(path: Path, ds: DataStore | None) -> None:
     except ValueError:
         wb.close()
         return
-    name_idx = headers.index("nome") if "nome" in headers else None
 
     cur = conn.cursor()
+    cur.execute("PRAGMA table_info(produtos)")
+    db_cols = [r[1].lower() for r in cur.fetchall()]
+    name_idx = (
+        headers.index("nome") if "nome" in headers and "nome" in db_cols else None
+    )
+    p1_idx = (
+        headers.index("preco1_g")
+        if "preco1_g" in headers and "preco1_g" in db_cols
+        else None
+    )
+    p2_idx = (
+        headers.index("preco2_g")
+        if "preco2_g" in headers and "preco2_g" in db_cols
+        else None
+    )
+    iva_idx = None
+    if "iva" in headers and "iva" in db_cols:
+        iva_idx = headers.index("iva")
+    elif "iva1" in headers and "iva" in db_cols:
+        iva_idx = headers.index("iva1")
+
     for row in rows:
         codigo = row[code_idx]
-        nome = row[name_idx] if name_idx is not None else None
+        if codigo is None:
+            continue
         cur.execute("SELECT 1 FROM produtos WHERE codigo=?", (codigo,))
-        if cur.fetchone():
-            cur.execute(
-                "UPDATE produtos SET nome=? WHERE codigo=?",
-                (nome, codigo),
-            )
+        exists = cur.fetchone() is not None
+        if exists:
+            updates = []
+            params = []
+            if name_idx is not None:
+                updates.append("nome=?")
+                params.append(row[name_idx])
+            if p1_idx is not None:
+                updates.append("preco1_g=?")
+                params.append(row[p1_idx])
+            if p2_idx is not None:
+                updates.append("preco2_g=?")
+                params.append(row[p2_idx])
+            if iva_idx is not None:
+                updates.append("iva=?")
+                params.append(row[iva_idx])
+            if updates:
+                params.append(codigo)
+                cur.execute(
+                    f"UPDATE produtos SET {', '.join(updates)} WHERE codigo=?",
+                    params,
+                )
         else:
+            cols = ["codigo"]
+            vals = [codigo]
+            if name_idx is not None:
+                cols.append("nome")
+                vals.append(row[name_idx])
+            if p1_idx is not None:
+                cols.append("preco1_g")
+                vals.append(row[p1_idx])
+            if p2_idx is not None:
+                cols.append("preco2_g")
+                vals.append(row[p2_idx])
+            if iva_idx is not None:
+                cols.append("iva")
+                vals.append(row[iva_idx])
+            placeholders = ",".join(["?"] * len(vals))
             cur.execute(
-                "INSERT INTO produtos (codigo, nome) VALUES (?, ?)",
-                (codigo, nome),
+                f"INSERT INTO produtos ({','.join(cols)}) VALUES ({placeholders})",
+                vals,
             )
     conn.commit()
     wb.close()
