@@ -8,6 +8,7 @@ import sqlite3
 from pathlib import Path
 
 from utils import get_project_root
+from .migration import ensure_core_tables
 
 base = get_project_root()
 
@@ -111,7 +112,8 @@ class DataStore:
                                 raise RuntimeError(
                                     "Migração cancelada pelo utilizador."
                                 )
-                    self._ensure_required_tables()
+                ensure_core_tables(self.conn)
+                self._ensure_required_tables()
             except sqlite3.Error as exc:
                 logger.error("[DataStore] Falha a ligar à BD '%s': %s", db_path, exc)
                 raise
@@ -164,27 +166,51 @@ class DataStore:
         return False
 
     def _ensure_required_tables(self):
-        """Verifica se tabelas essenciais existem na base de dados."""
-        required = {"produtos", "fichas_tecnicas"}
+        """Verifica se tabelas e colunas essenciais existem na base de dados."""
+
+        required = {
+            "produtos": {"codigo"},
+            "fichas_tecnicas": {"produto_codigo"},
+            "alergenios": {"id", "nome", "ativo"},
+            "tipos_artigos": {"cod", "descricao", "ativo"},
+            "validade": {"cod", "descricao", "ativo"},
+            "temperaturas": {"cod", "descricao", "ativo"},
+            "produto_auxiliar": {
+                "produto_codigo",
+                "tipo_artigo_id",
+                "validade_id",
+                "temperatura_id",
+            },
+        }
+
         try:
             cur = self.conn.cursor()
-            existing = set()
-            for name in required:
+            missing_tables = []
+            missing_cols = []
+            for table, cols in required.items():
                 cur.execute(
                     "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-                    (name,),
+                    (table,),
                 )
-                row = cur.fetchone()
-                if row:
-                    existing.add(row[0])
+                if cur.fetchone() is None:
+                    missing_tables.append(table)
+                    continue
+                cur.execute(f"PRAGMA table_info({table})")
+                existing = {r[1] for r in cur.fetchall()}
+                diff = cols - existing
+                if diff:
+                    missing_cols.append(f"{table}: {', '.join(sorted(diff))}")
         except sqlite3.Error as exc:
             logger.error("[DataStore] Falha ao verificar tabelas essenciais: %s", exc)
             raise
-        missing = required - existing
-        if missing:
-            msg = "[DataStore] Tabelas essenciais em falta: " + ", ".join(
-                sorted(missing)
-            )
+
+        if missing_tables or missing_cols:
+            parts = []
+            if missing_tables:
+                parts.append("tabelas: " + ", ".join(sorted(missing_tables)))
+            if missing_cols:
+                parts.append("colunas: " + "; ".join(sorted(missing_cols)))
+            msg = "[DataStore] Tabelas essenciais em falta: " + ", ".join(parts)
             logger.error(msg)
             raise RuntimeError(msg)
 

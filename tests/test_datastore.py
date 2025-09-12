@@ -6,27 +6,19 @@ import types
 import pytest
 
 from data.datastore import DataStore
-from data.repositories import AuxiliaresRepo
 
 
 def _make_datastore():
     ds = DataStore(db_path=":memory:")
     conn = ds.conn
     cur = conn.cursor()
-    # tabelas auxiliares
-    cur.execute(
-        "CREATE TABLE validade (cod INTEGER PRIMARY KEY, descricao TEXT, ativo INTEGER)"
-    )
+    cur.execute("DELETE FROM validade")
     cur.executemany(
         "INSERT INTO validade (cod, descricao, ativo) VALUES (?, ?, 1)",
         [(1, "24h"), (2, "48h")],
     )
-    cur.execute(
-        "CREATE TABLE produto_auxiliar (produto_codigo TEXT PRIMARY KEY, "
-        "tipo_artigo_id INTEGER, validade_id INTEGER, temperatura_id INTEGER)"
-    )
+    cur.execute("DELETE FROM produto_auxiliar")
     conn.commit()
-    ds.aux = AuxiliaresRepo(conn)
     return ds
 
 
@@ -41,7 +33,7 @@ def test_list_validades_and_auxiliares_rw():
 def test_reload_ids_repo_success(caplog):
     ds = DataStore(db_path=":memory:")
     cur = ds.conn.cursor()
-    cur.execute("CREATE TABLE produtos (codigo TEXT)")
+    cur.execute("DELETE FROM produtos")
     cur.executemany(
         "INSERT INTO produtos (codigo) VALUES (?)",
         [("P1",), ("P2",)],
@@ -57,7 +49,8 @@ def test_reload_ids_repo_success(caplog):
 def test_reload_ids_fallback_to_fichas_tecnicas(caplog):
     ds = DataStore(db_path=":memory:")
     cur = ds.conn.cursor()
-    cur.execute("CREATE TABLE fichas_tecnicas (produto_codigo TEXT)")
+    cur.execute("DROP TABLE produtos")
+    cur.execute("DELETE FROM fichas_tecnicas")
     cur.executemany(
         "INSERT INTO fichas_tecnicas (produto_codigo) VALUES (?)",
         [("F1",), ("F2",)],
@@ -73,7 +66,7 @@ def test_reload_ids_fallback_to_fichas_tecnicas(caplog):
 def test_list_active_allergens_db():
     ds = DataStore(db_path=":memory:")
     cur = ds.conn.cursor()
-    cur.execute("CREATE TABLE alergenios (id INTEGER, nome TEXT, ativo INTEGER)")
+    cur.execute("DELETE FROM alergenios")
     cur.executemany(
         "INSERT INTO alergenios (id, nome, ativo) VALUES (?, ?, ?)",
         [(2, "A", 1), (1, "B", 1), (3, "C", 0)],
@@ -172,15 +165,43 @@ def test_datastore_creates_empty_db(tmp_path, monkeypatch):
     assert names >= {"produtos", "fichas_tecnicas"}
 
 
-def test_datastore_missing_tables(tmp_path, caplog):
+def test_datastore_missing_tables(tmp_path):
     db_file = tmp_path / "ftv.db"
     conn = sqlite3.connect(str(db_file))
     conn.execute("CREATE TABLE x (id INTEGER)")
     conn.commit()
     conn.close()
+    ds = DataStore(db_path=str(db_file))
+    cur = ds.conn.cursor()
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    names = {r[0] for r in cur.fetchall()}
+    required = {
+        "produtos",
+        "fichas_tecnicas",
+        "alergenios",
+        "tipos_artigos",
+        "validade",
+        "temperaturas",
+        "produto_auxiliar",
+    }
+    assert required <= names
+
+
+def test_datastore_missing_columns(tmp_path, caplog):
+    db_file = tmp_path / "ftv.db"
+    conn = sqlite3.connect(str(db_file))
+    conn.execute("CREATE TABLE produtos (codigo TEXT)")
+    conn.execute("CREATE TABLE fichas_tecnicas (produto_codigo TEXT)")
+    conn.execute("CREATE TABLE tipos_artigos (cod INTEGER)")
+    conn.execute("CREATE TABLE validade (cod INTEGER)")
+    conn.execute("CREATE TABLE temperaturas (cod INTEGER)")
+    conn.execute("CREATE TABLE alergenios (id INTEGER, nome TEXT)")
+    conn.execute("CREATE TABLE produto_auxiliar (produto_codigo TEXT)")
+    conn.commit()
+    conn.close()
     with caplog.at_level(logging.ERROR), pytest.raises(RuntimeError):
         DataStore(db_path=str(db_file))
-    assert any("Tabelas essenciais em falta" in r.message for r in caplog.records)
+    assert any("colunas" in r.message for r in caplog.records)
 
 
 def test_get_produto_info_repo_error(caplog):
