@@ -405,6 +405,15 @@ class FTApp(QWidget):
 
     # ---------- Carregamento de dados ----------
     def _load_record(self, idx: int):
+        codigo = self.service.codigo_at(idx)
+        product = self.service.get_product_info(codigo)
+        self.current_product = product
+
+        self.edCodigo.setText(product.code or "")
+        self.edNome.setText(product.name or "")
+        self.lbFamiliaVal.setText(product.familia or "")
+        self.lbSubFamiliaVal.setText(product.subfamilia or "")
+
         pvps = product.pvps
         values = [pvps.get("pvp1"), pvps.get("pvp2"), pvps.get("pvp3"), pvps.get("pvp4"), pvps.get("pvp5")]
         for i, val in enumerate(values):
