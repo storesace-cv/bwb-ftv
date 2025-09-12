@@ -1,11 +1,54 @@
-from typing import List
+"""Utilities and service layer for product related operations."""
+
+from typing import Iterable, List
 
 from ftv.data.datastore import DataStore
 from ftv.domain import Product, Ingredient
 
 
+class ProductService:
+    """High level API used by the UI to interact with products and helpers."""
+
+    def __init__(self, ds: DataStore):
+        self.ds = ds
+        self.conn = getattr(ds, "conn", None)
+
+    # -- pagination / ids -------------------------------------------------
+    def total(self) -> int:
+        return self.ds.total()
+
+    def codigo_at(self, idx: int):
+        return self.ds.codigo_at(idx)
+
+    # -- auxiliary tables -------------------------------------------------
+    def list_tipos_artigos(self):
+        return self.ds.list_tipos_artigos()
+
+    def list_validade(self):
+        return self.ds.list_validade()
+
+    def list_temperaturas(self):
+        return self.ds.list_temperaturas()
+
+    def list_active_allergens(self):
+        return self.ds.list_active_allergens()
+
+    # -- product retrieval ------------------------------------------------
+    def get_product_info(self, codigo: str) -> Product:
+        return get_product_info(self.ds, codigo)
+
+    # -- cost calculations ------------------------------------------------
+    def calculate_cost(self, product_or_ingredients: Iterable[Ingredient] | Product) -> float:
+        """Calculate total cost from a Product or iterable of Ingredients."""
+        if isinstance(product_or_ingredients, Product):
+            ingredients = product_or_ingredients.ingredients
+        else:
+            ingredients = list(product_or_ingredients)
+        return calculate_cost(ingredients)
+
+
 def get_product_info(ds: DataStore, codigo: str) -> Product:
-    """Retrieve product information, pvps and ingredients as a Product domain model."""
+    """Retrieve product information, pvps and ingredients as a :class:`Product`."""
     info = ds.get_produto_info(codigo) if ds else {}
     pvps = ds.get_pvps(codigo) if ds else {}
     ing_rows = ds.get_ingredientes(codigo) if ds else []
@@ -36,8 +79,8 @@ def get_product_info(ds: DataStore, codigo: str) -> Product:
     )
 
 
-def calculate_cost(ingredients: List[Ingredient]) -> float:
-    """Return total cost for a list of ingredients."""
+def calculate_cost(ingredients: Iterable[Ingredient]) -> float:
+    """Return total cost for a list/iterable of ingredients."""
     total = 0.0
     for ing in ingredients:
         if ing.total is not None:

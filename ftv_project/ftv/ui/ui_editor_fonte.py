@@ -39,6 +39,7 @@ from PyQt5.QtWidgets import (
     QTableWidgetItem, QMessageBox, QScrollArea, QShortcut, QTextEdit, QCheckBox
 )
 from ftv.data.datastore import DataStore
+from ftv.services.products import ProductService
 APP_TITLE = "Fichas Técnicas Valorizadas"
 DEV_OVERLAYS = True  # Ctrl+D alterna
 
@@ -182,6 +183,7 @@ class FTApp(QWidget):
     def __init__(self, service: ProductService):
         super().__init__()
         self.service = service
+        self.ds = service.ds
         self.cur_index = 0
         self.current_product = None
         self._build_ui()

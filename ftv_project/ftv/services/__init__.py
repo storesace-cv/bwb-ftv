@@ -1,3 +1,5 @@
-from .products import get_product_info, calculate_cost
+"""Service layer exports."""
 
-__all__ = ["get_product_info", "calculate_cost"]
+from .products import ProductService, get_product_info, calculate_cost
+
+__all__ = ["ProductService", "get_product_info", "calculate_cost"]
