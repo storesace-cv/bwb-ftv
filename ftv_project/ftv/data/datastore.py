@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 from pathlib import Path
+from ..utils.paths import get_project_root
+
+from ..utils import get_project_root
 
 class DataStore:
     """
@@ -17,9 +20,9 @@ class DataStore:
 
         # Caminho default: raiz do projeto /databases/ftv.db
         try:
-            base = Path(__file__).resolve().parents[3]
+            base = get_project_root()
         except Exception:
-            base = Path('.').resolve()
+            base = Path(".").resolve()
 
         if db_path is None:
             db_path = str(base / 'databases' / 'ftv.db')
@@ -179,7 +182,7 @@ class DataStore:
 
         # 2) JSON
         try:
-            base = Path(__file__).resolve().parents[3]
+            base = get_project_root()
         except Exception:
             base = Path(".").resolve()
         json_path = base / "allergens.json"
@@ -245,25 +248,24 @@ class DataStore:
         except Exception:
             return False
 
+    # ------------------------------------------------------------------
+    # Compatibilidade retroativa
+    # ------------------------------------------------------------------
+    def list_validades(self):
+        """Alias histórico para :meth:`list_validade`.
 
+        Mantido para compatibilidade com versões antigas que
+        invocavam ``list_validades`` fora da classe.
+        """
+        return self.list_validade()
 
-def list_validades(self):
-    cur = self.conn.cursor()
-    cur.execute("SELECT id, descricao FROM validades WHERE ativo=1 ORDER BY id")
-    return cur.fetchall()
+    def get_auxiliares_for(self, codigo):
+        """Alias histórico para :meth:`read_auxiliares`."""
+        return self.read_auxiliares(codigo)
 
+    def save_auxiliares_for(self, codigo, tipo_id, val_id, temp_id):
+        """Alias histórico para :meth:`write_auxiliares`.
 
-def get_auxiliares_for(self, codigo):
-    cur = self.conn.cursor()
-    cur.execute("SELECT tipo_artigo_id, validade_id, temperatura_id FROM produto_auxiliar WHERE produto_codigo=?", (codigo,))
-    row = cur.fetchone()
-    if row:
-        return row[0], row[1], row[2]
-    return (None, None, None)
-
-
-def save_auxiliares_for(self, codigo, tipo_id, val_id, temp_id):
-    cur = self.conn.cursor()
-    # upsert
-    cur.execute("INSERT INTO produto_auxiliar(produto_codigo, tipo_artigo_id, validade_id, temperatura_id) VALUES(?,?,?,?) ON CONFLICT(produto_codigo) DO UPDATE SET tipo_artigo_id=excluded.tipo_artigo_id, validade_id=excluded.validade_id, temperatura_id=excluded.temperatura_id", (codigo, tipo_id, val_id, temp_id))
-    self.conn.commit()
+        Retorna ``True`` em caso de sucesso, ``False`` caso contrário.
+        """
+        return self.write_auxiliares(codigo, tipo_id, val_id, temp_id)

@@ -18,8 +18,19 @@ Exit codes:
   2 = ficheiros em falta
   3 = erro na operação
 """
-import sys, argparse, sqlite3, traceback
 from pathlib import Path
+import sys
+
+# Ensure the repository root is on sys.path so ``ftv_project`` can be imported
+# correctly when this script is executed from within the source tree.  The file
+# lives under ``ftv_project/ftv/tools/`` which is three levels below the repo
+# root.  Using ``parents[3]`` instead of ``parents[2]`` inserts the directory
+# that actually contains the ``ftv_project`` package.
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+import argparse, sqlite3, traceback
 
 DB_PATH = Path("databases") / "ftv.db"
 
