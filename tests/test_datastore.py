@@ -36,6 +36,22 @@ def test_list_validades_and_auxiliares_rw():
     assert ds.get_auxiliares_for("P1") == (10, 1, 20)
 
 
+def test_reload_ids_repo_success(caplog):
+    ds = DataStore(db_path=":memory:")
+    cur = ds.conn.cursor()
+    cur.execute("CREATE TABLE produtos (codigo TEXT)")
+    cur.executemany(
+        "INSERT INTO produtos (codigo) VALUES (?)",
+        [("P1",), ("P2",)],
+    )
+    ds.conn.commit()
+    with caplog.at_level(logging.INFO):
+        count = ds.reload_ids()
+    assert count == 2
+    assert ds._ids == ["P1", "P2"]
+    assert any("repositorio" in r.message for r in caplog.records)
+
+
 def test_reload_ids_fallback_to_fichas_tecnicas(caplog):
     ds = DataStore(db_path=":memory:")
     cur = ds.conn.cursor()
