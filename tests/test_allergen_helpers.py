@@ -1,7 +1,5 @@
 import json
-
 from data.datastore import DataStore
-import data.datastore as ds_module
 
 
 def test_allergens_from_db_invalid_rows():
@@ -25,24 +23,26 @@ def test_allergens_from_db_no_connection():
     assert ds._allergens_from_db() is None
 
 
-def test_allergens_from_json_missing(tmp_path, monkeypatch):
-    monkeypatch.setattr(ds_module, "base", tmp_path)
-    ds = ds_module.DataStore(demo=True)
+def test_allergens_from_json_missing():
+    ds = DataStore(db_path=":memory:")
     assert ds._allergens_from_json() is None
 
 
-def test_allergens_from_json_invalid(tmp_path, monkeypatch):
-    monkeypatch.setattr(ds_module, "base", tmp_path)
-    (tmp_path / "allergens.json").write_text("{bad json", encoding="utf-8")
-    ds = ds_module.DataStore(demo=True)
+def test_allergens_from_json_invalid():
+    ds = DataStore(db_path=":memory:")
+    ds.conn.execute("INSERT INTO Config (Key, Value) VALUES ('allergens', '{bad json')")
+    ds.conn.commit()
     assert ds._allergens_from_json() is None
 
 
-def test_allergens_from_json_filters_invalid(tmp_path, monkeypatch):
-    monkeypatch.setattr(ds_module, "base", tmp_path)
+def test_allergens_from_json_filters_invalid():
+    ds = DataStore(db_path=":memory:")
     data = {"alergenios": ["A", {"nome": "", "id": 2}, {"id": "x", "nome": "B"}]}
-    (tmp_path / "allergens.json").write_text(json.dumps(data), encoding="utf-8")
-    ds = ds_module.DataStore(demo=True)
+    ds.conn.execute(
+        "INSERT INTO Config (Key, Value) VALUES (?, ?)",
+        ("allergens", json.dumps(data)),
+    )
+    ds.conn.commit()
     assert ds._allergens_from_json() == [(1, "A"), (2, "B")]
 
 

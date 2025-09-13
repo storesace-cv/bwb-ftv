@@ -138,22 +138,21 @@ def test_list_active_allergens_db():
     assert ds.list_active_allergens() == [(1, "B"), (2, "A")]
 
 
-def test_list_active_allergens_json(tmp_path, monkeypatch):
-    import data.datastore as ds_module
-
-    monkeypatch.setattr(ds_module, "base", tmp_path)
-    (tmp_path / "allergens.json").write_text(
-        json.dumps({"alergenios": ["A", "B"]}), encoding="utf-8"
+def test_list_active_allergens_json():
+    ds = DataStore(db_path=":memory:")
+    ds.conn.execute("DELETE FROM Alergenios")
+    ds.conn.execute(
+        "INSERT INTO Config (Key, Value) VALUES (?, ?)",
+        ("allergens", json.dumps({"alergenios": ["A", "B"]})),
     )
-    ds = ds_module.DataStore(demo=True)
+    ds.conn.commit()
     assert ds.list_active_allergens() == [(1, "A"), (2, "B")]
 
 
-def test_list_active_allergens_default(tmp_path, monkeypatch):
-    import data.datastore as ds_module
-
-    monkeypatch.setattr(ds_module, "base", tmp_path)
-    ds = ds_module.DataStore(demo=True)
+def test_list_active_allergens_default():
+    ds = DataStore(db_path=":memory:")
+    ds.conn.execute("DELETE FROM Alergenios")
+    ds.conn.commit()
     items = ds.list_active_allergens()
     assert len(items) == 14
     assert items[0] == (1, "Glúten")

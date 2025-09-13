@@ -544,11 +544,14 @@ class DataStore:
         return result or None
 
     def _allergens_from_json(self):
-        json_path = base / "allergens.json"
-        if not json_path.exists():
+        if self.conn is None:
             return None
         try:
-            data = json.loads(json_path.read_text(encoding="utf-8"))
+            cur = self.conn.execute("SELECT Value FROM Config WHERE Key='allergens'")
+            row = cur.fetchone()
+            if not row or not row[0]:
+                return None
+            data = json.loads(row[0])
             payload = (
                 data.get("alergenios")
                 if isinstance(data, dict) and "alergenios" in data
@@ -583,9 +586,9 @@ class DataStore:
                         items.append((rid, nm))
             if items:
                 return [(i + 1, nm) for i, (_, nm) in enumerate(items)]
-        except (json.JSONDecodeError, OSError, TypeError, ValueError) as exc:
+        except (json.JSONDecodeError, sqlite3.Error, TypeError, ValueError) as exc:
             logger.error(
-                "[DataStore] list_active_allergens JSON falhou: %s",
+                "[DataStore] list_active_allergens config falhou: %s",
                 exc,
                 exc_info=True,
             )
@@ -616,7 +619,7 @@ class DataStore:
 
         Ordem de tentativa:
           1) BD (tabela alergenios: id, nome, ativo)
-          2) Ficheiro allergens.json na raiz do projeto
+          2) Tabela Config (chave 'allergens' contendo JSON)
           3) Lista padrão (14 principais)
 
         Returns:
