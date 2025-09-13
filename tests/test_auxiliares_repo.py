@@ -8,38 +8,38 @@ def _make_repo():
     cur = conn.cursor()
     cur.execute(
         """
-        CREATE TABLE tipos_artigos (
-            cod INTEGER PRIMARY KEY AUTOINCREMENT,
-            descricao TEXT,
-            ativo INTEGER
+        CREATE TABLE TiposArtigos (
+            Cod INTEGER PRIMARY KEY AUTOINCREMENT,
+            Descricao TEXT,
+            Ativo INTEGER
         )
         """
     )
     cur.execute(
         """
-        CREATE TABLE validade (
-            cod INTEGER PRIMARY KEY AUTOINCREMENT,
-            descricao TEXT,
-            ativo INTEGER
+        CREATE TABLE Validade (
+            Cod INTEGER PRIMARY KEY AUTOINCREMENT,
+            Descricao TEXT,
+            Ativo INTEGER
         )
         """
     )
     cur.execute(
         """
-        CREATE TABLE temperaturas (
-            cod INTEGER PRIMARY KEY AUTOINCREMENT,
-            descricao TEXT,
-            ativo INTEGER
+        CREATE TABLE Temperaturas (
+            Cod INTEGER PRIMARY KEY AUTOINCREMENT,
+            Descricao TEXT,
+            Ativo INTEGER
         )
         """
     )
     cur.execute(
         """
-        CREATE TABLE produto_auxiliar (
-            produto_codigo TEXT PRIMARY KEY,
-            tipo_artigo_id INTEGER,
-            validade_id INTEGER,
-            temperatura_id INTEGER
+        CREATE TABLE ProdutoAuxiliar (
+            ProdutoCodigo TEXT PRIMARY KEY,
+            TipoArtigoId INTEGER,
+            ValidadeId INTEGER,
+            TemperaturaId INTEGER
         )
         """
     )

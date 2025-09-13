@@ -41,7 +41,7 @@ na base de dados.
 ## Migração de esquema
 
 Para bases de dados já existentes, utilize o script `tools/cleanup_schema.py`
-para sincronizar as tabelas `produtos`, `fichas_tecnicas` e `precos_taxas` com
+para sincronizar as tabelas `Produtos`, `FichasTecnicas` e `PrecosTaxas` com
 os cabeçalhos actuais dos ficheiros Excel. Antes de qualquer alteração é
 criado um backup (`ftv.db.bak`) da base de dados.
 

@@ -2,7 +2,7 @@
 """Synchronize database schema with current import spreadsheets.
 
 Reads the three base Excel files in ``imports/`` and ensures the tables
-``produtos``, ``fichas_tecnicas`` and ``precos_taxas`` match their headers.
+``Produtos``, ``FichasTecnicas`` and ``PrecosTaxas`` match their headers.
 A backup of the SQLite database (``*.db.bak``) is created before applying
 changes.
 """
@@ -23,9 +23,9 @@ def main() -> None:
     imports_dir = root / "imports"
 
     files = {
-        "produtos": imports_dir / "Produtos_Base.xlsx",
-        "fichas_tecnicas": imports_dir / "FichasTecnicas_base.xlsx",
-        "precos_taxas": imports_dir / "PreçosTaxas_base.xlsx",
+        "Produtos": imports_dir / "Produtos_Base.xlsx",
+        "FichasTecnicas": imports_dir / "FichasTecnicas_base.xlsx",
+        "PrecosTaxas": imports_dir / "PreçosTaxas_base.xlsx",
     }
 
     ds = DataStore()
@@ -50,11 +50,9 @@ def main() -> None:
         except StopIteration:
             wb.close()
             continue
-        if table == "precos_taxas":
+        if table == "PrecosTaxas":
             mapped = [canonicalize_header(h, table=table) for h in raw_headers]
-            existing = [
-                r[1].lower() for r in conn.execute(f"PRAGMA table_info({table})")
-            ]
+            existing = [r[1] for r in conn.execute(f"PRAGMA table_info({table})")]
             headers = mapped + [c for c in existing if c not in mapped]
         else:
             headers = raw_headers

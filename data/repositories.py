@@ -12,13 +12,13 @@ class ProdutosRepo:
 
     def listar_codigos(self):
         cur = self.conn.cursor()
-        cur.execute("SELECT codigo FROM produtos ORDER BY codigo")
+        cur.execute("SELECT Codigo FROM Produtos ORDER BY Codigo")
         return [r[0] for r in cur.fetchall()]
 
     def get_info(self, codigo: str):
         cur = self.conn.cursor()
         # Ajusta conforme o teu esquema real (mantemos simples e não destrutivo):
-        cur.execute("SELECT * FROM produtos WHERE codigo = ?", (codigo,))
+        cur.execute("SELECT * FROM Produtos WHERE Codigo = ?", (codigo,))
         row = cur.fetchone()
         if not row:
             return {}
@@ -27,12 +27,12 @@ class ProdutosRepo:
         return {}
 
     def get_pvps(self, codigo: str):
-        """Devolve {'pvp1', 'pvp2', 'pvp3', 'pvp4', 'pvp5'} a partir de precos_taxas."""
+        """Devolve {'pvp1', 'pvp2', 'pvp3', 'pvp4', 'pvp5'} a partir de PrecosTaxas."""
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "SELECT preco_1, preco_2, preco_3, preco_4, preco_5 "
-                "FROM precos_taxas WHERE codigo = ?",
+                "SELECT Preco1, Preco2, Preco3, Preco4, Preco5 "
+                "FROM PrecosTaxas WHERE Codigo = ?",
                 (codigo,),
             )
             r = cur.fetchone()
@@ -73,39 +73,42 @@ class IngredientesRepo:
         self.conn = conn
 
     def _infer_cols(self):
-        """Inferir colunas em 'fichas_tecnicas' com as preferências do esquema."""
+        """Inferir colunas em 'FichasTecnicas' com as preferências do esquema."""
         cur = self.conn.cursor()
         try:
-            cur.execute("PRAGMA table_info(fichas_tecnicas)")
-            cols = [r[1].lower() for r in cur.fetchall()]
+            cur.execute("PRAGMA table_info(FichasTecnicas)")
+            cols_raw = [r[1] for r in cur.fetchall()]
+            cols = [c.lower() for c in cols_raw]
         except sqlite3.Error as exc:
             logger.error(
                 "[IngredientesRepo] _infer_cols falhou: %s", exc, exc_info=True
             )
             return None
 
-        def has(name):
-            return name in cols
+        def has(name: str) -> bool:
+            return name.lower() in cols
 
         def pick(cands):
             for c in cands:
-                if c in cols:
-                    return c
+                if c.lower() in cols:
+                    return cols_raw[cols.index(c.lower())]
             # heurística por prefixos
-            for c in cols:
-                for pref in ("produto_", "artigo_", "codigo_", "cod_", "fk_"):
+            for orig, c in zip(cols_raw, cols):
+                for pref in ("produto", "artigo", "codigo", "cod", "fk"):
                     if c.startswith(pref) and any(
                         k in c for k in ("produto", "artigo", "codigo", "cod")
                     ):
-                        return c
+                        return orig
             return None
 
         # Preferências baseadas no teu schema real
         prod = (
-            "produto_codigo"
-            if has("produto_codigo")
+            "ProdutoCodigo"
+            if has("ProdutoCodigo")
             else pick(
                 [
+                    "CodigoProduto",
+                    "produto_codigo",
                     "codigo_produto",
                     "produto",
                     "artigo",
@@ -143,13 +146,13 @@ class IngredientesRepo:
         return {"prod": prod, "ingr": ingr, "qty": qty, "unit": unit}
 
     def listar_por_produto(self, codigo: str):
-        """Devolve dados do produto em fichas_tecnicas."""
+        """Devolve dados do produto em FichasTecnicas."""
         """Lista dicts com chaves: ingrediente, nome, designacao, quantidade,
         qtd, QTD, unidade, ppu e total.
         """
         cur = self.conn.cursor()
         try:
-            cur.execute("PRAGMA table_info(fichas_tecnicas)")
+            cur.execute("PRAGMA table_info(FichasTecnicas)")
             cols = [c[1].lower() for c in cur.fetchall()]
             if "total" in cols:
                 cost_col = "total"
@@ -160,8 +163,8 @@ class IngredientesRepo:
             order_col = "ordem" if "ordem" in cols else "rowid"
             cur.execute(
                 f"SELECT componente_nome, qtd, unidade, ppu, {cost_col} "
-                "FROM fichas_tecnicas "
-                "WHERE produto_codigo = ? "
+                "FROM FichasTecnicas "
+                "WHERE ProdutoCodigo = ? "
                 f"ORDER BY {order_col}",
                 (codigo,),
             )
@@ -194,7 +197,7 @@ class IngredientesRepo:
                 exc_info=True,
             )
             try:
-                cur.execute("PRAGMA table_info(fichas_tecnicas)")
+                cur.execute("PRAGMA table_info(FichasTecnicas)")
                 cols = [c[1].lower() for c in cur.fetchall()]
 
                 def has(x):
@@ -225,7 +228,7 @@ class IngredientesRepo:
                 sql = (
                     "SELECT "
                     + ", ".join(sel)
-                    + " FROM fichas_tecnicas WHERE produto_codigo=?"
+                    + " FROM FichasTecnicas WHERE ProdutoCodigo=?"
                 )
                 cur.execute(sql, (codigo,))
                 rows = cur.fetchall()
@@ -275,7 +278,7 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "SELECT cod, descricao FROM tipos_artigos WHERE ativo=1 ORDER BY cod"
+                "SELECT cod, descricao FROM TiposArtigos WHERE ativo=1 ORDER BY cod"
             )
             rows = cur.fetchall()
             return [(None, "—")] + [(r[0], r[1]) for r in rows]
@@ -289,7 +292,7 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "SELECT cod, descricao FROM validade WHERE ativo=1 ORDER BY cod"
+                "SELECT cod, descricao FROM Validade WHERE ativo=1 ORDER BY cod"
             )
             rows = cur.fetchall()
             return [(None, "—")] + [(r[0], r[1]) for r in rows]
@@ -303,7 +306,7 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "SELECT cod, descricao FROM temperaturas WHERE ativo=1 ORDER BY cod"
+                "SELECT cod, descricao FROM Temperaturas WHERE ativo=1 ORDER BY cod"
             )
             rows = cur.fetchall()
             return [(None, "—")] + [(r[0], r[1]) for r in rows]
@@ -317,7 +320,7 @@ class AuxiliaresRepo:
     def list_tipos_artigos_admin(self):
         cur = self.conn.cursor()
         try:
-            cur.execute("SELECT cod, descricao, ativo FROM tipos_artigos ORDER BY cod")
+            cur.execute("SELECT cod, descricao, ativo FROM TiposArtigos ORDER BY cod")
             return [(r[0], r[1], r[2]) for r in cur.fetchall()]
         except sqlite3.Error as exc:
             logger.error(
@@ -331,7 +334,7 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "INSERT INTO tipos_artigos (descricao, ativo) VALUES (?, 1)",
+                "INSERT INTO TiposArtigos (descricao, ativo) VALUES (?, 1)",
                 (descricao,),
             )
             self.conn.commit()
@@ -346,7 +349,7 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "UPDATE tipos_artigos SET descricao=? WHERE cod=?",
+                "UPDATE TiposArtigos SET descricao=? WHERE cod=?",
                 (descricao, cod),
             )
             self.conn.commit()
@@ -364,7 +367,7 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "UPDATE tipos_artigos SET ativo=? WHERE cod=?",
+                "UPDATE TiposArtigos SET ativo=? WHERE cod=?",
                 (int(ativo), cod),
             )
             self.conn.commit()
@@ -381,7 +384,7 @@ class AuxiliaresRepo:
     def list_validade_admin(self):
         cur = self.conn.cursor()
         try:
-            cur.execute("SELECT cod, descricao, ativo FROM validade ORDER BY cod")
+            cur.execute("SELECT cod, descricao, ativo FROM Validade ORDER BY cod")
             return [(r[0], r[1], r[2]) for r in cur.fetchall()]
         except sqlite3.Error as exc:
             logger.error(
@@ -395,7 +398,7 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "INSERT INTO validade (descricao, ativo) VALUES (?, 1)",
+                "INSERT INTO Validade (descricao, ativo) VALUES (?, 1)",
                 (descricao,),
             )
             self.conn.commit()
@@ -408,7 +411,7 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "UPDATE validade SET descricao=? WHERE cod=?",
+                "UPDATE Validade SET descricao=? WHERE cod=?",
                 (descricao, cod),
             )
             self.conn.commit()
@@ -426,7 +429,7 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "UPDATE validade SET ativo=? WHERE cod=?",
+                "UPDATE Validade SET ativo=? WHERE cod=?",
                 (int(ativo), cod),
             )
             self.conn.commit()
@@ -443,7 +446,7 @@ class AuxiliaresRepo:
     def list_temperaturas_admin(self):
         cur = self.conn.cursor()
         try:
-            cur.execute("SELECT cod, descricao, ativo FROM temperaturas ORDER BY cod")
+            cur.execute("SELECT cod, descricao, ativo FROM Temperaturas ORDER BY cod")
             return [(r[0], r[1], r[2]) for r in cur.fetchall()]
         except sqlite3.Error as exc:
             logger.error(
@@ -457,7 +460,7 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "INSERT INTO temperaturas (descricao, ativo) VALUES (?, 1)",
+                "INSERT INTO Temperaturas (descricao, ativo) VALUES (?, 1)",
                 (descricao,),
             )
             self.conn.commit()
@@ -472,7 +475,7 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "UPDATE temperaturas SET descricao=? WHERE cod=?",
+                "UPDATE Temperaturas SET descricao=? WHERE cod=?",
                 (descricao, cod),
             )
             self.conn.commit()
@@ -490,7 +493,7 @@ class AuxiliaresRepo:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "UPDATE temperaturas SET ativo=? WHERE cod=?",
+                "UPDATE Temperaturas SET ativo=? WHERE cod=?",
                 (int(ativo), cod),
             )
             self.conn.commit()
@@ -510,8 +513,8 @@ class AuxiliaresRepo:
         try:
             cur = self.conn.cursor()
             cur.execute(
-                "SELECT tipo_artigo_id, validade_id, temperatura_id "
-                "FROM produto_auxiliar WHERE produto_codigo = ?",
+                "SELECT TipoArtigoId, ValidadeId, TemperaturaId "
+                "FROM ProdutoAuxiliar WHERE ProdutoCodigo = ?",
                 (codigo,),
             )
             row = cur.fetchone()
@@ -519,9 +522,9 @@ class AuxiliaresRepo:
                 return (None, None, None)
             try:
                 return (
-                    row["tipo_artigo_id"],
-                    row["validade_id"],
-                    row["temperatura_id"],
+                    row["TipoArtigoId"],
+                    row["ValidadeId"],
+                    row["TemperaturaId"],
                 )
             except (KeyError, IndexError, TypeError):
                 return (
@@ -541,16 +544,16 @@ class AuxiliaresRepo:
     def set_produto_auxiliares(
         self, codigo: str, tipo_artigo_id, validade_id, temperatura_id
     ) -> None:
-        """Upsert para a tabela produto_auxiliar."""
+        """Upsert para a tabela ProdutoAuxiliar."""
         try:
             cur = self.conn.cursor()
             cur.execute(
-                "INSERT INTO produto_auxiliar (produto_codigo, tipo_artigo_id, "
-                "validade_id, temperatura_id) VALUES (?, ?, ?, ?) ON "
-                "CONFLICT(produto_codigo) DO UPDATE SET "
-                "tipo_artigo_id=excluded.tipo_artigo_id, "
-                "validade_id=excluded.validade_id, "
-                "temperatura_id=excluded.temperatura_id",
+                "INSERT INTO ProdutoAuxiliar (ProdutoCodigo, TipoArtigoId, "
+                "ValidadeId, TemperaturaId) VALUES (?, ?, ?, ?) ON "
+                "CONFLICT(ProdutoCodigo) DO UPDATE SET "
+                "TipoArtigoId=excluded.TipoArtigoId, "
+                "ValidadeId=excluded.ValidadeId, "
+                "TemperaturaId=excluded.TemperaturaId",
                 (codigo, tipo_artigo_id, validade_id, temperatura_id),
             )
             self.conn.commit()
@@ -570,7 +573,7 @@ class PreparacaoRepo:
     def get_html(self, codigo: str) -> str:
         cur = self.conn.cursor()
         cur.execute(
-            "SELECT html FROM produto_preparacao WHERE produto_codigo = ?", (codigo,)
+            "SELECT Html FROM ProdutoPreparacao WHERE ProdutoCodigo = ?", (codigo,)
         )
         row = cur.fetchone()
         return row[0] if row and row[0] else ""
@@ -578,8 +581,8 @@ class PreparacaoRepo:
     def upsert_html(self, codigo: str, html: str) -> None:
         cur = self.conn.cursor()
         cur.execute(
-            "INSERT INTO produto_preparacao (produto_codigo, html) VALUES (?, ?) "
-            "ON CONFLICT(produto_codigo) DO UPDATE SET html=excluded.html",
+            "INSERT INTO ProdutoPreparacao (ProdutoCodigo, Html) VALUES (?, ?) "
+            "ON CONFLICT(ProdutoCodigo) DO UPDATE SET Html=excluded.Html",
             (codigo, html),
         )
         self.conn.commit()

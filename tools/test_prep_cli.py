@@ -49,7 +49,7 @@ def _load_preparacao_repo():
 
 def pick_first_codigo(conn):
     try:
-        cur = conn.execute("SELECT codigo FROM produtos ORDER BY codigo LIMIT 1")
+        cur = conn.execute("SELECT Codigo FROM Produtos ORDER BY Codigo LIMIT 1")
         row = cur.fetchone()
         return row[0] if row else None
     except Exception:
@@ -86,7 +86,7 @@ def main():
             codigo = pick_first_codigo(conn)
             if not codigo:
                 logger.error(
-                    "[TESTE][ERRO] Não foi possível descobrir um código em 'produtos'."
+                    "[TESTE][ERRO] Não foi possível descobrir um código em 'Produtos'."
                 )
                 sys.exit(3)
             logger.info("[TESTE] Usar código detetado: %s", codigo)
