@@ -60,7 +60,19 @@ def test_datastore_migration_accept(monkeypatch, tmp_path):
         "DispLojas TEXT"
         ")"
     )
-    conn.execute("CREATE TABLE FichasTecnicas (ProdutoCodigo TEXT)")
+    conn.execute(
+        "CREATE TABLE FichasTecnicas ("
+        "FamiliaSubfamilia TEXT, "
+        "ProdutoCodigo TEXT, "
+        "ProdutoNome TEXT, "
+        "ComponenteCodigo TEXT, "
+        "ComponenteNome TEXT, "
+        "Qtd REAL, "
+        "Unidade TEXT, "
+        "Ppu REAL, "
+        "Preco REAL, "
+        "Peso REAL)"
+    )
     conn.commit()
     conn.close()
 
@@ -138,7 +150,19 @@ def test_datastore_migration_decline(monkeypatch, tmp_path):
         "DispLojas TEXT"
         ")"
     )
-    conn.execute("CREATE TABLE FichasTecnicas (ProdutoCodigo TEXT)")
+    conn.execute(
+        "CREATE TABLE FichasTecnicas ("
+        "FamiliaSubfamilia TEXT, "
+        "ProdutoCodigo TEXT, "
+        "ProdutoNome TEXT, "
+        "ComponenteCodigo TEXT, "
+        "ComponenteNome TEXT, "
+        "Qtd REAL, "
+        "Unidade TEXT, "
+        "Ppu REAL, "
+        "Preco REAL, "
+        "Peso REAL)"
+    )
     conn.commit()
     conn.close()
 

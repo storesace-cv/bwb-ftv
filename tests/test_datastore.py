@@ -174,7 +174,18 @@ def test_datastore_creates_empty_db(tmp_path, monkeypatch):
             "    Descontinuado TEXT,\n"
             "    DispLojas TEXT\n"
             ");\n"
-            "CREATE TABLE FichasTecnicas (ProdutoCodigo TEXT);\n"
+            "CREATE TABLE FichasTecnicas (\n"
+            "    FamiliaSubfamilia TEXT,\n"
+            "    ProdutoCodigo TEXT,\n"
+            "    ProdutoNome TEXT,\n"
+            "    ComponenteCodigo TEXT,\n"
+            "    ComponenteNome TEXT,\n"
+            "    Qtd REAL,\n"
+            "    Unidade TEXT,\n"
+            "    Ppu REAL,\n"
+            "    Preco REAL,\n"
+            "    Peso REAL\n"
+            ");\n"
         ),
         encoding="utf-8",
     )

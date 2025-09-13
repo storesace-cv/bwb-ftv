@@ -204,8 +204,20 @@ class DataStore:
                 "Descontinuado",
                 "DispLojas",
             },
-            # ``FichasTecnicas`` deve ter pelo menos a ligação ao produto.
-            "FichasTecnicas": {"ProdutoCodigo"},
+            # ``FichasTecnicas`` deve incluir colunas essenciais de relação
+            # produto/componente e custos.
+            "FichasTecnicas": {
+                "FamiliaSubfamilia",
+                "ProdutoCodigo",
+                "ProdutoNome",
+                "ComponenteCodigo",
+                "ComponenteNome",
+                "Qtd",
+                "Unidade",
+                "Ppu",
+                "Preco",
+                "Peso",
+            },
             "PrecosTaxas": {"Codigo"},
             "Alergenios": {"Id", "Nome", "Ativo"},
             "TiposArtigos": {"Cod", "Descricao", "Ativo"},
