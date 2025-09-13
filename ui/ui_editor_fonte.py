@@ -341,7 +341,7 @@ class FTApp(QWidget):
         self.lbPVP = []
         for i in range(5):
             col = Zone(
-                f"C1.A.2.A.P{i+1}",
+                f"C1.A.2.A.{i+1}",
                 base_cont,
                 flow="v",
                 margins=2,
@@ -857,7 +857,7 @@ class FTApp(QWidget):
     def _toggle_overlays(self):
         layout.DEV_OVERLAYS = not layout.DEV_OVERLAYS
         for z in self.findChildren(Zone):
-            if z.tag.count(".") == 0:
+            if z.tag.count(".") == 0 and layout.validate_tag(z.tag):
                 z.apply_overlays(layout.DEV_OVERLAYS)
 
     def _toggle_overlays_btn(self):

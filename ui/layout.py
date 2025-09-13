@@ -1,3 +1,5 @@
+import re
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QHBoxLayout,
@@ -9,6 +11,15 @@ from PyQt5.QtWidgets import (
 )
 
 DEV_OVERLAYS = True
+
+
+_TAG_RE = re.compile(r"^C\d+(?:\.(?:A|B|\d+))*$")
+
+
+def validate_tag(tag: str) -> bool:
+    """Return ``True`` if ``tag`` complies with the expected pattern."""
+
+    return bool(_TAG_RE.fullmatch(tag))
 
 
 def bg_for_level(level: int) -> str:
@@ -29,6 +40,8 @@ class Zone(QWidget):
         level: int = 0,
         show_overlays: bool = True,
     ):
+        if not validate_tag(tag):
+            raise ValueError(f"Invalid zone tag: {tag}")
         super().__init__(parent)
         self.tag = tag
         self.setObjectName(tag)
@@ -109,8 +122,13 @@ class Zone(QWidget):
         h = QHBoxLayout(cont)
         h.setContentsMargins(0, 0, 0, 0)
         h.setSpacing(self.ly.spacing())
+        left_tag = self.tag + ".A"
+        right_tag = self.tag + ".B"
+        for t in (left_tag, right_tag):
+            if not validate_tag(t):
+                raise ValueError(f"Invalid zone tag: {t}")
         left = Zone(
-            self.tag + ".A",
+            left_tag,
             cont,
             flow="v",
             margins=4,
@@ -119,7 +137,7 @@ class Zone(QWidget):
             show_overlays=DEV_OVERLAYS,
         )
         right = Zone(
-            self.tag + ".B",
+            right_tag,
             cont,
             flow="v",
             margins=4,
@@ -138,8 +156,13 @@ class Zone(QWidget):
         v = QVBoxLayout(cont)
         v.setContentsMargins(0, 0, 0, 0)
         v.setSpacing(self.ly.spacing())
+        top_tag = self.tag + ".1"
+        bottom_tag = self.tag + ".2"
+        for t in (top_tag, bottom_tag):
+            if not validate_tag(t):
+                raise ValueError(f"Invalid zone tag: {t}")
         top = Zone(
-            self.tag + ".1",
+            top_tag,
             cont,
             flow="v",
             margins=4,
@@ -148,7 +171,7 @@ class Zone(QWidget):
             show_overlays=DEV_OVERLAYS,
         )
         bottom = Zone(
-            self.tag + ".2",
+            bottom_tag,
             cont,
             flow="v",
             margins=4,
