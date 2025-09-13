@@ -7,5 +7,5 @@ __pycache__/
 # Ignore logs, reports, and databases
 logs/
 reports/
-databases/*.xlsx*
-databases/*.db
+/databases/*
+!/databases/*/
