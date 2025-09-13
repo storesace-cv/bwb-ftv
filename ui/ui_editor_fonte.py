@@ -5,11 +5,11 @@
 # 1) Nomenclatura de Blocos e Células
 #    - Blocos: [B1] Dados Gerais, [B2] Ingredientes,
 #      [B3] Custos, [B4] Preparação, [B5] Nutrição / Alergénios.
-#    - Célula raiz do bloco: Bn.Cn (ex.: B1.C1, B2.C2, B3.C3, B4.C4, B5.C5).
+#    - Célula raiz do bloco: Bn.C1 (ex.: B1.C1, B2.C1, B3.C1, B4.C1, B5.C1).
 #    - Divisão horizontal: sufixos .A (esq.) e .B (dir.).
 #    - Divisão vertical: sufixos .1 (topo) e .2 (base).
 #    - Subdivisões encadeiam-se mantendo a regra (ex.: B1.C1.A.2.B).
-#    - NÃO usar nomes ad hoc (ex.: C3.X, C3AA, C3AB).
+#    - NÃO usar nomes ad hoc (ex.: C1.X, C1AA, C1AB).
 #
 # 2) Changelog: toda alteração documentada deve incluir data/hora
 #    (Europe/Lisbon)
@@ -17,12 +17,12 @@
 #
 # Changelog
 # ---------
-# 2025-09-08 16:06 — v3.64 — Alinhamento de nomenclatura em B3 (C3)
+# 2025-09-08 16:06 — v3.64 — Alinhamento de nomenclatura em B3 (C1)
 #    & reforço de comentários; split vertical em C1.A.2 com dados no topo;
 #    Custo Total = soma da coluna "Total".
 # 2025-09-08 17:35 — v3.73 — Restabelecido: botão Overlay no topo
 #    esquerdo; navegação no rodapé; scroll vertical; mantidas alterações
-#    pedidas (C3 swap, remoção C1.A.2.B.2, tags visíveis).
+#    pedidas (C1 swap, remoção C1.A.2.B.2, tags visíveis).
 # 2025-09-08 18:05 — v3.80 — Reintroduzidos [B4] Preparação e [B5]
 #    Alergénios; overlays/cores preservados; footer com contador.
 # 2025-09-08 18:40 — v3.82 — C1.A.2.B ligado à BD
@@ -41,7 +41,7 @@
 #      ordenadas) com pré-seleção por FK do produto.
 #    • B2: grelha 50/10/10/14/16 + Código oculto; cálculo Total por linha
 #      quando necessário.
-#    • B3: C3.A.A = Custo Total (soma da coluna “Total”); C3.A.B =
+#    • B3: C1.A.A = Custo Total (soma da coluna “Total”); C1.A.B =
 #      “Food Cost:” (placeholder).
 #    • B4: editor de Preparação com toolbar simples; B5: Alergénios 2×N
 #      com persistência N–N.
@@ -49,6 +49,7 @@
 #      Tabelas / Utilitários; diálogos de gestão nas Tabelas.
 #    • Overlays/cores preservados; navegação centrada no rodapé; scroll
 #      vertical; cabeçalho em comentários.
+# 2025-09-13 17:16 — v3.89 — Raiz dos blocos B2–B5 renomeada para ".C1".
 
 import sys
 import logging
@@ -380,9 +381,9 @@ class FTApp(QWidget):
         prev.setStyleSheet("border:1px solid #ccc; padding:8px;")
         C1B.add(prev, 1)
 
-        # ---------------- B2 — Ingredientes (B2.C2) ----------------
+        # ---------------- B2 — Ingredientes (B2.C1) ----------------
         self.C2 = Zone(
-            "B2.C2", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
+            "B2.C1", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
         )
         page_ly.addWidget(self._section_box("[B2] - Ingredientes", self.C2), 0)
 
@@ -396,14 +397,14 @@ class FTApp(QWidget):
         self.C2.add(self.tbIng, 1)
         self._setup_ing_columns()
 
-        # ---------------- B3 — Custos (B3.C3) ----------------
+        # ---------------- B3 — Custos (B3.C1) ----------------
         self.C3 = Zone(
-            "B3.C3", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
+            "B3.C1", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
         )
         page_ly.addWidget(self._section_box("[B3] - Custos", self.C3), 0)
 
         C3A = Zone(
-            "B3.C3.A",
+            "B3.C1.A",
             self.C3,
             flow="v",
             level=1,
@@ -412,7 +413,7 @@ class FTApp(QWidget):
         self.C3.add(C3A, 1)
         C3AA, C3AB = C3A.split_h((1, 1))
 
-        # C3 swap aplicado: C3.A.A = Custo Total | C3.A.B = "Food Cost:"
+        # C1 swap aplicado: C1.A.A = Custo Total | C1.A.B = "Food Cost:"
         ct_row = QWidget()
         ct_ly = QVBoxLayout(ct_row)
         ct_ly.setContentsMargins(0, 0, 0, 0)
@@ -425,9 +426,9 @@ class FTApp(QWidget):
 
         C3AB.add(QLabel("Food Cost:"), 0)
 
-        # ---------------- B4 — Preparação (B4.C4) ----------------
+        # ---------------- B4 — Preparação (B4.C1) ----------------
         self.C4 = Zone(
-            "B4.C4", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
+            "B4.C1", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
         )
         page_ly.addWidget(self._section_box("[B4] - Preparação", self.C4), 1)
 
@@ -475,9 +476,9 @@ class FTApp(QWidget):
         self.edPrep.textChanged.connect(self._on_prep_changed)
         self.C4.add(self.edPrep, 1)
 
-        # ---------------- B5 — Nutrição / Alergénios (B5.C5) ----------------
+        # ---------------- B5 — Nutrição / Alergénios (B5.C1) ----------------
         self.C5 = Zone(
-            "B5.C5", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
+            "B5.C1", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
         )
         page_ly.addWidget(self._section_box("[B5] - Nutrição / Alergénios", self.C5), 0)
 
@@ -905,7 +906,8 @@ class FTApp(QWidget):
                     for table in candidates:
                         try:
                             cur.execute(
-                                "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                                "SELECT name FROM sqlite_master "
+                                "WHERE type='table' AND name=?",
                                 (table,),
                             )
                             if cur.fetchone():
