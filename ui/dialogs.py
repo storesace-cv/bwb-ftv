@@ -1,4 +1,6 @@
 import logging
+from collections.abc import Callable
+
 from PyQt5.QtWidgets import QMessageBox
 from utils.paths import get_project_root
 
@@ -51,8 +53,24 @@ def update_data(parent, service, load_record, cur_index):
         QMessageBox.critical(parent, "Atualizar Dados", f"Falha na atualização: {exc}")
 
 
-def manage_aux_table(parent, title: str, repo_methods: dict[str, callable]) -> None:
+def manage_aux_table(
+    parent,
+    title: str,
+    repo_methods: dict[str, Callable],
+    on_change: Callable | None = None,
+) -> None:
     """Display a simple dialog to manage auxiliary tables.
+
+    Parameters
+    ----------
+    parent
+        Parent widget for the dialog.
+    title
+        Window title for the dialog.
+    repo_methods
+        Mapping providing callables for ``list``, ``add`` and ``set_active``.
+    on_change
+        Optional callback invoked whenever the table content changes.
 
     The ``repo_methods`` mapping must provide callables for ``list``, ``add``
     and ``set_active`` which correspond to admin methods from
@@ -97,12 +115,16 @@ def manage_aux_table(parent, title: str, repo_methods: dict[str, callable]) -> N
         if ok and text.strip():
             repo_methods["add"](text.strip())
             refresh()
+            if callable(on_change):
+                on_change()
 
     def toggle(item: QListWidgetItem):
         cod, ativo = item.data(Qt.UserRole)
         new_state = 0 if ativo else 1
         if repo_methods["set_active"](cod, new_state):
             refresh()
+            if callable(on_change):
+                on_change()
         else:  # pragma: no cover - UI feedback only
             QMessageBox.warning(
                 dlg,
