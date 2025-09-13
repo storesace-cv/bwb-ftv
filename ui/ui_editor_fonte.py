@@ -1,40 +1,59 @@
-# flake8: noqa
 # Fichas Técnicas Valorizadas — UI (Single-file)
 #
 # Regras Aprovadas (manter sempre no topo e cumprir em TODO o código)
 # -------------------------------------------------------------------
 # 1) Nomenclatura de Blocos e Células
-#    - Blocos: [B1] Dados Gerais, [B2] Ingredientes, [B3] Custos, [B4] Preparação, [B5] Nutrição / Alergénios.
+#    - Blocos: [B1] Dados Gerais, [B2] Ingredientes,
+#      [B3] Custos, [B4] Preparação, [B5] Nutrição / Alergénios.
 #    - Célula raiz do bloco: Cn (ex.: C1, C2, C3, C4, C5).
 #    - Divisão horizontal: sufixos .A (esq.) e .B (dir.).
 #    - Divisão vertical: sufixos .1 (topo) e .2 (base).
 #    - Subdivisões encadeiam-se mantendo a regra (ex.: C1.A.2.B).
 #    - NÃO usar nomes ad hoc (ex.: C3.X, C3AA, C3AB).
 #
-# 2) Changelog: toda alteração documentada deve incluir data/hora (Europe/Lisbon)
+# 2) Changelog: toda alteração documentada deve incluir data/hora
+#    (Europe/Lisbon)
 #    - Formato: YYYY-MM-DD HH:MM — descrição.
 #
 # Changelog
 # ---------
-# 2025-09-08 16:06 — v3.64 — Alinhamento de nomenclatura em B3 (C3) & reforço de comentários; split vertical em C1.A.2 com dados no topo; Custo Total = soma da coluna "Total".
-# 2025-09-08 17:35 — v3.73 — Restabelecido: botão Overlay no topo esquerdo; navegação no rodapé; scroll vertical; mantidas alterações pedidas (C3 swap, remoção C1.A.2.B.2, tags visíveis).
-# 2025-09-08 18:05 — v3.80 — Reintroduzidos [B4] Preparação e [B5] Alergénios; overlays/cores preservados; footer com contador.
-# 2025-09-08 18:40 — v3.82 — C1.A.2.B ligado à BD (tipos/validade/temperaturas) com pré-seleção por FK; preservado layout.
-# 2025-09-08 19:05 — v3.84 — Menu → Tabelas abre diálogos de gestão (listar ativos, adicionar, inativar) para Tipos/Validade/Temperaturas.
-# 2025-09-08 19:30 — v3.87 — Consolidação parcial das alterações sem tocar no layout base.
+# 2025-09-08 16:06 — v3.64 — Alinhamento de nomenclatura em B3 (C3)
+#    & reforço de comentários; split vertical em C1.A.2 com dados no topo;
+#    Custo Total = soma da coluna "Total".
+# 2025-09-08 17:35 — v3.73 — Restabelecido: botão Overlay no topo
+#    esquerdo; navegação no rodapé; scroll vertical; mantidas alterações
+#    pedidas (C3 swap, remoção C1.A.2.B.2, tags visíveis).
+# 2025-09-08 18:05 — v3.80 — Reintroduzidos [B4] Preparação e [B5]
+#    Alergénios; overlays/cores preservados; footer com contador.
+# 2025-09-08 18:40 — v3.82 — C1.A.2.B ligado à BD
+#    (tipos/validade/temperaturas) com pré-seleção por FK; preservado
+#    layout.
+# 2025-09-08 19:05 — v3.84 — Menu → Tabelas abre diálogos de gestão
+#    (listar ativos, adicionar, inativar) para Tipos/Validade/
+#    Temperaturas.
+# 2025-09-08 19:30 — v3.87 — Consolidação parcial das alterações sem
+#    tocar no layout base.
 # 2025-09-08 19:45 — v3.88 — CONSOLIDAÇÃO FINAL:
-#    • C1.A.2.A dividido (topo: Família/Sub-família; base: PVP1..PVP5 com etiqueta por cima e valor por baixo; leitura PVP1..2 de precos_taxas).
-#    • C1.A.2.B: combos ligados às tabelas auxiliares (ativo=1, ordenadas) com pré-seleção por FK do produto.
-#    • B2: grelha 50/10/10/14/16 + Código oculto; cálculo Total por linha quando necessário.
-#    • B3: C3.A.A = Custo Total (soma da coluna “Total”); C3.A.B = “Food Cost:” (placeholder).
-#    • B4: editor de Preparação com toolbar simples; B5: Alergénios 2×N com persistência N–N.
-#    • Menu: QToolButton (InstantPopup) sem caret; Base de Dados / Tabelas / Utilitários; diálogos de gestão nas Tabelas.
-#    • Overlays/cores preservados; navegação centrada no rodapé; scroll vertical; cabeçalho em comentários.
+#    • C1.A.2.A dividido (topo: Família/Sub-família; base: PVP1..PVP5 com
+#      etiqueta por cima e valor por baixo; leitura PVP1..2 de
+#      precos_taxas).
+#    • C1.A.2.B: combos ligados às tabelas auxiliares (ativo=1,
+#      ordenadas) com pré-seleção por FK do produto.
+#    • B2: grelha 50/10/10/14/16 + Código oculto; cálculo Total por linha
+#      quando necessário.
+#    • B3: C3.A.A = Custo Total (soma da coluna “Total”); C3.A.B =
+#      “Food Cost:” (placeholder).
+#    • B4: editor de Preparação com toolbar simples; B5: Alergénios 2×N
+#      com persistência N–N.
+#    • Menu: QToolButton (InstantPopup) sem caret; Base de Dados /
+#      Tabelas / Utilitários; diálogos de gestão nas Tabelas.
+#    • Overlays/cores preservados; navegação centrada no rodapé; scroll
+#      vertical; cabeçalho em comentários.
 
 import sys
 import logging
-from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QFont, QKeySequence
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
@@ -44,7 +63,6 @@ from PyQt5.QtWidgets import (
     QGroupBox,
     QLabel,
     QLineEdit,
-    QComboBox,
     QPushButton,
     QSizePolicy,
     QTableWidget,
@@ -57,207 +75,21 @@ from PyQt5.QtWidgets import (
 )
 from data.datastore import DataStore
 from services.products import ProductService
-from utils.paths import get_project_root
 from utils.formatting import format_pt_number
 
-APP_TITLE = "Fichas Técnicas Valorizadas"
-DEV_OVERLAYS = True  # Ctrl+D alterna
+from . import layout
+from .layout import Zone
+from .utilities import make_readonly_lineedit, match_font, stack_combo
+from .dialogs import import_data, update_data
 
+APP_TITLE = "Fichas Técnicas Valorizadas"
 
 logger = logging.getLogger(__name__)
-
-# ------------------------ UI Helpers ------------------------
-
-
-def make_readonly_lineedit(le: QLineEdit, bold=False):
-    le.setReadOnly(True)
-    le.setFrame(False)
-    le.setStyleSheet("border:none; background:transparent;")
-    f = le.font()
-    f.setBold(bold)
-    le.setFont(f)
-
-
-def match_font(lbl: QLabel, ref: QLineEdit):
-    f = QFont(ref.font())
-    lbl.setFont(f)
-
-
-def stack_combo(title: str):
-    w = QWidget()
-    v = QVBoxLayout(w)
-    v.setContentsMargins(0, 0, 0, 0)
-    v.setSpacing(2)
-    lbl = QLabel(title)
-    v.addWidget(lbl, 0, Qt.AlignLeft | Qt.AlignVCenter)
-    cb = QComboBox()
-    cb.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-    v.addWidget(cb, 0)
-    return w, cb
-
-
-# ------------------------ Zone (Cell) System ------------------------
-
-
-def bg_for_level(level: int):
-    colors = ["#eafbf1", "#eef5ff", "#fff5e8", "#f7f0ff", "#fff0f0"]
-    return colors[level % len(colors)] if DEV_OVERLAYS else "transparent"
-
-
-class Zone(QWidget):
-    """Célula real (com tag e overlay opcional)."""
-
-    def __init__(
-        self,
-        tag: str,
-        parent=None,
-        flow="v",
-        margins=8,
-        spacing=6,
-        level: int = 0,
-        show_overlays: bool = True,
-    ):
-        super().__init__(parent)
-        self.tag = tag
-        self.setObjectName(tag)
-        self._level = level
-        self._labels = []
-        if flow == "v":
-            self.ly = QVBoxLayout(self)
-        else:
-            self.ly = QHBoxLayout(self)
-        self.ly.setContentsMargins(margins, margins, margins, margins)
-        self.ly.setSpacing(spacing)
-
-        self._tag_lbl = QLabel(self.tag, self)
-        self._tag_lbl.setStyleSheet("color:#c00; font-size:10px;")
-        self._tag_lbl.setFixedHeight(12)
-        self.ly.addWidget(self._tag_lbl, 0, Qt.AlignLeft)
-
-        self.apply_overlays(show_overlays)
-
-    def apply_overlays(self, on: bool):
-        if on:
-            self.setStyleSheet(
-                f"background:{bg_for_level(self._level)}; border:1px dashed red;"
-            )
-            self._tag_lbl.show()
-        else:
-            self.setStyleSheet("")
-            self._tag_lbl.hide()
-        for ch in self.findChildren(Zone):
-            ch.apply_overlays(on)
-
-    def add(self, w: QWidget, stretch: int = 0):
-        self.ly.addWidget(w, stretch)
-
-    def add_row(
-        self,
-        label_text: str,
-        value_widget: QWidget,
-        label_minw: int = None,
-        vspacing: int = 2,
-    ):
-        row = QWidget(self)
-        row.setStyleSheet("border:none; background:transparent;")
-        grid = QGridLayout(row)
-        grid.setContentsMargins(0, 0, 0, 0)
-        grid.setHorizontalSpacing(12)
-        grid.setVerticalSpacing(vspacing)
-        grid.setColumnStretch(1, 1)
-        lbl = QLabel(label_text, row)
-        lbl.setStyleSheet("border:none; background:transparent;")
-        lbl.setAlignment(Qt.AlignVCenter | Qt.AlignRight)
-        if label_minw:
-            lbl.setFixedWidth(label_minw)
-        value_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        try:
-            value_widget.setStyleSheet(
-                value_widget.styleSheet() + "border:none; background:transparent;"
-            )
-        except Exception:
-            pass
-        grid.addWidget(lbl, 0, 0, alignment=Qt.AlignVCenter | Qt.AlignRight)
-        grid.addWidget(value_widget, 0, 1, alignment=Qt.AlignVCenter | Qt.AlignLeft)
-        self.ly.addWidget(row)
-        self._labels.append(lbl)
-        self.sync_label_widths()
-        return lbl
-
-    def sync_label_widths(self):
-        if not self._labels:
-            return
-        maxw = max(l.sizeHint().width() for l in self._labels)
-        for l in self._labels:
-            l.setFixedWidth(maxw)
-
-    def split_h(self, ratios=(1, 1)):
-        cont = QWidget(self)
-        cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        h = QHBoxLayout(cont)
-        h.setContentsMargins(0, 0, 0, 0)
-        h.setSpacing(self.ly.spacing())
-        left = Zone(
-            self.tag + ".A",
-            cont,
-            flow="v",
-            margins=4,
-            spacing=self.ly.spacing(),
-            level=self._level + 1,
-            show_overlays=DEV_OVERLAYS,
-        )
-        right = Zone(
-            self.tag + ".B",
-            cont,
-            flow="v",
-            margins=4,
-            spacing=self.ly.spacing(),
-            level=self._level + 1,
-            show_overlays=DEV_OVERLAYS,
-        )
-        h.addWidget(left, ratios[0])
-        h.addWidget(right, ratios[1])
-        self.ly.addWidget(cont, 1)
-        return left, right
-
-    def split_v(self, ratios=(1, 1)):
-        cont = QWidget(self)
-        cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        v = QVBoxLayout(cont)
-        v.setContentsMargins(0, 0, 0, 0)
-        v.setSpacing(self.ly.spacing())
-        top = Zone(
-            self.tag + ".1",
-            cont,
-            flow="v",
-            margins=4,
-            spacing=self.ly.spacing(),
-            level=self._level + 1,
-            show_overlays=DEV_OVERLAYS,
-        )
-        bottom = Zone(
-            self.tag + ".2",
-            cont,
-            flow="v",
-            margins=4,
-            spacing=self.ly.spacing(),
-            level=self._level + 1,
-            show_overlays=DEV_OVERLAYS,
-        )
-        v.addWidget(top, ratios[0])
-        v.addWidget(bottom, ratios[1])
-        self.ly.addWidget(cont, 1)
-        return top, bottom
-
 
 # ------------------------ Main App ------------------------
 
 
 class FTApp(QWidget):
-    def _aux_load_selected(self, codigo):
-        """Tabela de auxiliares removida."""
-        return
-
     def __init__(self, service: ProductService):
         super().__init__()
         self.service = service
@@ -276,51 +108,6 @@ class FTApp(QWidget):
         ly.setSpacing(8)
         ly.addWidget(zone)
         return box
-
-    def _missing_import_files(self) -> list[str]:
-        base = get_project_root() / "imports"
-        files = [
-            base / "Produtos_Base.xlsx",
-            base / "FichasTecnicas_base.xlsx",
-            base / "PreçosTaxas_base.xlsx",
-        ]
-        return [fp.name for fp in files if not fp.exists()]
-
-    def _import_data(self):
-        missing = self._missing_import_files()
-        if missing:
-            QMessageBox.warning(
-                self,
-                "Importar Dados",
-                "Ficheiros em falta: " + ", ".join(sorted(missing)),
-            )
-            return
-        try:
-            self.service.import_from_excel()
-            self._load_record(self.cur_index)
-            QMessageBox.information(self, "Importar Dados", "Importação concluída.")
-        except Exception as exc:  # pragma: no cover - UI feedback only
-            logger.exception("Import failed", exc_info=exc)
-            QMessageBox.critical(self, "Importar Dados", f"Falha na importação: {exc}")
-
-    def _update_data(self):
-        missing = self._missing_import_files()
-        if missing:
-            QMessageBox.warning(
-                self,
-                "Atualizar Dados",
-                "Ficheiros em falta: " + ", ".join(sorted(missing)),
-            )
-            return
-        try:
-            self.service.update_from_excel()
-            self._load_record(self.cur_index)
-            QMessageBox.information(self, "Atualizar Dados", "Atualização concluída.")
-        except Exception as exc:  # pragma: no cover - UI feedback only
-            logger.exception("Update failed", exc_info=exc)
-            QMessageBox.critical(
-                self, "Atualizar Dados", f"Falha na atualização: {exc}"
-            )
 
     def _build_ui(self):
         self.setWindowTitle(APP_TITLE)
@@ -363,8 +150,12 @@ class FTApp(QWidget):
         self.mnuRoot.addMenu(mUtil)
         self.btMenu.setMenu(self.mnuRoot)
         # ligações básicas
-        actReload.triggered.connect(self._import_data)
-        actUpdate.triggered.connect(self._update_data)
+        actReload.triggered.connect(
+            lambda: import_data(self, self.service, self._load_record, self.cur_index)
+        )
+        actUpdate.triggered.connect(
+            lambda: update_data(self, self.service, self._load_record, self.cur_index)
+        )
         actTipos.triggered.connect(
             lambda: QMessageBox.information(
                 self,
@@ -406,7 +197,7 @@ class FTApp(QWidget):
         root.addWidget(scroll, 1)
 
         # ---------------- B1 — Dados Gerais (C1) ----------------
-        self.C1 = Zone("C1", self, flow="v", level=0, show_overlays=DEV_OVERLAYS)
+        self.C1 = Zone("C1", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS)
         page_ly.addWidget(self._section_box("[B1] - Dados Gerais", self.C1), 0)
 
         C1A, C1B = self.C1.split_h((3, 1))
@@ -459,7 +250,7 @@ class FTApp(QWidget):
                 margins=2,
                 spacing=2,
                 level=C1A21_base._level + 1,
-                show_overlays=DEV_OVERLAYS,
+                show_overlays=layout.DEV_OVERLAYS,
             )
             lbl = QLabel(f"PVP{i+1}")
             val = QLabel("—")
@@ -487,7 +278,7 @@ class FTApp(QWidget):
         C1B.add(prev, 1)
 
         # ---------------- B2 — Ingredientes (C2) ----------------
-        self.C2 = Zone("C2", self, flow="v", level=0, show_overlays=DEV_OVERLAYS)
+        self.C2 = Zone("C2", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS)
         page_ly.addWidget(self._section_box("[B2] - Ingredientes", self.C2), 0)
 
         self.tbIng = QTableWidget(0, 6, self)
@@ -500,10 +291,16 @@ class FTApp(QWidget):
         self._setup_ing_columns()
 
         # ---------------- B3 — Custos (C3) ----------------
-        self.C3 = Zone("C3", self, flow="v", level=0, show_overlays=DEV_OVERLAYS)
+        self.C3 = Zone("C3", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS)
         page_ly.addWidget(self._section_box("[B3] - Custos", self.C3), 0)
 
-        C3A = Zone("C3.A", self.C3, flow="v", level=1, show_overlays=DEV_OVERLAYS)
+        C3A = Zone(
+            "C3.A",
+            self.C3,
+            flow="v",
+            level=1,
+            show_overlays=layout.DEV_OVERLAYS,
+        )
         self.C3.add(C3A, 1)
         C3AA, C3AB = C3A.split_h((1, 1))
 
@@ -521,7 +318,7 @@ class FTApp(QWidget):
         C3AB.add(QLabel("Food Cost:"), 0)
 
         # ---------------- B4 — Preparação (C4) ----------------
-        self.C4 = Zone("C4", self, flow="v", level=0, show_overlays=DEV_OVERLAYS)
+        self.C4 = Zone("C4", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS)
         page_ly.addWidget(self._section_box("[B4] - Preparação", self.C4), 1)
 
         # Simples toolbar "demo" e editor
@@ -541,7 +338,7 @@ class FTApp(QWidget):
         self.C4.add(self.edPrep, 1)
 
         # ---------------- B5 — Nutrição / Alergénios (C5) ----------------
-        self.C5 = Zone("C5", self, flow="v", level=0, show_overlays=DEV_OVERLAYS)
+        self.C5 = Zone("C5", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS)
         page_ly.addWidget(self._section_box("[B5] - Nutrição / Alergénios", self.C5), 0)
 
         self._build_allergens_grid()
@@ -691,6 +488,7 @@ class FTApp(QWidget):
     def _update_costs_from_table(self):
         """Recalculate total cost using the service layer."""
         try:
+            total = self.service.calculate_cost(self.current_product)
             self.edCustoTotal.setText(format_pt_number(total))
         except Exception:
             pass
@@ -701,15 +499,14 @@ class FTApp(QWidget):
         self._apply_ingredient_widths()
 
     def _toggle_overlays(self):
-        global DEV_OVERLAYS
-        DEV_OVERLAYS = not DEV_OVERLAYS
+        layout.DEV_OVERLAYS = not layout.DEV_OVERLAYS
         for z in self.findChildren(Zone):
             if z.tag.count(".") == 0:
-                z.apply_overlays(DEV_OVERLAYS)
+                z.apply_overlays(layout.DEV_OVERLAYS)
 
     def _toggle_overlays_btn(self):
         self._toggle_overlays()
-        self.btOverlay.setText(f"Overlays: {'ON' if DEV_OVERLAYS else 'OFF'}")
+        self.btOverlay.setText(f"Overlays: {'ON' if layout.DEV_OVERLAYS else 'OFF'}")
 
     # ================== AUXILIARES — CANÓNICO (v2) ==================
     def _aux_fetch_lists(self):
@@ -876,7 +673,10 @@ class FTApp(QWidget):
         return
 
     def _aux_ensure_guard(self):
-        """Envolve _load_record com guarda self._loading True/False e injeta pipeline dos auxiliares."""
+        """Envolve _load_record com guarda self._loading True/False.
+
+        Injeta pipeline dos auxiliares.
+        """
         if getattr(self, "_aux_guard_wrapped", False):
             return
         orig = getattr(self, "_load_record", None)
