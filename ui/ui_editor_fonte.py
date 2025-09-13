@@ -52,7 +52,8 @@
 
 import sys
 import logging
-import re
+import html as html_module
+import html.parser as html_parser
 from PyQt5.QtCore import Qt, QAbstractTableModel, QSortFilterProxyModel
 from PyQt5.QtGui import QKeySequence, QTextOption
 from PyQt5.QtWidgets import (
@@ -509,10 +510,105 @@ class FTApp(QWidget):
         self._apply_prep_autofit_or_scroll()
 
     def _sanitize_prep_html(self, html: str) -> str:
+        """Sanitize HTML from the preparation editor.
+
+        Only a minimal subset of tags/attributes is allowed. ``<script>``
+        elements are completely removed, ``on*`` attributes are stripped and
+        style properties are whitelisted. ``<b>`` and ``<i>`` are normalised to
+        ``<strong>`` and ``<em>`` respectively.
+        """
+
+        allowed_tags = {"p", "br", "strong", "em", "ul", "ol", "li", "span"}
+        allowed_attrs: dict[str, set[str]] = {
+            "p": {"style"},
+            "span": {"style"},
+            "li": {"style"},
+        }
+        allowed_styles = {"text-align"}
+
+        def _sanitize_style(style: str) -> str:
+            clean_props: list[str] = []
+            for part in style.split(";"):
+                if not part.strip():
+                    continue
+                key, _, value = part.partition(":")
+                key = key.strip().lower()
+                value = value.strip()
+                if key in allowed_styles:
+                    val_low = value.lower()
+                    if any(x in val_low for x in ["javascript:", "expression", "url("]):
+                        continue
+                    clean_props.append(f"{key}: {value}")
+            return "; ".join(clean_props)
+
+        class _Sanitizer(html_parser.HTMLParser):
+            def __init__(self):
+                super().__init__(convert_charrefs=False)
+                self.result: list[str] = []
+                self.skip_depth = 0
+
+            def handle_starttag(self, tag, attrs):
+                tag = tag.lower()
+                if tag in {"script", "style"}:
+                    self.skip_depth += 1
+                    return
+                if self.skip_depth:
+                    return
+                tag = "strong" if tag == "b" else tag
+                tag = "em" if tag == "i" else tag
+                if tag not in allowed_tags:
+                    return
+                clean_attrs: list[tuple[str, str]] = []
+                for attr, value in attrs:
+                    if attr is None:
+                        continue
+                    attr_l = attr.lower()
+                    if attr_l.startswith("on"):
+                        continue
+                    if attr_l == "style":
+                        val = _sanitize_style(value or "")
+                        if val:
+                            clean_attrs.append((attr_l, val))
+                    elif attr_l in allowed_attrs.get(tag, set()):
+                        clean_attrs.append(
+                            (attr_l, html_module.escape(value or "", quote=True))
+                        )
+                attr_str = "".join(f' {name}="{val}"' for name, val in clean_attrs)
+                self.result.append(f"<{tag}{attr_str}>")
+
+            def handle_endtag(self, tag):
+                tag = tag.lower()
+                if tag in {"script", "style"}:
+                    if self.skip_depth:
+                        self.skip_depth -= 1
+                    return
+                if self.skip_depth:
+                    return
+                tag = "strong" if tag == "b" else tag
+                tag = "em" if tag == "i" else tag
+                if tag in allowed_tags:
+                    self.result.append(f"</{tag}>")
+
+            def handle_data(self, data):
+                if not self.skip_depth:
+                    self.result.append(html_module.escape(data))
+
+            def handle_entityref(self, name):
+                if not self.skip_depth:
+                    self.result.append(f"&{name};")
+
+            def handle_charref(self, name):
+                if not self.skip_depth:
+                    self.result.append(f"&#{name};")
+
         try:
-            cleaned = re.sub(r"<script.*?>.*?</script>", "", html, flags=re.I | re.S)
-            return cleaned.strip()
+            sanitizer = _Sanitizer()
+            sanitizer.feed(html)
+            sanitizer.close()
+            return "".join(sanitizer.result).strip()
         except Exception:
+            # In case of an unexpected error return the original html to avoid
+            # losing data.
             return html
 
     def _save_prep(self, force: bool):
