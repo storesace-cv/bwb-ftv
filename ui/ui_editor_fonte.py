@@ -55,7 +55,7 @@ import logging
 import html as html_module
 import html.parser as html_parser
 from PyQt5.QtCore import Qt, QAbstractTableModel, QSortFilterProxyModel
-from PyQt5.QtGui import QKeySequence, QTextOption
+from PyQt5.QtGui import QFont, QKeySequence, QTextOption
 from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
@@ -73,6 +73,8 @@ from PyQt5.QtWidgets import (
     QShortcut,
     QTextEdit,
     QCheckBox,
+    QToolBar,
+    QAction,
 )
 from data.datastore import DataStore
 from services.products import ProductService
@@ -173,7 +175,7 @@ class FTApp(QWidget):
         self.btSave.clicked.connect(lambda: self._save_prep(force=True))
         top.addWidget(self.btSave, 0, Qt.AlignLeft)
         top.addStretch(1)
-        from PyQt5.QtWidgets import QToolButton, QMenu, QAction
+        from PyQt5.QtWidgets import QMenu, QToolButton
 
         self.btMenu = QToolButton()
         self.btMenu.setText("Menu")
@@ -396,17 +398,38 @@ class FTApp(QWidget):
         self.C4 = Zone("C4", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS)
         page_ly.addWidget(self._section_box("[B4] - Preparação", self.C4), 1)
 
-        # Simples toolbar "demo" e editor
-        tb = QHBoxLayout()
-        tb.setContentsMargins(0, 0, 0, 0)
-        tb.setSpacing(6)
-        for txt in ["↥", "↶", "B", "I", "U", "→", "⇔", "≡", "1.", "•"]:
-            b = QPushButton(txt)
-            b.setFixedSize(28, 22)
-            tb.addWidget(b)
-        tbw = QWidget()
-        tbw.setLayout(tb)
-        self.C4.add(tbw, 0)
+        # Toolbar de formatação
+        toolbar = QToolBar()
+        bold_act = QAction("B", self)
+        bold_act.setShortcut(QKeySequence("Ctrl+B"))
+        bold_act.triggered.connect(self._toggle_bold)
+        toolbar.addAction(bold_act)
+
+        italic_act = QAction("I", self)
+        italic_act.setShortcut(QKeySequence("Ctrl+I"))
+        italic_act.triggered.connect(self._toggle_italic)
+        toolbar.addAction(italic_act)
+
+        underline_act = QAction("U", self)
+        underline_act.setShortcut(QKeySequence("Ctrl+U"))
+        underline_act.triggered.connect(self._toggle_underline)
+        toolbar.addAction(underline_act)
+
+        toolbar.addSeparator()
+
+        ol_act = QAction("1.", self)
+        ol_act.triggered.connect(self._insert_ordered_list)
+        toolbar.addAction(ol_act)
+
+        ul_act = QAction("•", self)
+        ul_act.triggered.connect(self._insert_unordered_list)
+        toolbar.addAction(ul_act)
+
+        clear_act = QAction("Limpar", self)
+        clear_act.triggered.connect(self._clear_formatting)
+        toolbar.addAction(clear_act)
+
+        self.C4.add(toolbar, 0)
 
         self.edPrep = QTextEdit()
         self.edPrep.setAcceptRichText(True)
@@ -508,6 +531,26 @@ class FTApp(QWidget):
     def _on_prep_changed(self):
         self._prep_dirty = True
         self._apply_prep_autofit_or_scroll()
+
+    def _toggle_bold(self):
+        weight = QFont.Bold if self.edPrep.fontWeight() != QFont.Bold else QFont.Normal
+        self.edPrep.setFontWeight(weight)
+
+    def _toggle_italic(self):
+        self.edPrep.setFontItalic(not self.edPrep.fontItalic())
+
+    def _toggle_underline(self):
+        self.edPrep.setFontUnderline(not self.edPrep.fontUnderline())
+
+    def _insert_ordered_list(self):
+        self.edPrep.insertHtml("<ol><li></li></ol>")
+
+    def _insert_unordered_list(self):
+        self.edPrep.insertHtml("<ul><li></li></ul>")
+
+    def _clear_formatting(self):
+        text = self.edPrep.toPlainText()
+        self.edPrep.setPlainText(text)
 
     def _sanitize_prep_html(self, html: str) -> str:
         """Sanitize HTML from the preparation editor.
