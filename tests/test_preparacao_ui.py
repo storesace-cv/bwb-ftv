@@ -1,9 +1,10 @@
+# flake8: noqa
+
 import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import types
-from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTextEdit, QWidget, QShortcut
 
 from data.datastore import DataStore

@@ -215,6 +215,7 @@ class FTApp(QWidget):
                     "list": self.ds.aux.list_tipos_artigos_admin,
                     "add": self.ds.aux.add_tipo_artigo,
                     "set_active": self.ds.aux.set_tipo_artigo_ativo,
+                    "delete": self.ds.aux.delete_tipo_artigo,
                 },
                 on_change=self._aux_refresh_lists,
             )
@@ -227,6 +228,7 @@ class FTApp(QWidget):
                     "list": self.ds.aux.list_validade_admin,
                     "add": self.ds.aux.add_validade,
                     "set_active": self.ds.aux.set_validade_ativo,
+                    "delete": self.ds.aux.delete_validade,
                 },
                 on_change=self._aux_refresh_lists,
             )
@@ -239,6 +241,7 @@ class FTApp(QWidget):
                     "list": self.ds.aux.list_temperaturas_admin,
                     "add": self.ds.aux.add_temperatura,
                     "set_active": self.ds.aux.set_temperatura_ativo,
+                    "delete": self.ds.aux.delete_temperatura,
                 },
                 on_change=self._aux_refresh_lists,
             )

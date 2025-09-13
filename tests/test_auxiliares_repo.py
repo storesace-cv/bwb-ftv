@@ -33,6 +33,16 @@ def _make_repo():
         )
         """
     )
+    cur.execute(
+        """
+        CREATE TABLE Produtos (
+            Cod INTEGER PRIMARY KEY AUTOINCREMENT,
+            TipoArtigo INTEGER,
+            Validade INTEGER,
+            Temperatura INTEGER
+        )
+        """
+    )
     conn.commit()
     return conn, AuxiliaresRepo(conn)
 
@@ -108,3 +118,42 @@ def test_temperaturas_crud_failure():
     assert repo2.list_temperaturas_admin() == []
     conn.close()
     conn2.close()
+
+
+def test_delete_tipo_artigo():
+    conn, repo = _make_repo()
+    tid1 = repo.add_tipo_artigo("A")
+    assert repo.delete_tipo_artigo(tid1) is True
+    assert repo.list_tipos_artigos_admin() == []
+    tid2 = repo.add_tipo_artigo("B")
+    conn.execute("INSERT INTO Produtos (TipoArtigo) VALUES (?)", (tid2,))
+    conn.commit()
+    assert repo.delete_tipo_artigo(tid2) is False
+    assert repo.list_tipos_artigos_admin() == [(tid2, "B", 1)]
+    conn.close()
+
+
+def test_delete_validade():
+    conn, repo = _make_repo()
+    vid1 = repo.add_validade("24h")
+    assert repo.delete_validade(vid1) is True
+    assert repo.list_validade_admin() == []
+    vid2 = repo.add_validade("48h")
+    conn.execute("INSERT INTO Produtos (Validade) VALUES (?)", (vid2,))
+    conn.commit()
+    assert repo.delete_validade(vid2) is False
+    assert repo.list_validade_admin() == [(vid2, "48h", 1)]
+    conn.close()
+
+
+def test_delete_temperatura():
+    conn, repo = _make_repo()
+    tid1 = repo.add_temperatura("Quente")
+    assert repo.delete_temperatura(tid1) is True
+    assert repo.list_temperaturas_admin() == []
+    tid2 = repo.add_temperatura("Frio")
+    conn.execute("INSERT INTO Produtos (Temperatura) VALUES (?)", (tid2,))
+    conn.commit()
+    assert repo.delete_temperatura(tid2) is False
+    assert repo.list_temperaturas_admin() == [(tid2, "Frio", 1)]
+    conn.close()
