@@ -460,108 +460,94 @@ class DataStore:
                 exc_info=True,
             )
 
-    # Alergénios ativos: lista de tuplos (id, nome)
-    def list_active_allergens(self):
-        """
-        Devolve lista de tuplos (id, nome) de alergénios ativos.
+    # Alergénios ativos: helpers
+    def _allergens_from_db(self):
+        if not self.conn or self.demo:
+            return None
+        try:
+            cur = self.conn.cursor()
+            cur.execute("SELECT id, nome FROM alergenios WHERE ativo=1 ORDER BY id")
+            rows = cur.fetchall()
+        except sqlite3.Error as exc:
+            logger.error(
+                "[DataStore] list_active_allergens BD falhou: %s",
+                exc,
+                exc_info=True,
+            )
+            return None
 
-        Ordem de tentativa:
-          1) BD (tabela alergenios: id, nome, ativo)
-          2) Ficheiro allergens.json na raiz do projeto
-          3) Lista padrão (14 principais)
-
-        Returns:
-            list[tuple[int, str]]
-        """
-        # 1) BD
-        if self.conn and not self.demo:
+        result = []
+        for r in rows or []:
             try:
-                cur = self.conn.cursor()
-                cur.execute("SELECT id, nome FROM alergenios WHERE ativo=1 ORDER BY id")
-                rows = cur.fetchall()
-                result = []
-                for r in rows or []:
-                    try:
-                        rid = r["id"] if hasattr(r, "keys") else r[0]
-                        nm = r["nome"] if hasattr(r, "keys") else r[1]
-                    except (KeyError, IndexError, TypeError):
-                        try:
-                            rid, nm = r[0], r[1]
-                        except (IndexError, TypeError):
-                            rid, nm = None, None
-                    if nm is not None and str(nm).strip():
-                        try:
-                            rid_int = (
-                                int(rid)
-                                if rid is not None and str(rid).strip() != ""
-                                else None
-                            )
-                        except (ValueError, TypeError):
-                            rid_int = None
-                        result.append(
-                            (
-                                rid_int if rid_int is not None else len(result) + 1,
-                                str(nm).strip(),
-                            )
-                        )
-                if result:
-                    return result
-            except sqlite3.Error as exc:
-                logger.error(
-                    "[DataStore] list_active_allergens BD falhou: %s",
-                    exc,
-                    exc_info=True,
+                rid = r["id"] if hasattr(r, "keys") else r[0]
+                nm = r["nome"] if hasattr(r, "keys") else r[1]
+            except (KeyError, IndexError, TypeError):
+                try:
+                    rid, nm = r[0], r[1]
+                except (IndexError, TypeError):
+                    continue
+            if nm is None or str(nm).strip() == "":
+                continue
+            try:
+                rid_int = (
+                    int(rid) if rid is not None and str(rid).strip() != "" else None
                 )
+            except (ValueError, TypeError):
+                rid_int = None
+            result.append(
+                (rid_int if rid_int is not None else len(result) + 1, str(nm).strip())
+            )
+        return result or None
 
-        # 2) JSON
+    def _allergens_from_json(self):
         json_path = base / "allergens.json"
-        if json_path.exists():
-            try:
-                data = json.loads(json_path.read_text(encoding="utf-8"))
-                payload = (
-                    data.get("alergenios")
-                    if isinstance(data, dict) and "alergenios" in data
-                    else data
-                )
-                items = []
-                if isinstance(payload, list):
-                    tmp = []
-                    for idx, item in enumerate(payload, 1):
-                        if isinstance(item, str):
-                            nm = item.strip()
-                            if nm:
-                                tmp.append((idx, nm))
-                        elif isinstance(item, dict):
-                            nm = item.get("nome") or item.get("name")
-                            if nm and str(nm).strip():
-                                rid = item.get("id")
-                                try:
-                                    rid_int = (
-                                        int(rid)
-                                        if rid is not None and str(rid).strip() != ""
-                                        else idx
-                                    )
-                                except (ValueError, TypeError):
-                                    rid_int = idx
-                                tmp.append((rid_int, str(nm).strip()))
-                    # remover duplicados por nome (case-insensitive), mantendo ordem
-                    seen = set()
-                    for rid, nm in tmp:
-                        key = nm.strip().lower()
-                        if key not in seen:
-                            seen.add(key)
-                            items.append((rid, nm))
-                if items:
-                    # normalizar ids sequenciais 1..N mantendo ordem
-                    return [(i + 1, nm) for i, (_, nm) in enumerate(items)]
-            except (json.JSONDecodeError, OSError, TypeError, ValueError) as exc:
-                logger.error(
-                    "[DataStore] list_active_allergens JSON falhou: %s",
-                    exc,
-                    exc_info=True,
-                )
+        if not json_path.exists():
+            return None
+        try:
+            data = json.loads(json_path.read_text(encoding="utf-8"))
+            payload = (
+                data.get("alergenios")
+                if isinstance(data, dict) and "alergenios" in data
+                else data
+            )
+            items = []
+            if isinstance(payload, list):
+                tmp = []
+                for idx, item in enumerate(payload, 1):
+                    if isinstance(item, str):
+                        nm = item.strip()
+                        if nm:
+                            tmp.append((idx, nm))
+                    elif isinstance(item, dict):
+                        nm = item.get("nome") or item.get("name")
+                        if nm and str(nm).strip():
+                            rid = item.get("id")
+                            try:
+                                rid_int = (
+                                    int(rid)
+                                    if rid is not None and str(rid).strip() != ""
+                                    else idx
+                                )
+                            except (ValueError, TypeError):
+                                rid_int = idx
+                            tmp.append((rid_int, str(nm).strip()))
+                seen = set()
+                for rid, nm in tmp:
+                    key = nm.strip().lower()
+                    if key not in seen:
+                        seen.add(key)
+                        items.append((rid, nm))
+            if items:
+                return [(i + 1, nm) for i, (_, nm) in enumerate(items)]
+        except (json.JSONDecodeError, OSError, TypeError, ValueError) as exc:
+            logger.error(
+                "[DataStore] list_active_allergens JSON falhou: %s",
+                exc,
+                exc_info=True,
+            )
+        return None
 
-        # 3) Padrão
+    def _default_allergens(self):
         default = [
             "Glúten",
             "Crustáceos",
@@ -579,3 +565,25 @@ class DataStore:
             "Moluscos",
         ]
         return [(i + 1, nm) for i, nm in enumerate(default)]
+
+    def list_active_allergens(self):
+        """
+        Devolve lista de tuplos (id, nome) de alergénios ativos.
+
+        Ordem de tentativa:
+          1) BD (tabela alergenios: id, nome, ativo)
+          2) Ficheiro allergens.json na raiz do projeto
+          3) Lista padrão (14 principais)
+
+        Returns:
+            list[tuple[int, str]]
+        """
+        for getter in (
+            self._allergens_from_db,
+            self._allergens_from_json,
+            self._default_allergens,
+        ):
+            items = getter()
+            if items:
+                return items
+        return []
