@@ -1,4 +1,6 @@
 import pytest
+from PyQt5.QtCore import QSize
+from PyQt5.QtGui import QResizeEvent
 from services.products import ProductService
 from ui.ui_editor_fonte import FTApp
 from utils.formatting import format_pt_number
@@ -104,4 +106,26 @@ def test_apply_ing_autofit_or_scroll(rows, qapp):
     expected_h = hh.height() + row_h * visible + frame * 2
     assert ft.tbIng.height() == expected_h
     assert ft.tbIng.verticalScrollBar().isVisible() == (rows >= 9)
+    ft.close()
+
+
+def test_apply_ingredient_widths_after_resize(qapp):
+    ds = StubDataStore()
+    service = ProductService(ds)
+    ft = FTApp(service)
+    ft._load_record(0)
+
+    new_width = 1600
+    old_size = ft.size()
+    ev = QResizeEvent(QSize(new_width, old_size.height()), old_size)
+    ft.resize(new_width, old_size.height())
+    ft.resizeEvent(ev)
+    ft._apply_ingredient_widths()
+
+    ratios = [0.50, 0.10, 0.10, 0.14, 0.16]
+    width = ft.width()
+    for col, ratio in enumerate(ratios):
+        expected = width * ratio
+        actual = ft.tbIng.columnWidth(col)
+        assert actual == pytest.approx(expected, abs=2)
     ft.close()
