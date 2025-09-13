@@ -58,6 +58,7 @@ from PyQt5.QtWidgets import (
 from data.datastore import DataStore
 from services.products import ProductService
 from utils.paths import get_project_root
+from utils.formatting import format_pt_number
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
 DEV_OVERLAYS = True  # Ctrl+D alterna
@@ -630,17 +631,8 @@ class FTApp(QWidget):
             pvps.get("pvp5"),
         ]
         for i, val in enumerate(values):
-            txt = (
-                "—"
-                if val
-                in (
-                    None,
-                    "",
-                )
-                else f"{float(val):.2f}"
-            )
             if i < len(self.lbPVP):
-                self.lbPVP[i].setText(txt)
+                self.lbPVP[i].setText(format_pt_number(val))
 
         self.cbTipos.clear()
         self.cbValidade.clear()
@@ -681,7 +673,9 @@ class FTApp(QWidget):
                 self.tbIng.setItem(r, c, it)
 
         self._apply_ingredient_widths()
-        self.edCustoTotal.setText(f"{self.service.calculate_cost(product):.2f}")
+        self.edCustoTotal.setText(
+            format_pt_number(self.service.calculate_cost(product))
+        )
         self.lbPos.setText(f"{self.cur_index+1} / {max(1,self.service.total())}")
 
         # --- Auxiliares: fetch/populate/load (canon) ---
@@ -697,7 +691,7 @@ class FTApp(QWidget):
     def _update_costs_from_table(self):
         """Recalculate total cost using the service layer."""
         try:
-            self.edCustoTotal.setText(f"{total:.2f}")
+            self.edCustoTotal.setText(format_pt_number(total))
         except Exception:
             pass
 
