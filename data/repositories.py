@@ -407,6 +407,24 @@ class AuxiliaresRepo:
             "TiposArtigos", "set_tipo_artigo_ativo", cod, ativo
         )
 
+    def delete_tipo_artigo(self, cod) -> bool:
+        cur = self.conn.cursor()
+        try:
+            cur.execute("SELECT COUNT(*) FROM Produtos WHERE TipoArtigo = ?", (cod,))
+            if cur.fetchone()[0]:
+                return False
+            cur.execute("DELETE FROM TiposArtigos WHERE cod = ?", (cod,))
+            self.conn.commit()
+            return cur.rowcount > 0
+        except sqlite3.Error as exc:
+            logger.error(
+                "[AuxiliaresRepo] delete_tipo_artigo(%s) falhou: %s",
+                cod,
+                exc,
+                exc_info=True,
+            )
+            return False
+
     def list_validade_admin(self):
         return self._admin_list("Validade", "list_validade_admin")
 
@@ -433,6 +451,24 @@ class AuxiliaresRepo:
 
     def set_validade_ativo(self, cod, ativo: int) -> bool:
         return self._admin_set_active("Validade", "set_validade_ativo", cod, ativo)
+
+    def delete_validade(self, cod) -> bool:
+        cur = self.conn.cursor()
+        try:
+            cur.execute("SELECT COUNT(*) FROM Produtos WHERE Validade = ?", (cod,))
+            if cur.fetchone()[0]:
+                return False
+            cur.execute("DELETE FROM Validade WHERE cod = ?", (cod,))
+            self.conn.commit()
+            return cur.rowcount > 0
+        except sqlite3.Error as exc:
+            logger.error(
+                "[AuxiliaresRepo] delete_validade(%s) falhou: %s",
+                cod,
+                exc,
+                exc_info=True,
+            )
+            return False
 
     def list_temperaturas_admin(self):
         return self._admin_list("Temperaturas", "list_temperaturas_admin")
@@ -462,6 +498,24 @@ class AuxiliaresRepo:
         return self._admin_set_active(
             "Temperaturas", "set_temperatura_ativo", cod, ativo
         )
+
+    def delete_temperatura(self, cod) -> bool:
+        cur = self.conn.cursor()
+        try:
+            cur.execute("SELECT COUNT(*) FROM Produtos WHERE Temperatura = ?", (cod,))
+            if cur.fetchone()[0]:
+                return False
+            cur.execute("DELETE FROM Temperaturas WHERE cod = ?", (cod,))
+            self.conn.commit()
+            return cur.rowcount > 0
+        except sqlite3.Error as exc:
+            logger.error(
+                "[AuxiliaresRepo] delete_temperatura(%s) falhou: %s",
+                cod,
+                exc,
+                exc_info=True,
+            )
+            return False
 
 
 class PreparacaoRepo:

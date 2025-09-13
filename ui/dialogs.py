@@ -98,6 +98,10 @@ def manage_aux_table(
     vbox.addLayout(hbox)
     bt_add = QPushButton("Adicionar")
     hbox.addWidget(bt_add)
+    bt_toggle = QPushButton("Inativar/Ativar")
+    hbox.addWidget(bt_toggle)
+    bt_remove = QPushButton("Remover")
+    hbox.addWidget(bt_remove)
     bt_close = QPushButton("Fechar")
     hbox.addWidget(bt_close)
 
@@ -132,7 +136,34 @@ def manage_aux_table(
                 "Falha ao atualizar o registo.",
             )
 
+    def toggle_selected():
+        item = lst.currentItem()
+        if item:
+            toggle(item)
+
+    def remove_item():
+        item = lst.currentItem()
+        if not item:
+            return
+        cod, _ = item.data(Qt.UserRole)
+        try:
+            ok = repo_methods["delete"](cod)
+        except Exception:  # pragma: no cover - UI feedback only
+            ok = False
+        if ok:
+            refresh()
+            if callable(on_change):
+                on_change()
+        else:  # pragma: no cover - UI feedback only
+            QMessageBox.warning(
+                dlg,
+                title,
+                "Falha ao remover o registo.",
+            )
+
     bt_add.clicked.connect(add_item)
+    bt_toggle.clicked.connect(toggle_selected)
+    bt_remove.clicked.connect(remove_item)
     bt_close.clicked.connect(dlg.accept)
     lst.itemDoubleClicked.connect(toggle)
 
