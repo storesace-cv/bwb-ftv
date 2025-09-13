@@ -222,7 +222,12 @@ def test_datastore_missing_columns(tmp_path, caplog):
     db_file = tmp_path / "ftv.db"
     conn = sqlite3.connect(str(db_file))
     conn.execute("CREATE TABLE Produtos (Codigo TEXT)")
-    conn.execute("CREATE TABLE FichasTecnicas (ProdutoCodigo TEXT)")
+    conn.execute(
+        "CREATE TABLE FichasTecnicas ("
+        "FamiliaSubfamilia TEXT, ProdutoCodigo TEXT, ProdutoNome TEXT, "
+        "ComponenteCodigo TEXT, ComponenteNome TEXT, Qtd REAL, Unidade TEXT, "
+        "Ppu REAL, Preco REAL, Peso REAL)"
+    )
     conn.execute("CREATE TABLE TiposArtigos (Cod INTEGER)")
     conn.execute("CREATE TABLE Validade (Cod INTEGER)")
     conn.execute("CREATE TABLE Temperaturas (Cod INTEGER)")

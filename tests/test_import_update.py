@@ -19,9 +19,10 @@ def ds():
     )
     conn.execute("DROP TABLE FichasTecnicas")
     conn.execute(
-        "CREATE TABLE FichasTecnicas (ProdutoCodigo TEXT, "
-        "ComponenteNome TEXT, Qtd REAL, Unidade TEXT, "
-        "Ppu REAL, Total REAL)"
+        "CREATE TABLE FichasTecnicas ("
+        "FamiliaSubfamilia TEXT, ProdutoCodigo TEXT, ProdutoNome TEXT, "
+        "ComponenteCodigo TEXT, ComponenteNome TEXT, Qtd REAL, Unidade TEXT, "
+        "Ppu REAL, Preco REAL, Peso REAL)"
     )
     return ds
 
@@ -51,7 +52,20 @@ def _write_base_files(
 
     ft_wb = Workbook()
     ws = ft_wb.active
-    ws.append(["produto_codigo"])
+    ws.append(
+        [
+            "familia_subfamilia",
+            "produto_codigo",
+            "produto_nome",
+            "componente_codigo",
+            "componente_nome",
+            "qtd",
+            "unidade",
+            "ppu",
+            "preco",
+            "peso",
+        ]
+    )
     ft_wb.save(base_dir / "FichasTecnicas_base.xlsx")
 
     prec_wb = Workbook()
@@ -220,8 +234,21 @@ def test_import_maps_custo_to_total(ds, imports_dir):
 
     ft = Workbook()
     ws = ft.active
-    ws.append(["produto_codigo", "componente_nome", "qtd", "unidade", "ppu", "custo"])
-    ws.append(["P1", "Ing", 2, "Kg", 3, 6])
+    ws.append(
+        [
+            "familia_subfamilia",
+            "produto_codigo",
+            "produto_nome",
+            "componente_codigo",
+            "componente_nome",
+            "qtd",
+            "unidade",
+            "ppu",
+            "custo",
+            "peso",
+        ]
+    )
+    ws.append([None, "P1", None, None, "Ing", 2, "Kg", 3, 6, None])
     ft.save(imports_dir / "FichasTecnicas_base.xlsx")
 
     prec = Workbook()
@@ -240,7 +267,7 @@ def test_update_maps_custo_to_total(ds, imports_dir):
     ds.conn.execute("INSERT INTO Produtos (Codigo, Produto) VALUES ('P1', 'Prod')")
     ds.conn.execute(
         "INSERT INTO FichasTecnicas "
-        "(ProdutoCodigo, ComponenteNome, Qtd, Unidade, Ppu, Total) "
+        "(ProdutoCodigo, ComponenteNome, Qtd, Unidade, Ppu, Preco) "
         "VALUES ('P1', 'Ing', 1, 'Kg', 2, 5)"
     )
     ds.reload_ids()
@@ -253,8 +280,21 @@ def test_update_maps_custo_to_total(ds, imports_dir):
 
     ft = Workbook()
     ws = ft.active
-    ws.append(["produto_codigo", "componente_nome", "qtd", "unidade", "ppu", "custo"])
-    ws.append(["P1", "Ing", 3, "Kg", 2, 7])
+    ws.append(
+        [
+            "familia_subfamilia",
+            "produto_codigo",
+            "produto_nome",
+            "componente_codigo",
+            "componente_nome",
+            "qtd",
+            "unidade",
+            "ppu",
+            "custo",
+            "peso",
+        ]
+    )
+    ws.append([None, "P1", None, None, "Ing", 3, "Kg", 2, 7, None])
     ft.save(imports_dir / "FichasTecnicas_base.xlsx")
 
     prec = Workbook()

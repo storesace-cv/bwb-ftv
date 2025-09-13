@@ -9,6 +9,13 @@ def test_apply_pending_migrations(tmp_path, monkeypatch):
     db = tmp_path / "db.sqlite"
     conn = sqlite3.connect(str(db))
 
+    conn.execute(
+        "CREATE TABLE FichasTecnicas ("
+        "FamiliaSubfamilia TEXT, ProdutoCodigo TEXT, ProdutoNome TEXT, "
+        "ComponenteCodigo TEXT, ComponenteNome TEXT, Qtd REAL, Unidade TEXT, "
+        "Ppu REAL, Preco REAL, Peso REAL)"
+    )
+
     mig_dir = tmp_path / "data" / "migrations"
     mig_dir.mkdir(parents=True)
     (mig_dir / "001.sql").write_text("CREATE TABLE T1(Id INTEGER);", encoding="utf-8")
