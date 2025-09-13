@@ -178,18 +178,18 @@ class DataStore:
         """Verifica se tabelas e colunas essenciais existem na base de dados."""
 
         required = {
-            "produtos": {"codigo"},
-            "fichas_tecnicas": {"produto_codigo"},
-            "precos_taxas": {"codigo"},
-            "alergenios": {"id", "nome", "ativo"},
-            "tipos_artigos": {"cod", "descricao", "ativo"},
-            "validade": {"cod", "descricao", "ativo"},
-            "temperaturas": {"cod", "descricao", "ativo"},
-            "produto_auxiliar": {
-                "produto_codigo",
-                "tipo_artigo_id",
-                "validade_id",
-                "temperatura_id",
+            "Produtos": {"Codigo"},
+            "FichasTecnicas": {"ProdutoCodigo"},
+            "PrecosTaxas": {"Codigo"},
+            "Alergenios": {"Id", "Nome", "Ativo"},
+            "TiposArtigos": {"Cod", "Descricao", "Ativo"},
+            "Validade": {"Cod", "Descricao", "Ativo"},
+            "Temperaturas": {"Cod", "Descricao", "Ativo"},
+            "ProdutoAuxiliar": {
+                "ProdutoCodigo",
+                "TipoArtigoId",
+                "ValidadeId",
+                "TemperaturaId",
             },
         }
 
@@ -234,7 +234,7 @@ class DataStore:
     def reload_ids(self):
         """
         Recarrega a lista de códigos (_ids). Tenta repos 'produtos'; senão usa
-        fichas_tecnicas.
+        FichasTecnicas.
         """
         ids = []
         # 1) tentar via repositório
@@ -254,17 +254,17 @@ class DataStore:
             try:
                 cur = self.conn.cursor()
                 try:
-                    cur.execute("SELECT DISTINCT codigo FROM produtos ORDER BY codigo")
+                    cur.execute("SELECT DISTINCT Codigo FROM Produtos ORDER BY Codigo")
                     ids = [r[0] for r in cur.fetchall()]
-                    source = "produtos"
+                    source = "Produtos"
                 except sqlite3.Error as exc:
-                    logger.warning("[DataStore] fallback para fichas_tecnicas: %s", exc)
+                    logger.warning("[DataStore] fallback para FichasTecnicas: %s", exc)
                     cur.execute(
-                        "SELECT DISTINCT produto_codigo FROM fichas_tecnicas "
-                        "ORDER BY produto_codigo"
+                        "SELECT DISTINCT ProdutoCodigo FROM FichasTecnicas "
+                        "ORDER BY ProdutoCodigo"
                     )
                     ids = [r[0] for r in cur.fetchall()]
-                    source = "fichas_tecnicas"
+                    source = "FichasTecnicas"
             except sqlite3.Error as exc:
                 logger.error(
                     "[DataStore] reload_ids falhou na BD: %s", exc, exc_info=True

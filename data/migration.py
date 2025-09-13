@@ -12,22 +12,42 @@ BASE_DIR = get_project_root()
 MIGRATIONS_DIR = BASE_DIR / "data" / "migrations"
 
 
-def _schema_table_name(conn: sqlite3.Connection) -> str:
+def _ensure_schema_table(conn: sqlite3.Connection) -> str:
+    """Ensure the migration tracking table ``SchemaVersion`` exists.
+
+    If an old ``schema_version`` table is present it is automatically
+    renamed to the new CamelCase variant along with its ``Filename``
+    column.  The function always returns the name of the table used for
+    tracking migrations.
+    """
+
     cur = conn.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='SchemaVersion'"
     )
-    return "SchemaVersion" if cur.fetchone() else "schema_version"
+    if cur.fetchone():
+        cols = [r[1] for r in conn.execute("PRAGMA table_info('SchemaVersion')")]
+        if "filename" in [c.lower() for c in cols] and "Filename" not in cols:
+            conn.execute("ALTER TABLE SchemaVersion RENAME COLUMN filename TO Filename")
+        return "SchemaVersion"
 
+    cur = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='schema_version'"
+    )
+    if cur.fetchone():
+        conn.execute("ALTER TABLE schema_version RENAME TO SchemaVersion")
+        try:
+            conn.execute("ALTER TABLE SchemaVersion RENAME COLUMN filename TO Filename")
+        except sqlite3.OperationalError:
+            pass
+        return "SchemaVersion"
 
-def _ensure_schema_table(conn: sqlite3.Connection) -> str:
-    name = _schema_table_name(conn)
-    conn.execute(f"CREATE TABLE IF NOT EXISTS {name} (filename TEXT PRIMARY KEY)")
-    return name
+    conn.execute("CREATE TABLE IF NOT EXISTS SchemaVersion (Filename TEXT PRIMARY KEY)")
+    return "SchemaVersion"
 
 
 def _applied_migrations(conn: sqlite3.Connection) -> set[str]:
     table = _ensure_schema_table(conn)
-    cur = conn.execute(f"SELECT filename FROM {table}")
+    cur = conn.execute(f"SELECT Filename FROM {table}")
     return {row[0] for row in cur.fetchall()}
 
 
@@ -56,9 +76,9 @@ def apply_pending_migrations(conn: sqlite3.Connection) -> List[str]:
                 exc
             ):
                 raise
-        table = _schema_table_name(conn)
+        table = _ensure_schema_table(conn)
         with conn:
-            conn.execute(f"INSERT INTO {table}(filename) VALUES (?)", (path.name,))
+            conn.execute(f"INSERT INTO {table}(Filename) VALUES (?)", (path.name,))
     return [p.name for p in pending]
 
 
@@ -68,81 +88,81 @@ def ensure_core_tables(conn: sqlite3.Connection) -> None:
     statements = [
         (
             """
-            CREATE TABLE IF NOT EXISTS produtos (
-                codigo TEXT PRIMARY KEY
+            CREATE TABLE IF NOT EXISTS Produtos (
+                Codigo TEXT PRIMARY KEY
             )
             """
         ),
         (
             """
-            CREATE TABLE IF NOT EXISTS fichas_tecnicas (
-                produto_codigo TEXT
+            CREATE TABLE IF NOT EXISTS FichasTecnicas (
+                ProdutoCodigo TEXT
             )
             """
         ),
         (
             """
-            CREATE TABLE IF NOT EXISTS precos_taxas (
-                codigo TEXT PRIMARY KEY,
-                loja TEXT,
-                ativo TEXT,
-                preco_1 TEXT,
-                preco_2 TEXT,
-                preco_3 TEXT,
-                preco_4 TEXT,
-                preco_5 TEXT,
-                iva_1 TEXT,
-                iva_2 TEXT,
-                isencao_iva TEXT,
-                nome_prod_venda_nao_necessario_p__importar TEXT,
-                familia_nao_necessario_p__importar TEXT,
-                sub_familia_nao_necessario_p__importar TEXT
+            CREATE TABLE IF NOT EXISTS PrecosTaxas (
+                Codigo TEXT PRIMARY KEY,
+                Loja TEXT,
+                Ativo TEXT,
+                Preco1 TEXT,
+                Preco2 TEXT,
+                Preco3 TEXT,
+                Preco4 TEXT,
+                Preco5 TEXT,
+                Iva1 TEXT,
+                Iva2 TEXT,
+                IsencaoIva TEXT,
+                NomeProdVenda TEXT,
+                Familia TEXT,
+                SubFamilia TEXT
             )
             """
         ),
         (
             """
-            CREATE TABLE IF NOT EXISTS alergenios (
-                id    INTEGER PRIMARY KEY,
-                nome  TEXT NOT NULL,
-                ativo INTEGER NOT NULL DEFAULT 1
+            CREATE TABLE IF NOT EXISTS Alergenios (
+                Id    INTEGER PRIMARY KEY,
+                Nome  TEXT NOT NULL,
+                Ativo INTEGER NOT NULL DEFAULT 1
             )
             """
         ),
         (
             """
-            CREATE TABLE IF NOT EXISTS tipos_artigos (
-                cod       INTEGER PRIMARY KEY,
-                descricao TEXT NOT NULL,
-                ativo     INTEGER NOT NULL DEFAULT 1
+            CREATE TABLE IF NOT EXISTS TiposArtigos (
+                Cod       INTEGER PRIMARY KEY,
+                Descricao TEXT NOT NULL,
+                Ativo     INTEGER NOT NULL DEFAULT 1
             )
             """
         ),
         (
             """
-            CREATE TABLE IF NOT EXISTS validade (
-                cod       INTEGER PRIMARY KEY,
-                descricao TEXT NOT NULL,
-                ativo     INTEGER NOT NULL DEFAULT 1
+            CREATE TABLE IF NOT EXISTS Validade (
+                Cod       INTEGER PRIMARY KEY,
+                Descricao TEXT NOT NULL,
+                Ativo     INTEGER NOT NULL DEFAULT 1
             )
             """
         ),
         (
             """
-            CREATE TABLE IF NOT EXISTS temperaturas (
-                cod       INTEGER PRIMARY KEY,
-                descricao TEXT NOT NULL,
-                ativo     INTEGER NOT NULL DEFAULT 1
+            CREATE TABLE IF NOT EXISTS Temperaturas (
+                Cod       INTEGER PRIMARY KEY,
+                Descricao TEXT NOT NULL,
+                Ativo     INTEGER NOT NULL DEFAULT 1
             )
             """
         ),
         (
             """
-            CREATE TABLE IF NOT EXISTS produto_auxiliar (
-                produto_codigo TEXT PRIMARY KEY,
-                tipo_artigo_id INTEGER,
-                validade_id    INTEGER,
-                temperatura_id INTEGER
+            CREATE TABLE IF NOT EXISTS ProdutoAuxiliar (
+                ProdutoCodigo TEXT PRIMARY KEY,
+                TipoArtigoId INTEGER,
+                ValidadeId    INTEGER,
+                TemperaturaId INTEGER
             )
             """
         ),

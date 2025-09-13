@@ -24,7 +24,7 @@ def test_apply_pending_migrations(tmp_path, monkeypatch):
         "SELECT name FROM sqlite_master WHERE type='table' AND name='t1'"
     )
     assert cur.fetchone() is not None
-    cur = conn.execute("SELECT filename FROM schema_version")
+    cur = conn.execute("SELECT Filename FROM SchemaVersion")
     assert cur.fetchone()[0] == "001.sql"
 
 
@@ -35,8 +35,8 @@ def test_datastore_migration_accept(monkeypatch, tmp_path):
     db_dir.mkdir()
     db_path = db_dir / "ftv.db"
     conn = sqlite3.connect(str(db_path))
-    conn.execute("CREATE TABLE produtos (codigo TEXT)")
-    conn.execute("CREATE TABLE fichas_tecnicas (produto_codigo TEXT)")
+    conn.execute("CREATE TABLE Produtos (Codigo TEXT)")
+    conn.execute("CREATE TABLE FichasTecnicas (ProdutoCodigo TEXT)")
     conn.commit()
     conn.close()
 
@@ -89,8 +89,8 @@ def test_datastore_migration_decline(monkeypatch, tmp_path):
     db_dir.mkdir()
     db_path = db_dir / "ftv.db"
     conn = sqlite3.connect(str(db_path))
-    conn.execute("CREATE TABLE produtos (codigo TEXT)")
-    conn.execute("CREATE TABLE fichas_tecnicas (produto_codigo TEXT)")
+    conn.execute("CREATE TABLE Produtos (Codigo TEXT)")
+    conn.execute("CREATE TABLE FichasTecnicas (ProdutoCodigo TEXT)")
     conn.commit()
     conn.close()
 
