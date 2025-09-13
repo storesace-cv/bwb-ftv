@@ -86,6 +86,7 @@ def manage_aux_table(
         QTableWidget,
         QTableWidgetItem,
         QPushButton,
+        QStyle,
         QVBoxLayout,
     )
 
@@ -101,10 +102,10 @@ def manage_aux_table(
     vbox.addLayout(hbox)
     bt_add = QPushButton("Adicionar")
     hbox.addWidget(bt_add)
-    bt_toggle = QPushButton("Inativar/Ativar")
+    bt_toggle = QPushButton("Inactivar/Activar")
+    bt_toggle.setToolTip("Inactivar ou activar o registo selecionado")
+    bt_toggle.setIcon(dlg.style().standardIcon(QStyle.SP_BrowserReload))
     hbox.addWidget(bt_toggle)
-    bt_remove = QPushButton("Remover")
-    hbox.addWidget(bt_remove)
     bt_close = QPushButton("Fechar")
     hbox.addWidget(bt_close)
 
@@ -151,27 +152,6 @@ def manage_aux_table(
                 "Falha ao atualizar o registo.",
             )
 
-    def remove_item():
-        row = tbl.currentRow()
-        if row < 0:
-            return
-        cod_item = tbl.item(row, 0)
-        cod, _ = cod_item.data(Qt.UserRole)
-        try:
-            ok = repo_methods["delete"](cod)
-        except Exception:  # pragma: no cover - UI feedback only
-            ok = False
-        if ok:
-            refresh()
-            if callable(on_change):
-                on_change()
-        else:  # pragma: no cover - UI feedback only
-            QMessageBox.warning(
-                dlg,
-                title,
-                "Falha ao remover o registo.",
-            )
-
     def rename_item(item: QTableWidgetItem):
         if item.column() != 1:
             return
@@ -196,7 +176,6 @@ def manage_aux_table(
 
     bt_add.clicked.connect(add_item)
     bt_toggle.clicked.connect(toggle_selected)
-    bt_remove.clicked.connect(remove_item)
     bt_close.clicked.connect(dlg.accept)
     tbl.itemDoubleClicked.connect(rename_item)
 
