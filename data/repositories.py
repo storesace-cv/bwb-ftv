@@ -507,64 +507,6 @@ class AuxiliaresRepo:
             )
             return False
 
-    # --- Produto Auxiliar (tabela canónica de FK de auxiliares) ---
-    def get_produto_auxiliares(self, codigo: str):
-        """Devolve (tipo_artigo_id, validade_id, temperatura_id) ou (None,None,None)."""
-        try:
-            cur = self.conn.cursor()
-            cur.execute(
-                "SELECT TipoArtigoId, ValidadeId, TemperaturaId "
-                "FROM ProdutoAuxiliar WHERE ProdutoCodigo = ?",
-                (codigo,),
-            )
-            row = cur.fetchone()
-            if not row:
-                return (None, None, None)
-            try:
-                return (
-                    row["TipoArtigoId"],
-                    row["ValidadeId"],
-                    row["TemperaturaId"],
-                )
-            except (KeyError, IndexError, TypeError):
-                return (
-                    row[0] if len(row) > 0 else None,
-                    row[1] if len(row) > 1 else None,
-                    row[2] if len(row) > 2 else None,
-                )
-        except sqlite3.Error as exc:
-            logger.error(
-                "[AuxiliaresRepo] get_produto_auxiliares(%s) falhou: %s",
-                codigo,
-                exc,
-                exc_info=True,
-            )
-            return (None, None, None)
-
-    def set_produto_auxiliares(
-        self, codigo: str, tipo_artigo_id, validade_id, temperatura_id
-    ) -> None:
-        """Upsert para a tabela ProdutoAuxiliar."""
-        try:
-            cur = self.conn.cursor()
-            cur.execute(
-                "INSERT INTO ProdutoAuxiliar (ProdutoCodigo, TipoArtigoId, "
-                "ValidadeId, TemperaturaId) VALUES (?, ?, ?, ?) ON "
-                "CONFLICT(ProdutoCodigo) DO UPDATE SET "
-                "TipoArtigoId=excluded.TipoArtigoId, "
-                "ValidadeId=excluded.ValidadeId, "
-                "TemperaturaId=excluded.TemperaturaId",
-                (codigo, tipo_artigo_id, validade_id, temperatura_id),
-            )
-            self.conn.commit()
-        except sqlite3.Error as exc:
-            logger.error(
-                "[AuxiliaresRepo] set_produto_auxiliares(%s) falhou: %s",
-                codigo,
-                exc,
-                exc_info=True,
-            )
-
 
 class PreparacaoRepo:
     def __init__(self, conn: sqlite3.Connection):

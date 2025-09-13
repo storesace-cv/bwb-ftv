@@ -17,17 +17,13 @@ def _make_datastore():
         "INSERT INTO Validade (Cod, Descricao, Ativo) VALUES (?, ?, 1)",
         [(1, "24h"), (2, "48h")],
     )
-    cur.execute("DELETE FROM ProdutoAuxiliar")
     conn.commit()
     return ds
 
 
-def test_list_validades_and_auxiliares_rw():
+def test_list_validades_rw():
     ds = _make_datastore()
     assert ds.list_validades()[1:] == [(1, "24h"), (2, "48h")]
-    assert ds.get_auxiliares_for("P1") == (None, None, None)
-    assert ds.save_auxiliares_for("P1", 10, 1, 20)
-    assert ds.get_auxiliares_for("P1") == (10, 1, 20)
 
 
 def test_reload_ids_repo_success(caplog):
@@ -99,7 +95,7 @@ def test_list_active_allergens_default(tmp_path, monkeypatch):
 def test_context_manager_closes_connection():
     with DataStore(db_path=":memory:") as ds:
         conn = ds.conn
-        conn.execute("CREATE TABLE x (id INTEGER)")
+        conn.execute("CREATE TABLE X (Id INTEGER)")
     # connection is closed after context
     with pytest.raises(sqlite3.ProgrammingError):
         conn.execute("SELECT 1")
@@ -168,7 +164,7 @@ def test_datastore_creates_empty_db(tmp_path, monkeypatch):
 def test_datastore_missing_tables(tmp_path):
     db_file = tmp_path / "ftv.db"
     conn = sqlite3.connect(str(db_file))
-    conn.execute("CREATE TABLE x (id INTEGER)")
+    conn.execute("CREATE TABLE X (Id INTEGER)")
     conn.commit()
     conn.close()
     ds = DataStore(db_path=str(db_file))
@@ -182,7 +178,6 @@ def test_datastore_missing_tables(tmp_path):
         "TiposArtigos",
         "Validade",
         "Temperaturas",
-        "ProdutoAuxiliar",
     }
     assert required <= names
 
@@ -196,7 +191,6 @@ def test_datastore_missing_columns(tmp_path, caplog):
     conn.execute("CREATE TABLE Validade (Cod INTEGER)")
     conn.execute("CREATE TABLE Temperaturas (Cod INTEGER)")
     conn.execute("CREATE TABLE Alergenios (Id INTEGER, Nome TEXT)")
-    conn.execute("CREATE TABLE ProdutoAuxiliar (ProdutoCodigo TEXT)")
     conn.commit()
     conn.close()
     with caplog.at_level(logging.ERROR), pytest.raises(RuntimeError):
