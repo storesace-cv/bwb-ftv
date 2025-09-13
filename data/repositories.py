@@ -448,14 +448,14 @@ class AuxiliaresRepo:
     def list_validade(self):
         cur = self.conn.cursor()
         try:
-            cur.execute("SELECT Cod, Descricao FROM Validade")
+            cur.execute("SELECT Cod, Descricao FROM Validade ORDER BY Cod")
             rows = cur.fetchall()
-            return [(r[0], r[1]) for r in rows]
+            return [(None, "—")] + [(r[0], r[1]) for r in rows]
         except sqlite3.Error as exc:
             logger.error(
                 "[AuxiliaresRepo] list_validade falhou: %s", exc, exc_info=True
             )
-            return []
+            return [(None, "—")]
 
     def list_temperaturas(self):
         cur = self.conn.cursor()
