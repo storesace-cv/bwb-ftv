@@ -50,6 +50,7 @@
 #    • Overlays/cores preservados; navegação centrada no rodapé; scroll
 #      vertical; cabeçalho em comentários.
 # 2025-09-13 17:16 — v3.89 — Raiz dos blocos B2–B5 renomeada para ".C1".
+# 2025-09-13 23:08 — v3.90 — Menu Segurança com ações de cópia e reposição.
 
 import sys
 import logging
@@ -85,7 +86,13 @@ from utils.formatting import format_pt_number
 from . import layout
 from .layout import Zone
 from .utilities import make_readonly_lineedit, match_font, stack_combo
-from .dialogs import import_data, manage_aux_table, update_data
+from .dialogs import (
+    import_data,
+    manage_aux_table,
+    update_data,
+    backup_db,
+    restore_db,
+)
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
 
@@ -213,6 +220,12 @@ class FTApp(QWidget):
         actReload = QAction("Importar Dados", self)
         mBD.addAction(actUpdate)
         mBD.addAction(actReload)
+        mSeg = QMenu("Segurança", mBD)
+        actBackup = QAction("Segurança", self)
+        actRestore = QAction("Reposição", self)
+        mSeg.addAction(actBackup)
+        mSeg.addAction(actRestore)
+        mBD.addMenu(mSeg)
         self.mnuRoot.addMenu(mBD)
         mTab = QMenu("Tabelas", self.mnuRoot)
         actTipos = QAction("Tipos Artigos", self)
@@ -234,6 +247,8 @@ class FTApp(QWidget):
         actUpdate.triggered.connect(
             lambda: update_data(self, self.service, self._load_record, self.cur_index)
         )
+        actBackup.triggered.connect(lambda: backup_db(self, self.ds))
+        actRestore.triggered.connect(lambda: restore_db(self, self.ds))
         actTipos.triggered.connect(
             lambda: manage_aux_table(
                 self,
