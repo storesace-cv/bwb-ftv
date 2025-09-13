@@ -96,7 +96,7 @@ logger = logging.getLogger(__name__)
 class FichasTecnicasModel(QAbstractTableModel):
     """Table model for displaying ``FichasTecnicas`` records."""
 
-    headers = ["Ingrediente", "QTD", "U.M.", "PPU", "Total", "Código"]
+    headers = ["ComponenteNome", "QTD", "U.M.", "PPU", "Total"]
 
     def __init__(self, rows: list[FichaTecnica] | None = None):
         super().__init__()
@@ -119,7 +119,6 @@ class FichasTecnicasModel(QAbstractTableModel):
                 ficha.unit,
                 format_pt_number(ficha.ppu),
                 format_pt_number(ficha.total),
-                ficha.code,
             ]
             val = mapping[index.column()]
             return val if val is not None else ""
@@ -516,12 +515,11 @@ class FTApp(QWidget):
         model = self.tbIng.model()
         if not model:
             return
-        self.tbIng.setColumnHidden(0, True)
+        self.tbIng.setColumnWidth(0, int(w * 0.50))
         self.tbIng.setColumnWidth(1, int(w * 0.10))
         self.tbIng.setColumnWidth(2, int(w * 0.10))
         self.tbIng.setColumnWidth(3, int(w * 0.14))
         self.tbIng.setColumnWidth(4, int(w * 0.16))
-        self.tbIng.setColumnWidth(5, int(w * 0.50))
 
     def _apply_ingredient_widths(self):
         self._setup_ing_columns()
