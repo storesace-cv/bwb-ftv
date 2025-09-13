@@ -27,3 +27,12 @@ def test_list_canonicalization_handles_suffix_and_duplicates():
     ]
     cleaned = [canonicalize_header(h) for h in headers]
     assert cleaned == ["Produto", "Produto", "Codigo", "Codigo", "NomeProdVenda"]
+
+
+def test_price_and_iva_aliases():
+    assert canonicalize_header("preco1") == "Preco1"
+    assert canonicalize_header("preco1g", table="Produtos") == "Preco1G"
+    assert canonicalize_header("preco1g", table="Outros") == "Preco1"
+    assert canonicalize_header("iva1") == "Iva1"
+    assert canonicalize_header("iva2") == "Iva2"
+    assert canonicalize_header("isencaoiva") == "IsencaoIva"

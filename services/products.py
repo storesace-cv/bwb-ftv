@@ -16,6 +16,34 @@ from utils.paths import get_project_root
 from utils.formatting import parse_decimal
 
 
+HEADER_ALIASES = {
+    "codigodoproduto": "Codigo",
+    "codproduto": "Codigo",
+    "prodvenda": "Codigo",
+    "preco1": "Preco1",
+    "preco2": "Preco2",
+    "preco3": "Preco3",
+    "preco4": "Preco4",
+    "preco5": "Preco5",
+    "iva1": "Iva1",
+    "iva2": "Iva2",
+    "isencaoiva": "IsencaoIva",
+    "custo": "Total",
+    "preco": "Total",
+    "componentenome": "ComponenteNome",
+    # Map common spreadsheet headers to their canonical database columns.
+    "nome": "Produto",
+}
+
+PRECO_GRAM_LOOKUP = {
+    "preco1g": ("Preco1G", "Preco1"),
+    "preco2g": ("Preco2G", "Preco2"),
+    "preco3g": ("Preco3G", "Preco3"),
+    "preco4g": ("Preco4G", "Preco4"),
+    "preco5g": ("Preco5G", "Preco5"),
+}
+
+
 def canonicalize_header(text: str, table: str | None = None) -> str:
     """Return a canonical CamelCase column name for a spreadsheet header."""
 
@@ -26,44 +54,18 @@ def canonicalize_header(text: str, table: str | None = None) -> str:
     txt_norm = re.sub(r"[^0-9A-Za-z]+", " ", txt_norm).strip()
     key = "".join(txt_norm.lower().split())
 
-    aliases = {
-        "codigodoproduto": "Codigo",
-        "codproduto": "Codigo",
-        "prodvenda": "Codigo",
-        "preco1": "Preco1",
-        "preco2": "Preco2",
-        "preco3": "Preco3",
-        "preco4": "Preco4",
-        "preco5": "Preco5",
-        "iva1": "Iva1",
-        "iva2": "Iva2",
-        "isencaoiva": "IsencaoIva",
-        "custo": "Total",
-        "preco": "Total",
-        "componentenome": "ComponenteNome",
-        # Map common spreadsheet headers to their canonical database columns.
-        "nome": "Produto",
-    }
-
     if key == "produtocodigo":
         return (
             "ProdutoCodigo"
             if table in {"FichasTecnicas", "ProdutoPreparacao"}
             else "Codigo"
         )
-    if key == "preco1g":
-        return "Preco1G" if table == "Produtos" else "Preco1"
-    if key == "preco2g":
-        return "Preco2G" if table == "Produtos" else "Preco2"
-    if key == "preco3g":
-        return "Preco3G" if table == "Produtos" else "Preco3"
-    if key == "preco4g":
-        return "Preco4G" if table == "Produtos" else "Preco4"
-    if key == "preco5g":
-        return "Preco5G" if table == "Produtos" else "Preco5"
+    if key in PRECO_GRAM_LOOKUP:
+        preco_g, preco = PRECO_GRAM_LOOKUP[key]
+        return preco_g if table == "Produtos" else preco
 
-    if key in aliases:
-        return aliases[key]
+    if key in HEADER_ALIASES:
+        return HEADER_ALIASES[key]
 
     return "".join(word.capitalize() for word in txt_norm.split())
 
