@@ -257,7 +257,7 @@ class DataStore:
             if missing_cols:
                 parts.append("colunas: " + "; ".join(sorted(missing_cols)))
             msg = "[DataStore] Tabelas essenciais em falta: " + ", ".join(parts)
-            logger.error(msg, exc_info=True)
+            logger.error(msg)
             raise RuntimeError(msg)
 
     # ----------------------------
