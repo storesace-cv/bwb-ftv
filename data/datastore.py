@@ -286,17 +286,44 @@ class DataStore:
             try:
                 cur = self.conn.cursor()
                 try:
-                    cur.execute("SELECT DISTINCT Codigo FROM Produtos ORDER BY Codigo")
+                    cur.execute(
+                        """
+                        SELECT DISTINCT p.Codigo
+                        FROM Produtos p
+                        JOIN FichasTecnicas ft ON ft.ProdutoCodigo = p.Codigo
+                        WHERE p.TipoVenda = 1
+                        ORDER BY p.Codigo
+                        """
+                    )
                     ids = [r[0] for r in cur.fetchall()]
                     source = "Produtos"
                 except sqlite3.Error as exc:
                     logger.warning("[DataStore] fallback para FichasTecnicas: %s", exc)
-                    cur.execute(
-                        "SELECT DISTINCT ProdutoCodigo FROM FichasTecnicas "
-                        "ORDER BY ProdutoCodigo"
-                    )
-                    ids = [r[0] for r in cur.fetchall()]
-                    source = "FichasTecnicas"
+                    if "no such table: Produtos" in str(exc):
+                        # ``Produtos`` não existe: usar códigos diretamente de
+                        # ``FichasTecnicas``.
+                        logger.info(
+                            "[DataStore] tabela 'Produtos' inexistente; "
+                            "a usar ProdutoCodigo de FichasTecnicas",
+                        )
+                        cur.execute(
+                            "SELECT DISTINCT ProdutoCodigo FROM FichasTecnicas "
+                            "ORDER BY ProdutoCodigo"
+                        )
+                        ids = [r[0] for r in cur.fetchall()]
+                        source = "FichasTecnicas"
+                    else:
+                        cur.execute(
+                            """
+                            SELECT DISTINCT p.Codigo
+                            FROM FichasTecnicas ft
+                            JOIN Produtos p ON ft.ProdutoCodigo = p.Codigo
+                            WHERE p.TipoVenda = 1
+                            ORDER BY p.Codigo
+                            """
+                        )
+                        ids = [r[0] for r in cur.fetchall()]
+                        source = "Produtos"
             except sqlite3.Error as exc:
                 logger.error(
                     "[DataStore] reload_ids falhou na BD: %s", exc, exc_info=True
