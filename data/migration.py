@@ -89,7 +89,27 @@ def ensure_core_tables(conn: sqlite3.Connection) -> None:
         (
             """
             CREATE TABLE IF NOT EXISTS Produtos (
-                Codigo TEXT PRIMARY KEY
+                Codigo TEXT PRIMARY KEY,
+                Produto TEXT,
+                Familia TEXT,
+                SubFamilia TEXT,
+                AfetaStk TEXT,
+                Menu TEXT,
+                CodBarras TEXT,
+                TipoMercad TEXT,
+                TipoVenda TEXT,
+                TipoProducao TEXT,
+                TipoGener TEXT,
+                UnStockVMPG TEXT,
+                UnVendaVMV TEXT,
+                UnInvVMMMPG TEXT,
+                UnProduFtPV TEXT,
+                CodAuxiliar TEXT,
+                CodAuxiliar2 TEXT,
+                PCU TEXT,
+                PCM TEXT,
+                Descontinuado TEXT,
+                DispLojas TEXT
             )
             """
         ),
