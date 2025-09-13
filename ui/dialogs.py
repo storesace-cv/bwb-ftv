@@ -4,8 +4,9 @@ from collections.abc import Callable
 from pathlib import Path
 from shutil import copy2
 
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QFileDialog, QMessageBox
 from utils.paths import get_project_root
+from data import restore_backup
 
 logger = logging.getLogger(__name__)
 
@@ -74,24 +75,29 @@ def backup_db(parent, ds):
 
 
 def restore_db(parent, ds):
-    """Restore the database from its ``.bak`` copy."""
+    """Restore the main database from a selected backup file."""
 
-    conn = getattr(ds, "conn", None)
-    if conn is None:
-        QMessageBox.warning(parent, "Reposição", "Base de dados indisponível.")
+    backups_dir = get_project_root() / "databases" / "backups"
+    if not backups_dir.exists() or not any(backups_dir.glob("*.db")):
+        QMessageBox.warning(parent, "Reposição", "Nenhum backup encontrado.")
         return
+
+    file_path, _ = QFileDialog.getOpenFileName(
+        parent,
+        "Selecionar backup",
+        str(backups_dir),
+        "Database Files (*.db)",
+    )
+    if not file_path:
+        return
+
+    db_path = get_project_root() / "databases" / "ftv.db"
     try:
-        db_file = Path(conn.execute("PRAGMA database_list").fetchone()[2])
-        backup = db_file.with_suffix(db_file.suffix + ".bak")
-        if not backup.exists():
-            QMessageBox.warning(
-                parent, "Reposição", f"Backup não encontrado: {backup.name}"
-            )
-            return
-        conn.close()
-        copy2(backup, db_file)
-        ds.conn = sqlite3.connect(str(db_file))
+        ds.close()
+        restore_backup(Path(file_path), db_path)
+        ds.conn = sqlite3.connect(str(db_path))
         ds.conn.row_factory = sqlite3.Row
+        ds.reload_ids()
         QMessageBox.information(parent, "Reposição", "Reposição concluída.")
     except Exception as exc:  # pragma: no cover - UI feedback only
         logger.exception("Restore failed", exc_info=exc)
