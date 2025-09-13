@@ -12,6 +12,7 @@ BASE_DIR = get_project_root()
 MIGRATIONS_DIR = BASE_DIR / "data" / "migrations"
 
 DEFAULT_VALIDADE = [(1, "24h"), (2, "48h")]
+DEFAULT_TEMPERATURAS = [(1, "Quente"), (2, "Frio")]
 
 PRODUTOS_SCHEMA = """
 CREATE TABLE IF NOT EXISTS Produtos (
@@ -296,8 +297,9 @@ def apply_pending_migrations(conn: sqlite3.Connection) -> List[str]:
 
 
 def ensure_core_tables(conn: sqlite3.Connection) -> None:
-    """Create essential tables if they do not already exist."""
+    """Run migrations and create essential tables if missing."""
 
+    apply_pending_migrations(conn)
     _upgrade_tables(conn)
 
     statements = [
@@ -346,6 +348,7 @@ def ensure_core_tables(conn: sqlite3.Connection) -> None:
         conn.execute(stmt)
     conn.commit()
     _seed_validade(conn)
+    _seed_temperaturas(conn)
 
 
 def _seed_validade(conn: sqlite3.Connection) -> None:
@@ -357,6 +360,23 @@ def _seed_validade(conn: sqlite3.Connection) -> None:
             conn.executemany(
                 "INSERT INTO Validade (Cod, Descricao, Ativo) VALUES (?, ?, 1)",
                 DEFAULT_VALIDADE,
+            )
+            conn.commit()
+    except sqlite3.Error:
+        # Table missing or other errors are ignored here; callers may handle
+        # them separately.
+        pass
+
+
+def _seed_temperaturas(conn: sqlite3.Connection) -> None:
+    """Populate ``Temperaturas`` with default records if empty."""
+
+    try:
+        cur = conn.execute("SELECT COUNT(*) FROM Temperaturas")
+        if cur.fetchone()[0] == 0:
+            conn.executemany(
+                "INSERT INTO Temperaturas (Cod, Descricao, Ativo) VALUES (?, ?, 1)",
+                DEFAULT_TEMPERATURAS,
             )
             conn.commit()
     except sqlite3.Error:
@@ -426,6 +446,5 @@ def ensure_preparacao_table(conn: sqlite3.Connection) -> None:
 def setup_database(conn: sqlite3.Connection) -> None:
     """Run pending migrations and ensure essential tables exist."""
 
-    apply_pending_migrations(conn)
     ensure_core_tables(conn)
     ensure_preparacao_table(conn)
