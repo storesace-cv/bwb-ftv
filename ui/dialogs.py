@@ -96,6 +96,7 @@ def manage_aux_table(
     tbl = QTableWidget(0, 2)
     tbl.setHorizontalHeaderLabels(["Código", "Descrição"])
     tbl.horizontalHeader().setStretchLastSection(True)
+    tbl.setStyleSheet("QTableWidget::item:hover { background: #00008b; color: #fff; }")
     vbox.addWidget(tbl)
 
     hbox = QHBoxLayout()
