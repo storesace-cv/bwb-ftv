@@ -171,6 +171,9 @@ class ProductService:
     def list_active_allergens(self):
         return self.ds.list_active_allergens()
 
+    def set_tipo_artigo(self, codigo: str, tipo_cod) -> bool:
+        return self.ds.set_tipo_artigo(codigo, tipo_cod)
+
     # -- product retrieval ------------------------------------------------
     def get_product_info(self, codigo: str) -> Product:
         return get_product_info(self.ds, codigo)

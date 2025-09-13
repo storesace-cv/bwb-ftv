@@ -433,6 +433,22 @@ class DataStore:
             logger.error("[DataStore] list_temperaturas falhou: %s", exc, exc_info=True)
             return [(None, "—")]
 
+    def set_tipo_artigo(self, codigo: str, tipo_cod) -> bool:
+        """Atualiza o ``TipoArtigo`` de um produto."""
+        if not self.produtos:
+            return False
+        try:
+            return self.produtos.set_tipo_artigo(codigo, tipo_cod)
+        except sqlite3.Error as exc:
+            logger.error(
+                "[DataStore] set_tipo_artigo(%s, %s) falhou: %s",
+                codigo,
+                tipo_cod,
+                exc,
+                exc_info=True,
+            )
+            return False
+
     # Preparação (B4)
     def get_preparacao_html(self, codigo: str) -> str:
         if not self.prep:
