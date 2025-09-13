@@ -3,6 +3,6 @@ def test_validade_seeded_on_empty_db():
 
     ds = DataStore(db_path=":memory:")
     try:
-        assert ds.list_validade()[1:] == [(1, "24h"), (2, "48h")]
+        assert ds.list_validade() == [(1, "24h"), (2, "48h")]
     finally:
         ds.close()

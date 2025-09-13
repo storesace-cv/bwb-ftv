@@ -408,12 +408,12 @@ class DataStore:
 
     def list_validade(self):
         if not self.aux:
-            return [(None, "—")]
+            return []
         try:
-            return self.aux.list_validade()
+            return self.aux.list_validade()[1:]
         except sqlite3.Error as exc:
             logger.error("[DataStore] list_validade falhou: %s", exc, exc_info=True)
-            return [(None, "—")]
+            return []
 
     def list_validades(self):
         """Alias para :meth:`list_validade` mantendo compatibilidade."""
