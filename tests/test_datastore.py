@@ -79,7 +79,7 @@ def test_datastore_upgrades_missing_columns(tmp_path):
 
 def test_list_validades_rw():
     ds = _make_datastore()
-    assert ds.list_validades()[1:] == [(1, "24h"), (2, "48h")]
+    assert ds.list_validades() == [(1, "24h"), (2, "48h")]
 
 
 def test_reload_ids_repo_success(caplog):
