@@ -29,7 +29,15 @@ class ProdutosRepo:
 
     def listar_codigos(self):
         cur = self.conn.cursor()
-        cur.execute("SELECT Codigo FROM Produtos ORDER BY Codigo")
+        cur.execute(
+            """
+            SELECT DISTINCT p.Codigo
+            FROM Produtos p
+            JOIN FichasTecnicas ft ON ft.ProdutoCodigo = p.Codigo
+            WHERE p.TipoVenda = 1
+            ORDER BY p.Codigo
+            """
+        )
         return [r[0] for r in cur.fetchall()]
 
     def get_info(self, codigo: str):
