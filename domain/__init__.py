@@ -1,3 +1,3 @@
-from .models import Product, Ingredient
+from .models import Product, Ingredient, FichaTecnica
 
-__all__ = ["Product", "Ingredient"]
+__all__ = ["Product", "Ingredient", "FichaTecnica"]
