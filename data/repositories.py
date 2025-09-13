@@ -157,7 +157,13 @@ class IngredientesRepo:
             else pick(["unid", "unidade_medida", "uom", "und", "unidad"])
         )
 
-        return {"prod": prod, "ingr": ingr, "qty": qty, "unit": unit}
+        code = (
+            "componente_codigo"
+            if has("componente_codigo")
+            else pick(["codigo_componente", "cod_componente", "componente", "codigo"])
+        )
+
+        return {"prod": prod, "ingr": ingr, "qty": qty, "unit": unit, "code": code}
 
     def listar_por_produto(self, codigo: str):
         """Devolve dados do produto em FichasTecnicas."""
@@ -193,18 +199,22 @@ class IngredientesRepo:
         order_col = "ordem" if "ordem" in table_cols else "rowid"
 
         try:
+            select_cols = [cols["ingr"], cols["qty"], cols["unit"], "ppu", cost_col]
+            if cols.get("code"):
+                select_cols.append(cols["code"])
             cur.execute(
                 (
-                    f"SELECT {cols['ingr']}, {cols['qty']}, {cols['unit']}, "
-                    f"ppu, {cost_col} "
-                    "FROM FichasTecnicas "
-                    f"WHERE {cols['prod']} = ? "
-                    f"ORDER BY {order_col}"
+                    "SELECT "
+                    + ", ".join(select_cols)
+                    + " FROM FichasTecnicas "
+                    + f"WHERE {cols['prod']} = ? ORDER BY {order_col}"
                 ),
                 (codigo,),
             )
             rows = cur.fetchall()
             idx = {"ingr": 0, "qty": 1, "unit": 2, "ppu": 3, "cost": 4}
+            if cols.get("code"):
+                idx["code"] = len(select_cols) - 1
             out = []
             for r in rows:
                 nome = r[idx["ingr"]]
@@ -212,6 +222,7 @@ class IngredientesRepo:
                 unidade = r[idx["unit"]]
                 ppu = r[idx["ppu"]]
                 total = r[idx["cost"]]
+                code_val = r[idx["code"]] if "code" in idx else None
                 item = {
                     "ingrediente": nome,
                     "nome": nome,
@@ -223,6 +234,8 @@ class IngredientesRepo:
                     "ppu": ppu,
                     "total": total,
                 }
+                if code_val is not None:
+                    item["codigo"] = code_val
                 out.append(item)
             return out
         except sqlite3.Error as exc:
@@ -239,6 +252,9 @@ class IngredientesRepo:
                 if has("componente_nome"):
                     sel.append("componente_nome")
                     alias.append("nome")
+                if has("componente_codigo"):
+                    sel.append("componente_codigo")
+                    alias.append("codigo")
                 if has("qtd"):
                     sel.append("qtd")
                     alias.append("qtd")
@@ -278,6 +294,7 @@ class IngredientesRepo:
                         "unidade": None,
                         "ppu": None,
                         "total": None,
+                        "codigo": None,
                     }
                     tmp = {}
                     for i, a in enumerate(alias):
@@ -289,7 +306,7 @@ class IngredientesRepo:
                         ]
                     if "qtd" in tmp and tmp["qtd"] is not None:
                         base["quantidade"] = base["qtd"] = base["QTD"] = tmp["qtd"]
-                    for k in ("unidade", "ppu", "total"):
+                    for k in ("unidade", "ppu", "total", "codigo"):
                         if k in tmp:
                             base[k] = tmp[k]
                     out.append(base)
