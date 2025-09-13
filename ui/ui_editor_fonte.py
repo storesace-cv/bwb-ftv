@@ -369,6 +369,7 @@ class FTApp(QWidget):
         C1A22.add(w_temp)
         self.cbTipos.currentIndexChanged.connect(self._on_tipo_artigo_changed)
         self.cbValidade.currentIndexChanged.connect(self._on_validade_changed)
+        self.cbTemp.currentIndexChanged.connect(self._on_temperatura_changed)
 
         # C1.B — placeholder de preview
         prev = QLabel("Pré-visualização")
@@ -830,6 +831,20 @@ class FTApp(QWidget):
             self.service.set_validade(codigo, validade_cod)
             if self.current_product:
                 self.current_product.validade_cod = validade_cod
+        except Exception:
+            pass
+
+    def _on_temperatura_changed(self, idx: int):
+        if getattr(self, "_loading", False):
+            return
+        codigo = getattr(self.current_product, "code", None)
+        if not codigo:
+            return
+        temperatura_cod = self.cbTemp.itemData(idx)
+        try:
+            self.service.set_temperatura(codigo, temperatura_cod)
+            if self.current_product:
+                self.current_product.temperatura_cod = temperatura_cod
         except Exception:
             pass
 
