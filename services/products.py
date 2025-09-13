@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Iterable, List
 import unicodedata
 import re
+from decimal import Decimal, InvalidOperation
 
 from openpyxl import load_workbook
 
@@ -66,6 +67,22 @@ def canonicalize_header(text: str, table: str | None = None) -> str:
         return aliases[key]
 
     return "".join(word.capitalize() for word in txt_norm.split())
+
+
+def parse_decimal(value):
+    """Return a float parsed from a potentially localized decimal string.
+
+    Spaces are treated as thousand separators and commas as decimal separators.
+    If ``value`` isn't a string or can't be parsed, it is returned unchanged.
+    """
+
+    if isinstance(value, str):
+        cleaned = value.replace(" ", "").replace(",", ".")
+        try:
+            return float(Decimal(cleaned))
+        except (InvalidOperation, ValueError):
+            return value
+    return value
 
 
 def sync_table_schema(conn, table: str, headers: list[str]) -> list[str]:
@@ -301,11 +318,48 @@ def import_from_excel(ds: DataStore | None = None) -> None:
         if not cols:
             wb.close()
             return
+        numeric_cols = {
+            r[1]
+            for r in conn.execute(f"PRAGMA table_info({table})")
+            if r[2]
+            and any(t in r[2].upper() for t in ("REAL", "INT", "NUM", "DEC", "FLOAT"))
+        }
+        numeric_cols.update(
+            c
+            for c in cols
+            if c.lower()
+            in {
+                "preco",
+                "preco1",
+                "preco2",
+                "preco3",
+                "preco4",
+                "preco5",
+                "preco1g",
+                "preco2g",
+                "preco3g",
+                "preco4g",
+                "preco5g",
+                "ppu",
+                "qtd",
+                "total",
+                "peso",
+                "iva",
+                "iva1",
+                "iva2",
+            }
+        )
         placeholders = ",".join(["?"] * len(cols))
         sql = f"INSERT INTO {table} ({','.join(cols)}) VALUES ({placeholders})"
         data: list[tuple] = []
         for row in rows:
-            row_map = {headers[i]: row[i] for i in range(min(len(headers), len(row)))}
+            row_map = {}
+            for i in range(min(len(headers), len(row))):
+                col = headers[i]
+                val = row[i]
+                if col in numeric_cols:
+                    val = parse_decimal(val)
+                row_map[col] = val
             data.append(tuple(row_map.get(c) for c in cols))
         if data:
             conn.executemany(sql, data)
@@ -343,12 +397,24 @@ def import_from_excel(ds: DataStore | None = None) -> None:
         if not cols:
             wb.close()
             return
+        numeric_cols = {
+            r[1]
+            for r in conn.execute("PRAGMA table_info(PrecosTaxas)")
+            if r[2]
+            and any(t in r[2].upper() for t in ("REAL", "INT", "NUM", "DEC", "FLOAT"))
+        }
         conn.execute("DELETE FROM PrecosTaxas")
         placeholders = ",".join(["?"] * len(cols))
         sql = f"INSERT INTO PrecosTaxas ({','.join(cols)}) VALUES ({placeholders})"
         data: list[tuple] = []
         for row in rows:
-            row_map = {headers[i]: row[i] for i in range(min(len(headers), len(row)))}
+            row_map = {}
+            for i in range(min(len(headers), len(row))):
+                col = headers[i]
+                val = row[i]
+                if col in numeric_cols:
+                    val = parse_decimal(val)
+                row_map[col] = val
             data.append(tuple(row_map.get(c) for c in cols))
         if data:
             conn.executemany(sql, data)
@@ -477,12 +543,24 @@ def update_from_excel(ds: DataStore | None = None) -> None:
         if not cols:
             wb.close()
             return
+        numeric_cols = {
+            r[1]
+            for r in conn.execute("PRAGMA table_info(PrecosTaxas)")
+            if r[2]
+            and any(t in r[2].upper() for t in ("REAL", "INT", "NUM", "DEC", "FLOAT"))
+        }
         conn.execute("DELETE FROM PrecosTaxas")
         placeholders = ",".join(["?"] * len(cols))
         sql = f"INSERT INTO PrecosTaxas ({','.join(cols)}) VALUES ({placeholders})"
         data: list[tuple] = []
         for row in rows:
-            row_map = {headers[i]: row[i] for i in range(min(len(headers), len(row)))}
+            row_map = {}
+            for i in range(min(len(headers), len(row))):
+                col = headers[i]
+                val = row[i]
+                if col in numeric_cols:
+                    val = parse_decimal(val)
+                row_map[col] = val
             data.append(tuple(row_map.get(c) for c in cols))
         if data:
             conn.executemany(sql, data)
