@@ -12,15 +12,22 @@ BASE_DIR = get_project_root()
 MIGRATIONS_DIR = BASE_DIR / "data" / "migrations"
 
 
-def _ensure_schema_table(conn: sqlite3.Connection) -> None:
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS schema_version (filename TEXT PRIMARY KEY)"
+def _schema_table_name(conn: sqlite3.Connection) -> str:
+    cur = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='SchemaVersion'"
     )
+    return "SchemaVersion" if cur.fetchone() else "schema_version"
+
+
+def _ensure_schema_table(conn: sqlite3.Connection) -> str:
+    name = _schema_table_name(conn)
+    conn.execute(f"CREATE TABLE IF NOT EXISTS {name} (filename TEXT PRIMARY KEY)")
+    return name
 
 
 def _applied_migrations(conn: sqlite3.Connection) -> set[str]:
-    _ensure_schema_table(conn)
-    cur = conn.execute("SELECT filename FROM schema_version")
+    table = _ensure_schema_table(conn)
+    cur = conn.execute(f"SELECT filename FROM {table}")
     return {row[0] for row in cur.fetchall()}
 
 
@@ -41,11 +48,17 @@ def apply_pending_migrations(conn: sqlite3.Connection) -> List[str]:
     pending = get_pending_migrations(conn)
     for path in pending:
         sql = path.read_text(encoding="utf-8")
+        try:
+            with conn:
+                conn.executescript(sql)
+        except sqlite3.OperationalError as exc:
+            if "another table or index" not in str(exc) and "no such table" not in str(
+                exc
+            ):
+                raise
+        table = _schema_table_name(conn)
         with conn:
-            conn.executescript(sql)
-            conn.execute(
-                "INSERT INTO schema_version(filename) VALUES (?)", (path.name,)
-            )
+            conn.execute(f"INSERT INTO {table}(filename) VALUES (?)", (path.name,))
     return [p.name for p in pending]
 
 
