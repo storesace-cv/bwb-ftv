@@ -8,7 +8,7 @@ import sqlite3
 from pathlib import Path
 
 from utils import get_project_root
-from .migration import ensure_core_tables, ensure_preparacao_table
+from .migration import get_pending_migrations, setup_database
 
 base = get_project_root()
 
@@ -88,11 +88,6 @@ class DataStore:
                 if not is_memory:
                     default_db = base / "databases" / "ftv.db"
                     if db_path.resolve() == default_db.resolve():
-                        from .migration import (
-                            apply_pending_migrations,
-                            get_pending_migrations,
-                        )
-
                         pending = get_pending_migrations(self.conn)
                         if pending:
                             from PyQt5.QtWidgets import QApplication
@@ -107,15 +102,12 @@ class DataStore:
                                 ),
                                 ["Sim", "Não"],
                             ).get_choice()
-                            if choice == "Sim":
-                                apply_pending_migrations(self.conn)
-                            else:
+                            if choice != "Sim":
                                 self.conn.close()
                                 raise RuntimeError(
                                     "Migração cancelada pelo utilizador."
                                 )
-                ensure_core_tables(self.conn)
-                ensure_preparacao_table(self.conn)
+                setup_database(self.conn)
                 self._ensure_required_tables()
             except sqlite3.Error as exc:
                 logger.error(

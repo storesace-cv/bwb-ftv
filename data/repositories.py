@@ -451,11 +451,21 @@ class AuxiliaresRepo:
             cur.execute("SELECT Cod, Descricao FROM Validade ORDER BY Cod")
             rows = cur.fetchall()
             return [(None, "—")] + [(r[0], r[1]) for r in rows]
+        except sqlite3.OperationalError as exc:
+            msg = str(exc).lower()
+            if "no such table" in msg:
+                logger.warning(
+                    "[AuxiliaresRepo] tabela Validade ausente; execute migrations"
+                )
+                raise RuntimeError("Tabela Validade ausente") from exc
+            logger.error(
+                "[AuxiliaresRepo] list_validade falhou: %s", exc, exc_info=True
+            )
         except sqlite3.Error as exc:
             logger.error(
                 "[AuxiliaresRepo] list_validade falhou: %s", exc, exc_info=True
             )
-            return [(None, "—")]
+        return [(None, "—")]
 
     def list_temperaturas(self):
         cur = self.conn.cursor()
