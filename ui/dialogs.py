@@ -1,5 +1,8 @@
 import logging
+import sqlite3
 from collections.abc import Callable
+from pathlib import Path
+from shutil import copy2
 
 from PyQt5.QtWidgets import QMessageBox
 from utils.paths import get_project_root
@@ -51,6 +54,48 @@ def update_data(parent, service, load_record, cur_index):
     except Exception as exc:  # pragma: no cover - UI feedback only
         logger.exception("Update failed", exc_info=exc)
         QMessageBox.critical(parent, "Atualizar Dados", f"Falha na atualização: {exc}")
+
+
+def backup_db(parent, ds):
+    """Create a ``.bak`` copy of the current database."""
+
+    conn = getattr(ds, "conn", None)
+    if conn is None:
+        QMessageBox.warning(parent, "Segurança", "Base de dados indisponível.")
+        return
+    try:
+        db_file = Path(conn.execute("PRAGMA database_list").fetchone()[2])
+        backup = db_file.with_suffix(db_file.suffix + ".bak")
+        copy2(db_file, backup)
+        QMessageBox.information(parent, "Segurança", f"Cópia criada: {backup.name}.")
+    except Exception as exc:  # pragma: no cover - UI feedback only
+        logger.exception("Backup failed", exc_info=exc)
+        QMessageBox.critical(parent, "Segurança", f"Falha na cópia: {exc}")
+
+
+def restore_db(parent, ds):
+    """Restore the database from its ``.bak`` copy."""
+
+    conn = getattr(ds, "conn", None)
+    if conn is None:
+        QMessageBox.warning(parent, "Reposição", "Base de dados indisponível.")
+        return
+    try:
+        db_file = Path(conn.execute("PRAGMA database_list").fetchone()[2])
+        backup = db_file.with_suffix(db_file.suffix + ".bak")
+        if not backup.exists():
+            QMessageBox.warning(
+                parent, "Reposição", f"Backup não encontrado: {backup.name}"
+            )
+            return
+        conn.close()
+        copy2(backup, db_file)
+        ds.conn = sqlite3.connect(str(db_file))
+        ds.conn.row_factory = sqlite3.Row
+        QMessageBox.information(parent, "Reposição", "Reposição concluída.")
+    except Exception as exc:  # pragma: no cover - UI feedback only
+        logger.exception("Restore failed", exc_info=exc)
+        QMessageBox.critical(parent, "Reposição", f"Falha na reposição: {exc}")
 
 
 def manage_aux_table(
