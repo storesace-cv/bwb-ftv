@@ -30,9 +30,14 @@ def test_reload_ids_repo_success(caplog):
     ds = DataStore(db_path=":memory:")
     cur = ds.conn.cursor()
     cur.execute("DELETE FROM Produtos")
+    cur.execute("DELETE FROM FichasTecnicas")
     cur.executemany(
-        "INSERT INTO Produtos (Codigo, Produto) VALUES (?, ?)",
+        "INSERT INTO Produtos (Codigo, Produto, TipoVenda) VALUES (?, ?, 1)",
         [("P1", "Produto 1"), ("P2", "Produto 2")],
+    )
+    cur.executemany(
+        "INSERT INTO FichasTecnicas (ProdutoCodigo) VALUES (?)",
+        [("P1",), ("P2",)],
     )
     ds.conn.commit()
     with caplog.at_level(logging.INFO):

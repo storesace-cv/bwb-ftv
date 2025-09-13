@@ -15,7 +15,7 @@ def ds():
     conn.execute("DROP TABLE Produtos")
     conn.execute(
         "CREATE TABLE Produtos (Codigo TEXT PRIMARY KEY, Produto TEXT, "
-        "Preco1G REAL, Preco2G REAL, Iva REAL)"
+        "TipoVenda INTEGER, Preco1G REAL, Preco2G REAL, Iva REAL)"
     )
     conn.execute("DROP TABLE FichasTecnicas")
     conn.execute(
@@ -45,9 +45,9 @@ def _write_base_files(
         products = [("P1", "Produto 1")]
     prod_wb = Workbook()
     ws = prod_wb.active
-    ws.append(["codigo", "nome"])
+    ws.append(["codigo", "nome", "tipo_venda"])
     for code, name in products:
-        ws.append([code, name])
+        ws.append([code, name, 1])
     prod_wb.save(base_dir / "Produtos_Base.xlsx")
 
     ft_wb = Workbook()
@@ -66,6 +66,8 @@ def _write_base_files(
             "peso",
         ]
     )
+    for code, _ in products:
+        ws.append([None, code, None, None, None, None, None, None, None, None])
     ft_wb.save(base_dir / "FichasTecnicas_base.xlsx")
 
     prec_wb = Workbook()
@@ -94,8 +96,12 @@ def test_import_from_excel_replaces_database(ds, imports_dir):
 
 def test_update_from_excel_updates_and_inserts(ds, imports_dir):
     ds.conn.executemany(
-        "INSERT INTO Produtos (Codigo, Produto) VALUES (?, ?)",
+        "INSERT INTO Produtos (Codigo, Produto, TipoVenda) VALUES (?, ?, 1)",
         [("P1", "Produto 1"), ("P2", "Produto 2")],
+    )
+    ds.conn.executemany(
+        "INSERT INTO FichasTecnicas (ProdutoCodigo) VALUES (?)",
+        [("P1",), ("P2",)],
     )
     ds.reload_ids()
     svc = ProductService(ds)
@@ -256,8 +262,8 @@ def test_preco_taxas_requires_codigo(ds, imports_dir, func):
 def test_import_maps_custo_to_total(ds, imports_dir):
     prod = Workbook()
     ws = prod.active
-    ws.append(["codigo", "nome"])
-    ws.append(["P1", "Produto 1"])
+    ws.append(["codigo", "nome", "tipo_venda"])
+    ws.append(["P1", "Produto 1", 1])
     prod.save(imports_dir / "Produtos_Base.xlsx")
 
     ft = Workbook()
@@ -302,8 +308,8 @@ def test_update_maps_custo_to_total(ds, imports_dir):
 
     prod = Workbook()
     ws = prod.active
-    ws.append(["codigo", "nome"])
-    ws.append(["P1", "Prod"])
+    ws.append(["codigo", "nome", "tipo_venda"])
+    ws.append(["P1", "Prod", 1])
     prod.save(imports_dir / "Produtos_Base.xlsx")
 
     ft = Workbook()
