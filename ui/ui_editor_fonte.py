@@ -52,7 +52,7 @@
 
 import sys
 import logging
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QAbstractTableModel, QSortFilterProxyModel
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import (
     QApplication,
@@ -65,8 +65,7 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QPushButton,
     QSizePolicy,
-    QTableWidget,
-    QTableWidgetItem,
+    QTableView,
     QMessageBox,
     QScrollArea,
     QShortcut,
@@ -75,6 +74,7 @@ from PyQt5.QtWidgets import (
 )
 from data.datastore import DataStore
 from services.products import ProductService
+from domain import FichaTecnica
 from utils.formatting import format_pt_number
 
 from . import layout
@@ -87,6 +87,49 @@ APP_TITLE = "Fichas Técnicas Valorizadas"
 logger = logging.getLogger(__name__)
 
 # ------------------------ Main App ------------------------
+
+
+class FichasTecnicasModel(QAbstractTableModel):
+    """Table model for displaying ``FichasTecnicas`` records."""
+
+    headers = ["Ingrediente", "QTD", "U.M.", "PPU", "Total", "Código"]
+
+    def __init__(self, rows: list[FichaTecnica] | None = None):
+        super().__init__()
+        self._rows: list[FichaTecnica] = rows or []
+
+    def rowCount(self, parent=None):  # pragma: no cover - trivial
+        return len(self._rows)
+
+    def columnCount(self, parent=None):  # pragma: no cover - trivial
+        return len(self.headers)
+
+    def data(self, index, role=Qt.DisplayRole):
+        if not index.isValid():
+            return None
+        ficha = self._rows[index.row()]
+        if role == Qt.DisplayRole:
+            mapping = [
+                ficha.ingredient,
+                format_pt_number(ficha.quantity),
+                ficha.unit,
+                format_pt_number(ficha.ppu),
+                format_pt_number(ficha.total),
+                ficha.code,
+            ]
+            val = mapping[index.column()]
+            return val if val is not None else ""
+        return None
+
+    def headerData(self, section, orientation, role=Qt.DisplayRole):  # pragma: no cover
+        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+            return self.headers[section]
+        return None
+
+    def update_data(self, rows: list[FichaTecnica]):
+        self.beginResetModel()
+        self._rows = rows
+        self.endResetModel()
 
 
 class FTApp(QWidget):
@@ -298,13 +341,22 @@ class FTApp(QWidget):
         self.C2 = Zone("C2", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS)
         page_ly.addWidget(self._section_box("[B2] - Ingredientes", self.C2), 0)
 
-        self.tbIng = QTableWidget(0, 6, self)
-        self.tbIng.setHorizontalHeaderLabels(
-            ["Ingrediente", "QTD", "U.M.", "PPU", "Total", "Código"]
-        )
+        self.edIngFilter = QLineEdit()
+        self.edIngFilter.setPlaceholderText("Filtrar ingrediente...")
+        self.C2.add(self.edIngFilter, 0)
+
+        self.ingModel = FichasTecnicasModel([])
+        self.ingProxy = QSortFilterProxyModel(self)
+        self.ingProxy.setSourceModel(self.ingModel)
+        self.ingProxy.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        self.ingProxy.setFilterKeyColumn(0)
+
+        self.tbIng = QTableView(self)
+        self.tbIng.setModel(self.ingProxy)
         self.tbIng.verticalHeader().setVisible(False)
         self.tbIng.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.C2.add(self.tbIng, 1)
+        self.edIngFilter.textChanged.connect(self.ingProxy.setFilterFixedString)
         self._setup_ing_columns()
 
         # ---------------- B3 — Custos (C3) ----------------
@@ -476,15 +528,22 @@ class FTApp(QWidget):
         _select_by_code(self.cbValidade, product.validade_cod)
         _select_by_code(self.cbTemp, product.temperatura_cod)
 
-        self.tbIng.setRowCount(0)
-        for ing in product.ingredients:
-            r = self.tbIng.rowCount()
-            self.tbIng.insertRow(r)
-            vals = []
-            for c, val in enumerate(vals):
-                it = QTableWidgetItem(val)
-                it.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
-                self.tbIng.setItem(r, c, it)
+        fichas_func = getattr(self.service, "list_fichas_tecnicas", None)
+        if callable(fichas_func):
+            fichas = fichas_func(codigo)
+        else:
+            fichas = [
+                FichaTecnica(
+                    ingredient=ing.name,
+                    quantity=ing.quantity,
+                    unit=ing.unit,
+                    ppu=ing.ppu,
+                    total=ing.total,
+                    code=ing.code,
+                )
+                for ing in product.ingredients
+            ]
+        self.ingModel.update_data(fichas)
 
         self._apply_ingredient_widths()
         self.edCustoTotal.setText(

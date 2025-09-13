@@ -12,7 +12,7 @@ from openpyxl import load_workbook
 
 from data.datastore import DataStore
 from data.migration import setup_database
-from domain import Product, Ingredient
+from domain import Product, Ingredient, FichaTecnica
 from utils.paths import get_project_root
 from utils.formatting import parse_decimal
 
@@ -174,6 +174,30 @@ class ProductService:
     # -- product retrieval ------------------------------------------------
     def get_product_info(self, codigo: str) -> Product:
         return get_product_info(self.ds, codigo)
+
+    def list_fichas_tecnicas(self, codigo: str) -> list[FichaTecnica]:
+        """Return technical sheet rows for ``codigo`` as dataclasses."""
+
+        rows = self.ds.get_ingredientes(codigo)
+        fichas: list[FichaTecnica] = []
+        for row in rows:
+            fichas.append(
+                FichaTecnica(
+                    ingredient=row.get("nome")
+                    or row.get("ingrediente")
+                    or row.get("designacao")
+                    or "",
+                    quantity=row.get("qtd")
+                    or row.get("quantidade")
+                    or row.get("QTD")
+                    or 0,
+                    unit=row.get("unidade") or "",
+                    ppu=row.get("ppu"),
+                    total=row.get("total"),
+                    code=row.get("codigo"),
+                )
+            )
+        return fichas
 
     # -- cost calculations ------------------------------------------------
     def calculate_cost(

@@ -17,6 +17,18 @@ class Ingredient:
 
 
 @dataclass
+class FichaTecnica:
+    """Representation of a row in the ``FichasTecnicas`` table."""
+
+    ingredient: str
+    quantity: float
+    unit: str
+    ppu: float | None = None
+    total: float | None = None
+    code: str | None = None
+
+
+@dataclass
 class Product:
     """Representation of a product with associated ingredients."""
 
