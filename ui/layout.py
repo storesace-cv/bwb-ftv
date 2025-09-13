@@ -156,30 +156,21 @@ class Zone(QWidget):
         v = QVBoxLayout(cont)
         v.setContentsMargins(0, 0, 0, 0)
         v.setSpacing(self.ly.spacing())
-        top_tag = self.tag + ".1"
-        bottom_tag = self.tag + ".2"
-        for t in (top_tag, bottom_tag):
-            if not validate_tag(t):
-                raise ValueError(f"Invalid zone tag: {t}")
-        top = Zone(
-            top_tag,
-            cont,
-            flow="v",
-            margins=4,
-            spacing=self.ly.spacing(),
-            level=self._level + 1,
-            show_overlays=DEV_OVERLAYS,
-        )
-        bottom = Zone(
-            bottom_tag,
-            cont,
-            flow="v",
-            margins=4,
-            spacing=self.ly.spacing(),
-            level=self._level + 1,
-            show_overlays=DEV_OVERLAYS,
-        )
-        v.addWidget(top, ratios[0])
-        v.addWidget(bottom, ratios[1])
+        zones = []
+        for idx, ratio in enumerate(ratios, start=1):
+            tag = f"{self.tag}.{idx}"
+            if not validate_tag(tag):
+                raise ValueError(f"Invalid zone tag: {tag}")
+            zone = Zone(
+                tag,
+                cont,
+                flow="v",
+                margins=4,
+                spacing=self.ly.spacing(),
+                level=self._level + 1,
+                show_overlays=DEV_OVERLAYS,
+            )
+            v.addWidget(zone, ratio)
+            zones.append(zone)
         self.ly.addWidget(cont, 1)
-        return top, bottom
+        return tuple(zones)
