@@ -94,11 +94,22 @@ def _upgrade_tables(conn: sqlite3.Connection) -> None:
         "SELECT name FROM sqlite_master WHERE type='table' AND name='Produtos'"
     )
     if cur.fetchone():
-        info = {r[1]: r[2].upper() for r in conn.execute("PRAGMA table_info(Produtos)")}
-        has_cols = "PCU" in info and "PCM" in info
-        if has_cols and (
-            info.get("PCU") != "DECIMAL(10,2)" or info.get("PCM") != "DECIMAL(10,2)"
-        ):
+        rows = list(conn.execute("PRAGMA table_info(Produtos)"))
+        types = {r[1]: r[2].upper() for r in rows}
+        existing = {r[1] for r in rows}
+        need = False
+        if "PCU" in types and "PCM" in types:
+            if (
+                types.get("PCU") != "DECIMAL(10,2)"
+                or types.get("PCM") != "DECIMAL(10,2)"
+            ):
+                need = True
+        if "UnInvVMMMPG" not in existing:
+            try:
+                conn.execute("ALTER TABLE Produtos ADD COLUMN UnInvVMMMPG TEXT")
+            except sqlite3.OperationalError:
+                need = True
+        if need:
             cols = [
                 "Codigo",
                 "Produto",
@@ -123,6 +134,32 @@ def _upgrade_tables(conn: sqlite3.Connection) -> None:
                 "DispLojas",
             ]
             _recreate_table(conn, "Produtos", PRODUTOS_SCHEMA, cols)
+
+    cur = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='FichasTecnicas'"
+    )
+    if cur.fetchone():
+        rows = list(conn.execute("PRAGMA table_info(FichasTecnicas)"))
+        existing = {r[1] for r in rows}
+        if "Preco" not in existing:
+            try:
+                conn.execute(
+                    "ALTER TABLE FichasTecnicas ADD COLUMN Preco DECIMAL(10,2)"
+                )
+            except sqlite3.OperationalError:
+                cols = [
+                    "FamiliaSubfamilia",
+                    "ProdutoCodigo",
+                    "ProdutoNome",
+                    "ComponenteCodigo",
+                    "ComponenteNome",
+                    "Qtd",
+                    "Unidade",
+                    "Ppu",
+                    "Preco",
+                    "Peso",
+                ]
+                _recreate_table(conn, "FichasTecnicas", FICHAS_TECNICAS_SCHEMA, cols)
 
     cur = conn.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='PrecosTaxas'"
