@@ -49,8 +49,3 @@ ALTER TABLE Temperaturas RENAME COLUMN cod TO Cod;
 ALTER TABLE Temperaturas RENAME COLUMN descricao TO Descricao;
 ALTER TABLE Temperaturas RENAME COLUMN ativo TO Ativo;
 
-ALTER TABLE produto_auxiliar RENAME TO ProdutoAuxiliar;
-ALTER TABLE ProdutoAuxiliar RENAME COLUMN produto_codigo TO ProdutoCodigo;
-ALTER TABLE ProdutoAuxiliar RENAME COLUMN tipo_artigo_id TO TipoArtigoId;
-ALTER TABLE ProdutoAuxiliar RENAME COLUMN validade_id TO ValidadeId;
-ALTER TABLE ProdutoAuxiliar RENAME COLUMN temperatura_id TO TemperaturaId;

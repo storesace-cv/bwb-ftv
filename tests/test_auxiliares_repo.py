@@ -33,16 +33,6 @@ def _make_repo():
         )
         """
     )
-    cur.execute(
-        """
-        CREATE TABLE ProdutoAuxiliar (
-            ProdutoCodigo TEXT PRIMARY KEY,
-            TipoArtigoId INTEGER,
-            ValidadeId INTEGER,
-            TemperaturaId INTEGER
-        )
-        """
-    )
     conn.commit()
     return conn, AuxiliaresRepo(conn)
 
@@ -118,21 +108,3 @@ def test_temperaturas_crud_failure():
     assert repo2.list_temperaturas_admin() == []
     conn.close()
     conn2.close()
-
-
-def test_produto_auxiliares_upsert():
-    conn, repo = _make_repo()
-    assert repo.get_produto_auxiliares("P1") == (None, None, None)
-    repo.set_produto_auxiliares("P1", 1, 2, 3)
-    assert repo.get_produto_auxiliares("P1") == (1, 2, 3)
-    repo.set_produto_auxiliares("P1", 4, 5, 6)
-    assert repo.get_produto_auxiliares("P1") == (4, 5, 6)
-    conn.close()
-
-
-def test_produto_auxiliares_missing_tables():
-    conn, repo = _make_repo_no_tables()
-    assert repo.get_produto_auxiliares("P1") == (None, None, None)
-    repo.set_produto_auxiliares("P1", 1, 2, 3)
-    assert repo.get_produto_auxiliares("P1") == (None, None, None)
-    conn.close()

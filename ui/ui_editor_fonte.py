@@ -254,40 +254,8 @@ class Zone(QWidget):
 
 class FTApp(QWidget):
     def _aux_load_selected(self, codigo):
-        """Lê produto_auxiliar e posiciona os CBs sem disparar autosave."""
-        conn = getattr(self.service, "conn", None)
-        if not conn or not codigo:
-            return
-        cur = conn.cursor()
-        try:
-            cur.execute(
-                "SELECT tipo_artigo_id, validade_id, temperatura_id FROM produto_auxiliar WHERE produto_codigo=?",
-                (codigo,),
-            )
-            row = cur.fetchone()
-        except Exception:
-            row = None
-
-        tid = vid = pid = None
-        if row:
-            tid, vid, pid = row[0], row[1], row[2]
-
-        for cb, val in (
-            (getattr(self, "cbTipoArtigo", None), tid),
-            (getattr(self, "cbValidade", None), vid),
-            (getattr(self, "cbTemp", None), pid),
-        ):
-            if not cb:
-                continue
-            cb.blockSignals(True)
-            target = 0
-            if val is not None:
-                for i in range(cb.count()):
-                    if cb.itemData(i) == val:
-                        target = i
-                        break
-            cb.setCurrentIndex(target)
-            cb.blockSignals(False)
+        """Tabela de auxiliares removida."""
+        return
 
     def __init__(self, service: ProductService):
         super().__init__()
@@ -722,7 +690,6 @@ class FTApp(QWidget):
             cbs = self._aux_find_cbs()
             self._aux_populate_cbs(lists, cbs)
             self._aux_load_selected(codigo)
-            self._aux_wire_autosave(cbs)
         except Exception as e:
             logger.error("[AuxCanon][ERRO] %s", e)
 
@@ -911,145 +878,8 @@ class FTApp(QWidget):
         return cbs
 
     def _aux_load_selected(self, codigo):
-        """Posiciona os comboboxes na seleção gravada (produto_auxiliar ou produto_attrs)."""
-        cb_tipo, cb_val, cb_temp = self._aux_find_cbs()
-        if not any([cb_tipo, cb_val, cb_temp]):
-            return
-        tid = vid = pid = None
-        try:
-            cur = self.service.conn.cursor()
-            cur.execute(
-                "SELECT tipo_artigo_id, validade_id, temperatura_id FROM produto_auxiliar WHERE produto_codigo=?",
-                (codigo,),
-            )
-            row = cur.fetchone()
-            if row:
-                tid, vid, pid = row[0], row[1], row[2]
-            else:
-                cur.execute(
-                    "SELECT tipo_artigo, validade, temperatura FROM produto_attrs WHERE produto_codigo=?",
-                    (codigo,),
-                )
-                row = cur.fetchone()
-                if row:
-                    tid, vid, pid = row[0], row[1], row[2]
-        except Exception as e:
-            logger.warning("[AuxUI][AVISO] a ler seleção: %s", e)
-
-        def _as_int(v):
-            try:
-                return int(v) if v is not None else None
-            except Exception:
-                return None
-
-        tid, vid, pid = _as_int(tid), _as_int(vid), _as_int(pid)
-
-        def set_by_data(cb, wanted_id):
-            if cb is None:
-                return
-            try:
-                cb.blockSignals(True)
-            except Exception:
-                pass
-            try:
-                if wanted_id is None:
-                    cb.setCurrentIndex(0)  # "—"
-                    return
-                for i in range(cb.count()):
-                    try:
-                        d = cb.itemData(i)
-                    except Exception:
-                        d = None
-                    if d == wanted_id:
-                        cb.setCurrentIndex(i)
-                        return
-                cb.setCurrentIndex(0)
-            finally:
-                try:
-                    cb.blockSignals(False)
-                except Exception:
-                    pass
-
-        set_by_data(cb_tipo, tid)
-        set_by_data(cb_val, vid)
-        set_by_data(cb_temp, pid)
-
-    def _aux_wire_autosave(self, cbs=None):
-        """Wire ``currentIndexChanged`` to persist combo selections.
-
-        Parameters
-        ----------
-        cbs: tuple[QComboBox, QComboBox, QComboBox] | None
-            Optional comboboxes for ``tipo_artigo``, ``validade`` and
-            ``temperatura``. If ``None`` they are resolved via
-            ``_aux_find_cbs``.
-        """
-
-        if cbs is None:
-            cbs = self._aux_find_cbs()
-        cb_tipo, cb_val, cb_temp = cbs
-        conn = getattr(self.service, "conn", None)
-        if not conn:
-            return
-
-        def saver(kind, cb):
-            if cb is None:
-                return
-
-            def handler(*_):
-                if getattr(self, "_loading", False):
-                    return
-                idx = cb.currentIndex()
-                data = cb.itemData(idx)
-                value = None if (idx <= 0 or data in (None, "", "—")) else data
-                # produto visível
-                try:
-                    codigo = self.service.codigo_at(getattr(self, "cur_index", 0))
-                except Exception:
-                    codigo = None
-                if not codigo:
-                    try:
-                        codigo = self.lbCodigo.text().strip()
-                    except Exception:
-                        pass
-                if not codigo:
-                    return
-                # grava
-                col = {
-                    "tipo_artigo": "tipo_artigo_id",
-                    "validade": "validade_id",
-                    "temperatura": "temperatura_id",
-                }[kind]
-                try:
-                    cur = conn.cursor()
-                    if value is None:
-                        cur.execute(
-                            "INSERT INTO produto_auxiliar (produto_codigo) VALUES (?) ON CONFLICT(produto_codigo) DO NOTHING",
-                            (codigo,),
-                        )
-                        cur.execute(
-                            f"UPDATE produto_auxiliar SET {col}=NULL WHERE produto_codigo=?",
-                            (codigo,),
-                        )
-                    else:
-                        cur.execute(
-                            f"""
-                            INSERT INTO produto_auxiliar (produto_codigo, {col})
-                            VALUES (?, ?)
-                            ON CONFLICT(produto_codigo) DO UPDATE SET {col}=excluded.{col}
-                        """,
-                            (codigo, int(value)),
-                        )
-                    conn.commit()
-                except Exception as e:
-                    logger.error("[AuxUI][ERRO] gravar %s p/%s: %s", kind, codigo, e)
-
-            cb.currentIndexChanged.connect(handler)
-
-        saver("tipo_artigo", cb_tipo)
-        saver("validade", cb_val)
-        saver("temperatura", cb_temp)
-        logger.info("[AuxUI] autosave ligado.")
+        """Tabela de auxiliares removida."""
+        return
 
     def _aux_ensure_guard(self):
         """Envolve _load_record com guarda self._loading True/False e injeta pipeline dos auxiliares."""
@@ -1073,7 +903,6 @@ class FTApp(QWidget):
                     codigo = None
                 if codigo:
                     self._aux_load_selected(codigo)
-                self._aux_wire_autosave(cbs)
                 return res
             finally:
                 self._loading = False

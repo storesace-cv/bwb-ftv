@@ -156,16 +156,6 @@ def ensure_core_tables(conn: sqlite3.Connection) -> None:
             )
             """
         ),
-        (
-            """
-            CREATE TABLE IF NOT EXISTS ProdutoAuxiliar (
-                ProdutoCodigo TEXT PRIMARY KEY,
-                TipoArtigoId INTEGER,
-                ValidadeId    INTEGER,
-                TemperaturaId INTEGER
-            )
-            """
-        ),
     ]
 
     for stmt in statements:

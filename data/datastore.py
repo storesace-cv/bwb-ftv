@@ -185,12 +185,6 @@ class DataStore:
             "TiposArtigos": {"Cod", "Descricao", "Ativo"},
             "Validade": {"Cod", "Descricao", "Ativo"},
             "Temperaturas": {"Cod", "Descricao", "Ativo"},
-            "ProdutoAuxiliar": {
-                "ProdutoCodigo",
-                "TipoArtigoId",
-                "ValidadeId",
-                "TemperaturaId",
-            },
         }
 
         try:
@@ -520,56 +514,3 @@ class DataStore:
             "Moluscos",
         ]
         return [(i + 1, nm) for i, nm in enumerate(default)]
-
-    def _read_auxiliares(self, codigo: str):
-        """Lê (tipo_id, validade_id, temperatura_id) a partir do repo Auxiliares."""
-        if (
-            getattr(self, "demo", False)
-            or not getattr(self, "conn", None)
-            or getattr(self, "aux", None) is None
-        ):
-            return (None, None, None)
-        try:
-            return self.aux.get_produto_auxiliares(codigo)
-        except sqlite3.Error as exc:
-            logger.error(
-                "[DataStore] get_produto_auxiliares(%s) falhou: %s",
-                codigo,
-                exc,
-                exc_info=True,
-            )
-            return (None, None, None)
-
-    def _write_auxiliares(
-        self, codigo: str, tipo_id, validade_id, temperatura_id
-    ) -> bool:
-        """Grava no repo Auxiliares (upsert)."""
-        if (
-            getattr(self, "demo", False)
-            or not getattr(self, "conn", None)
-            or getattr(self, "aux", None) is None
-        ):
-            return False
-        try:
-            self.aux.set_produto_auxiliares(
-                codigo, tipo_id, validade_id, temperatura_id
-            )
-            return True
-        except sqlite3.Error as exc:
-            logger.error(
-                "[DataStore] set_produto_auxiliares(%s) falhou: %s",
-                codigo,
-                exc,
-                exc_info=True,
-            )
-            return False
-
-    def get_auxiliares_for(self, codigo: str):
-        """Obtém (tipo_id, validade_id, temperatura_id) para um produto."""
-        return self._read_auxiliares(codigo)
-
-    def save_auxiliares_for(
-        self, codigo: str, tipo_id, validade_id, temperatura_id
-    ) -> bool:
-        """Guarda auxiliares para um produto. Devolve *True* se bem sucedido."""
-        return self._write_auxiliares(codigo, tipo_id, validade_id, temperatura_id)

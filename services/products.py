@@ -45,7 +45,7 @@ def canonicalize_header(text: str, table: str | None = None) -> str:
     if key == "produtocodigo":
         return (
             "ProdutoCodigo"
-            if table in {"FichasTecnicas", "ProdutoPreparacao", "ProdutoAuxiliar"}
+            if table in {"FichasTecnicas", "ProdutoPreparacao"}
             else "Codigo"
         )
     if key == "preco1g":
