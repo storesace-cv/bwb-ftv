@@ -341,7 +341,7 @@ class FTApp(QWidget):
         self.lbPVP = []
         for i in range(5):
             col = Zone(
-                f"C1.A.2.A.P{i+1}",
+                f"C1.A.2.A.{i+1}",
                 base_cont,
                 flow="v",
                 margins=2,
