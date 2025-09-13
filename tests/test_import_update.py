@@ -217,6 +217,34 @@ def test_update_from_excel_handles_alt_headers(ds, imports_dir):
     assert pvps["pvp1"] == 4.0
 
 
+@pytest.mark.parametrize(
+    "price,expected",
+    [("1,5", 1.5), ("1 234,5", 1234.5)],
+)
+def test_import_from_excel_parses_formatted_numbers(ds, imports_dir, price, expected):
+    _write_base_files(imports_dir, price=price)
+    svc = ProductService(ds)
+    svc.import_from_excel()
+    pvps = ds.get_pvps("P1")
+    assert pvps["pvp1"] == expected
+
+
+@pytest.mark.parametrize(
+    "price,expected",
+    [("1,5", 1.5), ("1 234,5", 1234.5)],
+)
+def test_update_from_excel_parses_formatted_numbers(ds, imports_dir, price, expected):
+    ds.conn.execute(
+        "INSERT INTO Produtos (Codigo, Produto, Preco1G) VALUES ('P1', 'X', 1.0)"
+    )
+    ds.reload_ids()
+    _write_base_files(imports_dir, price=price)
+    svc = ProductService(ds)
+    svc.update_from_excel()
+    pvps = ds.get_pvps("P1")
+    assert pvps["pvp1"] == expected
+
+
 @pytest.mark.parametrize("func", ["import_from_excel", "update_from_excel"])
 def test_preco_taxas_requires_codigo(ds, imports_dir, func):
     _write_base_files(imports_dir, code_header="wrong")
@@ -248,7 +276,7 @@ def test_import_maps_custo_to_total(ds, imports_dir):
             "peso",
         ]
     )
-    ws.append([None, "P1", None, None, "Ing", 2, "Kg", 3, 6, None])
+    ws.append([None, "P1", None, None, "Ing", 2, "Kg", 3, "1 234,5", None])
     ft.save(imports_dir / "FichasTecnicas_base.xlsx")
 
     prec = Workbook()
@@ -260,7 +288,7 @@ def test_import_maps_custo_to_total(ds, imports_dir):
     svc = ProductService(ds)
     svc.import_from_excel()
     ing = ds.get_ingredientes("P1")[0]
-    assert ing["total"] == 6
+    assert ing["total"] == 1234.5
 
 
 def test_update_maps_custo_to_total(ds, imports_dir):
