@@ -101,6 +101,26 @@ class ProdutosRepo:
             )
             return False
 
+    def set_validade(self, codigo: str, validade_cod) -> bool:
+        """Atualiza o campo ``Validade`` de um produto."""
+        cur = self.conn.cursor()
+        try:
+            cur.execute(
+                "UPDATE Produtos SET Validade = ? WHERE Codigo = ?",
+                (validade_cod, codigo),
+            )
+            self.conn.commit()
+            return cur.rowcount > 0
+        except sqlite3.Error as exc:
+            logger.error(
+                "[ProdutosRepo] set_validade(%s, %s) falhou: %s",
+                codigo,
+                validade_cod,
+                exc,
+                exc_info=True,
+            )
+            return False
+
 
 class IngredientesRepo:
     def __init__(self, conn):

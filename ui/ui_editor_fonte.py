@@ -368,6 +368,7 @@ class FTApp(QWidget):
         C1A22.add(w_val)
         C1A22.add(w_temp)
         self.cbTipos.currentIndexChanged.connect(self._on_tipo_artigo_changed)
+        self.cbValidade.currentIndexChanged.connect(self._on_validade_changed)
 
         # C1.B — placeholder de preview
         prev = QLabel("Pré-visualização")
@@ -815,6 +816,20 @@ class FTApp(QWidget):
             self.service.set_tipo_artigo(codigo, tipo_cod)
             if self.current_product:
                 self.current_product.tipo_artigo_cod = tipo_cod
+        except Exception:
+            pass
+
+    def _on_validade_changed(self, idx: int):
+        if getattr(self, "_loading", False):
+            return
+        codigo = getattr(self.current_product, "code", None)
+        if not codigo:
+            return
+        validade_cod = self.cbValidade.itemData(idx)
+        try:
+            self.service.set_validade(codigo, validade_cod)
+            if self.current_product:
+                self.current_product.validade_cod = validade_cod
         except Exception:
             pass
 
