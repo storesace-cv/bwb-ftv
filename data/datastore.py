@@ -204,6 +204,9 @@ class DataStore:
                 "PCM",
                 "Descontinuado",
                 "DispLojas",
+                "TipoArtigo",
+                "Validade",
+                "Temperatura",
             },
             # ``FichasTecnicas`` deve incluir colunas essenciais de relação
             # produto/componente e custos.

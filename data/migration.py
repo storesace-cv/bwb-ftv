@@ -33,7 +33,10 @@ CREATE TABLE IF NOT EXISTS Produtos (
     PCU DECIMAL(10,2),
     PCM DECIMAL(10,2),
     Descontinuado TEXT,
-    DispLojas TEXT
+    DispLojas TEXT,
+    TipoArtigo INTEGER,
+    Validade INTEGER,
+    Temperatura INTEGER
 )
 """
 
@@ -109,6 +112,12 @@ def _upgrade_tables(conn: sqlite3.Connection) -> None:
                 conn.execute("ALTER TABLE Produtos ADD COLUMN UnInvVMMMPG TEXT")
             except sqlite3.OperationalError:
                 need = True
+        for col in ("TipoArtigo", "Validade", "Temperatura"):
+            if col not in existing:
+                try:
+                    conn.execute(f"ALTER TABLE Produtos ADD COLUMN {col} INTEGER")
+                except sqlite3.OperationalError:
+                    need = True
         if need:
             cols = [
                 "Codigo",
@@ -132,6 +141,9 @@ def _upgrade_tables(conn: sqlite3.Connection) -> None:
                 "PCM",
                 "Descontinuado",
                 "DispLojas",
+                "TipoArtigo",
+                "Validade",
+                "Temperatura",
             ]
             _recreate_table(conn, "Produtos", PRODUTOS_SCHEMA, cols)
 
@@ -265,8 +277,14 @@ def apply_pending_migrations(conn: sqlite3.Connection) -> List[str]:
             with conn:
                 conn.executescript(sql)
         except sqlite3.OperationalError as exc:
-            if "another table or index" not in str(exc) and "no such table" not in str(
-                exc
+            msg = str(exc).lower()
+            if not any(
+                err in msg
+                for err in (
+                    "another table or index",
+                    "no such table",
+                    "duplicate column name",
+                )
             ):
                 raise
         table = _ensure_schema_table(conn)

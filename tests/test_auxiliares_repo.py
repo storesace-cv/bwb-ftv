@@ -1,6 +1,6 @@
 import sqlite3
 
-from data.repositories import AuxiliaresRepo
+from data.repositories import AuxiliaresRepo, ProdutosRepo
 
 
 def _make_repo():
@@ -168,4 +168,62 @@ def test_delete_temperatura():
     conn.commit()
     assert repo.delete_temperatura(tid2) is False
     assert repo.list_temperaturas_admin() == [(tid2, "Frio", 1)]
+    conn.close()
+
+
+def test_produtos_repo_setters_persist():
+    conn = sqlite3.connect(":memory:")
+    cur = conn.cursor()
+    cur.execute(
+        """
+        CREATE TABLE TiposArtigos (
+            Cod INTEGER PRIMARY KEY AUTOINCREMENT,
+            Descricao TEXT,
+            Ativo INTEGER
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE Validade (
+            Cod INTEGER PRIMARY KEY AUTOINCREMENT,
+            Descricao TEXT,
+            Ativo INTEGER
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE Temperaturas (
+            Cod INTEGER PRIMARY KEY AUTOINCREMENT,
+            Descricao TEXT,
+            Ativo INTEGER
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE Produtos (
+            Codigo TEXT PRIMARY KEY,
+            Produto TEXT,
+            TipoArtigo INTEGER,
+            Validade INTEGER,
+            Temperatura INTEGER
+        )
+        """
+    )
+    cur.execute("INSERT INTO Produtos (Codigo, Produto) VALUES ('P1', 'Prod')")
+    conn.commit()
+    aux = AuxiliaresRepo(conn)
+    prod = ProdutosRepo(conn)
+    tid = aux.add_tipo_artigo("A")
+    vid = aux.add_validade("24h")
+    tpid = aux.add_temperatura("Frio")
+    assert prod.set_tipo_artigo("P1", tid) is True
+    assert prod.set_validade("P1", vid) is True
+    assert prod.set_temperatura("P1", tpid) is True
+    row = conn.execute(
+        "SELECT TipoArtigo, Validade, Temperatura FROM Produtos WHERE Codigo='P1'"
+    ).fetchone()
+    assert row == (tid, vid, tpid)
     conn.close()
