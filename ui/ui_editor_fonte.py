@@ -90,8 +90,8 @@ from .dialogs import (
     import_data,
     manage_aux_table,
     update_data,
-    backup_db,
-    restore_db,
+    backup_database,
+    restore_database,
 )
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
@@ -247,8 +247,8 @@ class FTApp(QWidget):
         actUpdate.triggered.connect(
             lambda: update_data(self, self.service, self._load_record, self.cur_index)
         )
-        actBackup.triggered.connect(lambda: backup_db(self, self.ds))
-        actRestore.triggered.connect(lambda: restore_db(self, self.ds))
+        actBackup.triggered.connect(lambda: backup_database(self, self.ds))
+        actRestore.triggered.connect(lambda: restore_database(self, self.ds))
         actTipos.triggered.connect(
             lambda: manage_aux_table(
                 self,
