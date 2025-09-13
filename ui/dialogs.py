@@ -72,8 +72,19 @@ def backup_database(parent, datastore):
         QMessageBox.critical(parent, "Segurança", f"Falha na cópia: {exc}")
 
 
-def restore_database(parent, datastore):
-    """Restore ``ftv.db`` from a selected backup file and rebuild caches."""
+def restore_database(parent, datastore, on_restore: Callable | None = None):
+    """Restore ``ftv.db`` from a selected backup file and rebuild caches.
+
+    Parameters
+    ----------
+    parent
+        Parent widget for message boxes.
+    datastore
+        :class:`DataStore` instance to rebind to the restored database.
+    on_restore
+        Optional callback invoked after caches are reloaded. This allows the
+        UI to refresh any state that depends on database contents.
+    """
 
     backups_dir = get_project_root() / "databases" / "backups"
     if not backups_dir.exists() or not any(backups_dir.glob("*.db")):
@@ -111,6 +122,8 @@ def restore_database(parent, datastore):
         datastore.aux = AuxiliaresRepo(datastore.conn)
         datastore.prep = PreparacaoRepo(datastore.conn)
         datastore.reload_ids()
+        if callable(on_restore):
+            on_restore()
         QMessageBox.information(parent, "Reposição", "Reposição concluída.")
     except Exception as exc:  # pragma: no cover - UI feedback only
         logger.exception("Restore failed", exc_info=exc)

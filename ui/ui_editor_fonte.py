@@ -248,7 +248,9 @@ class FTApp(QWidget):
             lambda: update_data(self, self.service, self._load_record, self.cur_index)
         )
         actBackup.triggered.connect(lambda: backup_database(self, self.ds))
-        actRestore.triggered.connect(lambda: restore_database(self, self.ds))
+        actRestore.triggered.connect(
+            lambda: restore_database(self, self.ds, self._after_restore)
+        )
         actTipos.triggered.connect(
             lambda: manage_aux_table(
                 self,
@@ -889,6 +891,17 @@ class FTApp(QWidget):
     def _toggle_overlays_btn(self):
         self._toggle_overlays()
         self.btOverlay.setText(f"Overlays: {'ON' if layout.DEV_OVERLAYS else 'OFF'}")
+
+    def _after_restore(self):
+        """Refresh UI state after a database restore."""
+        try:
+            self._aux_refresh_lists()
+        except Exception:
+            pass
+        try:
+            self._load_record(getattr(self, "cur_index", 0))
+        except Exception:
+            pass
 
     # ================== AUXILIARES — CANÓNICO (v2) ==================
     def _aux_fetch_lists(self, cbs=None):
