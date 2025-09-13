@@ -24,7 +24,16 @@ CREATE TABLE IF NOT EXISTS Produtos (
 );
 
 CREATE TABLE IF NOT EXISTS FichasTecnicas (
-    ProdutoCodigo TEXT
+    FamiliaSubfamilia TEXT,
+    ProdutoCodigo TEXT,
+    ProdutoNome TEXT,
+    ComponenteCodigo TEXT,
+    ComponenteNome TEXT,
+    Qtd REAL,
+    Unidade TEXT,
+    Ppu REAL,
+    Preco REAL,
+    Peso REAL
 );
 
 CREATE TABLE IF NOT EXISTS PrecosTaxas (

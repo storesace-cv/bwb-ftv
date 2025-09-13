@@ -116,7 +116,16 @@ def ensure_core_tables(conn: sqlite3.Connection) -> None:
         (
             """
             CREATE TABLE IF NOT EXISTS FichasTecnicas (
-                ProdutoCodigo TEXT
+                FamiliaSubfamilia TEXT,
+                ProdutoCodigo TEXT,
+                ProdutoNome TEXT,
+                ComponenteCodigo TEXT,
+                ComponenteNome TEXT,
+                Qtd REAL,
+                Unidade TEXT,
+                Ppu REAL,
+                Preco REAL,
+                Peso REAL
             )
             """
         ),
