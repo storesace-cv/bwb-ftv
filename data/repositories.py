@@ -168,18 +168,31 @@ class IngredientesRepo:
         cols = self._infer_cols()
         if not cols:
             return []
+
         try:
             cur.execute("PRAGMA table_info(FichasTecnicas)")
             table_cols = [c[1].lower() for c in cur.fetchall()]
-            if "total" in table_cols:
-                cost_col = "total"
-            elif "custo" in table_cols:
-                cost_col = "custo"
-            elif "preco" in table_cols:
-                cost_col = "preco"
-            else:
-                return []
-            order_col = "ordem" if "ordem" in table_cols else "rowid"
+        except sqlite3.Error as exc:
+            logger.error(
+                "[IngredientesRepo] listar_por_produto(%s) falhou: %s",
+                codigo,
+                exc,
+                exc_info=True,
+            )
+            return []
+
+        if "total" in table_cols:
+            cost_col = "total"
+        elif "custo" in table_cols:
+            cost_col = "custo"
+        elif "preco" in table_cols:
+            cost_col = "preco"
+        else:
+            return []
+
+        order_col = "ordem" if "ordem" in table_cols else "rowid"
+
+        try:
             cur.execute(
                 (
                     f"SELECT {cols['ingr']}, {cols['qty']}, {cols['unit']}, "
@@ -213,12 +226,7 @@ class IngredientesRepo:
                 out.append(item)
             return out
         except sqlite3.Error as exc:
-            logger.error(
-                "[IngredientesRepo] listar_por_produto(%s) falhou: %s",
-                codigo,
-                exc,
-                exc_info=True,
-            )
+            primary_exc = exc
             try:
                 cur.execute("PRAGMA table_info(FichasTecnicas)")
                 cols = [c[1].lower() for c in cur.fetchall()]
@@ -287,6 +295,12 @@ class IngredientesRepo:
                     out.append(base)
                 return out
             except sqlite3.Error as exc2:
+                logger.error(
+                    "[IngredientesRepo] listar_por_produto(%s) falhou: %s",
+                    codigo,
+                    primary_exc,
+                    exc_info=True,
+                )
                 logger.error(
                     "[IngredientesRepo] fallback listar_por_produto(%s) falhou: %s",
                     codigo,
