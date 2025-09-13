@@ -27,5 +27,5 @@ class Product:
     tipo_artigo_cod: int | None = None
     validade_cod: int | None = None
     temperatura_cod: int | None = None
-    pvps: dict = field(default_factory=dict)
+    pvps: dict[str, float | None] = field(default_factory=dict)
     ingredients: List[Ingredient] = field(default_factory=list)

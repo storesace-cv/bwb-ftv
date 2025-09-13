@@ -361,7 +361,7 @@ class DataStore:
             )
             return {}
 
-    def get_pvps(self, codigo: str):
+    def get_pvps(self, codigo: str) -> dict[str, float | None]:
         if not self.produtos:
             return {
                 "pvp1": None,
