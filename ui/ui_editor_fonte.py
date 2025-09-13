@@ -793,7 +793,7 @@ class FTApp(QWidget):
                 _select_by_code(self.cbValidade, product.validade_cod)
                 _select_by_code(self.cbTemp, product.temperatura_cod)
             except Exception as e:
-                logger.error("[AuxCanon][ERRO] %s", e)
+                logger.exception("[AuxCanon][ERRO] %s", e)
         finally:
             self._loading = False
 
