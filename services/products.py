@@ -174,6 +174,9 @@ class ProductService:
     def set_tipo_artigo(self, codigo: str, tipo_cod) -> bool:
         return self.ds.set_tipo_artigo(codigo, tipo_cod)
 
+    def set_validade(self, codigo: str, validade_cod) -> bool:
+        return self.ds.set_validade(codigo, validade_cod)
+
     # -- product retrieval ------------------------------------------------
     def get_product_info(self, codigo: str) -> Product:
         return get_product_info(self.ds, codigo)
@@ -252,9 +255,11 @@ def get_product_info(ds: DataStore, codigo: str) -> Product:
         name=info.get("produto"),
         familia=info.get("familia"),
         subfamilia=info.get("subfamilia"),
-        tipo_artigo_cod=info.get("tipo_artigo_cod"),
-        validade_cod=info.get("validade_cod"),
-        temperatura_cod=info.get("temperatura_cod"),
+        tipo_artigo_cod=info.get("tipo_artigo_cod") or info.get("tipoartigo"),
+        validade_cod=info.get("validade_cod")
+        or info.get("validade")
+        or info.get("validadeid"),
+        temperatura_cod=info.get("temperatura_cod") or info.get("temperatura"),
         pvps=pvps,
         ingredients=ingredients,
     )

@@ -52,6 +52,18 @@ def _make_repo_no_tables():
     return conn, AuxiliaresRepo(conn)
 
 
+def test_list_validade_returns_records():
+    conn, repo = _make_repo()
+    cur = conn.cursor()
+    cur.executemany(
+        "INSERT INTO Validade (Descricao, Ativo) VALUES (?, 1)",
+        [("24h",), ("48h",)],
+    )
+    conn.commit()
+    assert repo.list_validade()[1:] == [(1, "24h"), (2, "48h")]
+    conn.close()
+
+
 def test_tipos_artigos_crud_success():
     conn, repo = _make_repo()
     tid = repo.add_tipo_artigo("TipoA")

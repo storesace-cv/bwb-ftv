@@ -449,6 +449,22 @@ class DataStore:
             )
             return False
 
+    def set_validade(self, codigo: str, validade_cod) -> bool:
+        """Atualiza o ``Validade`` de um produto."""
+        if not self.produtos:
+            return False
+        try:
+            return self.produtos.set_validade(codigo, validade_cod)
+        except sqlite3.Error as exc:
+            logger.error(
+                "[DataStore] set_validade(%s, %s) falhou: %s",
+                codigo,
+                validade_cod,
+                exc,
+                exc_info=True,
+            )
+            return False
+
     # Preparação (B4)
     def get_preparacao_html(self, codigo: str) -> str:
         if not self.prep:
