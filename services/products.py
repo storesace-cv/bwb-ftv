@@ -201,7 +201,7 @@ class ProductService:
 def get_product_info(ds: DataStore, codigo: str) -> Product:
     """Retrieve product information, pvps and ingredients as a :class:`Product`."""
     info = ds.get_produto_info(codigo) if ds else {}
-    pvps = ds.get_pvps(codigo) if ds else {}
+    pvps: dict[str, float | None] = ds.get_pvps(codigo) if ds else {}
     ing_rows = ds.get_ingredientes(codigo) if ds else []
 
     ingredients: List[Ingredient] = []

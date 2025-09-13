@@ -38,7 +38,7 @@ class ProdutosRepo:
             return {k.lower(): row[k] for k in row.keys()}
         return {}
 
-    def get_pvps(self, codigo: str):
+    def get_pvps(self, codigo: str) -> dict[str, float | None]:
         """Devolve {'pvp1', 'pvp2', 'pvp3', 'pvp4', 'pvp5'} a partir de PrecosTaxas."""
         cur = self.conn.cursor()
         try:
