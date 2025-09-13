@@ -462,6 +462,23 @@ class FTApp(QWidget):
     def _apply_ingredient_widths(self):
         self._setup_ing_columns()
 
+    def _apply_ing_autofit_or_scroll(self):
+        vh = self.tbIng.verticalHeader()
+        hh = self.tbIng.horizontalHeader()
+        rows = self.tbIng.model().rowCount()
+        row_h = vh.defaultSectionSize()
+        max_visible = 8
+        visible_rows = min(rows, max_visible)
+        total_h = hh.height() + row_h * visible_rows + self.tbIng.frameWidth() * 2
+        scroll = self.tbIng.verticalScrollBar()
+        if rows <= max_visible:
+            self.tbIng.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            scroll.hide()
+        else:
+            self.tbIng.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+            scroll.show()
+        self.tbIng.setFixedHeight(total_h)
+
     # ---------- Navegação ----------
     def _connect_nav(self):
         self.btFirst.clicked.connect(lambda: self._goto(0))
