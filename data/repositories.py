@@ -121,6 +121,26 @@ class ProdutosRepo:
             )
             return False
 
+    def set_temperatura(self, codigo: str, temperatura_cod) -> bool:
+        """Atualiza o campo ``Temperatura`` de um produto."""
+        cur = self.conn.cursor()
+        try:
+            cur.execute(
+                "UPDATE Produtos SET Temperatura = ? WHERE Codigo = ?",
+                (temperatura_cod, codigo),
+            )
+            self.conn.commit()
+            return cur.rowcount > 0
+        except sqlite3.Error as exc:
+            logger.error(
+                "[ProdutosRepo] set_temperatura(%s, %s) falhou: %s",
+                codigo,
+                temperatura_cod,
+                exc,
+                exc_info=True,
+            )
+            return False
+
 
 class IngredientesRepo:
     def __init__(self, conn):

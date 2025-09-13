@@ -177,6 +177,9 @@ class ProductService:
     def set_validade(self, codigo: str, validade_cod) -> bool:
         return self.ds.set_validade(codigo, validade_cod)
 
+    def set_temperatura(self, codigo: str, temperatura_cod) -> bool:
+        return self.ds.set_temperatura(codigo, temperatura_cod)
+
     # -- product retrieval ------------------------------------------------
     def get_product_info(self, codigo: str) -> Product:
         return get_product_info(self.ds, codigo)

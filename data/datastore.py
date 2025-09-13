@@ -465,6 +465,22 @@ class DataStore:
             )
             return False
 
+    def set_temperatura(self, codigo: str, temperatura_cod) -> bool:
+        """Atualiza o ``Temperatura`` de um produto."""
+        if not self.produtos:
+            return False
+        try:
+            return self.produtos.set_temperatura(codigo, temperatura_cod)
+        except sqlite3.Error as exc:
+            logger.error(
+                "[DataStore] set_temperatura(%s, %s) falhou: %s",
+                codigo,
+                temperatura_cod,
+                exc,
+                exc_info=True,
+            )
+            return False
+
     # Preparação (B4)
     def get_preparacao_html(self, codigo: str) -> str:
         if not self.prep:
