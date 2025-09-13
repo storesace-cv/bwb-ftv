@@ -165,6 +165,7 @@ class FTApp(QWidget):
                     "add": self.ds.aux.add_tipo_artigo,
                     "set_active": self.ds.aux.set_tipo_artigo_ativo,
                 },
+                on_change=self._aux_refresh_lists,
             )
         )
         actVal.triggered.connect(
@@ -176,6 +177,7 @@ class FTApp(QWidget):
                     "add": self.ds.aux.add_validade,
                     "set_active": self.ds.aux.set_validade_ativo,
                 },
+                on_change=self._aux_refresh_lists,
             )
         )
         actTemps.triggered.connect(
@@ -187,6 +189,7 @@ class FTApp(QWidget):
                     "add": self.ds.aux.add_temperatura,
                     "set_active": self.ds.aux.set_temperatura_ativo,
                 },
+                on_change=self._aux_refresh_lists,
             )
         )
         actTheme.triggered.connect(
@@ -681,6 +684,11 @@ class FTApp(QWidget):
         fill(cb_val, lists.get("validade", []))
         fill(cb_temp, lists.get("temperatura", []))
         return cbs
+
+    def _aux_refresh_lists(self):
+        """Recarrega as listas e atualiza os comboboxes auxiliares."""
+        lists = self._aux_fetch_lists()
+        self._aux_populate_cbs(lists)
 
     def _aux_load_selected(self, codigo):
         """Tabela de auxiliares removida."""
