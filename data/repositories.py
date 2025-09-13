@@ -528,6 +528,22 @@ class AuxiliaresRepo:
 class PreparacaoRepo:
     def __init__(self, conn: sqlite3.Connection):
         self.conn = conn
+        try:
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS ProdutoPreparacao (
+                    ProdutoCodigo TEXT PRIMARY KEY,
+                    Html          TEXT NOT NULL DEFAULT ''
+                )
+                """
+            )
+            conn.commit()
+        except sqlite3.Error as exc:
+            logger.error(
+                "[PreparacaoRepo] falha a criar tabela ProdutoPreparacao: %s",
+                exc,
+                exc_info=True,
+            )
 
     def get_html(self, codigo: str) -> str:
         cur = self.conn.cursor()

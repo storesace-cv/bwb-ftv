@@ -8,7 +8,7 @@ import sqlite3
 from pathlib import Path
 
 from utils import get_project_root
-from .migration import ensure_core_tables
+from .migration import ensure_core_tables, ensure_preparacao_table
 
 base = get_project_root()
 
@@ -115,6 +115,7 @@ class DataStore:
                                     "Migração cancelada pelo utilizador."
                                 )
                 ensure_core_tables(self.conn)
+                ensure_preparacao_table(self.conn)
                 self._ensure_required_tables()
             except sqlite3.Error as exc:
                 logger.error(
