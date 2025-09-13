@@ -470,14 +470,24 @@ class AuxiliaresRepo:
     def list_temperaturas(self):
         cur = self.conn.cursor()
         try:
-            cur.execute("SELECT Cod, Descricao FROM Temperaturas")
+            cur.execute("SELECT Cod, Descricao FROM Temperaturas ORDER BY Cod")
             rows = cur.fetchall()
             return [(r[0], r[1]) for r in rows]
+        except sqlite3.OperationalError as exc:
+            msg = str(exc).lower()
+            if "no such table" in msg:
+                logger.warning(
+                    "[AuxiliaresRepo] tabela Temperaturas ausente; execute migrations"
+                )
+                raise RuntimeError("Tabela Temperaturas ausente") from exc
+            logger.error(
+                "[AuxiliaresRepo] list_temperaturas falhou: %s", exc, exc_info=True
+            )
         except sqlite3.Error as exc:
             logger.error(
                 "[AuxiliaresRepo] list_temperaturas falhou: %s", exc, exc_info=True
             )
-            return []
+        return []
 
     # --- Métodos administrativos adicionados (CRUD) ---
     def list_tipos_artigos_admin(self):
