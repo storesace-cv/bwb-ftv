@@ -149,7 +149,11 @@ class ProductService:
 
     def __init__(self, ds: DataStore):
         self.ds = ds
-        self.conn = getattr(ds, "conn", None)
+
+    @property
+    def conn(self):  # pragma: no cover - simple delegation
+        """Return the current database connection from the datastore."""
+        return getattr(self.ds, "conn", None)
 
     # -- pagination / ids -------------------------------------------------
     def total(self) -> int:
