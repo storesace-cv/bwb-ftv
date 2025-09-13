@@ -7,14 +7,13 @@ from pathlib import Path
 from typing import Iterable, List
 import unicodedata
 import re
-from decimal import Decimal, InvalidOperation
-
 from openpyxl import load_workbook
 
 from data.datastore import DataStore
 from data.migration import setup_database
 from domain import Product, Ingredient
 from utils.paths import get_project_root
+from utils.formatting import parse_decimal
 
 
 def canonicalize_header(text: str, table: str | None = None) -> str:
@@ -67,22 +66,6 @@ def canonicalize_header(text: str, table: str | None = None) -> str:
         return aliases[key]
 
     return "".join(word.capitalize() for word in txt_norm.split())
-
-
-def parse_decimal(value):
-    """Return a float parsed from a potentially localized decimal string.
-
-    Spaces are treated as thousand separators and commas as decimal separators.
-    If ``value`` isn't a string or can't be parsed, it is returned unchanged.
-    """
-
-    if isinstance(value, str):
-        cleaned = value.replace(" ", "").replace(",", ".")
-        try:
-            return float(Decimal(cleaned))
-        except (InvalidOperation, ValueError):
-            return value
-    return value
 
 
 def sync_table_schema(conn, table: str, headers: list[str]) -> list[str]:

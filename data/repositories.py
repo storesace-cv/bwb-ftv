@@ -1,26 +1,12 @@
-# Auto-gerado pela Fase 2 — repositories
+"""Repositories for data access."""
+
 import logging
 import sqlite3
-from decimal import Decimal, InvalidOperation
+
+from utils.formatting import parse_decimal
 
 
 logger = logging.getLogger(__name__)
-
-
-def parse_decimal(value):
-    """Return a float parsed from a potentially localized decimal string.
-
-    Spaces are treated as thousand separators and commas as decimal separators.
-    If ``value`` isn't a string or can't be parsed, it is returned unchanged.
-    """
-
-    if isinstance(value, str):
-        cleaned = value.replace(" ", "").replace(",", ".")
-        try:
-            return float(Decimal(cleaned))
-        except (InvalidOperation, ValueError):
-            return value
-    return value
 
 
 class ProdutosRepo:
