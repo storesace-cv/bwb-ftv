@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable, Iterator, List
 import unicodedata
 import re
+from contextlib import closing, contextmanager
 from openpyxl import load_workbook
 
 from data.datastore import DataStore
@@ -41,6 +42,27 @@ PRECO_GRAM_LOOKUP = {
     "preco3g": ("Preco3G", "Preco3"),
     "preco4g": ("Preco4G", "Preco4"),
     "preco5g": ("Preco5G", "Preco5"),
+}
+
+NUMERIC_NAMES = {
+    "preco",
+    "preco1",
+    "preco2",
+    "preco3",
+    "preco4",
+    "preco5",
+    "preco1g",
+    "preco2g",
+    "preco3g",
+    "preco4g",
+    "preco5g",
+    "ppu",
+    "qtd",
+    "total",
+    "peso",
+    "iva",
+    "iva1",
+    "iva2",
 }
 
 
@@ -229,6 +251,31 @@ def calculate_cost(ingredients: Iterable[Ingredient]) -> float:
     return total
 
 
+@contextmanager
+def _load_workbook_rows(
+    path: Path, table: str, conn
+) -> Iterator[tuple[list[str], Iterable[tuple], set[str]]]:
+    """Yield canonicalized headers, row iterator and numeric columns for a sheet."""
+
+    with closing(load_workbook(path, read_only=True, data_only=True)) as wb:
+        ws = wb.active
+        rows = ws.iter_rows(values_only=True)
+        try:
+            raw_headers = list(next(rows))
+        except StopIteration:
+            yield [], iter(()), set()
+            return
+        headers = [canonicalize_header(h, table=table) for h in raw_headers]
+        numeric_cols = {
+            r[1]
+            for r in conn.execute(f"PRAGMA table_info({table})")
+            if r[2]
+            and any(t in r[2].upper() for t in ("REAL", "INT", "NUM", "DEC", "FLOAT"))
+        }
+        numeric_cols.update(c for c in headers if c and c.lower() in NUMERIC_NAMES)
+        yield headers, rows, numeric_cols
+
+
 def import_from_excel(ds: DataStore | None = None) -> None:
     """Import product data from Excel files in ``<root>/imports``.
 
@@ -263,22 +310,20 @@ def import_from_excel(ds: DataStore | None = None) -> None:
 
     setup_database(conn)
     for table, fp in files.items():
-        wb = load_workbook(fp, read_only=True, data_only=True)
-        ws = wb.active
-        rows = ws.iter_rows(values_only=True)
-        try:
-            raw_headers = list(next(rows))
-        except StopIteration:
-            wb.close()
-            continue
-        if table == "PrecosTaxas":
-            mapped = [canonicalize_header(h, table=table) for h in raw_headers]
-            existing = [r[1] for r in conn.execute(f"PRAGMA table_info({table})")]
-            headers = mapped + [c for c in existing if c not in mapped]
-        else:
-            headers = raw_headers
-        sync_table_schema(conn, table, headers)
-        wb.close()
+        with closing(load_workbook(fp, read_only=True, data_only=True)) as wb:
+            ws = wb.active
+            rows = ws.iter_rows(values_only=True)
+            try:
+                raw_headers = list(next(rows))
+            except StopIteration:
+                continue
+            if table == "PrecosTaxas":
+                mapped = [canonicalize_header(h, table=table) for h in raw_headers]
+                existing = [r[1] for r in conn.execute(f"PRAGMA table_info({table})")]
+                headers = mapped + [c for c in existing if c not in mapped]
+            else:
+                headers = raw_headers
+            sync_table_schema(conn, table, headers)
 
     cur = conn.cursor()
     for tbl in ("Produtos", "FichasTecnicas", "PrecosTaxas"):
@@ -289,121 +334,70 @@ def import_from_excel(ds: DataStore | None = None) -> None:
     conn.commit()
 
     def _load_insert(file_path: Path, table: str) -> None:
-        wb = load_workbook(file_path, read_only=True, data_only=True)
-        ws = wb.active
-        rows = ws.iter_rows(values_only=True)
-        try:
-            raw_headers = list(next(rows))
-        except StopIteration:
-            wb.close()
-            return
-        headers = [canonicalize_header(h, table=table) for h in raw_headers]
-        headers = sync_table_schema(conn, table, headers)
-        cols = [h for h in headers if h]
-        if not cols:
-            wb.close()
-            return
-        numeric_cols = {
-            r[1]
-            for r in conn.execute(f"PRAGMA table_info({table})")
-            if r[2]
-            and any(t in r[2].upper() for t in ("REAL", "INT", "NUM", "DEC", "FLOAT"))
-        }
-        numeric_cols.update(
-            c
-            for c in cols
-            if c.lower()
-            in {
-                "preco",
-                "preco1",
-                "preco2",
-                "preco3",
-                "preco4",
-                "preco5",
-                "preco1g",
-                "preco2g",
-                "preco3g",
-                "preco4g",
-                "preco5g",
-                "ppu",
-                "qtd",
-                "total",
-                "peso",
-                "iva",
-                "iva1",
-                "iva2",
-            }
-        )
-        placeholders = ",".join(["?"] * len(cols))
-        sql = f"INSERT INTO {table} ({','.join(cols)}) VALUES ({placeholders})"
-        data: list[tuple] = []
-        for row in rows:
-            row_map = {}
-            for i in range(min(len(headers), len(row))):
-                col = headers[i]
-                val = row[i]
-                if col in numeric_cols:
-                    val = parse_decimal(val)
-                row_map[col] = val
-            data.append(tuple(row_map.get(c) for c in cols))
-        if data:
-            conn.executemany(sql, data)
-        wb.close()
+        with _load_workbook_rows(file_path, table, conn) as (
+            headers,
+            rows,
+            numeric_cols,
+        ):
+            headers = sync_table_schema(conn, table, headers)
+            cols = [h for h in headers if h]
+            if not cols:
+                return
+            placeholders = ",".join(["?"] * len(cols))
+            sql = f"INSERT INTO {table} ({','.join(cols)}) VALUES ({placeholders})"
+            data: list[tuple] = []
+            for row in rows:
+                row_map = {}
+                for i in range(min(len(headers), len(row))):
+                    col = headers[i]
+                    val = row[i]
+                    if col in numeric_cols:
+                        val = parse_decimal(val)
+                    row_map[col] = val
+                data.append(tuple(row_map.get(c) for c in cols))
+            if data:
+                conn.executemany(sql, data)
 
     _load_insert(files["Produtos"], "Produtos")
     _load_insert(files["FichasTecnicas"], "FichasTecnicas")
 
     def _load_prices(file_path: Path) -> None:
-        wb = load_workbook(file_path, read_only=True, data_only=True)
-        ws = wb.active
-        rows = ws.iter_rows(values_only=True)
-        try:
-            raw_headers = list(next(rows))
-        except StopIteration:
-            wb.close()
-            return
-        rows = list(rows)
-        mapped = [canonicalize_header(h, table="PrecosTaxas") for h in raw_headers]
-        if "Loja" not in mapped:
-            mapped.append("Loja")
-            rows = [tuple(list(r) + ["1"]) for r in rows]
-        has_codigo = "Codigo" in mapped
-        existing = [r[1] for r in conn.execute("PRAGMA table_info(PrecosTaxas)")]
-        headers = sync_table_schema(
-            conn, "PrecosTaxas", mapped + [c for c in existing if c not in mapped]
-        )
-        if not has_codigo:
-            wb.close()
-            raise ValueError(
-                "PreçosTaxas_base.xlsx missing 'Codigo' column; found: "
-                + ", ".join(mapped)
+        with _load_workbook_rows(file_path, "PrecosTaxas", conn) as (
+            headers,
+            rows,
+            numeric_cols,
+        ):
+            rows = list(rows)
+            if "Loja" not in headers:
+                headers.append("Loja")
+                rows = [tuple(list(r) + ["1"]) for r in rows]
+            if "Codigo" not in headers:
+                raise ValueError(
+                    "PreçosTaxas_base.xlsx missing 'Codigo' column; found: "
+                    + ", ".join(headers)
+                )
+            existing = [r[1] for r in conn.execute("PRAGMA table_info(PrecosTaxas)")]
+            headers = sync_table_schema(
+                conn, "PrecosTaxas", headers + [c for c in existing if c not in headers]
             )
-        cols = [h for h in headers if h]
-        if not cols:
-            wb.close()
-            return
-        numeric_cols = {
-            r[1]
-            for r in conn.execute("PRAGMA table_info(PrecosTaxas)")
-            if r[2]
-            and any(t in r[2].upper() for t in ("REAL", "INT", "NUM", "DEC", "FLOAT"))
-        }
-        conn.execute("DELETE FROM PrecosTaxas")
-        placeholders = ",".join(["?"] * len(cols))
-        sql = f"INSERT INTO PrecosTaxas ({','.join(cols)}) VALUES ({placeholders})"
-        data: list[tuple] = []
-        for row in rows:
-            row_map = {}
-            for i in range(min(len(headers), len(row))):
-                col = headers[i]
-                val = row[i]
-                if col in numeric_cols:
-                    val = parse_decimal(val)
-                row_map[col] = val
-            data.append(tuple(row_map.get(c) for c in cols))
-        if data:
-            conn.executemany(sql, data)
-        wb.close()
+            cols = [h for h in headers if h]
+            if not cols:
+                return
+            conn.execute("DELETE FROM PrecosTaxas")
+            placeholders = ",".join(["?"] * len(cols))
+            sql = f"INSERT INTO PrecosTaxas ({','.join(cols)}) VALUES ({placeholders})"
+            data: list[tuple] = []
+            for row in rows:
+                row_map = {}
+                for i in range(min(len(headers), len(row))):
+                    col = headers[i]
+                    val = row[i]
+                    if col in numeric_cols:
+                        val = parse_decimal(val)
+                    row_map[col] = val
+                data.append(tuple(row_map.get(c) for c in cols))
+            if data:
+                conn.executemany(sql, data)
 
     _load_prices(files["PrecosTaxas"])
     conn.commit()
@@ -655,91 +649,106 @@ def _update_from_excel(path: Path, ds: DataStore | None) -> None:
 
     setup_database(conn)
 
-    wb = load_workbook(path, read_only=True, data_only=True)
-    ws = wb.active
-    rows = ws.iter_rows(values_only=True)
-    try:
-        headers = [canonicalize_header(h, table="Produtos") for h in next(rows)]
-    except StopIteration:
-        wb.close()
-        return
-    if "Codigo" not in headers:
-        wb.close()
-        raise ValueError(
-            "Spreadsheet missing 'Codigo' column; found: " + ", ".join(headers)
-        )
-    code_idx = headers.index("Codigo")
-
-    cur = conn.cursor()
-    cur.execute("PRAGMA table_info(Produtos)")
-    db_cols = [r[1] for r in cur.fetchall()]
-    if "Produto" in headers and "Produto" not in db_cols:
-        cur.execute("ALTER TABLE Produtos ADD COLUMN Produto")
-        db_cols.append("Produto")
-    name_idx = (
-        headers.index("Produto")
-        if "Produto" in headers and "Produto" in db_cols
-        else None
-    )
-    p1_idx = (
-        headers.index("Preco1G")
-        if "Preco1G" in headers and "Preco1G" in db_cols
-        else None
-    )
-    p2_idx = (
-        headers.index("Preco2G")
-        if "Preco2G" in headers and "Preco2G" in db_cols
-        else None
-    )
-    iva_idx = headers.index("Iva") if "Iva" in headers and "Iva" in db_cols else None
-
-    for row in rows:
-        codigo = row[code_idx]
-        if codigo is None:
-            continue
-        cur.execute("SELECT 1 FROM Produtos WHERE Codigo=?", (codigo,))
-        exists = cur.fetchone() is not None
-        if exists:
-            updates = []
-            params = []
-            if name_idx is not None:
-                updates.append("Produto=?")
-                params.append(row[name_idx])
-            if p1_idx is not None:
-                updates.append("Preco1G=?")
-                params.append(row[p1_idx])
-            if p2_idx is not None:
-                updates.append("Preco2G=?")
-                params.append(row[p2_idx])
-            if iva_idx is not None:
-                updates.append("Iva=?")
-                params.append(row[iva_idx])
-            if updates:
-                params.append(codigo)
-                cur.execute(
-                    f"UPDATE Produtos SET {', '.join(updates)} WHERE Codigo=?",
-                    params,
-                )
-        else:
-            cols = ["Codigo"]
-            vals = [codigo]
-            if name_idx is not None:
-                cols.append("Produto")
-                vals.append(row[name_idx])
-            if p1_idx is not None:
-                cols.append("Preco1G")
-                vals.append(row[p1_idx])
-            if p2_idx is not None:
-                cols.append("Preco2G")
-                vals.append(row[p2_idx])
-            if iva_idx is not None:
-                cols.append("Iva")
-                vals.append(row[iva_idx])
-            placeholders = ",".join(["?"] * len(vals))
-            cur.execute(
-                f"INSERT INTO Produtos ({','.join(cols)}) VALUES ({placeholders})",
-                vals,
+    with _load_workbook_rows(path, "Produtos", conn) as (
+        headers,
+        rows,
+        numeric_cols,
+    ):
+        if "Codigo" not in headers:
+            raise ValueError(
+                "Spreadsheet missing 'Codigo' column; found: " + ", ".join(headers)
             )
+        code_idx = headers.index("Codigo")
+
+        cur = conn.cursor()
+        cur.execute("PRAGMA table_info(Produtos)")
+        db_cols = [r[1] for r in cur.fetchall()]
+        if "Produto" in headers and "Produto" not in db_cols:
+            cur.execute("ALTER TABLE Produtos ADD COLUMN Produto")
+            db_cols.append("Produto")
+        name_idx = (
+            headers.index("Produto")
+            if "Produto" in headers and "Produto" in db_cols
+            else None
+        )
+        p1_idx = (
+            headers.index("Preco1G")
+            if "Preco1G" in headers and "Preco1G" in db_cols
+            else None
+        )
+        p2_idx = (
+            headers.index("Preco2G")
+            if "Preco2G" in headers and "Preco2G" in db_cols
+            else None
+        )
+        iva_idx = (
+            headers.index("Iva") if "Iva" in headers and "Iva" in db_cols else None
+        )
+
+        for row in rows:
+            codigo = row[code_idx]
+            if codigo is None:
+                continue
+            cur.execute("SELECT 1 FROM Produtos WHERE Codigo=?", (codigo,))
+            exists = cur.fetchone() is not None
+            if exists:
+                updates = []
+                params = []
+                if name_idx is not None:
+                    updates.append("Produto=?")
+                    params.append(row[name_idx])
+                if p1_idx is not None:
+                    val = row[p1_idx]
+                    if headers[p1_idx] in numeric_cols:
+                        val = parse_decimal(val)
+                    updates.append("Preco1G=?")
+                    params.append(val)
+                if p2_idx is not None:
+                    val = row[p2_idx]
+                    if headers[p2_idx] in numeric_cols:
+                        val = parse_decimal(val)
+                    updates.append("Preco2G=?")
+                    params.append(val)
+                if iva_idx is not None:
+                    val = row[iva_idx]
+                    if headers[iva_idx] in numeric_cols:
+                        val = parse_decimal(val)
+                    updates.append("Iva=?")
+                    params.append(val)
+                if updates:
+                    params.append(codigo)
+                    cur.execute(
+                        f"UPDATE Produtos SET {', '.join(updates)} WHERE Codigo=?",
+                        params,
+                    )
+            else:
+                cols = ["Codigo"]
+                vals = [codigo]
+                if name_idx is not None:
+                    cols.append("Produto")
+                    vals.append(row[name_idx])
+                if p1_idx is not None:
+                    val = row[p1_idx]
+                    if headers[p1_idx] in numeric_cols:
+                        val = parse_decimal(val)
+                    cols.append("Preco1G")
+                    vals.append(val)
+                if p2_idx is not None:
+                    val = row[p2_idx]
+                    if headers[p2_idx] in numeric_cols:
+                        val = parse_decimal(val)
+                    cols.append("Preco2G")
+                    vals.append(val)
+                if iva_idx is not None:
+                    val = row[iva_idx]
+                    if headers[iva_idx] in numeric_cols:
+                        val = parse_decimal(val)
+                    cols.append("Iva")
+                    vals.append(val)
+                placeholders = ",".join(["?"] * len(vals))
+                cur.execute(
+                    f"INSERT INTO Produtos ({','.join(cols)}) VALUES ({placeholders})",
+                    vals,
+                )
     conn.commit()
-    wb.close()
     ds.reload_ids()

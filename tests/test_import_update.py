@@ -4,7 +4,7 @@ import pytest
 from openpyxl import Workbook
 
 from data.datastore import DataStore
-from services.products import ProductService
+from services.products import ProductService, _update_from_excel
 from utils.paths import get_project_root
 
 
@@ -341,3 +341,17 @@ def test_update_maps_custo_to_total(ds, imports_dir):
     svc.update_from_excel()
     ing = ds.get_ingredientes("P1")[0]
     assert ing["total"] == 7
+
+
+def test_private_update_from_excel_parses_numbers(ds, tmp_path):
+    wb = Workbook()
+    ws = wb.active
+    ws.append(["Código", "Nome", "Preço1 G"])
+    ws.append(["P1", "Produto 1", "1 234,5"])
+    path = tmp_path / "update.xlsx"
+    wb.save(path)
+
+    _update_from_excel(path, ds)
+    info = ds.get_produto_info("P1")
+    assert info["produto"] == "Produto 1"
+    assert info["preco1g"] == 1234.5
