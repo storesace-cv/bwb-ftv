@@ -1,3 +1,4 @@
+import pytest
 from services.products import ProductService
 from ui.ui_editor_fonte import FTApp
 from utils.formatting import format_pt_number
@@ -65,4 +66,42 @@ def test_load_record_populates_ingredients(qapp):
         assert model.data(model.index(row, 4)) == format_pt_number(data["total"])
     assert ft.tbIng.isColumnHidden(5)
     assert not ft.tbIng.verticalHeader().isVisible()
+    ft.close()
+
+
+class VarStubDataStore(StubDataStore):
+    def __init__(self, n):
+        self.n = n
+
+    def get_ingredientes(self, codigo):
+        return [
+            {
+                "nome": f"Ing{i}",
+                "qtd": 1.0,
+                "unidade": "kg",
+                "ppu": 1.0,
+                "total": 1.0,
+                "codigo": f"C{i}",
+            }
+            for i in range(self.n)
+        ]
+
+
+@pytest.mark.parametrize("rows", [1, 8, 9])
+def test_apply_ing_autofit_or_scroll(rows, qapp):
+    ds = VarStubDataStore(rows)
+    service = ProductService(ds)
+    ft = FTApp(service)
+    ft._load_record(0)
+    ft.show()
+    ft._apply_ing_autofit_or_scroll()
+    qapp.processEvents()
+    vh = ft.tbIng.verticalHeader()
+    hh = ft.tbIng.horizontalHeader()
+    frame = ft.tbIng.frameWidth()
+    row_h = vh.defaultSectionSize()
+    visible = min(rows, 8)
+    expected_h = hh.height() + row_h * visible + frame * 2
+    assert ft.tbIng.height() == expected_h
+    assert ft.tbIng.verticalScrollBar().isVisible() == (rows >= 9)
     ft.close()
