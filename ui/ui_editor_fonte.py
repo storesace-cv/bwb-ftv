@@ -787,9 +787,8 @@ class FTApp(QWidget):
             self._apply_prep_autofit_or_scroll()
 
             try:
-                lists = self._aux_fetch_lists()
                 cbs = (self.cbTipos, self.cbValidade, self.cbTemp)
-                self._aux_populate_cbs(lists, cbs)
+                self._aux_fetch_lists(cbs)
                 _select_by_code(self.cbTipos, product.tipo_artigo_cod)
                 _select_by_code(self.cbValidade, product.validade_cod)
                 _select_by_code(self.cbTemp, product.temperatura_cod)
@@ -866,102 +865,108 @@ class FTApp(QWidget):
         self.btOverlay.setText(f"Overlays: {'ON' if layout.DEV_OVERLAYS else 'OFF'}")
 
     # ================== AUXILIARES — CANÓNICO (v2) ==================
-    def _aux_fetch_lists(self):
-        """Retrieve canonical lists using the service layer.
+    def _aux_fetch_lists(self, cbs=None):
+        """Fetch auxiliary lists via the service layer and populate combo boxes."""
 
-        Falls back to raw SQL inspection if the service layer doesn't expose
-        the required listing helpers. The returned structure maps
-        ``tipo_artigo``, ``validade`` and ``temperatura`` to lists of
-        ``(id, name)`` tuples.
-        """
+        lists = {"tipo_artigo": [], "validade": [], "temperatura": []}
 
         if all(
             hasattr(self.service, m)
             for m in ("list_tipos_artigos", "list_validade", "list_temperaturas")
         ):
-            return {
-                "tipo_artigo": self.service.list_tipos_artigos(),
-                "validade": self.service.list_validade(),
-                "temperatura": self.service.list_temperaturas(),
-            }
-
-        out = {"tipo_artigo": [], "validade": [], "temperatura": []}
-        conn = getattr(self.service, "conn", None)
-        if not conn:
-            return out
-        cur = conn.cursor()
-
-        def resolve_table(candidates):
-            for table in candidates:
-                try:
-                    cur.execute(
-                        "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-                        (table,),
-                    )
-                    if cur.fetchone():
-                        return table
-                except Exception:
-                    pass
-            return None
-
-        def pick_cols(table):
             try:
-                cur.execute(f"PRAGMA table_info({table})")
-                rows = cur.fetchall()
+                lists["tipo_artigo"] = self.service.list_tipos_artigos()
             except Exception:
-                return None, None
-            names = [r[1].lower() for r in rows]
-            id_col = None
-            for cand in ("id", "cod", "codigo"):
-                if cand in names:
-                    id_col = cand
-                    break
-            if id_col is None:
-                for r in rows:
-                    if r[5]:
-                        id_col = r[1]
-                        break
-            name_col = None
-            for cand in ("descricao", "nome", "designacao"):
-                if cand in names:
-                    name_col = cand
-                    break
-            return id_col, name_col
-
-        def fetch_generic(table_candidates):
-            tbl = resolve_table(table_candidates)
-            if not tbl:
-                return []
-            id_col, name_col = pick_cols(tbl)
-            if not id_col or not name_col:
-                return []
-            sql = (
-                f"SELECT {id_col}, {name_col} FROM {tbl} "
-                f"WHERE COALESCE(ativo,1)=1 ORDER BY {name_col}"
-            )
+                pass
             try:
-                cur.execute(sql)
-                rows = cur.fetchall()
+                lists["validade"] = self.service.list_validade()
             except Exception:
-                return []
-            result = []
-            for r in rows:
-                try:
-                    rid = int(r[0])
-                except Exception:
+                pass
+            try:
+                lists["temperatura"] = self.service.list_temperaturas()
+            except Exception:
+                pass
+        else:
+            conn = getattr(self.service, "conn", None)
+            if conn:
+                cur = conn.cursor()
+
+                def resolve_table(candidates):
+                    for table in candidates:
+                        try:
+                            cur.execute(
+                                "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                                (table,),
+                            )
+                            if cur.fetchone():
+                                return table
+                        except Exception:
+                            pass
+                    return None
+
+                def pick_cols(table):
                     try:
-                        rid = int(str(r[0]).strip())
+                        cur.execute(f"PRAGMA table_info({table})")
+                        rows = cur.fetchall()
                     except Exception:
-                        continue
-                name = str(r[1]).strip()
-                if name:
-                    result.append((rid, name))
-            return result
+                        return None, None
+                    names = [r[1].lower() for r in rows]
+                    id_col = None
+                    for cand in ("id", "cod", "codigo"):
+                        if cand in names:
+                            id_col = cand
+                            break
+                    if id_col is None:
+                        for r in rows:
+                            if r[5]:
+                                id_col = r[1]
+                                break
+                    name_col = None
+                    for cand in ("descricao", "nome", "designacao"):
+                        if cand in names:
+                            name_col = cand
+                            break
+                    return id_col, name_col
 
-        out["tipo_artigo"] = fetch_generic(("tipos_artigos",))
-        out["validade"] = fetch_generic(("validade", "validades"))
-        out["temperatura"] = fetch_generic(("temperaturas",))
-        return out
+                def fetch_generic(table_candidates):
+                    tbl = resolve_table(table_candidates)
+                    if not tbl:
+                        return []
+                    id_col, name_col = pick_cols(tbl)
+                    if not id_col or not name_col:
+                        return []
+                    sql = (
+                        f"SELECT {id_col}, {name_col} FROM {tbl} "
+                        f"WHERE COALESCE(ativo,1)=1 ORDER BY {name_col}"
+                    )
+                    try:
+                        cur.execute(sql)
+                        rows = cur.fetchall()
+                    except Exception:
+                        return []
+                    result = []
+                    for r in rows:
+                        try:
+                            rid = int(r[0])
+                        except Exception:
+                            try:
+                                rid = int(str(r[0]).strip())
+                            except Exception:
+                                continue
+                        name = str(r[1]).strip()
+                        if name:
+                            result.append((rid, name))
+                    return result
+
+                lists["tipo_artigo"] = fetch_generic(("tipos_artigos",))
+                lists["validade"] = fetch_generic(("validade", "validades"))
+                lists["temperatura"] = fetch_generic(("temperaturas",))
+
+        try:
+            self._aux_populate_cbs(lists, cbs)
+        except Exception:
+            pass
+        return lists
 
     def _aux_find_cbs(self):
         """Tenta encontrar os 3 comboboxes. Usa objectName e heurística."""
@@ -1036,8 +1041,7 @@ class FTApp(QWidget):
 
     def _aux_refresh_lists(self):
         """Recarrega as listas e atualiza os comboboxes auxiliares."""
-        lists = self._aux_fetch_lists()
-        self._aux_populate_cbs(lists, (self.cbTipos, self.cbValidade, self.cbTemp))
+        self._aux_fetch_lists((self.cbTipos, self.cbValidade, self.cbTemp))
 
     def _aux_load_selected(self, codigo):
         """Tabela de auxiliares removida."""
@@ -1058,9 +1062,8 @@ class FTApp(QWidget):
         def wrapped(idx: int):
             self._loading = True
             try:
-                lists = self._aux_fetch_lists()
                 cbs = self._aux_find_cbs()
-                self._aux_populate_cbs(lists, cbs)
+                self._aux_fetch_lists(cbs)
                 res = orig(idx)
                 try:
                     codigo = self.service.codigo_at(getattr(self, "cur_index", 0))

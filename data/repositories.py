@@ -436,44 +436,38 @@ class AuxiliaresRepo:
     def list_tipos_artigos(self):
         cur = self.conn.cursor()
         try:
-            cur.execute(
-                "SELECT cod, descricao FROM TiposArtigos WHERE ativo=1 ORDER BY cod"
-            )
+            cur.execute("SELECT Cod, Descricao FROM TiposArtigos")
             rows = cur.fetchall()
-            return [(None, "—")] + [(r[0], r[1]) for r in rows]
+            return [(r[0], r[1]) for r in rows]
         except sqlite3.Error as exc:
             logger.error(
                 "[AuxiliaresRepo] list_tipos_artigos falhou: %s", exc, exc_info=True
             )
-            return [(None, "—")]
+            return []
 
     def list_validade(self):
         cur = self.conn.cursor()
         try:
-            cur.execute(
-                "SELECT cod, descricao FROM Validade WHERE ativo=1 ORDER BY cod"
-            )
+            cur.execute("SELECT Cod, Descricao FROM Validade")
             rows = cur.fetchall()
-            return [(None, "—")] + [(r[0], r[1]) for r in rows]
+            return [(r[0], r[1]) for r in rows]
         except sqlite3.Error as exc:
             logger.error(
                 "[AuxiliaresRepo] list_validade falhou: %s", exc, exc_info=True
             )
-            return [(None, "—")]
+            return []
 
     def list_temperaturas(self):
         cur = self.conn.cursor()
         try:
-            cur.execute(
-                "SELECT cod, descricao FROM Temperaturas WHERE ativo=1 ORDER BY cod"
-            )
+            cur.execute("SELECT Cod, Descricao FROM Temperaturas")
             rows = cur.fetchall()
-            return [(None, "—")] + [(r[0], r[1]) for r in rows]
+            return [(r[0], r[1]) for r in rows]
         except sqlite3.Error as exc:
             logger.error(
                 "[AuxiliaresRepo] list_temperaturas falhou: %s", exc, exc_info=True
             )
-            return [(None, "—")]
+            return []
 
     # --- Métodos administrativos adicionados (CRUD) ---
     def list_tipos_artigos_admin(self):
