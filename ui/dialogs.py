@@ -49,3 +49,70 @@ def update_data(parent, service, load_record, cur_index):
     except Exception as exc:  # pragma: no cover - UI feedback only
         logger.exception("Update failed", exc_info=exc)
         QMessageBox.critical(parent, "Atualizar Dados", f"Falha na atualização: {exc}")
+
+
+def manage_aux_table(parent, title: str, repo_methods: dict[str, callable]) -> None:
+    """Display a simple dialog to manage auxiliary tables.
+
+    The ``repo_methods`` mapping must provide callables for ``list``, ``add``
+    and ``set_active`` which correspond to admin methods from
+    :class:`data.repositories.AuxiliaresRepo`.
+    """
+
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtWidgets import (
+        QDialog,
+        QHBoxLayout,
+        QInputDialog,
+        QListWidget,
+        QListWidgetItem,
+        QPushButton,
+        QVBoxLayout,
+    )
+
+    dlg = QDialog(parent)
+    dlg.setWindowTitle(title)
+    vbox = QVBoxLayout(dlg)
+    lst = QListWidget()
+    vbox.addWidget(lst)
+
+    hbox = QHBoxLayout()
+    vbox.addLayout(hbox)
+    bt_add = QPushButton("Adicionar")
+    hbox.addWidget(bt_add)
+    bt_close = QPushButton("Fechar")
+    hbox.addWidget(bt_close)
+
+    def refresh():
+        lst.clear()
+        for cod, desc, ativo in repo_methods["list"]():
+            item = QListWidgetItem(f"{cod} - {desc}")
+            item.setData(Qt.UserRole, (cod, ativo))
+            if not ativo:
+                item.setForeground(Qt.gray)
+            lst.addItem(item)
+
+    def add_item():
+        text, ok = QInputDialog.getText(dlg, "Adicionar", "Descrição:")
+        if ok and text.strip():
+            repo_methods["add"](text.strip())
+            refresh()
+
+    def toggle(item: QListWidgetItem):
+        cod, ativo = item.data(Qt.UserRole)
+        new_state = 0 if ativo else 1
+        if repo_methods["set_active"](cod, new_state):
+            refresh()
+        else:  # pragma: no cover - UI feedback only
+            QMessageBox.warning(
+                dlg,
+                title,
+                "Falha ao atualizar o registo.",
+            )
+
+    bt_add.clicked.connect(add_item)
+    bt_close.clicked.connect(dlg.accept)
+    lst.itemDoubleClicked.connect(toggle)
+
+    refresh()
+    dlg.exec_()

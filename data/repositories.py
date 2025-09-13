@@ -293,6 +293,48 @@ class AuxiliaresRepo:
     def __init__(self, conn: sqlite3.Connection):
         self.conn = conn
 
+    # --- Helpers para operações administrativas genericamente ---
+
+    def _admin_list(self, table: str, log_label: str):
+        cur = self.conn.cursor()
+        try:
+            cur.execute(f"SELECT cod, descricao, ativo FROM {table} ORDER BY cod")
+            return [(r[0], r[1], r[2]) for r in cur.fetchall()]
+        except sqlite3.Error as exc:
+            logger.error(f"[AuxiliaresRepo] {log_label} falhou: %s", exc, exc_info=True)
+            return []
+
+    def _admin_add(self, table: str, log_label: str, descricao: str):
+        cur = self.conn.cursor()
+        try:
+            cur.execute(
+                f"INSERT INTO {table} (descricao, ativo) VALUES (?, 1)",
+                (descricao,),
+            )
+            self.conn.commit()
+            return cur.lastrowid
+        except sqlite3.Error as exc:
+            logger.error(f"[AuxiliaresRepo] {log_label} falhou: %s", exc, exc_info=True)
+            return None
+
+    def _admin_set_active(self, table: str, log_label: str, cod, ativo: int) -> bool:
+        cur = self.conn.cursor()
+        try:
+            cur.execute(
+                f"UPDATE {table} SET ativo=? WHERE cod=?",
+                (int(ativo), cod),
+            )
+            self.conn.commit()
+            return cur.rowcount > 0
+        except sqlite3.Error as exc:
+            logger.error(
+                f"[AuxiliaresRepo] {log_label}(%s) falhou: %s",
+                cod,
+                exc,
+                exc_info=True,
+            )
+            return False
+
     def list_tipos_artigos(self):
         cur = self.conn.cursor()
         try:
@@ -337,32 +379,10 @@ class AuxiliaresRepo:
 
     # --- Métodos administrativos adicionados (CRUD) ---
     def list_tipos_artigos_admin(self):
-        cur = self.conn.cursor()
-        try:
-            cur.execute("SELECT cod, descricao, ativo FROM TiposArtigos ORDER BY cod")
-            return [(r[0], r[1], r[2]) for r in cur.fetchall()]
-        except sqlite3.Error as exc:
-            logger.error(
-                "[AuxiliaresRepo] list_tipos_artigos_admin falhou: %s",
-                exc,
-                exc_info=True,
-            )
-            return []
+        return self._admin_list("TiposArtigos", "list_tipos_artigos_admin")
 
     def add_tipo_artigo(self, descricao: str):
-        cur = self.conn.cursor()
-        try:
-            cur.execute(
-                "INSERT INTO TiposArtigos (descricao, ativo) VALUES (?, 1)",
-                (descricao,),
-            )
-            self.conn.commit()
-            return cur.lastrowid
-        except sqlite3.Error as exc:
-            logger.error(
-                "[AuxiliaresRepo] add_tipo_artigo falhou: %s", exc, exc_info=True
-            )
-            return None
+        return self._admin_add("TiposArtigos", "add_tipo_artigo", descricao)
 
     def update_tipo_artigo(self, cod, descricao: str) -> bool:
         cur = self.conn.cursor()
@@ -383,48 +403,15 @@ class AuxiliaresRepo:
             return False
 
     def set_tipo_artigo_ativo(self, cod, ativo: int) -> bool:
-        cur = self.conn.cursor()
-        try:
-            cur.execute(
-                "UPDATE TiposArtigos SET ativo=? WHERE cod=?",
-                (int(ativo), cod),
-            )
-            self.conn.commit()
-            return cur.rowcount > 0
-        except sqlite3.Error as exc:
-            logger.error(
-                "[AuxiliaresRepo] set_tipo_artigo_ativo(%s) falhou: %s",
-                cod,
-                exc,
-                exc_info=True,
-            )
-            return False
+        return self._admin_set_active(
+            "TiposArtigos", "set_tipo_artigo_ativo", cod, ativo
+        )
 
     def list_validade_admin(self):
-        cur = self.conn.cursor()
-        try:
-            cur.execute("SELECT cod, descricao, ativo FROM Validade ORDER BY cod")
-            return [(r[0], r[1], r[2]) for r in cur.fetchall()]
-        except sqlite3.Error as exc:
-            logger.error(
-                "[AuxiliaresRepo] list_validade_admin falhou: %s",
-                exc,
-                exc_info=True,
-            )
-            return []
+        return self._admin_list("Validade", "list_validade_admin")
 
     def add_validade(self, descricao: str):
-        cur = self.conn.cursor()
-        try:
-            cur.execute(
-                "INSERT INTO Validade (descricao, ativo) VALUES (?, 1)",
-                (descricao,),
-            )
-            self.conn.commit()
-            return cur.lastrowid
-        except sqlite3.Error as exc:
-            logger.error("[AuxiliaresRepo] add_validade falhou: %s", exc, exc_info=True)
-            return None
+        return self._admin_add("Validade", "add_validade", descricao)
 
     def update_validade(self, cod, descricao: str) -> bool:
         cur = self.conn.cursor()
@@ -445,50 +432,13 @@ class AuxiliaresRepo:
             return False
 
     def set_validade_ativo(self, cod, ativo: int) -> bool:
-        cur = self.conn.cursor()
-        try:
-            cur.execute(
-                "UPDATE Validade SET ativo=? WHERE cod=?",
-                (int(ativo), cod),
-            )
-            self.conn.commit()
-            return cur.rowcount > 0
-        except sqlite3.Error as exc:
-            logger.error(
-                "[AuxiliaresRepo] set_validade_ativo(%s) falhou: %s",
-                cod,
-                exc,
-                exc_info=True,
-            )
-            return False
+        return self._admin_set_active("Validade", "set_validade_ativo", cod, ativo)
 
     def list_temperaturas_admin(self):
-        cur = self.conn.cursor()
-        try:
-            cur.execute("SELECT cod, descricao, ativo FROM Temperaturas ORDER BY cod")
-            return [(r[0], r[1], r[2]) for r in cur.fetchall()]
-        except sqlite3.Error as exc:
-            logger.error(
-                "[AuxiliaresRepo] list_temperaturas_admin falhou: %s",
-                exc,
-                exc_info=True,
-            )
-            return []
+        return self._admin_list("Temperaturas", "list_temperaturas_admin")
 
     def add_temperatura(self, descricao: str):
-        cur = self.conn.cursor()
-        try:
-            cur.execute(
-                "INSERT INTO Temperaturas (descricao, ativo) VALUES (?, 1)",
-                (descricao,),
-            )
-            self.conn.commit()
-            return cur.lastrowid
-        except sqlite3.Error as exc:
-            logger.error(
-                "[AuxiliaresRepo] add_temperatura falhou: %s", exc, exc_info=True
-            )
-            return None
+        return self._admin_add("Temperaturas", "add_temperatura", descricao)
 
     def update_temperatura(self, cod, descricao: str) -> bool:
         cur = self.conn.cursor()
@@ -509,22 +459,9 @@ class AuxiliaresRepo:
             return False
 
     def set_temperatura_ativo(self, cod, ativo: int) -> bool:
-        cur = self.conn.cursor()
-        try:
-            cur.execute(
-                "UPDATE Temperaturas SET ativo=? WHERE cod=?",
-                (int(ativo), cod),
-            )
-            self.conn.commit()
-            return cur.rowcount > 0
-        except sqlite3.Error as exc:
-            logger.error(
-                "[AuxiliaresRepo] set_temperatura_ativo(%s) falhou: %s",
-                cod,
-                exc,
-                exc_info=True,
-            )
-            return False
+        return self._admin_set_active(
+            "Temperaturas", "set_temperatura_ativo", cod, ativo
+        )
 
 
 class PreparacaoRepo:
