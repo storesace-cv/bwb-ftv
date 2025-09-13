@@ -218,7 +218,7 @@ class DataStore:
                 "Preco",
                 "Peso",
             },
-            "PrecosTaxas": {"Codigo"},
+            "PrecosTaxas": {"Codigo", "Loja"},
             "Alergenios": {"Id", "Nome", "Ativo"},
             "TiposArtigos": {"Cod", "Descricao", "Ativo"},
             "Validade": {"Cod", "Descricao", "Ativo"},

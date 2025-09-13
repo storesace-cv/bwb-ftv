@@ -169,8 +169,8 @@ def test_datastore_creates_empty_db(tmp_path, monkeypatch):
             "    UnProduFtPV TEXT,\n"
             "    CodAuxiliar TEXT,\n"
             "    CodAuxiliar2 TEXT,\n"
-            "    PCU TEXT,\n"
-            "    PCM TEXT,\n"
+            "    PCU DECIMAL(10,2),\n"
+            "    PCM DECIMAL(10,2),\n"
             "    Descontinuado TEXT,\n"
             "    DispLojas TEXT\n"
             ");\n"
@@ -210,6 +210,7 @@ def test_datastore_missing_tables(tmp_path):
     required = {
         "Produtos",
         "FichasTecnicas",
+        "PrecosTaxas",
         "Alergenios",
         "TiposArtigos",
         "Validade",
