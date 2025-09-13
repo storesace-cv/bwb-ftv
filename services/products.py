@@ -102,6 +102,7 @@ def sync_table_schema(conn, table: str, headers: list[str]) -> list[str]:
         if h and h not in existing:
             cur.execute(f"ALTER TABLE {table} ADD COLUMN {h}")
             info[h] = {"type": "", "pk": 0}
+            existing.add(h)
 
     existing = set(info.keys())
     missing = [c for c in existing if c not in norm_headers]
