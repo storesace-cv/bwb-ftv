@@ -52,6 +52,7 @@
 
 import sys
 import logging
+import re
 from PyQt5.QtCore import Qt, QAbstractTableModel, QSortFilterProxyModel
 from PyQt5.QtGui import QKeySequence, QTextOption
 from PyQt5.QtWidgets import (
@@ -139,6 +140,7 @@ class FTApp(QWidget):
         self.ds = service.ds
         self.cur_index = 0
         self.current_product = None
+        self._prep_dirty = False
         self._build_ui()
         self._connect_nav()
         self._load_record(self.cur_index)
@@ -166,6 +168,9 @@ class FTApp(QWidget):
         self.btOverlay = QPushButton("Overlays: ON")
         self.btOverlay.clicked.connect(self._toggle_overlays_btn)
         top.addWidget(self.btOverlay, 0, Qt.AlignLeft)
+        self.btSave = QPushButton("Guardar")
+        self.btSave.clicked.connect(lambda: self._save_prep(force=True))
+        top.addWidget(self.btSave, 0, Qt.AlignLeft)
         top.addStretch(1)
         from PyQt5.QtWidgets import QToolButton, QMenu, QAction
 
@@ -410,6 +415,7 @@ class FTApp(QWidget):
         self.edPrep.setLineWrapMode(QTextEdit.WidgetWidth)
         self.edPrep.document().setDefaultStyleSheet("img { max-width:100%; }")
         self.edPrep.setPlaceholderText("— Texto de preparação —")
+        self.edPrep.textChanged.connect(self._on_prep_changed)
         self.C4.add(self.edPrep, 1)
 
         # ---------------- B5 — Nutrição / Alergénios (C5) ----------------
@@ -438,6 +444,9 @@ class FTApp(QWidget):
 
         # Atalho teclado para overlays
         QShortcut(QKeySequence("Ctrl+D"), self, activated=self._toggle_overlays)
+        QShortcut(
+            QKeySequence("Ctrl+S"), self, activated=lambda: self._save_prep(force=True)
+        )
 
     # ---------- Alergénios grid ----------
     def _build_allergens_grid(self):
@@ -495,6 +504,37 @@ class FTApp(QWidget):
         self.edPrep.setMaximumHeight(h)
         self.edPrep.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 
+    def _on_prep_changed(self):
+        self._prep_dirty = True
+        self._apply_prep_autofit_or_scroll()
+
+    def _sanitize_prep_html(self, html: str) -> str:
+        try:
+            cleaned = re.sub(r"<script.*?>.*?</script>", "", html, flags=re.I | re.S)
+            return cleaned.strip()
+        except Exception:
+            return html
+
+    def _save_prep(self, force: bool):
+        if not force and not self._prep_dirty:
+            return
+        codigo = getattr(self.current_product, "code", None)
+        if not codigo:
+            return
+        html = self.edPrep.toHtml()
+        html = self._sanitize_prep_html(html)
+        if html.strip():
+            try:
+                self.ds.save_preparacao_html(codigo, html)
+            except Exception:
+                pass
+        else:
+            try:
+                self.ds.save_preparacao_html(codigo, "")
+            except Exception:
+                pass
+        self._prep_dirty = False
+
     # ---------- Navegação ----------
     def _connect_nav(self):
         self.btFirst.clicked.connect(lambda: self._goto(0))
@@ -503,10 +543,14 @@ class FTApp(QWidget):
         self.btLast.clicked.connect(lambda: self._goto(self.service.total() - 1))
 
     def _goto(self, idx):
+        if self._prep_dirty:
+            self._save_prep(force=False)
         self.cur_index = max(0, min(idx, self.service.total() - 1))
         self._load_record(self.cur_index)
 
     def _go(self, delta):
+        if self._prep_dirty:
+            self._save_prep(force=False)
         self.cur_index = (self.cur_index + delta) % max(1, self.service.total())
         self._load_record(self.cur_index)
 
@@ -585,10 +629,13 @@ class FTApp(QWidget):
         self.lbPos.setText(f"{self.cur_index+1} / {max(1,self.service.total())}")
 
         try:
-            html = self.ds.get_preparacao_html(codigo)
+            html = self.ds.get_preparacao_html(codigo) or ""
         except Exception:
             html = ""
-        self.edPrep.setHtml(html or "")
+        self.edPrep.blockSignals(True)
+        self.edPrep.setHtml(html)
+        self.edPrep.blockSignals(False)
+        self._prep_dirty = False
         self._apply_prep_autofit_or_scroll()
 
         # --- Auxiliares: fetch/populate/load (canon) ---
