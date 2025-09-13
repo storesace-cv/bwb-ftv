@@ -178,7 +178,33 @@ class DataStore:
         """Verifica se tabelas e colunas essenciais existem na base de dados."""
 
         required = {
-            "Produtos": {"Codigo"},
+            # Campos mínimos esperados em ``Produtos``.  Estes refletem o
+            # esquema expandido utilizado pelo projeto e são essenciais para a
+            # importação e apresentação de dados.
+            "Produtos": {
+                "Codigo",
+                "Produto",
+                "Familia",
+                "SubFamilia",
+                "AfetaStk",
+                "Menu",
+                "CodBarras",
+                "TipoMercad",
+                "TipoVenda",
+                "TipoProducao",
+                "TipoGener",
+                "UnStockVMPG",
+                "UnVendaVMV",
+                "UnInvVMMMPG",
+                "UnProduFtPV",
+                "CodAuxiliar",
+                "CodAuxiliar2",
+                "PCU",
+                "PCM",
+                "Descontinuado",
+                "DispLojas",
+            },
+            # ``FichasTecnicas`` deve ter pelo menos a ligação ao produto.
             "FichasTecnicas": {"ProdutoCodigo"},
             "PrecosTaxas": {"Codigo"},
             "Alergenios": {"Id", "Nome", "Ativo"},

@@ -149,8 +149,32 @@ def test_datastore_creates_empty_db(tmp_path, monkeypatch):
     (tmp_path / "data").mkdir()
     (tmp_path / "databases").mkdir()
     (tmp_path / "data" / "schema.sql").write_text(
-        "CREATE TABLE Produtos (Codigo TEXT PRIMARY KEY);"
-        "CREATE TABLE FichasTecnicas (ProdutoCodigo TEXT);",
+        (
+            "CREATE TABLE Produtos (\n"
+            "    Codigo TEXT PRIMARY KEY,\n"
+            "    Produto TEXT,\n"
+            "    Familia TEXT,\n"
+            "    SubFamilia TEXT,\n"
+            "    AfetaStk TEXT,\n"
+            "    Menu TEXT,\n"
+            "    CodBarras TEXT,\n"
+            "    TipoMercad TEXT,\n"
+            "    TipoVenda TEXT,\n"
+            "    TipoProducao TEXT,\n"
+            "    TipoGener TEXT,\n"
+            "    UnStockVMPG TEXT,\n"
+            "    UnVendaVMV TEXT,\n"
+            "    UnInvVMMMPG TEXT,\n"
+            "    UnProduFtPV TEXT,\n"
+            "    CodAuxiliar TEXT,\n"
+            "    CodAuxiliar2 TEXT,\n"
+            "    PCU TEXT,\n"
+            "    PCM TEXT,\n"
+            "    Descontinuado TEXT,\n"
+            "    DispLojas TEXT\n"
+            ");\n"
+            "CREATE TABLE FichasTecnicas (ProdutoCodigo TEXT);\n"
+        ),
         encoding="utf-8",
     )
 

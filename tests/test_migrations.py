@@ -35,7 +35,31 @@ def test_datastore_migration_accept(monkeypatch, tmp_path):
     db_dir.mkdir()
     db_path = db_dir / "ftv.db"
     conn = sqlite3.connect(str(db_path))
-    conn.execute("CREATE TABLE Produtos (Codigo TEXT)")
+    conn.execute(
+        "CREATE TABLE Produtos ("
+        "Codigo TEXT PRIMARY KEY,"
+        "Produto TEXT,"
+        "Familia TEXT,"
+        "SubFamilia TEXT,"
+        "AfetaStk TEXT,"
+        "Menu TEXT,"
+        "CodBarras TEXT,"
+        "TipoMercad TEXT,"
+        "TipoVenda TEXT,"
+        "TipoProducao TEXT,"
+        "TipoGener TEXT,"
+        "UnStockVMPG TEXT,"
+        "UnVendaVMV TEXT,"
+        "UnInvVMMMPG TEXT,"
+        "UnProduFtPV TEXT,"
+        "CodAuxiliar TEXT,"
+        "CodAuxiliar2 TEXT,"
+        "PCU TEXT,"
+        "PCM TEXT,"
+        "Descontinuado TEXT,"
+        "DispLojas TEXT"
+        ")"
+    )
     conn.execute("CREATE TABLE FichasTecnicas (ProdutoCodigo TEXT)")
     conn.commit()
     conn.close()
@@ -89,7 +113,31 @@ def test_datastore_migration_decline(monkeypatch, tmp_path):
     db_dir.mkdir()
     db_path = db_dir / "ftv.db"
     conn = sqlite3.connect(str(db_path))
-    conn.execute("CREATE TABLE Produtos (Codigo TEXT)")
+    conn.execute(
+        "CREATE TABLE Produtos ("
+        "Codigo TEXT PRIMARY KEY,"
+        "Produto TEXT,"
+        "Familia TEXT,"
+        "SubFamilia TEXT,"
+        "AfetaStk TEXT,"
+        "Menu TEXT,"
+        "CodBarras TEXT,"
+        "TipoMercad TEXT,"
+        "TipoVenda TEXT,"
+        "TipoProducao TEXT,"
+        "TipoGener TEXT,"
+        "UnStockVMPG TEXT,"
+        "UnVendaVMV TEXT,"
+        "UnInvVMMMPG TEXT,"
+        "UnProduFtPV TEXT,"
+        "CodAuxiliar TEXT,"
+        "CodAuxiliar2 TEXT,"
+        "PCU TEXT,"
+        "PCM TEXT,"
+        "Descontinuado TEXT,"
+        "DispLojas TEXT"
+        ")"
+    )
     conn.execute("CREATE TABLE FichasTecnicas (ProdutoCodigo TEXT)")
     conn.commit()
     conn.close()
