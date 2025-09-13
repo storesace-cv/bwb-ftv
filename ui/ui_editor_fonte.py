@@ -367,6 +367,7 @@ class FTApp(QWidget):
         C1A22.add(w_tipos)
         C1A22.add(w_val)
         C1A22.add(w_temp)
+        self.cbTipos.currentIndexChanged.connect(self._on_tipo_artigo_changed)
 
         # C1.B — placeholder de preview
         prev = QLabel("Pré-visualização")
@@ -718,96 +719,81 @@ class FTApp(QWidget):
 
     # ---------- Carregamento de dados ----------
     def _load_record(self, idx: int):
-        codigo = self.service.codigo_at(idx)
-        product = self.service.get_product_info(codigo)
-        self.current_product = product
+        self._loading = True
+        try:
+            codigo = self.service.codigo_at(idx)
+            product = self.service.get_product_info(codigo)
+            self.current_product = product
 
-        self.edCodigo.setText(product.code or "")
-        self.edNome.setText(product.name or "")
-        self.lbFamiliaVal.setText(product.familia or "")
-        self.lbSubFamiliaVal.setText(product.subfamilia or "")
+            self.edCodigo.setText(product.code or "")
+            self.edNome.setText(product.name or "")
+            self.lbFamiliaVal.setText(product.familia or "")
+            self.lbSubFamiliaVal.setText(product.subfamilia or "")
 
-        pvps = product.pvps
-        values = [
-            pvps.get("pvp1"),
-            pvps.get("pvp2"),
-            pvps.get("pvp3"),
-            pvps.get("pvp4"),
-            pvps.get("pvp5"),
-        ]
-        for i, val in enumerate(values):
-            if i < len(self.lbPVP):
-                self.lbPVP[i].setText(format_pt_number(val))
-
-        self.cbTipos.clear()
-        self.cbValidade.clear()
-        self.cbTemp.clear()
-        self.cbTipos.addItems([])
-        self.cbTipos.clear()
-        for cod, desc in self.service.list_tipos_artigos():
-            self.cbTipos.addItem(desc, cod)
-
-        self.cbValidade.clear()
-        for cod, desc in self.service.list_validade():
-            self.cbValidade.addItem(desc, cod)
-
-        self.cbTemp.clear()
-        for cod, desc in self.service.list_temperaturas():
-            self.cbTemp.addItem(desc, cod)
-
-        def _select_by_code(combo, code_value):
-            if code_value is None:
-                return
-            for i in range(combo.count()):
-                if combo.itemData(i) == code_value:
-                    combo.setCurrentIndex(i)
-                    return
-
-        _select_by_code(self.cbTipos, product.tipo_artigo_cod)
-        _select_by_code(self.cbValidade, product.validade_cod)
-        _select_by_code(self.cbTemp, product.temperatura_cod)
-
-        fichas_func = getattr(self.service, "list_fichas_tecnicas", None)
-        if callable(fichas_func):
-            fichas = fichas_func(codigo)
-        else:
-            fichas = [
-                FichaTecnica(
-                    ingredient=ing.name,
-                    quantity=ing.quantity,
-                    unit=ing.unit,
-                    ppu=ing.ppu,
-                    total=ing.total,
-                    code=ing.code,
-                )
-                for ing in product.ingredients
+            pvps = product.pvps
+            values = [
+                pvps.get("pvp1"),
+                pvps.get("pvp2"),
+                pvps.get("pvp3"),
+                pvps.get("pvp4"),
+                pvps.get("pvp5"),
             ]
-        self.ingModel.update_data(fichas)
+            for i, val in enumerate(values):
+                if i < len(self.lbPVP):
+                    self.lbPVP[i].setText(format_pt_number(val))
 
-        self._apply_ingredient_widths()
-        self.edCustoTotal.setText(
-            format_pt_number(self.service.calculate_cost(product))
-        )
-        self.lbPos.setText(f"{self.cur_index+1} / {max(1,self.service.total())}")
+            def _select_by_code(combo, code_value):
+                if code_value is None:
+                    return
+                for i in range(combo.count()):
+                    if combo.itemData(i) == code_value:
+                        combo.setCurrentIndex(i)
+                        return
 
-        try:
-            html = self.ds.get_preparacao_html(codigo) or ""
-        except Exception:
-            html = ""
-        self.edPrep.blockSignals(True)
-        self.edPrep.setHtml(html)
-        self.edPrep.blockSignals(False)
-        self._prep_dirty = False
-        self._apply_prep_autofit_or_scroll()
+            fichas_func = getattr(self.service, "list_fichas_tecnicas", None)
+            if callable(fichas_func):
+                fichas = fichas_func(codigo)
+            else:
+                fichas = [
+                    FichaTecnica(
+                        ingredient=ing.name,
+                        quantity=ing.quantity,
+                        unit=ing.unit,
+                        ppu=ing.ppu,
+                        total=ing.total,
+                        code=ing.code,
+                    )
+                    for ing in product.ingredients
+                ]
+            self.ingModel.update_data(fichas)
 
-        # --- Auxiliares: fetch/populate/load (canon) ---
-        try:
-            lists = self._aux_fetch_lists()
-            cbs = self._aux_find_cbs()
-            self._aux_populate_cbs(lists, cbs)
-            self._aux_load_selected(codigo)
-        except Exception as e:
-            logger.error("[AuxCanon][ERRO] %s", e)
+            self._apply_ingredient_widths()
+            self.edCustoTotal.setText(
+                format_pt_number(self.service.calculate_cost(product))
+            )
+            self.lbPos.setText(f"{self.cur_index+1} / {max(1,self.service.total())}")
+
+            try:
+                html = self.ds.get_preparacao_html(codigo) or ""
+            except Exception:
+                html = ""
+            self.edPrep.blockSignals(True)
+            self.edPrep.setHtml(html)
+            self.edPrep.blockSignals(False)
+            self._prep_dirty = False
+            self._apply_prep_autofit_or_scroll()
+
+            try:
+                lists = self._aux_fetch_lists()
+                cbs = (self.cbTipos, self.cbValidade, self.cbTemp)
+                self._aux_populate_cbs(lists, cbs)
+                _select_by_code(self.cbTipos, product.tipo_artigo_cod)
+                _select_by_code(self.cbValidade, product.validade_cod)
+                _select_by_code(self.cbTemp, product.temperatura_cod)
+            except Exception as e:
+                logger.error("[AuxCanon][ERRO] %s", e)
+        finally:
+            self._loading = False
 
     # ---------- Cálculos ----------
     def _update_costs_from_table(self):
@@ -815,6 +801,20 @@ class FTApp(QWidget):
         try:
             total = self.service.calculate_cost(self.current_product)
             self.edCustoTotal.setText(format_pt_number(total))
+        except Exception:
+            pass
+
+    def _on_tipo_artigo_changed(self, idx: int):
+        if getattr(self, "_loading", False):
+            return
+        codigo = getattr(self.current_product, "code", None)
+        if not codigo:
+            return
+        tipo_cod = self.cbTipos.itemData(idx)
+        try:
+            self.service.set_tipo_artigo(codigo, tipo_cod)
+            if self.current_product:
+                self.current_product.tipo_artigo_cod = tipo_cod
         except Exception:
             pass
 
@@ -836,14 +836,23 @@ class FTApp(QWidget):
 
     # ================== AUXILIARES — CANÓNICO (v2) ==================
     def _aux_fetch_lists(self):
-        """Retrieve canonical lists from the database.
+        """Retrieve canonical lists using the service layer.
 
-        The method resolves table and column names dynamically and only
-        returns active records (``COALESCE(ativo,1)=1``).  The returned
-        structure is a dictionary with the keys ``tipo_artigo``,
-        ``validade`` and ``temperatura`` mapping to ``[(id, nome)]``
-        tuples.
+        Falls back to raw SQL inspection if the service layer doesn't expose
+        the required listing helpers. The returned structure maps
+        ``tipo_artigo``, ``validade`` and ``temperatura`` to lists of
+        ``(id, name)`` tuples.
         """
+
+        if all(
+            hasattr(self.service, m)
+            for m in ("list_tipos_artigos", "list_validade", "list_temperaturas")
+        ):
+            return {
+                "tipo_artigo": self.service.list_tipos_artigos(),
+                "validade": self.service.list_validade(),
+                "temperatura": self.service.list_temperaturas(),
+            }
 
         out = {"tipo_artigo": [], "validade": [], "temperatura": []}
         conn = getattr(self.service, "conn", None)
@@ -997,7 +1006,7 @@ class FTApp(QWidget):
     def _aux_refresh_lists(self):
         """Recarrega as listas e atualiza os comboboxes auxiliares."""
         lists = self._aux_fetch_lists()
-        self._aux_populate_cbs(lists)
+        self._aux_populate_cbs(lists, (self.cbTipos, self.cbValidade, self.cbTemp))
 
     def _aux_load_selected(self, codigo):
         """Tabela de auxiliares removida."""

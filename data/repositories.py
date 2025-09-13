@@ -81,6 +81,26 @@ class ProdutosRepo:
                 "pvp5": None,
             }
 
+    def set_tipo_artigo(self, codigo: str, tipo_cod) -> bool:
+        """Atualiza o campo ``TipoArtigo`` de um produto."""
+        cur = self.conn.cursor()
+        try:
+            cur.execute(
+                "UPDATE Produtos SET TipoArtigo = ? WHERE Codigo = ?",
+                (tipo_cod, codigo),
+            )
+            self.conn.commit()
+            return cur.rowcount > 0
+        except sqlite3.Error as exc:
+            logger.error(
+                "[ProdutosRepo] set_tipo_artigo(%s, %s) falhou: %s",
+                codigo,
+                tipo_cod,
+                exc,
+                exc_info=True,
+            )
+            return False
+
 
 class IngredientesRepo:
     def __init__(self, conn):
