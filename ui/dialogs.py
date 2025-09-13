@@ -57,23 +57,23 @@ def update_data(parent, service, load_record, cur_index):
 
 
 def backup_database(parent, datastore):
-    """Create a timestamped backup of the current database."""
+    """Create a timestamped backup of the database file."""
 
-    conn = getattr(datastore, "conn", None)
-    if conn is None:
+    if getattr(datastore, "conn", None) is None:
         QMessageBox.warning(parent, "Segurança", "Base de dados indisponível.")
         return
     try:
-        db_file = Path(conn.execute("PRAGMA database_list").fetchone()[2])
-        backup = create_backup(db_file)
-        QMessageBox.information(parent, "Segurança", f"Cópia criada: {backup.name}.")
+        backup = create_backup()
+        QMessageBox.information(
+            parent, "Segurança", f"Ficheiro copiado: {backup.name}."
+        )
     except Exception as exc:  # pragma: no cover - UI feedback only
         logger.exception("Backup failed", exc_info=exc)
         QMessageBox.critical(parent, "Segurança", f"Falha na cópia: {exc}")
 
 
 def restore_database(parent, datastore):
-    """Restore the main database from a selected backup file."""
+    """Restore ``ftv.db`` from a selected backup file and rebuild caches."""
 
     backups_dir = get_project_root() / "databases" / "backups"
     if not backups_dir.exists() or not any(backups_dir.glob("*.db")):
@@ -89,16 +89,27 @@ def restore_database(parent, datastore):
     if not file_path:
         return
 
-    conn = getattr(datastore, "conn", None)
-    if conn is None:
+    if getattr(datastore, "conn", None) is None:
         QMessageBox.warning(parent, "Reposição", "Base de dados indisponível.")
         return
-    db_path = Path(conn.execute("PRAGMA database_list").fetchone()[2])
+
     try:
         datastore.close()
-        restore_backup(Path(file_path), db_path)
+        restore_backup(Path(file_path))
+        db_path = get_project_root() / "databases" / "ftv.db"
         datastore.conn = sqlite3.connect(str(db_path))
         datastore.conn.row_factory = sqlite3.Row
+        from data.repositories import (
+            ProdutosRepo,
+            IngredientesRepo,
+            AuxiliaresRepo,
+            PreparacaoRepo,
+        )
+
+        datastore.produtos = ProdutosRepo(datastore.conn)
+        datastore.ingredientes = IngredientesRepo(datastore.conn)
+        datastore.aux = AuxiliaresRepo(datastore.conn)
+        datastore.prep = PreparacaoRepo(datastore.conn)
         datastore.reload_ids()
         QMessageBox.information(parent, "Reposição", "Reposição concluída.")
     except Exception as exc:  # pragma: no cover - UI feedback only

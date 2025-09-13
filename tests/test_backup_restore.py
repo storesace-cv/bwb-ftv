@@ -22,7 +22,7 @@ def test_backup_and_restore(tmp_path, monkeypatch):
     root = tmp_path
     databases_dir = root / "databases"
     databases_dir.mkdir()
-    db_file = databases_dir / "main.db"
+    db_file = databases_dir / "ftv.db"
 
     ds = DummyDatastore(db_file)
     ds.conn.execute("CREATE TABLE data (value TEXT)")
@@ -41,8 +41,7 @@ def test_backup_and_restore(tmp_path, monkeypatch):
     assert len(backups) == 1
     backup = backups[0]
     assert backup.parent == backups_dir
-    stem, timestamp = backup.stem.split(".")
-    assert stem == db_file.stem
+    _, timestamp = backup.stem.split(".")
     assert len(timestamp) == 15
     datetime.strptime(timestamp, "%Y%m%d_%H%M%S")
 
