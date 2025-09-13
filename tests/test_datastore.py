@@ -21,6 +21,61 @@ def _make_datastore():
     return ds
 
 
+def test_datastore_upgrades_missing_columns(tmp_path):
+    db_path = tmp_path / "old.db"
+    conn = sqlite3.connect(db_path)
+    conn.execute(
+        (
+            "CREATE TABLE Produtos (\n"
+            "    Codigo TEXT PRIMARY KEY,\n"
+            "    Produto TEXT,\n"
+            "    Familia TEXT,\n"
+            "    SubFamilia TEXT,\n"
+            "    AfetaStk TEXT,\n"
+            "    Menu TEXT,\n"
+            "    CodBarras TEXT,\n"
+            "    TipoMercad TEXT,\n"
+            "    TipoVenda TEXT,\n"
+            "    TipoProducao TEXT,\n"
+            "    TipoGener TEXT,\n"
+            "    UnStockVMPG TEXT,\n"
+            "    UnVendaVMV TEXT,\n"
+            "    UnProduFtPV TEXT,\n"
+            "    CodAuxiliar TEXT,\n"
+            "    CodAuxiliar2 TEXT,\n"
+            "    PCU DECIMAL(10,2),\n"
+            "    PCM DECIMAL(10,2),\n"
+            "    Descontinuado TEXT,\n"
+            "    DispLojas TEXT\n"
+            ")"
+        )
+    )
+    conn.execute(
+        (
+            "CREATE TABLE FichasTecnicas (\n"
+            "    FamiliaSubfamilia TEXT,\n"
+            "    ProdutoCodigo TEXT,\n"
+            "    ProdutoNome TEXT,\n"
+            "    ComponenteCodigo TEXT,\n"
+            "    ComponenteNome TEXT,\n"
+            "    Qtd DECIMAL(10,2),\n"
+            "    Unidade TEXT,\n"
+            "    Ppu DECIMAL(10,2),\n"
+            "    Peso DECIMAL(10,2)\n"
+            ")"
+        )
+    )
+    conn.commit()
+    conn.close()
+
+    ds = DataStore(db_path=db_path)
+    cur = ds.conn.execute("PRAGMA table_info(Produtos)")
+    assert any(r[1] == "UnInvVMMMPG" for r in cur.fetchall())
+    cur = ds.conn.execute("PRAGMA table_info(FichasTecnicas)")
+    assert any(r[1] == "Preco" for r in cur.fetchall())
+    ds.close()
+
+
 def test_list_validades_rw():
     ds = _make_datastore()
     assert ds.list_validades()[1:] == [(1, "24h"), (2, "48h")]
