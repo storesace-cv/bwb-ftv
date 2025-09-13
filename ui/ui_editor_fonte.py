@@ -5,10 +5,10 @@
 # 1) Nomenclatura de Blocos e Células
 #    - Blocos: [B1] Dados Gerais, [B2] Ingredientes,
 #      [B3] Custos, [B4] Preparação, [B5] Nutrição / Alergénios.
-#    - Célula raiz do bloco: Cn (ex.: C1, C2, C3, C4, C5).
+#    - Célula raiz do bloco: Bn.Cn (ex.: B1.C1, B2.C2, B3.C3, B4.C4, B5.C5).
 #    - Divisão horizontal: sufixos .A (esq.) e .B (dir.).
 #    - Divisão vertical: sufixos .1 (topo) e .2 (base).
-#    - Subdivisões encadeiam-se mantendo a regra (ex.: C1.A.2.B).
+#    - Subdivisões encadeiam-se mantendo a regra (ex.: B1.C1.A.2.B).
 #    - NÃO usar nomes ad hoc (ex.: C3.X, C3AA, C3AB).
 #
 # 2) Changelog: toda alteração documentada deve incluir data/hora
@@ -293,8 +293,10 @@ class FTApp(QWidget):
         page.setMinimumWidth(1100)
         root.addWidget(scroll, 1)
 
-        # ---------------- B1 — Dados Gerais (C1) ----------------
-        self.C1 = Zone("C1", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS)
+        # ---------------- B1 — Dados Gerais (B1.C1) ----------------
+        self.C1 = Zone(
+            "B1.C1", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
+        )
         page_ly.addWidget(self._section_box("[B1] - Dados Gerais", self.C1), 0)
 
         C1A, C1B = self.C1.split_h((3, 1))
@@ -308,11 +310,11 @@ class FTApp(QWidget):
         C1A1.add_row("Código:", self.edCodigo, label_minw=lbl_w, vspacing=2)
         C1A1.add_row("Nome do Artigo:", self.edNome, label_minw=lbl_w, vspacing=2)
 
-        # C1.A.2        # C1.A.2
+        # B1.C1.A.2
         C1A21, C1A22 = C1A2.split_h(
             (3, 1)
-        )  # C1.A.2.A (famílias/PVPs) + C1.A.2.B (combos)
-        # C1.A.2.A → divide verticalmente: topo (famílias) + base (PVP1..PVP5)
+        )  # B1.C1.A.2.A (famílias/PVPs) + B1.C1.A.2.B (combos)
+        # B1.C1.A.2.A → divide verticalmente: topo (famílias) + base (PVP1..PVP5)
         C1A21_top, C1A21_base = C1A21.split_v((1, 2))
         C1A21_top.apply_overlays(True)
         self.lbFamiliaVal = QLabel("")
@@ -341,7 +343,7 @@ class FTApp(QWidget):
         self.lbPVP = []
         for i in range(5):
             col = Zone(
-                f"C1.A.2.A.{i+1}",
+                f"B1.C1.A.2.A.{i+1}",
                 base_cont,
                 flow="v",
                 margins=2,
@@ -360,7 +362,7 @@ class FTApp(QWidget):
             self.lbPVP.append(val)
             base_h.addWidget(col, 1)
 
-        # Combos diretamente em C1.A.2.B (sem .B.2)
+        # Combos diretamente em B1.C1.A.2.B (sem .B.2)
         w_tipos, self.cbTipos = stack_combo("Tipos Artigos")
         w_val, self.cbValidade = stack_combo("Validade")
         w_temp, self.cbTemp = stack_combo("Temperaturas")
@@ -372,14 +374,16 @@ class FTApp(QWidget):
         self.cbValidade.currentIndexChanged.connect(self._on_validade_changed)
         self.cbTemp.currentIndexChanged.connect(self._on_temperatura_changed)
 
-        # C1.B — placeholder de preview
+        # B1.C1.B — placeholder de preview
         prev = QLabel("Pré-visualização")
         prev.setAlignment(Qt.AlignCenter)
         prev.setStyleSheet("border:1px solid #ccc; padding:8px;")
         C1B.add(prev, 1)
 
-        # ---------------- B2 — Ingredientes (C2) ----------------
-        self.C2 = Zone("C2", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS)
+        # ---------------- B2 — Ingredientes (B2.C2) ----------------
+        self.C2 = Zone(
+            "B2.C2", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
+        )
         page_ly.addWidget(self._section_box("[B2] - Ingredientes", self.C2), 0)
 
         self.ingModel = FichasTecnicasModel([])
@@ -392,12 +396,14 @@ class FTApp(QWidget):
         self.C2.add(self.tbIng, 1)
         self._setup_ing_columns()
 
-        # ---------------- B3 — Custos (C3) ----------------
-        self.C3 = Zone("C3", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS)
+        # ---------------- B3 — Custos (B3.C3) ----------------
+        self.C3 = Zone(
+            "B3.C3", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
+        )
         page_ly.addWidget(self._section_box("[B3] - Custos", self.C3), 0)
 
         C3A = Zone(
-            "C3.A",
+            "B3.C3.A",
             self.C3,
             flow="v",
             level=1,
@@ -419,8 +425,10 @@ class FTApp(QWidget):
 
         C3AB.add(QLabel("Food Cost:"), 0)
 
-        # ---------------- B4 — Preparação (C4) ----------------
-        self.C4 = Zone("C4", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS)
+        # ---------------- B4 — Preparação (B4.C4) ----------------
+        self.C4 = Zone(
+            "B4.C4", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
+        )
         page_ly.addWidget(self._section_box("[B4] - Preparação", self.C4), 1)
 
         # Toolbar de formatação
@@ -467,8 +475,10 @@ class FTApp(QWidget):
         self.edPrep.textChanged.connect(self._on_prep_changed)
         self.C4.add(self.edPrep, 1)
 
-        # ---------------- B5 — Nutrição / Alergénios (C5) ----------------
-        self.C5 = Zone("C5", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS)
+        # ---------------- B5 — Nutrição / Alergénios (B5.C5) ----------------
+        self.C5 = Zone(
+            "B5.C5", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
+        )
         page_ly.addWidget(self._section_box("[B5] - Nutrição / Alergénios", self.C5), 0)
 
         self._build_allergens_grid()
@@ -857,7 +867,7 @@ class FTApp(QWidget):
     def _toggle_overlays(self):
         layout.DEV_OVERLAYS = not layout.DEV_OVERLAYS
         for z in self.findChildren(Zone):
-            if z.tag.count(".") == 0 and layout.validate_tag(z.tag):
+            if z.tag.count(".") == 1 and layout.validate_tag(z.tag):
                 z.apply_overlays(layout.DEV_OVERLAYS)
 
     def _toggle_overlays_btn(self):

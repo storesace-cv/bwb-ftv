@@ -13,7 +13,8 @@ from PyQt5.QtWidgets import (
 DEV_OVERLAYS = True
 
 
-_TAG_RE = re.compile(r"^C\d+(?:\.(?:A|B|\d+))*$")
+# Updated to allow block-prefixed cell identifiers like ``B1.C1``
+_TAG_RE = re.compile(r"^B\d+\.C\d+(?:\.(?:A|B|\d+))*$")
 
 
 def validate_tag(tag: str) -> bool:
