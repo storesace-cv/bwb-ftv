@@ -11,6 +11,162 @@ from utils.paths import get_project_root
 BASE_DIR = get_project_root()
 MIGRATIONS_DIR = BASE_DIR / "data" / "migrations"
 
+PRODUTOS_SCHEMA = """
+CREATE TABLE IF NOT EXISTS Produtos (
+    Codigo TEXT PRIMARY KEY,
+    Produto TEXT,
+    Familia TEXT,
+    SubFamilia TEXT,
+    AfetaStk TEXT,
+    Menu TEXT,
+    CodBarras TEXT,
+    TipoMercad TEXT,
+    TipoVenda TEXT,
+    TipoProducao TEXT,
+    TipoGener TEXT,
+    UnStockVMPG TEXT,
+    UnVendaVMV TEXT,
+    UnInvVMMMPG TEXT,
+    UnProduFtPV TEXT,
+    CodAuxiliar TEXT,
+    CodAuxiliar2 TEXT,
+    PCU DECIMAL(10,2),
+    PCM DECIMAL(10,2),
+    Descontinuado TEXT,
+    DispLojas TEXT
+)
+"""
+
+FICHAS_TECNICAS_SCHEMA = """
+CREATE TABLE IF NOT EXISTS FichasTecnicas (
+    FamiliaSubfamilia TEXT,
+    ProdutoCodigo TEXT,
+    ProdutoNome TEXT,
+    ComponenteCodigo TEXT,
+    ComponenteNome TEXT,
+    Qtd DECIMAL(10,2),
+    Unidade TEXT,
+    Ppu DECIMAL(10,2),
+    Preco DECIMAL(10,2),
+    Peso DECIMAL(10,2)
+)
+"""
+
+PRECOS_TAXAS_SCHEMA = """
+CREATE TABLE IF NOT EXISTS PrecosTaxas (
+    Codigo TEXT NOT NULL,
+    Loja TEXT NOT NULL,
+    Ativo TEXT,
+    Preco1 DECIMAL(10,2),
+    Preco2 DECIMAL(10,2),
+    Preco3 DECIMAL(10,2),
+    Preco4 DECIMAL(10,2),
+    Preco5 DECIMAL(10,2),
+    Iva1 DECIMAL(10,2),
+    Iva2 DECIMAL(10,2),
+    IsencaoIva TEXT,
+    NomeProdVenda TEXT,
+    Familia TEXT,
+    SubFamilia TEXT,
+    PRIMARY KEY (Codigo, Loja)
+)
+"""
+
+
+def _recreate_table(
+    conn: sqlite3.Connection, name: str, schema: str, columns: list[str]
+) -> None:
+    tmp = f"{name}_old"
+    with conn:
+        conn.execute(f"ALTER TABLE {name} RENAME TO {tmp}")
+        conn.execute(schema.replace("IF NOT EXISTS ", ""))
+        cur = conn.execute(f"PRAGMA table_info({tmp})")
+        existing = {r[1] for r in cur.fetchall()}
+        copy_cols = [c for c in columns if c in existing]
+        if copy_cols:
+            cols = ",".join(copy_cols)
+            conn.execute(f"INSERT INTO {name} ({cols}) SELECT {cols} FROM {tmp}")
+        conn.execute(f"DROP TABLE {tmp}")
+
+
+def _upgrade_tables(conn: sqlite3.Connection) -> None:
+    cur = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='Produtos'"
+    )
+    if cur.fetchone():
+        info = {r[1]: r[2].upper() for r in conn.execute("PRAGMA table_info(Produtos)")}
+        has_cols = "PCU" in info and "PCM" in info
+        if has_cols and (
+            info.get("PCU") != "DECIMAL(10,2)" or info.get("PCM") != "DECIMAL(10,2)"
+        ):
+            cols = [
+                "Codigo",
+                "Produto",
+                "Familia",
+                "SubFamilia",
+                "AfetaStk",
+                "Menu",
+                "CodBarras",
+                "TipoMercad",
+                "TipoVenda",
+                "TipoProducao",
+                "TipoGener",
+                "UnStockVMPG",
+                "UnVendaVMV",
+                "UnInvVMMMPG",
+                "UnProduFtPV",
+                "CodAuxiliar",
+                "CodAuxiliar2",
+                "PCU",
+                "PCM",
+                "Descontinuado",
+                "DispLojas",
+            ]
+            _recreate_table(conn, "Produtos", PRODUTOS_SCHEMA, cols)
+
+    cur = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='PrecosTaxas'"
+    )
+    if cur.fetchone():
+        rows = list(conn.execute("PRAGMA table_info(PrecosTaxas)"))
+        types = {r[1]: r[2].upper() for r in rows}
+        pk_cols = [r[1] for r in rows if r[5] > 0]
+        required = [
+            "Preco1",
+            "Preco2",
+            "Preco3",
+            "Preco4",
+            "Preco5",
+            "Iva1",
+            "Iva2",
+            "Loja",
+        ]
+        has_cols = all(c in types for c in required)
+        need = has_cols and pk_cols != ["Codigo", "Loja"]
+        if has_cols:
+            for c in required[:-1]:
+                if types.get(c) != "DECIMAL(10,2)":
+                    need = True
+                    break
+        if need:
+            cols = [
+                "Codigo",
+                "Loja",
+                "Ativo",
+                "Preco1",
+                "Preco2",
+                "Preco3",
+                "Preco4",
+                "Preco5",
+                "Iva1",
+                "Iva2",
+                "IsencaoIva",
+                "NomeProdVenda",
+                "Familia",
+                "SubFamilia",
+            ]
+            _recreate_table(conn, "PrecosTaxas", PRECOS_TAXAS_SCHEMA, cols)
+
 
 def _ensure_schema_table(conn: sqlite3.Connection) -> str:
     """Ensure the migration tracking table ``SchemaVersion`` exists.
@@ -85,70 +241,12 @@ def apply_pending_migrations(conn: sqlite3.Connection) -> List[str]:
 def ensure_core_tables(conn: sqlite3.Connection) -> None:
     """Create essential tables if they do not already exist."""
 
+    _upgrade_tables(conn)
+
     statements = [
-        (
-            """
-            CREATE TABLE IF NOT EXISTS Produtos (
-                Codigo TEXT PRIMARY KEY,
-                Produto TEXT,
-                Familia TEXT,
-                SubFamilia TEXT,
-                AfetaStk TEXT,
-                Menu TEXT,
-                CodBarras TEXT,
-                TipoMercad TEXT,
-                TipoVenda TEXT,
-                TipoProducao TEXT,
-                TipoGener TEXT,
-                UnStockVMPG TEXT,
-                UnVendaVMV TEXT,
-                UnInvVMMMPG TEXT,
-                UnProduFtPV TEXT,
-                CodAuxiliar TEXT,
-                CodAuxiliar2 TEXT,
-                PCU TEXT,
-                PCM TEXT,
-                Descontinuado TEXT,
-                DispLojas TEXT
-            )
-            """
-        ),
-        (
-            """
-            CREATE TABLE IF NOT EXISTS FichasTecnicas (
-                FamiliaSubfamilia TEXT,
-                ProdutoCodigo TEXT,
-                ProdutoNome TEXT,
-                ComponenteCodigo TEXT,
-                ComponenteNome TEXT,
-                Qtd REAL,
-                Unidade TEXT,
-                Ppu REAL,
-                Preco REAL,
-                Peso REAL
-            )
-            """
-        ),
-        (
-            """
-            CREATE TABLE IF NOT EXISTS PrecosTaxas (
-                Codigo TEXT PRIMARY KEY,
-                Loja TEXT,
-                Ativo TEXT,
-                Preco1 TEXT,
-                Preco2 TEXT,
-                Preco3 TEXT,
-                Preco4 TEXT,
-                Preco5 TEXT,
-                Iva1 TEXT,
-                Iva2 TEXT,
-                IsencaoIva TEXT,
-                NomeProdVenda TEXT,
-                Familia TEXT,
-                SubFamilia TEXT
-            )
-            """
-        ),
+        (PRODUTOS_SCHEMA),
+        (FICHAS_TECNICAS_SCHEMA),
+        (PRECOS_TAXAS_SCHEMA),
         (
             """
             CREATE TABLE IF NOT EXISTS Alergenios (

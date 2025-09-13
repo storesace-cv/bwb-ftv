@@ -323,7 +323,11 @@ def import_from_excel(ds: DataStore | None = None) -> None:
         except StopIteration:
             wb.close()
             return
+        rows = list(rows)
         mapped = [canonicalize_header(h, table="PrecosTaxas") for h in raw_headers]
+        if "Loja" not in mapped:
+            mapped.append("Loja")
+            rows = [tuple(list(r) + ["1"]) for r in rows]
         has_codigo = "Codigo" in mapped
         existing = [r[1] for r in conn.execute("PRAGMA table_info(PrecosTaxas)")]
         headers = sync_table_schema(
@@ -453,7 +457,11 @@ def update_from_excel(ds: DataStore | None = None) -> None:
         except StopIteration:
             wb.close()
             return
+        rows = list(rows)
         mapped = [canonicalize_header(h, table="PrecosTaxas") for h in raw_headers]
+        if "Loja" not in mapped:
+            mapped.append("Loja")
+            rows = [tuple(list(r) + ["1"]) for r in rows]
         has_codigo = "Codigo" in mapped
         existing = [r[1] for r in conn.execute("PRAGMA table_info(PrecosTaxas)")]
         headers = sync_table_schema(

@@ -17,8 +17,8 @@ CREATE TABLE IF NOT EXISTS Produtos (
     UnProduFtPV TEXT,
     CodAuxiliar TEXT,
     CodAuxiliar2 TEXT,
-    PCU TEXT,
-    PCM TEXT,
+    PCU DECIMAL(10,2),
+    PCM DECIMAL(10,2),
     Descontinuado TEXT,
     DispLojas TEXT
 );
@@ -29,26 +29,27 @@ CREATE TABLE IF NOT EXISTS FichasTecnicas (
     ProdutoNome TEXT,
     ComponenteCodigo TEXT,
     ComponenteNome TEXT,
-    Qtd REAL,
+    Qtd DECIMAL(10,2),
     Unidade TEXT,
-    Ppu REAL,
-    Preco REAL,
-    Peso REAL
+    Ppu DECIMAL(10,2),
+    Preco DECIMAL(10,2),
+    Peso DECIMAL(10,2)
 );
 
 CREATE TABLE IF NOT EXISTS PrecosTaxas (
-    Codigo TEXT PRIMARY KEY,
-    Loja TEXT,
+    Codigo TEXT NOT NULL,
+    Loja TEXT NOT NULL,
     Ativo TEXT,
-    Preco1 TEXT,
-    Preco2 TEXT,
-    Preco3 TEXT,
-    Preco4 TEXT,
-    Preco5 TEXT,
-    Iva1 TEXT,
-    Iva2 TEXT,
+    Preco1 DECIMAL(10,2),
+    Preco2 DECIMAL(10,2),
+    Preco3 DECIMAL(10,2),
+    Preco4 DECIMAL(10,2),
+    Preco5 DECIMAL(10,2),
+    Iva1 DECIMAL(10,2),
+    Iva2 DECIMAL(10,2),
     IsencaoIva TEXT,
     NomeProdVenda TEXT,
     Familia TEXT,
-    SubFamilia TEXT
+    SubFamilia TEXT,
+    PRIMARY KEY (Codigo, Loja)
 );
