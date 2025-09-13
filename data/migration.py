@@ -327,8 +327,67 @@ def ensure_core_tables(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
+def ensure_preparacao_table(conn: sqlite3.Connection) -> None:
+    """Ensure table ``ProdutoPreparacao`` exists.
+
+    If the table is missing, legacy SQL migrations ``preparacao.sql`` and
+    ``rename_to_camelcase.sql`` are executed.  Errors from missing tables or
+    columns are ignored so the function is safe against already-upgraded
+    databases.
+    """
+
+    cur = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='ProdutoPreparacao'"
+    )
+    if cur.fetchone():
+        return
+
+    pre_path = MIGRATIONS_DIR / "preparacao.sql"
+    if pre_path.exists():
+        sql = pre_path.read_text(encoding="utf-8")
+        try:
+            with conn:
+                conn.executescript(sql)
+        except sqlite3.OperationalError:
+            pass
+        finally:
+            try:
+                conn.execute("PRAGMA foreign_keys=OFF")
+            except sqlite3.Error:
+                pass
+
+    ren_path = MIGRATIONS_DIR / "rename_to_camelcase.sql"
+    if ren_path.exists():
+        text = "\n".join(
+            line
+            for line in ren_path.read_text(encoding="utf-8").splitlines()
+            if not line.strip().startswith("--")
+        )
+        for stmt in text.split(";"):
+            stmt = stmt.strip()
+            if not stmt:
+                continue
+            try:
+                with conn:
+                    conn.execute(stmt)
+            except sqlite3.OperationalError as exc:
+                msg = str(exc).lower()
+                if any(
+                    e in msg
+                    for e in (
+                        "no such table",
+                        "no such column",
+                        "already exists",
+                        "another table or index",
+                    )
+                ):
+                    continue
+                raise
+
+
 def setup_database(conn: sqlite3.Connection) -> None:
     """Run pending migrations and ensure essential tables exist."""
 
     apply_pending_migrations(conn)
     ensure_core_tables(conn)
+    ensure_preparacao_table(conn)
