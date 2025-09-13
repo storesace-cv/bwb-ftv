@@ -302,7 +302,7 @@ def test_datastore_missing_columns(tmp_path, caplog):
     conn.close()
     with caplog.at_level(logging.ERROR), pytest.raises(RuntimeError):
         DataStore(db_path=str(db_file))
-    assert any("colunas" in r.message for r in caplog.records)
+    assert any("colunas" in r.message and r.exc_info is None for r in caplog.records)
 
 
 def test_get_produto_info_repo_error(caplog):
