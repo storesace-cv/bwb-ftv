@@ -2,11 +2,10 @@ import logging
 import sqlite3
 from collections.abc import Callable
 from pathlib import Path
-from shutil import copy2
 
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 from utils.paths import get_project_root
-from data import restore_backup
+from data import create_backup, restore_backup
 
 logger = logging.getLogger(__name__)
 
@@ -57,24 +56,23 @@ def update_data(parent, service, load_record, cur_index):
         QMessageBox.critical(parent, "Atualizar Dados", f"Falha na atualização: {exc}")
 
 
-def backup_db(parent, ds):
-    """Create a ``.bak`` copy of the current database."""
+def backup_database(parent, datastore):
+    """Create a timestamped backup of the current database."""
 
-    conn = getattr(ds, "conn", None)
+    conn = getattr(datastore, "conn", None)
     if conn is None:
         QMessageBox.warning(parent, "Segurança", "Base de dados indisponível.")
         return
     try:
         db_file = Path(conn.execute("PRAGMA database_list").fetchone()[2])
-        backup = db_file.with_suffix(db_file.suffix + ".bak")
-        copy2(db_file, backup)
+        backup = create_backup(db_file)
         QMessageBox.information(parent, "Segurança", f"Cópia criada: {backup.name}.")
     except Exception as exc:  # pragma: no cover - UI feedback only
         logger.exception("Backup failed", exc_info=exc)
         QMessageBox.critical(parent, "Segurança", f"Falha na cópia: {exc}")
 
 
-def restore_db(parent, ds):
+def restore_database(parent, datastore):
     """Restore the main database from a selected backup file."""
 
     backups_dir = get_project_root() / "databases" / "backups"
@@ -91,13 +89,17 @@ def restore_db(parent, ds):
     if not file_path:
         return
 
-    db_path = get_project_root() / "databases" / "ftv.db"
+    conn = getattr(datastore, "conn", None)
+    if conn is None:
+        QMessageBox.warning(parent, "Reposição", "Base de dados indisponível.")
+        return
+    db_path = Path(conn.execute("PRAGMA database_list").fetchone()[2])
     try:
-        ds.close()
+        datastore.close()
         restore_backup(Path(file_path), db_path)
-        ds.conn = sqlite3.connect(str(db_path))
-        ds.conn.row_factory = sqlite3.Row
-        ds.reload_ids()
+        datastore.conn = sqlite3.connect(str(db_path))
+        datastore.conn.row_factory = sqlite3.Row
+        datastore.reload_ids()
         QMessageBox.information(parent, "Reposição", "Reposição concluída.")
     except Exception as exc:  # pragma: no cover - UI feedback only
         logger.exception("Restore failed", exc_info=exc)
