@@ -12,6 +12,10 @@ def test_space_pascalcase_and_alias_preserved():
     assert canonicalize_header("Nome prod venda") == "NomeProdVenda"
 
 
+def test_produto_aliases_to_nome():
+    assert canonicalize_header("Produto") == "Nome"
+
+
 def test_list_canonicalization_handles_suffix_and_duplicates():
     headers = [
         "Nome (não necessário p/ importar)",
