@@ -40,6 +40,7 @@ def canonicalize_header(text: str, table: str | None = None) -> str:
         "isencaoiva": "IsencaoIva",
         "custo": "Total",
         "componentenome": "ComponenteNome",
+        "produto": "Nome",
     }
 
     if key == "produtocodigo":
@@ -288,10 +289,11 @@ def import_from_excel(ds: DataStore | None = None) -> None:
         ws = wb.active
         rows = ws.iter_rows(values_only=True)
         try:
-            headers = list(next(rows))
+            raw_headers = list(next(rows))
         except StopIteration:
             wb.close()
             return
+        headers = [canonicalize_header(h, table=table) for h in raw_headers]
         headers = sync_table_schema(conn, table, headers)
         cols = [h for h in headers if h]
         if not cols:
@@ -596,6 +598,9 @@ def _update_from_excel(path: Path, ds: DataStore | None) -> None:
     cur = conn.cursor()
     cur.execute("PRAGMA table_info(Produtos)")
     db_cols = [r[1] for r in cur.fetchall()]
+    if "Nome" in headers and "Nome" not in db_cols:
+        cur.execute("ALTER TABLE Produtos ADD COLUMN Nome")
+        db_cols.append("Nome")
     name_idx = (
         headers.index("Nome") if "Nome" in headers and "Nome" in db_cols else None
     )
