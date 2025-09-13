@@ -68,12 +68,13 @@ def manage_aux_table(
     title
         Window title for the dialog.
     repo_methods
-        Mapping providing callables for ``list``, ``add`` and ``set_active``.
+        Mapping providing callables for ``list``, ``add``, ``set_active`` and
+        ``update``.
     on_change
         Optional callback invoked whenever the table content changes.
 
-    The ``repo_methods`` mapping must provide callables for ``list``, ``add``
-    and ``set_active`` which correspond to admin methods from
+    The ``repo_methods`` mapping must provide callables for ``list``, ``add``,
+    ``set_active`` and ``update`` which correspond to admin methods from
     :class:`data.repositories.AuxiliaresRepo`.
     """
 
@@ -82,8 +83,8 @@ def manage_aux_table(
         QDialog,
         QHBoxLayout,
         QInputDialog,
-        QListWidget,
-        QListWidgetItem,
+        QTableWidget,
+        QTableWidgetItem,
         QPushButton,
         QVBoxLayout,
     )
@@ -91,8 +92,10 @@ def manage_aux_table(
     dlg = QDialog(parent)
     dlg.setWindowTitle(title)
     vbox = QVBoxLayout(dlg)
-    lst = QListWidget()
-    vbox.addWidget(lst)
+    tbl = QTableWidget(0, 2)
+    tbl.setHorizontalHeaderLabels(["Código", "Descrição"])
+    tbl.horizontalHeader().setStretchLastSection(True)
+    vbox.addWidget(tbl)
 
     hbox = QHBoxLayout()
     vbox.addLayout(hbox)
@@ -106,13 +109,21 @@ def manage_aux_table(
     hbox.addWidget(bt_close)
 
     def refresh():
-        lst.clear()
+        tbl.setRowCount(0)
         for cod, desc, ativo in repo_methods["list"]():
-            item = QListWidgetItem(f"{cod} - {desc}")
-            item.setData(Qt.UserRole, (cod, ativo))
+            row = tbl.rowCount()
+            tbl.insertRow(row)
+            cod_item = QTableWidgetItem(str(cod))
+            cod_item.setFlags(cod_item.flags() & ~Qt.ItemIsEditable)
+            cod_item.setData(Qt.UserRole, (cod, ativo))
+            desc_item = QTableWidgetItem(desc)
+            desc_item.setData(Qt.UserRole, (cod, ativo))
+            desc_item.setFlags(desc_item.flags() | Qt.ItemIsEditable)
             if not ativo:
-                item.setForeground(Qt.gray)
-            lst.addItem(item)
+                cod_item.setForeground(Qt.gray)
+                desc_item.setForeground(Qt.gray)
+            tbl.setItem(row, 0, cod_item)
+            tbl.setItem(row, 1, desc_item)
 
     def add_item():
         text, ok = QInputDialog.getText(dlg, "Adicionar", "Descrição:")
@@ -122,8 +133,12 @@ def manage_aux_table(
             if callable(on_change):
                 on_change()
 
-    def toggle(item: QListWidgetItem):
-        cod, ativo = item.data(Qt.UserRole)
+    def toggle_selected():
+        row = tbl.currentRow()
+        if row < 0:
+            return
+        cod_item = tbl.item(row, 0)
+        cod, ativo = cod_item.data(Qt.UserRole)
         new_state = 0 if ativo else 1
         if repo_methods["set_active"](cod, new_state):
             refresh()
@@ -136,16 +151,12 @@ def manage_aux_table(
                 "Falha ao atualizar o registo.",
             )
 
-    def toggle_selected():
-        item = lst.currentItem()
-        if item:
-            toggle(item)
-
     def remove_item():
-        item = lst.currentItem()
-        if not item:
+        row = tbl.currentRow()
+        if row < 0:
             return
-        cod, _ = item.data(Qt.UserRole)
+        cod_item = tbl.item(row, 0)
+        cod, _ = cod_item.data(Qt.UserRole)
         try:
             ok = repo_methods["delete"](cod)
         except Exception:  # pragma: no cover - UI feedback only
@@ -161,11 +172,33 @@ def manage_aux_table(
                 "Falha ao remover o registo.",
             )
 
+    def rename_item(item: QTableWidgetItem):
+        if item.column() != 1:
+            return
+        cod_item = tbl.item(item.row(), 0)
+        cod, _ = cod_item.data(Qt.UserRole)
+        text, ok = QInputDialog.getText(dlg, "Renomear", "Descrição:", text=item.text())
+        if ok and text.strip() and text != item.text():
+            try:
+                ok_upd = repo_methods["update"](cod, text.strip())
+            except Exception:  # pragma: no cover - UI feedback only
+                ok_upd = False
+            if ok_upd:
+                refresh()
+                if callable(on_change):
+                    on_change()
+            else:  # pragma: no cover - UI feedback only
+                QMessageBox.warning(
+                    dlg,
+                    title,
+                    "Falha ao atualizar o registo.",
+                )
+
     bt_add.clicked.connect(add_item)
     bt_toggle.clicked.connect(toggle_selected)
     bt_remove.clicked.connect(remove_item)
     bt_close.clicked.connect(dlg.accept)
-    lst.itemDoubleClicked.connect(toggle)
+    tbl.itemDoubleClicked.connect(rename_item)
 
     refresh()
     dlg.exec_()
