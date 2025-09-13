@@ -11,6 +11,8 @@ from utils.paths import get_project_root
 BASE_DIR = get_project_root()
 MIGRATIONS_DIR = BASE_DIR / "data" / "migrations"
 
+DEFAULT_VALIDADE = [(1, "24h"), (2, "48h")]
+
 PRODUTOS_SCHEMA = """
 CREATE TABLE IF NOT EXISTS Produtos (
     Codigo TEXT PRIMARY KEY,
@@ -343,6 +345,24 @@ def ensure_core_tables(conn: sqlite3.Connection) -> None:
     for stmt in statements:
         conn.execute(stmt)
     conn.commit()
+    _seed_validade(conn)
+
+
+def _seed_validade(conn: sqlite3.Connection) -> None:
+    """Populate ``Validade`` with default records if empty."""
+
+    try:
+        cur = conn.execute("SELECT COUNT(*) FROM Validade")
+        if cur.fetchone()[0] == 0:
+            conn.executemany(
+                "INSERT INTO Validade (Cod, Descricao, Ativo) VALUES (?, ?, 1)",
+                DEFAULT_VALIDADE,
+            )
+            conn.commit()
+    except sqlite3.Error:
+        # Table missing or other errors are ignored here; callers may handle
+        # them separately.
+        pass
 
 
 def ensure_preparacao_table(conn: sqlite3.Connection) -> None:
