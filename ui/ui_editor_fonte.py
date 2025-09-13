@@ -53,7 +53,7 @@
 import sys
 import logging
 from PyQt5.QtCore import Qt, QAbstractTableModel, QSortFilterProxyModel
-from PyQt5.QtGui import QKeySequence
+from PyQt5.QtGui import QKeySequence, QTextOption
 from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
@@ -403,6 +403,12 @@ class FTApp(QWidget):
         self.C4.add(tbw, 0)
 
         self.edPrep = QTextEdit()
+        self.edPrep.setAcceptRichText(True)
+        self.edPrep.setWordWrapMode(QTextOption.WordWrap)
+        self.edPrep.setTabChangesFocus(False)
+        self.edPrep.setUndoRedoEnabled(True)
+        self.edPrep.setLineWrapMode(QTextEdit.WidgetWidth)
+        self.edPrep.document().setDefaultStyleSheet("img { max-width:100%; }")
         self.edPrep.setPlaceholderText("— Texto de preparação —")
         self.C4.add(self.edPrep, 1)
 
@@ -478,6 +484,16 @@ class FTApp(QWidget):
             self.tbIng.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
             scroll.show()
         self.tbIng.setFixedHeight(total_h)
+
+    def _apply_prep_autofit_or_scroll(self):
+        doc_h = self.edPrep.document().size().toSize().height()
+        margins = self.edPrep.contentsMargins()
+        padding = margins.top() + margins.bottom() + self.edPrep.frameWidth() * 2
+        h = doc_h + padding
+        h = max(160, min(520, h))
+        self.edPrep.setMinimumHeight(h)
+        self.edPrep.setMaximumHeight(h)
+        self.edPrep.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 
     # ---------- Navegação ----------
     def _connect_nav(self):
@@ -568,6 +584,13 @@ class FTApp(QWidget):
         )
         self.lbPos.setText(f"{self.cur_index+1} / {max(1,self.service.total())}")
 
+        try:
+            html = self.ds.get_preparacao_html(codigo)
+        except Exception:
+            html = ""
+        self.edPrep.setHtml(html or "")
+        self._apply_prep_autofit_or_scroll()
+
         # --- Auxiliares: fetch/populate/load (canon) ---
         try:
             lists = self._aux_fetch_lists()
@@ -590,6 +613,7 @@ class FTApp(QWidget):
     def resizeEvent(self, ev):
         super().resizeEvent(ev)
         self._apply_ingredient_widths()
+        self._apply_prep_autofit_or_scroll()
 
     def _toggle_overlays(self):
         layout.DEV_OVERLAYS = not layout.DEV_OVERLAYS
