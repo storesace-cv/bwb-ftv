@@ -1,6 +1,15 @@
 # bwb-ftv
 Fichas Técnicas Valorizadas
 
+## Dependências do Sistema
+
+Antes de executar a aplicação, atualize as listas de pacotes e instale a biblioteca OpenGL:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y libgl1 # use libgl1-mesa-glx se libgl1 não estiver disponível
+```
+
 ## Database configuration
 
 Por omissão a aplicação utiliza a base de dados SQLite em
