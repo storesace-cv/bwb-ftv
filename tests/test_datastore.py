@@ -250,3 +250,20 @@ def test_get_produto_info_repo_error(caplog):
     with caplog.at_level(logging.ERROR):
         assert ds.get_produto_info("X") == {}
     assert any("boom" in r.message for r in caplog.records)
+
+
+@pytest.mark.parametrize(
+    "raw,expected",
+    [("1234.56", 1234.56), ("1 234,56", 1234.56)],
+)
+def test_get_pvps_parses_decimal_formats(raw, expected):
+    ds = DataStore(db_path=":memory:")
+    cur = ds.conn.cursor()
+    cur.execute("DELETE FROM PrecosTaxas")
+    cur.execute(
+        "INSERT INTO PrecosTaxas (Codigo, Loja, Preco1) VALUES (?, ?, ?)",
+        ("P1", "L1", raw),
+    )
+    ds.conn.commit()
+    pvps = ds.get_pvps("P1")
+    assert pvps["pvp1"] == expected
