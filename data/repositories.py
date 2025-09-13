@@ -165,33 +165,40 @@ class IngredientesRepo:
         qtd, QTD, unidade, ppu e total.
         """
         cur = self.conn.cursor()
+        cols = self._infer_cols()
+        if not cols:
+            return []
         try:
             cur.execute("PRAGMA table_info(FichasTecnicas)")
-            cols = [c[1].lower() for c in cur.fetchall()]
-            if "total" in cols:
+            table_cols = [c[1].lower() for c in cur.fetchall()]
+            if "total" in table_cols:
                 cost_col = "total"
-            elif "custo" in cols:
+            elif "custo" in table_cols:
                 cost_col = "custo"
-            elif "preco" in cols:
+            elif "preco" in table_cols:
                 cost_col = "preco"
             else:
                 return []
-            order_col = "ordem" if "ordem" in cols else "rowid"
+            order_col = "ordem" if "ordem" in table_cols else "rowid"
             cur.execute(
-                f"SELECT componente_nome, qtd, unidade, ppu, {cost_col} "
-                "FROM FichasTecnicas "
-                "WHERE ProdutoCodigo = ? "
-                f"ORDER BY {order_col}",
+                (
+                    f"SELECT {cols['ingr']}, {cols['qty']}, {cols['unit']}, "
+                    f"ppu, {cost_col} "
+                    "FROM FichasTecnicas "
+                    f"WHERE {cols['prod']} = ? "
+                    f"ORDER BY {order_col}"
+                ),
                 (codigo,),
             )
             rows = cur.fetchall()
+            idx = {"ingr": 0, "qty": 1, "unit": 2, "ppu": 3, "cost": 4}
             out = []
             for r in rows:
-                nome = r[0]
-                qtd = r[1]
-                unidade = r[2]
-                ppu = r[3]
-                total = r[4]
+                nome = r[idx["ingr"]]
+                qtd = r[idx["qty"]]
+                unidade = r[idx["unit"]]
+                ppu = r[idx["ppu"]]
+                total = r[idx["cost"]]
                 item = {
                     "ingrediente": nome,
                     "nome": nome,
