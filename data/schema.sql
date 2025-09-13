@@ -20,7 +20,10 @@ CREATE TABLE IF NOT EXISTS Produtos (
     PCU DECIMAL(10,2),
     PCM DECIMAL(10,2),
     Descontinuado TEXT,
-    DispLojas TEXT
+    DispLojas TEXT,
+    TipoArtigo INTEGER,
+    Validade INTEGER,
+    Temperatura INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS FichasTecnicas (

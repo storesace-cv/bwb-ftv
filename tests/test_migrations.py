@@ -1,4 +1,6 @@
 import sqlite3
+import shutil
+from pathlib import Path
 import pytest
 
 import data.migration as migration
@@ -209,3 +211,53 @@ def test_datastore_migration_decline(monkeypatch, tmp_path):
 
     with pytest.raises(RuntimeError):
         ds_module.DataStore()
+
+
+def test_update_produtos_aux_cols_migration(tmp_path, monkeypatch):
+    db = tmp_path / "db.sqlite"
+    conn = sqlite3.connect(str(db))
+    conn.execute(
+        (
+            "CREATE TABLE Produtos (\n"
+            "    Codigo TEXT PRIMARY KEY,\n"
+            "    Produto TEXT,\n"
+            "    Familia TEXT,\n"
+            "    SubFamilia TEXT,\n"
+            "    AfetaStk TEXT,\n"
+            "    Menu TEXT,\n"
+            "    CodBarras TEXT,\n"
+            "    TipoMercad TEXT,\n"
+            "    TipoVenda TEXT,\n"
+            "    TipoProducao TEXT,\n"
+            "    TipoGener TEXT,\n"
+            "    UnStockVMPG TEXT,\n"
+            "    UnVendaVMV TEXT,\n"
+            "    UnInvVMMMPG TEXT,\n"
+            "    UnProduFtPV TEXT,\n"
+            "    CodAuxiliar TEXT,\n"
+            "    CodAuxiliar2 TEXT,\n"
+            "    PCU DECIMAL(10,2),\n"
+            "    PCM DECIMAL(10,2),\n"
+            "    Descontinuado TEXT,\n"
+            "    DispLojas TEXT\n"
+            ")"
+        )
+    )
+    conn.commit()
+
+    mig_dir = tmp_path / "migrations"
+    mig_dir.mkdir()
+    src = (
+        Path(__file__).resolve().parents[1]
+        / "data"
+        / "migrations"
+        / "update_produtos_aux_cols.sql"
+    )
+    shutil.copy(src, mig_dir / src.name)
+    monkeypatch.setattr(migration, "MIGRATIONS_DIR", mig_dir)
+
+    apply_pending_migrations(conn)
+    cur = conn.execute("PRAGMA table_info(Produtos)")
+    cols = {r[1] for r in cur.fetchall()}
+    assert {"TipoArtigo", "Validade", "Temperatura"} <= cols
+    conn.close()
