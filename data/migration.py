@@ -342,6 +342,24 @@ def ensure_core_tables(conn: sqlite3.Connection) -> None:
             )
             """
         ),
+        (
+            """
+            CREATE TABLE IF NOT EXISTS Uploads (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Filename TEXT NOT NULL,
+                Content BLOB NOT NULL,
+                UploadedAt TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        ),
+        (
+            """
+            CREATE TABLE IF NOT EXISTS Config (
+                Key   TEXT PRIMARY KEY,
+                Value TEXT
+            )
+            """
+        ),
     ]
 
     for stmt in statements:

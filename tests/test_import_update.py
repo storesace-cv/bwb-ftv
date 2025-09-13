@@ -1,4 +1,3 @@
-import re
 import shutil
 import pytest
 from openpyxl import Workbook
@@ -33,7 +32,6 @@ def imports_dir():
     if base.exists():
         shutil.rmtree(base)
     base.mkdir(parents=True, exist_ok=True)
-    (base / "history").mkdir(exist_ok=True)
     yield base
     shutil.rmtree(base, ignore_errors=True)
 
@@ -90,8 +88,9 @@ def test_import_from_excel_replaces_database(ds, imports_dir):
     assert ds.get_produto_info("P1")["produto"] == "Produto 1"
     assert ds.get_produto_info("P2")["produto"] == "Produto 2"
     assert not (imports_dir / "Produtos_Base.xlsx").exists()
-    hist = {p.name for p in (imports_dir / "history").iterdir()}
-    assert any(name.startswith("Produtos_Base.xlsx") for name in hist)
+    rows = ds.conn.execute("SELECT Filename FROM Uploads").fetchall()
+    names = {r[0] for r in rows}
+    assert "Produtos_Base.xlsx" in names
 
 
 def test_update_from_excel_updates_and_inserts(ds, imports_dir):
@@ -117,6 +116,9 @@ def test_update_from_excel_updates_and_inserts(ds, imports_dir):
     assert ds.get_produto_info("P2")["produto"] == "Produto 2"
     assert ds.get_produto_info("P3")["produto"] == "Produto 3"
     assert not (imports_dir / "Produtos_Base.xlsx").exists()
+    rows = ds.conn.execute("SELECT Filename FROM Uploads").fetchall()
+    names = {r[0] for r in rows}
+    assert "Produtos_Base.xlsx" in names
 
 
 def test_import_from_excel_missing_file(ds, imports_dir):
@@ -137,40 +139,38 @@ def test_update_from_excel_missing_file(ds, imports_dir):
     assert "FichasTecnicas_base.xlsx" in str(exc.value)
 
 
-def test_import_moves_files_to_history_with_timestamp(ds, imports_dir):
+def test_import_stores_files_in_uploads(ds, imports_dir):
     svc = ProductService(ds)
     _write_base_files(imports_dir)
     svc.import_from_excel()
-    hist_files = list((imports_dir / "history").iterdir())
-    assert len(hist_files) == 3
+    rows = ds.conn.execute("SELECT Filename, length(Content) FROM Uploads").fetchall()
+    assert len(rows) == 3
     expected = [
         "Produtos_Base.xlsx",
         "FichasTecnicas_base.xlsx",
         "PreçosTaxas_base.xlsx",
     ]
+    names = {r[0] for r in rows}
     for name in expected:
+        assert name in names
         assert not (imports_dir / name).exists()
-        match = [p for p in hist_files if p.name.startswith(f"{name}.")]
-        assert match
-        assert re.fullmatch(rf"{re.escape(name)}\.\d{{14}}", match[0].name)
 
 
-def test_update_moves_files_to_history_with_timestamp(ds, imports_dir):
+def test_update_stores_files_in_uploads(ds, imports_dir):
     svc = ProductService(ds)
     _write_base_files(imports_dir)
     svc.update_from_excel()
-    hist_files = list((imports_dir / "history").iterdir())
-    assert len(hist_files) == 3
+    rows = ds.conn.execute("SELECT Filename, length(Content) FROM Uploads").fetchall()
+    assert len(rows) == 3
     expected = [
         "Produtos_Base.xlsx",
         "FichasTecnicas_base.xlsx",
         "PreçosTaxas_base.xlsx",
     ]
+    names = {r[0] for r in rows}
     for name in expected:
+        assert name in names
         assert not (imports_dir / name).exists()
-        match = [p for p in hist_files if p.name.startswith(f"{name}.")]
-        assert match
-        assert re.fullmatch(rf"{re.escape(name)}\.\d{{14}}", match[0].name)
 
 
 def test_import_from_excel_uses_produto_codigo(ds, imports_dir):

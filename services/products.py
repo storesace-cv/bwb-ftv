@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+import sqlite3
 from pathlib import Path
 from typing import Iterable, Iterator, List
 import unicodedata
@@ -322,9 +322,7 @@ def import_from_excel(ds: DataStore | None = None) -> None:
     """
 
     base = get_project_root() / "imports"
-    history_dir = base / "history"
     base.mkdir(parents=True, exist_ok=True)
-    history_dir.mkdir(parents=True, exist_ok=True)
 
     files = {
         "Produtos": base / "Produtos_Base.xlsx",
@@ -438,9 +436,14 @@ def import_from_excel(ds: DataStore | None = None) -> None:
     conn.commit()
     ds.reload_ids()
 
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     for fp in files.values():
-        fp.rename(history_dir / f"{fp.name}.{timestamp}")
+        content = fp.read_bytes()
+        conn.execute(
+            "INSERT INTO Uploads (Filename, Content) VALUES (?, ?)",
+            (fp.name, sqlite3.Binary(content)),
+        )
+        fp.unlink()
+    conn.commit()
 
 
 def update_from_excel(ds: DataStore | None = None) -> None:
@@ -451,9 +454,7 @@ def update_from_excel(ds: DataStore | None = None) -> None:
     """
 
     base = get_project_root() / "imports"
-    history_dir = base / "history"
     base.mkdir(parents=True, exist_ok=True)
-    history_dir.mkdir(parents=True, exist_ok=True)
 
     files = {
         "Produtos": base / "Produtos_Base.xlsx",
@@ -584,9 +585,14 @@ def update_from_excel(ds: DataStore | None = None) -> None:
     conn.commit()
     ds.reload_ids()
 
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     for fp in files.values():
-        fp.rename(history_dir / f"{fp.name}.{timestamp}")
+        content = fp.read_bytes()
+        conn.execute(
+            "INSERT INTO Uploads (Filename, Content) VALUES (?, ?)",
+            (fp.name, sqlite3.Binary(content)),
+        )
+        fp.unlink()
+    conn.commit()
 
 
 def _import_single_excel(path: Path, ds: DataStore | None) -> None:
