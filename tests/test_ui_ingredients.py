@@ -66,7 +66,8 @@ def test_load_record_populates_ingredients(qapp):
         assert model.data(model.index(row, 2)) == data["unidade"]
         assert model.data(model.index(row, 3)) == format_pt_number(data["ppu"])
         assert model.data(model.index(row, 4)) == format_pt_number(data["total"])
-    assert ft.tbIng.isColumnHidden(5)
+    assert ft.tbIng.isColumnHidden(0)
+    assert not ft.tbIng.isColumnHidden(5)
     assert not ft.tbIng.verticalHeader().isVisible()
     ft.close()
 
@@ -122,9 +123,9 @@ def test_apply_ingredient_widths_after_resize(qapp):
     ft.resizeEvent(ev)
     ft._apply_ingredient_widths()
 
-    ratios = [0.50, 0.10, 0.10, 0.14, 0.16]
+    ratios = {1: 0.10, 2: 0.10, 3: 0.14, 4: 0.16, 5: 0.50}
     width = ft.width()
-    for col, ratio in enumerate(ratios):
+    for col, ratio in ratios.items():
         expected = width * ratio
         actual = ft.tbIng.columnWidth(col)
         assert actual == pytest.approx(expected, abs=2)

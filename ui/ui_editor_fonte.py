@@ -54,7 +54,7 @@ import sys
 import logging
 import html as html_module
 import html.parser as html_parser
-from PyQt5.QtCore import Qt, QAbstractTableModel, QSortFilterProxyModel
+from PyQt5.QtCore import Qt, QAbstractTableModel
 from PyQt5.QtGui import QFont, QKeySequence, QTextOption
 from PyQt5.QtWidgets import (
     QApplication,
@@ -124,6 +124,33 @@ class FichasTecnicasModel(QAbstractTableModel):
             val = mapping[index.column()]
             return val if val is not None else ""
         return None
+
+    def setData(self, index, value, role=Qt.EditRole):  # pragma: no cover - GUI
+        if not index.isValid() or role != Qt.EditRole:
+            return False
+        ficha = self._rows[index.row()]
+        col = index.column()
+        try:
+            if col == 1:
+                ficha.quantity = float(value)
+            elif col == 3:
+                ficha.ppu = float(value)
+            elif col == 4:
+                ficha.total = float(value)
+            else:
+                return False
+        except (TypeError, ValueError):
+            return False
+        self.dataChanged.emit(index, index, [Qt.DisplayRole])
+        return True
+
+    def flags(self, index):  # pragma: no cover - trivial
+        if not index.isValid():
+            return Qt.NoItemFlags
+        base = Qt.ItemIsSelectable | Qt.ItemIsEnabled
+        if index.column() in (1, 3, 4):
+            return base | Qt.ItemIsEditable
+        return base
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):  # pragma: no cover
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
@@ -352,22 +379,14 @@ class FTApp(QWidget):
         self.C2 = Zone("C2", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS)
         page_ly.addWidget(self._section_box("[B2] - Ingredientes", self.C2), 0)
 
-        self.edIngFilter = QLineEdit()
-        self.edIngFilter.setPlaceholderText("Filtrar ingrediente...")
-        self.C2.add(self.edIngFilter, 0)
-
         self.ingModel = FichasTecnicasModel([])
-        self.ingProxy = QSortFilterProxyModel(self)
-        self.ingProxy.setSourceModel(self.ingModel)
-        self.ingProxy.setFilterCaseSensitivity(Qt.CaseInsensitive)
-        self.ingProxy.setFilterKeyColumn(0)
 
         self.tbIng = QTableView(self)
-        self.tbIng.setModel(self.ingProxy)
+        self.tbIng.setModel(self.ingModel)
         self.tbIng.verticalHeader().setVisible(False)
         self.tbIng.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.tbIng.setEditTriggers(QTableView.DoubleClicked | QTableView.EditKeyPressed)
         self.C2.add(self.tbIng, 1)
-        self.edIngFilter.textChanged.connect(self.ingProxy.setFilterFixedString)
         self._setup_ing_columns()
 
         # ---------------- B3 — Custos (C3) ----------------
@@ -494,12 +513,15 @@ class FTApp(QWidget):
     # ---------- Ingredientes: colunas ----------
     def _setup_ing_columns(self):
         w = max(self.width(), 1100)
-        self.tbIng.setColumnHidden(5, True)
-        self.tbIng.setColumnWidth(0, int(w * 0.50))
+        model = self.tbIng.model()
+        if not model:
+            return
+        self.tbIng.setColumnHidden(0, True)
         self.tbIng.setColumnWidth(1, int(w * 0.10))
         self.tbIng.setColumnWidth(2, int(w * 0.10))
         self.tbIng.setColumnWidth(3, int(w * 0.14))
         self.tbIng.setColumnWidth(4, int(w * 0.16))
+        self.tbIng.setColumnWidth(5, int(w * 0.50))
 
     def _apply_ingredient_widths(self):
         self._setup_ing_columns()
