@@ -80,7 +80,7 @@ from utils.formatting import format_pt_number
 from . import layout
 from .layout import Zone
 from .utilities import make_readonly_lineedit, match_font, stack_combo
-from .dialogs import import_data, update_data
+from .dialogs import import_data, manage_aux_table, update_data
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
 
@@ -157,22 +157,36 @@ class FTApp(QWidget):
             lambda: update_data(self, self.service, self._load_record, self.cur_index)
         )
         actTipos.triggered.connect(
-            lambda: QMessageBox.information(
+            lambda: manage_aux_table(
                 self,
                 "Tipos de Artigos",
-                f"Ativos: {len(self.service.list_tipos_artigos())-1}",
+                {
+                    "list": self.ds.aux.list_tipos_artigos_admin,
+                    "add": self.ds.aux.add_tipo_artigo,
+                    "set_active": self.ds.aux.set_tipo_artigo_ativo,
+                },
             )
         )
         actVal.triggered.connect(
-            lambda: QMessageBox.information(
-                self, "Validade", f"Ativos: {len(self.service.list_validade())-1}"
+            lambda: manage_aux_table(
+                self,
+                "Validade",
+                {
+                    "list": self.ds.aux.list_validade_admin,
+                    "add": self.ds.aux.add_validade,
+                    "set_active": self.ds.aux.set_validade_ativo,
+                },
             )
         )
         actTemps.triggered.connect(
-            lambda: QMessageBox.information(
+            lambda: manage_aux_table(
                 self,
                 "Temperaturas",
-                f"Ativos: {len(self.service.list_temperaturas())-1}",
+                {
+                    "list": self.ds.aux.list_temperaturas_admin,
+                    "add": self.ds.aux.add_temperatura,
+                    "set_active": self.ds.aux.set_temperatura_ativo,
+                },
             )
         )
         actTheme.triggered.connect(
