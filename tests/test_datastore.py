@@ -31,14 +31,15 @@ def test_reload_ids_repo_success(caplog):
     cur = ds.conn.cursor()
     cur.execute("DELETE FROM Produtos")
     cur.executemany(
-        "INSERT INTO Produtos (Codigo) VALUES (?)",
-        [("P1",), ("P2",)],
+        "INSERT INTO Produtos (Codigo, Produto) VALUES (?, ?)",
+        [("P1", "Produto 1"), ("P2", "Produto 2")],
     )
     ds.conn.commit()
     with caplog.at_level(logging.INFO):
         count = ds.reload_ids()
     assert count == 2
     assert ds._ids == ["P1", "P2"]
+    assert ds.get_produto_info("P1")["produto"] == "Produto 1"
     assert any("repositorio" in r.message for r in caplog.records)
 
 

@@ -14,7 +14,7 @@ def ds():
     conn = ds.conn
     conn.execute("DROP TABLE Produtos")
     conn.execute(
-        "CREATE TABLE Produtos (Codigo TEXT PRIMARY KEY, Nome TEXT, "
+        "CREATE TABLE Produtos (Codigo TEXT PRIMARY KEY, Produto TEXT, "
         "Preco1G REAL, Preco2G REAL, Iva REAL)"
     )
     conn.execute("DROP TABLE FichasTecnicas")
@@ -62,7 +62,7 @@ def _write_base_files(
 
 
 def test_import_from_excel_replaces_database(ds, imports_dir):
-    ds.conn.execute("INSERT INTO Produtos (Codigo, Nome) VALUES ('OLD', 'Old')")
+    ds.conn.execute("INSERT INTO Produtos (Codigo, Produto) VALUES ('OLD', 'Old')")
     ds.reload_ids()
     svc = ProductService(ds)
     _write_base_files(imports_dir, products=[("P1", "Produto 1"), ("P2", "Produto 2")])
@@ -71,8 +71,8 @@ def test_import_from_excel_replaces_database(ds, imports_dir):
 
     assert ds.total() == 2
     assert ds.get_produto_info("OLD") == {}
-    assert ds.get_produto_info("P1")["Nome"] == "Produto 1"
-    assert ds.get_produto_info("P2")["Nome"] == "Produto 2"
+    assert ds.get_produto_info("P1")["produto"] == "Produto 1"
+    assert ds.get_produto_info("P2")["produto"] == "Produto 2"
     assert not (imports_dir / "Produtos_Base.xlsx").exists()
     hist = {p.name for p in (imports_dir / "history").iterdir()}
     assert any(name.startswith("Produtos_Base.xlsx") for name in hist)
@@ -80,7 +80,7 @@ def test_import_from_excel_replaces_database(ds, imports_dir):
 
 def test_update_from_excel_updates_and_inserts(ds, imports_dir):
     ds.conn.executemany(
-        "INSERT INTO Produtos (Codigo, Nome) VALUES (?, ?)",
+        "INSERT INTO Produtos (Codigo, Produto) VALUES (?, ?)",
         [("P1", "Produto 1"), ("P2", "Produto 2")],
     )
     ds.reload_ids()
@@ -93,9 +93,9 @@ def test_update_from_excel_updates_and_inserts(ds, imports_dir):
     ds.reload_ids()
 
     assert ds.total() == 3
-    assert ds.get_produto_info("P1")["Nome"] == "Produto 1 updated"
-    assert ds.get_produto_info("P2")["Nome"] == "Produto 2"
-    assert ds.get_produto_info("P3")["Nome"] == "Produto 3"
+    assert ds.get_produto_info("P1")["produto"] == "Produto 1 updated"
+    assert ds.get_produto_info("P2")["produto"] == "Produto 2"
+    assert ds.get_produto_info("P3")["produto"] == "Produto 3"
     assert not (imports_dir / "Produtos_Base.xlsx").exists()
 
 
@@ -163,7 +163,7 @@ def test_import_from_excel_uses_produto_codigo(ds, imports_dir):
 
 def test_update_from_excel_uses_produto_codigo(ds, imports_dir):
     ds.conn.execute(
-        "INSERT INTO Produtos (Codigo, Nome, Preco1G) VALUES ('P1', 'X', 1.0)"
+        "INSERT INTO Produtos (Codigo, Produto, Preco1G) VALUES ('P1', 'X', 1.0)"
     )
     ds.reload_ids()
     _write_base_files(imports_dir, code_header="produto_codigo", price=3.0)
@@ -188,7 +188,7 @@ def test_import_from_excel_handles_alt_headers(ds, imports_dir):
 
 def test_update_from_excel_handles_alt_headers(ds, imports_dir):
     ds.conn.execute(
-        "INSERT INTO Produtos (Codigo, Nome, Preco1G) VALUES ('P1', 'X', 1.0)"
+        "INSERT INTO Produtos (Codigo, Produto, Preco1G) VALUES ('P1', 'X', 1.0)"
     )
     ds.reload_ids()
     _write_base_files(
@@ -237,7 +237,7 @@ def test_import_maps_custo_to_total(ds, imports_dir):
 
 
 def test_update_maps_custo_to_total(ds, imports_dir):
-    ds.conn.execute("INSERT INTO Produtos (Codigo, Nome) VALUES ('P1', 'Prod')")
+    ds.conn.execute("INSERT INTO Produtos (Codigo, Produto) VALUES ('P1', 'Prod')")
     ds.conn.execute(
         "INSERT INTO FichasTecnicas "
         "(ProdutoCodigo, ComponenteNome, Qtd, Unidade, Ppu, Total) "
