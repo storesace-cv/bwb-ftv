@@ -30,7 +30,7 @@ def test_calculate_cost_prefers_total_when_present():
 
 def test_get_product_info_builds_product_from_datastore():
     ds = MagicMock(spec=DataStore)
-    ds.get_produto_info.return_value = {"codigo": "P1", "nome": "Produto 1"}
+    ds.get_produto_info.return_value = {"codigo": "P1", "produto": "Produto 1"}
     ds.get_pvps.return_value = {"1": 10.0}
     ds.get_ingredientes.return_value = [
         {

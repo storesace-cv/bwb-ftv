@@ -10,4 +10,4 @@ def test_sync_table_schema_handles_duplicate_headers():
     sync_table_schema(conn, "Produtos", headers)
     cur = conn.execute("PRAGMA table_info(Produtos)")
     cols = [row[1] for row in cur.fetchall()]
-    assert cols == ["Codigo", "Nome"]
+    assert cols == ["Codigo", "Produto"]

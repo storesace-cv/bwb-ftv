@@ -23,7 +23,8 @@ class ProdutosRepo:
         if not row:
             return {}
         if hasattr(row, "keys"):
-            return {k: row[k] for k in row.keys()}
+            # Normalise keys to lowercase for consistent access downstream.
+            return {k.lower(): row[k] for k in row.keys()}
         return {}
 
     def get_pvps(self, codigo: str):

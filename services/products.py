@@ -40,7 +40,8 @@ def canonicalize_header(text: str, table: str | None = None) -> str:
         "isencaoiva": "IsencaoIva",
         "custo": "Total",
         "componentenome": "ComponenteNome",
-        "produto": "Nome",
+        # Map common spreadsheet headers to their canonical database columns.
+        "nome": "Produto",
     }
 
     if key == "produtocodigo":
@@ -196,7 +197,7 @@ def get_product_info(ds: DataStore, codigo: str) -> Product:
 
     return Product(
         code=info.get("codigo") or codigo,
-        name=info.get("nome"),
+        name=info.get("produto"),
         familia=info.get("familia"),
         subfamilia=info.get("subfamilia"),
         tipo_artigo_cod=info.get("tipo_artigo_cod"),
@@ -519,7 +520,9 @@ def _import_single_excel(path: Path, ds: DataStore | None) -> None:
     cur.execute("PRAGMA table_info(Produtos)")
     db_cols = [r[1].lower() for r in cur.fetchall()]
     name_idx = (
-        headers.index("nome") if "nome" in headers and "nome" in db_cols else None
+        headers.index("produto")
+        if "produto" in headers and "produto" in db_cols
+        else None
     )
     p1_idx = (
         headers.index("preco1_g")
@@ -536,7 +539,7 @@ def _import_single_excel(path: Path, ds: DataStore | None) -> None:
     cur.execute("DELETE FROM Produtos")
     cols = ["Codigo"]
     if name_idx is not None:
-        cols.append("Nome")
+        cols.append("Produto")
     if p1_idx is not None:
         cols.append("Preco1G")
     if p2_idx is not None:
@@ -598,11 +601,13 @@ def _update_from_excel(path: Path, ds: DataStore | None) -> None:
     cur = conn.cursor()
     cur.execute("PRAGMA table_info(Produtos)")
     db_cols = [r[1] for r in cur.fetchall()]
-    if "Nome" in headers and "Nome" not in db_cols:
-        cur.execute("ALTER TABLE Produtos ADD COLUMN Nome")
-        db_cols.append("Nome")
+    if "Produto" in headers and "Produto" not in db_cols:
+        cur.execute("ALTER TABLE Produtos ADD COLUMN Produto")
+        db_cols.append("Produto")
     name_idx = (
-        headers.index("Nome") if "Nome" in headers and "Nome" in db_cols else None
+        headers.index("Produto")
+        if "Produto" in headers and "Produto" in db_cols
+        else None
     )
     p1_idx = (
         headers.index("Preco1G")
@@ -626,7 +631,7 @@ def _update_from_excel(path: Path, ds: DataStore | None) -> None:
             updates = []
             params = []
             if name_idx is not None:
-                updates.append("Nome=?")
+                updates.append("Produto=?")
                 params.append(row[name_idx])
             if p1_idx is not None:
                 updates.append("Preco1G=?")
@@ -647,7 +652,7 @@ def _update_from_excel(path: Path, ds: DataStore | None) -> None:
             cols = ["Codigo"]
             vals = [codigo]
             if name_idx is not None:
-                cols.append("Nome")
+                cols.append("Produto")
                 vals.append(row[name_idx])
             if p1_idx is not None:
                 cols.append("Preco1G")
