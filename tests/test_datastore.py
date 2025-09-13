@@ -32,8 +32,12 @@ def test_reload_ids_repo_success(caplog):
     cur.execute("DELETE FROM Produtos")
     cur.execute("DELETE FROM FichasTecnicas")
     cur.executemany(
-        "INSERT INTO Produtos (Codigo, Produto, TipoVenda) VALUES (?, ?, 1)",
-        [("P1", "Produto 1"), ("P2", "Produto 2")],
+        "INSERT INTO Produtos (Codigo, Produto, TipoVenda) VALUES (?, ?, ?)",
+        [
+            ("P1", "Produto 1", 1),  # válido (TipoVenda=1 e tem ficha)
+            ("P2", "Produto 2", 2),  # TipoVenda != 1
+            ("P3", "Produto 3", 1),  # sem ficha técnica
+        ],
     )
     cur.executemany(
         "INSERT INTO FichasTecnicas (ProdutoCodigo) VALUES (?)",
@@ -42,9 +46,10 @@ def test_reload_ids_repo_success(caplog):
     ds.conn.commit()
     with caplog.at_level(logging.INFO):
         count = ds.reload_ids()
-    assert count == 2
-    assert ds._ids == ["P1", "P2"]
+    assert count == 1
+    assert ds._ids == ["P1"]
     assert ds.get_produto_info("P1")["produto"] == "Produto 1"
+    assert "P2" not in ds._ids and "P3" not in ds._ids
     assert any("repositorio" in r.message for r in caplog.records)
 
 
