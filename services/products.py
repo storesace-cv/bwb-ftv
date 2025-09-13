@@ -159,13 +159,13 @@ class ProductService:
         return self.ds.codigo_at(idx)
 
     # -- auxiliary tables -------------------------------------------------
-    def list_tipos_artigos(self):
+    def list_tipos_artigos(self) -> list[tuple[int, str]]:
         return self.ds.list_tipos_artigos()
 
-    def list_validade(self):
+    def list_validade(self) -> list[tuple[int, str]]:
         return self.ds.list_validade()
 
-    def list_temperaturas(self):
+    def list_temperaturas(self) -> list[tuple[int, str]]:
         return self.ds.list_temperaturas()
 
     def list_active_allergens(self):
