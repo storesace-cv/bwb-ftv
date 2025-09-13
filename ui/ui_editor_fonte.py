@@ -372,7 +372,7 @@ class FTApp(QWidget):
         grid.setContentsMargins(0, 0, 0, 0)
         grid.setHorizontalSpacing(12)
         grid.setVerticalSpacing(6)
-        cols = 2
+        cols = 3
         for i, (aid, nome) in enumerate(names):
             r = i // cols
             c = i % cols
