@@ -11,7 +11,7 @@ def test_apply_pending_migrations(tmp_path, monkeypatch):
 
     mig_dir = tmp_path / "data" / "migrations"
     mig_dir.mkdir(parents=True)
-    (mig_dir / "001.sql").write_text("CREATE TABLE t1(id INTEGER);", encoding="utf-8")
+    (mig_dir / "001.sql").write_text("CREATE TABLE T1(Id INTEGER);", encoding="utf-8")
 
     monkeypatch.setattr(migration, "MIGRATIONS_DIR", mig_dir)
 
@@ -21,7 +21,7 @@ def test_apply_pending_migrations(tmp_path, monkeypatch):
     assert applied == ["001.sql"]
 
     cur = conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='t1'"
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='T1'"
     )
     assert cur.fetchone() is not None
     cur = conn.execute("SELECT Filename FROM SchemaVersion")
@@ -42,7 +42,7 @@ def test_datastore_migration_accept(monkeypatch, tmp_path):
 
     mig_dir = tmp_path / "data" / "migrations"
     mig_dir.mkdir(parents=True)
-    (mig_dir / "001.sql").write_text("CREATE TABLE t2(id INTEGER);", encoding="utf-8")
+    (mig_dir / "001.sql").write_text("CREATE TABLE T2(Id INTEGER);", encoding="utf-8")
 
     monkeypatch.setattr(ds_module, "base", tmp_path)
     monkeypatch.setattr(migration, "MIGRATIONS_DIR", mig_dir)
@@ -77,7 +77,7 @@ def test_datastore_migration_accept(monkeypatch, tmp_path):
 
     ds = ds_module.DataStore()
     cur = ds.conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='t2'"
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='T2'"
     )
     assert cur.fetchone() is not None
 
@@ -96,7 +96,7 @@ def test_datastore_migration_decline(monkeypatch, tmp_path):
 
     mig_dir = tmp_path / "data" / "migrations"
     mig_dir.mkdir(parents=True)
-    (mig_dir / "001.sql").write_text("CREATE TABLE t3(id INTEGER);", encoding="utf-8")
+    (mig_dir / "001.sql").write_text("CREATE TABLE T3(Id INTEGER);", encoding="utf-8")
 
     monkeypatch.setattr(ds_module, "base", tmp_path)
     monkeypatch.setattr(migration, "MIGRATIONS_DIR", mig_dir)
