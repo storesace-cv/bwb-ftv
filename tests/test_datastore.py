@@ -99,7 +99,7 @@ def test_list_active_allergens_default(tmp_path, monkeypatch):
 def test_context_manager_closes_connection():
     with DataStore(db_path=":memory:") as ds:
         conn = ds.conn
-        conn.execute("CREATE TABLE x (id INTEGER)")
+        conn.execute("CREATE TABLE X (Id INTEGER)")
     # connection is closed after context
     with pytest.raises(sqlite3.ProgrammingError):
         conn.execute("SELECT 1")
@@ -168,7 +168,7 @@ def test_datastore_creates_empty_db(tmp_path, monkeypatch):
 def test_datastore_missing_tables(tmp_path):
     db_file = tmp_path / "ftv.db"
     conn = sqlite3.connect(str(db_file))
-    conn.execute("CREATE TABLE x (id INTEGER)")
+    conn.execute("CREATE TABLE X (Id INTEGER)")
     conn.commit()
     conn.close()
     ds = DataStore(db_path=str(db_file))

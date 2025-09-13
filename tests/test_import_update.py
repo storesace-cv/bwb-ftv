@@ -15,13 +15,13 @@ def ds():
     conn.execute("DROP TABLE Produtos")
     conn.execute(
         "CREATE TABLE Produtos (Codigo TEXT PRIMARY KEY, Nome TEXT, "
-        "preco1_g REAL, preco2_g REAL, Iva REAL)"
+        "Preco1G REAL, Preco2G REAL, Iva REAL)"
     )
     conn.execute("DROP TABLE FichasTecnicas")
     conn.execute(
         "CREATE TABLE FichasTecnicas (ProdutoCodigo TEXT, "
-        "ComponenteNome TEXT, qtd REAL, unidade TEXT, "
-        "ppu REAL, total REAL)"
+        "ComponenteNome TEXT, Qtd REAL, Unidade TEXT, "
+        "Ppu REAL, Total REAL)"
     )
     return ds
 
@@ -163,7 +163,7 @@ def test_import_from_excel_uses_produto_codigo(ds, imports_dir):
 
 def test_update_from_excel_uses_produto_codigo(ds, imports_dir):
     ds.conn.execute(
-        "INSERT INTO Produtos (Codigo, Nome, preco1_g) VALUES ('P1', 'X', 1.0)"
+        "INSERT INTO Produtos (Codigo, Nome, Preco1G) VALUES ('P1', 'X', 1.0)"
     )
     ds.reload_ids()
     _write_base_files(imports_dir, code_header="produto_codigo", price=3.0)
@@ -188,7 +188,7 @@ def test_import_from_excel_handles_alt_headers(ds, imports_dir):
 
 def test_update_from_excel_handles_alt_headers(ds, imports_dir):
     ds.conn.execute(
-        "INSERT INTO Produtos (Codigo, Nome, preco1_g) VALUES ('P1', 'X', 1.0)"
+        "INSERT INTO Produtos (Codigo, Nome, Preco1G) VALUES ('P1', 'X', 1.0)"
     )
     ds.reload_ids()
     _write_base_files(
@@ -240,7 +240,7 @@ def test_update_maps_custo_to_total(ds, imports_dir):
     ds.conn.execute("INSERT INTO Produtos (Codigo, Nome) VALUES ('P1', 'Prod')")
     ds.conn.execute(
         "INSERT INTO FichasTecnicas "
-        "(ProdutoCodigo, ComponenteNome, qtd, unidade, ppu, total) "
+        "(ProdutoCodigo, ComponenteNome, Qtd, Unidade, Ppu, Total) "
         "VALUES ('P1', 'Ing', 1, 'Kg', 2, 5)"
     )
     ds.reload_ids()
