@@ -159,6 +159,8 @@ class IngredientesRepo:
                 cost_col = "total"
             elif "custo" in cols:
                 cost_col = "custo"
+            elif "preco" in cols:
+                cost_col = "preco"
             else:
                 return []
             order_col = "ordem" if "ordem" in cols else "rowid"
@@ -223,6 +225,9 @@ class IngredientesRepo:
                     alias.append("total")
                 elif has("custo"):
                     sel.append("custo")
+                    alias.append("total")
+                elif has("preco"):
+                    sel.append("preco")
                     alias.append("total")
                 if not sel:
                     return []

@@ -39,6 +39,7 @@ def canonicalize_header(text: str, table: str | None = None) -> str:
         "iva2": "Iva2",
         "isencaoiva": "IsencaoIva",
         "custo": "Total",
+        "preco": "Total",
         "componentenome": "ComponenteNome",
         # Map common spreadsheet headers to their canonical database columns.
         "nome": "Produto",
