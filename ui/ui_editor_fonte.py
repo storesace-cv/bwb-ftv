@@ -58,7 +58,7 @@ import sys
 import logging
 import html as html_module
 import html.parser as html_parser
-from PyQt5.QtCore import Qt, QAbstractTableModel
+from PyQt5.QtCore import Qt, QAbstractTableModel, QTimer
 from PyQt5.QtGui import QFont, QKeySequence, QTextOption
 from PyQt5.QtWidgets import (
     QApplication,
@@ -839,7 +839,6 @@ class FTApp(QWidget):
             self.ingModel.update_data(fichas)
             self._apply_ing_autofit_or_scroll()
 
-            self._apply_ingredient_widths()
             self.edCustoTotal.setText(
                 format_pt_number(self.service.calculate_cost(product))
             )
@@ -918,6 +917,10 @@ class FTApp(QWidget):
             pass
 
     # ---------- Eventos ----------
+    def showEvent(self, ev):
+        super().showEvent(ev)
+        QTimer.singleShot(0, self._apply_ingredient_widths)
+
     def resizeEvent(self, ev):
         super().resizeEvent(ev)
         self._update_page_width()
