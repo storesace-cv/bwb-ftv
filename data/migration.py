@@ -178,14 +178,22 @@ def _upgrade_tables(conn: sqlite3.Connection) -> None:
         rows = list(conn.execute("PRAGMA table_info(PrecosTaxas)"))
         types = {r[1]: r[2].upper() for r in rows}
         pk_cols = [r[1] for r in rows if r[5] > 0]
-        required = ["Preco1_5", "Iva1_2", "Loja"]
-        has_cols = all(c in types for c in required)
-        need = has_cols and pk_cols != ["Codigo", "Loja"]
-        if has_cols:
-            for c in required[:-1]:
-                if types.get(c) != "DECIMAL(10,2)":
+        need = False
+        col_defs = {
+            "Preco1_5": "DECIMAL(10,2)",
+            "Iva1_2": "DECIMAL(10,2)",
+            "Loja": "TEXT",
+        }
+        for col, decl in col_defs.items():
+            if col not in types:
+                try:
+                    conn.execute(f"ALTER TABLE PrecosTaxas ADD COLUMN {col} {decl}")
+                except sqlite3.OperationalError:
                     need = True
-                    break
+            elif types.get(col) != decl:
+                need = True
+        if pk_cols != ["Codigo", "Loja"]:
+            need = True
         if need:
             cols = [
                 "Codigo",
@@ -282,6 +290,7 @@ def ensure_core_tables(conn: sqlite3.Connection) -> None:
 
     apply_pending_migrations(conn)
     _upgrade_tables(conn)
+    apply_pending_migrations(conn)
 
     statements = [
         (PRODUTOS_SCHEMA),
