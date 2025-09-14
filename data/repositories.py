@@ -155,110 +155,17 @@ class IngredientesRepo:
     def __init__(self, conn):
         self.conn = conn
 
-    def _infer_cols(self):
-        """Inferir colunas em 'FichasTecnicas' com as preferências do esquema."""
-        cur = self.conn.cursor()
-        try:
-            cur.execute("PRAGMA table_info(FichasTecnicas)")
-            cols_raw = [r[1] for r in cur.fetchall()]
-        except sqlite3.Error as exc:
-            logger.error(
-                "[IngredientesRepo] _infer_cols falhou: %s", exc, exc_info=True
-            )
-            return None
-
-        def _norm(name: str) -> str:
-            return "".join(ch for ch in name.lower() if ch.isalpha())
-
-        cols_norm = [_norm(c) for c in cols_raw]
-
-        def has(name: str) -> bool:
-            return _norm(name) in cols_norm
-
-        def pick(cands, allow_heuristic: bool = False):
-            for c in cands:
-                n = _norm(c)
-                if n in cols_norm:
-                    return cols_raw[cols_norm.index(n)]
-            if allow_heuristic:
-                for orig, n in zip(cols_raw, cols_norm):
-                    for pref in ("produto", "artigo", "codigo", "cod", "fk"):
-                        if n.startswith(pref) and any(
-                            k in n for k in ("produto", "artigo", "codigo", "cod")
-                        ):
-                            return orig
-            return None
-
-        # Preferências baseadas no teu schema real
-        prod = (
-            pick(["ProdutoCodigo"], allow_heuristic=False)
-            or pick(
-                [
-                    "CodigoProduto",
-                    "produto_codigo",
-                    "codigo_produto",
-                    "produto",
-                    "artigo",
-                    "codigo",
-                    "cod_produto",
-                    "codartigo",
-                    "fk_produto",
-                ],
-                allow_heuristic=True,
-            )
-        )
-        # ingrediente: o campo de Excel "ComponenteNome" é preferido;
-        # o importador também reconhece aliases como
-        # "ingrediente", "ingredientes", "designacao", "componente",
-        # "descricao" e "nome_ingrediente".
-        ingr = (
-            pick(["ComponenteNome"], allow_heuristic=False)
-            or pick(
-                [
-                    "ingrediente",
-                    "ingredientes",
-                    "designacao",
-                    "componente",
-                    "descricao",
-                    "nome_ingrediente",
-                ],
-                allow_heuristic=False,
-            )
-        )
-        # quantidade & unidade
-        qty = "qtd" if has("qtd") else pick(["quantidade", "qtde", "quant", "qte"])
-        unit = (
-            "unidade"
-            if has("unidade")
-            else pick(["unid", "unidade_medida", "uom", "und", "unidad"])
-        )
-
-        code = (
-            "componente_codigo"
-            if has("componente_codigo")
-            else pick(["codigo_componente", "cod_componente", "componente", "codigo"])
-        )
-
-        return {"prod": prod, "ingr": ingr, "qty": qty, "unit": unit, "code": code}
-
     def listar_por_produto(self, codigo: str):
-        """Devolve dados do produto em FichasTecnicas."""
-        """Lista dicts com chaves: ingrediente, nome, designacao, quantidade,
-        qtd, QTD, unidade, ppu e total.
-        """
-        cur = self.conn.cursor()
-        cols = self._infer_cols()
-        if cols is None:
-            logger.warning(
-                "[IngredientesRepo] listar_por_produto: "
-                "colunas de FichasTecnicas não puderam ser inferidas"
-            )
-            return []
+        """Devolve dados do produto em FichasTecnicas.
 
+        Retorna uma lista de dicts com chaves: ``ComponenteNome``, ``Qtd``,
+        ``Unidade``, ``Ppu``, ``Preco`` e ``Codigo`` (quando disponível).
+        """
+
+        cur = self.conn.cursor()
         try:
             cur.execute("PRAGMA table_info(FichasTecnicas)")
-            cols_raw = [c[1] for c in cur.fetchall()]
-            cols_lc = [c.lower() for c in cols_raw]
+            cols = [c[1] for c in cur.fetchall()]
         except sqlite3.Error as exc:
             logger.error(
                 "[IngredientesRepo] listar_por_produto(%s) falhou: %s",
@@ -268,150 +175,45 @@ class IngredientesRepo:
             )
             return []
 
-        def pick(name: str) -> str | None:
-            try:
-                return cols_raw[cols_lc.index(name)]
-            except ValueError:
-                return None
+        has_ordem = "Ordem" in cols
+        has_code = "ComponenteCodigo" in cols
 
-        cost_col = pick("total") or pick("custo") or pick("preco")
-        if not cost_col:
-            return []
+        select_cols = ["ComponenteNome", "Qtd", "Unidade", "Ppu", "Preco"]
+        if has_code:
+            select_cols.append("ComponenteCodigo")
 
-        order_col = pick("ordem") or "rowid"
+        query = (
+            "SELECT "
+            + ", ".join(quote_ident(c) for c in select_cols)
+            + " FROM FichasTecnicas WHERE ProdutoCodigo=? "
+            + ("ORDER BY Ordem" if has_ordem else "ORDER BY rowid")
+        )
 
         try:
-            select_cols = [
-                quote_ident(cols["ingr"]),
-                quote_ident(cols["qty"]),
-                quote_ident(cols["unit"]),
-                quote_ident("ppu"),
-                quote_ident(cost_col),
-            ]
-            if cols.get("code"):
-                select_cols.append(quote_ident(cols["code"]))
-            query = (
-                "SELECT "
-                + ", ".join(select_cols)
-                + " FROM FichasTecnicas "
-                + f"WHERE {quote_ident(cols['prod'])} = ? "
-                + f"ORDER BY {quote_ident(order_col)}"
-            )
             cur.execute(query, (codigo,))
             rows = cur.fetchall()
-            idx = {"ingr": 0, "qty": 1, "unit": 2, "ppu": 3, "cost": 4}
-            if cols.get("code"):
-                idx["code"] = len(select_cols) - 1
-            out = []
-            for r in rows:
-                nome = r[idx["ingr"]]
-                qtd = r[idx["qty"]]
-                unidade = r[idx["unit"]]
-                ppu = r[idx["ppu"]]
-                total = r[idx["cost"]]
-                code_val = r[idx["code"]] if "code" in idx else None
-                item = {
-                    "ingrediente": nome,
-                    "nome": nome,
-                    "designacao": nome,
-                    "quantidade": qtd,
-                    "qtd": qtd,
-                    "QTD": qtd,
-                    "unidade": unidade,
-                    "ppu": ppu,
-                    "total": total,
-                }
-                if code_val is not None:
-                    item["codigo"] = code_val
-                out.append(item)
-            return out
         except sqlite3.Error as exc:
-            primary_exc = exc
-            try:
-                cur.execute("PRAGMA table_info(FichasTecnicas)")
-                cols = [c[1].lower() for c in cur.fetchall()]
+            logger.error(
+                "[IngredientesRepo] listar_por_produto(%s) falhou: %s",
+                codigo,
+                exc,
+                exc_info=True,
+            )
+            return []
 
-                def has(x):
-                    return x in cols
-
-                sel = []
-                alias = []
-                if has("componente_nome"):
-                    sel.append("componente_nome")
-                    alias.append("nome")
-                if has("componente_codigo"):
-                    sel.append("componente_codigo")
-                    alias.append("codigo")
-                if has("qtd"):
-                    sel.append("qtd")
-                    alias.append("qtd")
-                if has("unidade"):
-                    sel.append("unidade")
-                    alias.append("unidade")
-                if has("ppu"):
-                    sel.append("ppu")
-                    alias.append("ppu")
-                if has("total"):
-                    sel.append("total")
-                    alias.append("total")
-                elif has("custo"):
-                    sel.append("custo")
-                    alias.append("total")
-                elif has("preco"):
-                    sel.append("preco")
-                    alias.append("total")
-                if not sel:
-                    return []
-                sql = (
-                    "SELECT "
-                    + ", ".join(quote_ident(c) for c in sel)
-                    + f" FROM FichasTecnicas WHERE {quote_ident('ProdutoCodigo')}=?"
-                )
-                cur.execute(sql, (codigo,))
-                rows = cur.fetchall()
-                out = []
-                for r in rows:
-                    base = {
-                        "ingrediente": None,
-                        "nome": None,
-                        "designacao": None,
-                        "quantidade": None,
-                        "qtd": None,
-                        "QTD": None,
-                        "unidade": None,
-                        "ppu": None,
-                        "total": None,
-                        "codigo": None,
-                    }
-                    tmp = {}
-                    for i, a in enumerate(alias):
-                        tmp[a] = r[i]
-                    # preencher aliases
-                    if "nome" in tmp and tmp["nome"] is not None:
-                        base["ingrediente"] = base["nome"] = base["designacao"] = tmp[
-                            "nome"
-                        ]
-                    if "qtd" in tmp and tmp["qtd"] is not None:
-                        base["quantidade"] = base["qtd"] = base["QTD"] = tmp["qtd"]
-                    for k in ("unidade", "ppu", "total", "codigo"):
-                        if k in tmp:
-                            base[k] = tmp[k]
-                    out.append(base)
-                return out
-            except sqlite3.Error as exc2:
-                logger.error(
-                    "[IngredientesRepo] listar_por_produto(%s) falhou: %s",
-                    codigo,
-                    primary_exc,
-                    exc_info=True,
-                )
-                logger.error(
-                    "[IngredientesRepo] fallback listar_por_produto(%s) falhou: %s",
-                    codigo,
-                    exc2,
-                    exc_info=True,
-                )
-                return []
+        out = []
+        for r in rows:
+            item = {
+                "ComponenteNome": r[0],
+                "Qtd": r[1],
+                "Unidade": r[2],
+                "Ppu": r[3],
+                "Preco": r[4],
+            }
+            if has_code:
+                item["Codigo"] = r[5]
+            out.append(item)
+        return out
 
 
 class AuxiliaresRepo:

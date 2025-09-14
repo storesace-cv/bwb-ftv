@@ -78,9 +78,8 @@ Para importar ou atualizar dados coloque os três ficheiros Excel dentro do dire
 
 No início da operação os ficheiros são validados: se algum estiver em falta ou não tiver extensão `.xlsx`, a importação é interrompida com erro. Após processamento com sucesso, cada ficheiro é movido para `imports/history` com um carimbo temporal (`YYYYMMDDHHMMSS`) anexado ao nome, permitindo manter um histórico de cargas.
 
-Ao importar `FichasTecnicas_base.xlsx` a coluna de custo pode surgir como
-`custo` ou `total`; ambas são automaticamente mapeadas para o campo `total`
-na base de dados.
+Ao importar `FichasTecnicas_base.xlsx` a coluna de custo deve chamar-se
+`Preco`, correspondendo diretamente ao campo `Preco` na base de dados.
 
 ## Migração de esquema
 

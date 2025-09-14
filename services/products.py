@@ -21,24 +21,8 @@ from utils.formatting import parse_decimal
 logger = logging.getLogger(__name__)
 
 
-HEADER_ALIASES = {
-    "codigodoproduto": "Codigo",
-    "codproduto": "Codigo",
-    "prodvenda": "Codigo",
-    "preco1": "Preco1",
-    "preco2": "Preco2",
-    "preco3": "Preco3",
-    "preco4": "Preco4",
-    "preco5": "Preco5",
-    "iva1": "Iva1",
-    "iva2": "Iva2",
-    "isencaoiva": "IsencaoIva",
-    "custo": "Total",
-    "preco": "Total",
-    "componentenome": "ComponenteNome",
-    # Map common spreadsheet headers to their canonical database columns.
-    "nome": "Produto",
-}
+# Historical header aliases have been removed. Imports now rely on
+# spreadsheets using the canonical column names directly.
 
 PRECO_GRAM_LOOKUP = {
     "preco1g": ("Preco1G", "Preco1"),
@@ -62,7 +46,6 @@ NUMERIC_NAMES = {
     "preco5g",
     "ppu",
     "qtd",
-    "total",
     "peso",
     "iva",
     "iva1",
@@ -90,8 +73,9 @@ def canonicalize_header(text: str, table: str | None = None) -> str:
         preco_g, preco = PRECO_GRAM_LOOKUP[key]
         return preco_g if table == "Produtos" else preco
 
-    if key in HEADER_ALIASES:
-        return HEADER_ALIASES[key]
+    # Preserve existing camel-case headers not matched above
+    if txt_norm and re.search(r"[A-Z]", txt_norm[1:]) and " " not in txt_norm:
+        return txt_norm[0].upper() + txt_norm[1:]
 
     return "".join(word.capitalize() for word in txt_norm.split())
 
@@ -198,13 +182,7 @@ class ProductService:
         rows = self.ds.get_ingredientes(codigo)
         fichas: list[FichaTecnica] = []
         for row in rows:
-            name = (
-                row.get("ComponenteNome")
-                or row.get("nome")
-                or row.get("ingrediente")
-                or row.get("designacao")
-                or ""
-            )
+            name = row.get("ComponenteNome") or ""
             if not name:
                 logger.warning(
                     "[ProductService] Nome do ingrediente vazio em %s: %s",
@@ -214,16 +192,11 @@ class ProductService:
             fichas.append(
                 FichaTecnica(
                     ingredient=name,
-                    quantity=(
-                        row.get("qtd")
-                        or row.get("quantidade")
-                        or row.get("QTD")
-                        or 0
-                    ),
-                    unit=row.get("unidade") or "",
-                    ppu=row.get("ppu"),
-                    total=row.get("total"),
-                    code=row.get("codigo"),
+                    quantity=row.get("Qtd") or 0,
+                    unit=row.get("Unidade") or "",
+                    ppu=row.get("Ppu"),
+                    total=row.get("Preco"),
+                    code=row.get("Codigo"),
                 )
             )
         return fichas
@@ -259,13 +232,7 @@ def get_product_info(ds: DataStore, codigo: str) -> Product:
 
     ingredients: List[Ingredient] = []
     for row in ing_rows:
-        name = (
-            row.get("ComponenteNome")
-            or row.get("nome")
-            or row.get("ingrediente")
-            or row.get("designacao")
-            or ""
-        )
+        name = row.get("ComponenteNome") or ""
         if not name:
             logger.warning(
                 "[ProductService] Nome do ingrediente vazio em %s: %s",
@@ -275,16 +242,11 @@ def get_product_info(ds: DataStore, codigo: str) -> Product:
         ingredients.append(
             Ingredient(
                 name=name,
-                quantity=(
-                    row.get("qtd")
-                    or row.get("quantidade")
-                    or row.get("QTD")
-                    or 0
-                ),
-                unit=row.get("unidade") or "",
-                ppu=row.get("ppu"),
-                total=row.get("total"),
-                code=row.get("codigo"),
+                quantity=row.get("Qtd") or 0,
+                unit=row.get("Unidade") or "",
+                ppu=row.get("Ppu"),
+                total=row.get("Preco"),
+                code=row.get("Codigo"),
             )
         )
 
@@ -293,11 +255,9 @@ def get_product_info(ds: DataStore, codigo: str) -> Product:
         name=info.get("produto"),
         familia=info.get("familia"),
         subfamilia=info.get("subfamilia"),
-        tipo_artigo_cod=info.get("tipo_artigo_cod") or info.get("tipoartigo"),
-        validade_cod=info.get("validade_cod")
-        or info.get("validade")
-        or info.get("validadeid"),
-        temperatura_cod=info.get("temperatura_cod") or info.get("temperatura"),
+        tipo_artigo_cod=info.get("tipoartigo"),
+        validade_cod=info.get("validade"),
+        temperatura_cod=info.get("temperatura"),
         pvps=pvps,
         ingredients=ingredients,
     )

@@ -37,13 +37,13 @@ def imports_dir():
 
 
 def _write_base_files(
-    base_dir, products=None, code_header="codigo", price_header="preco1_g", price=1.0
+    base_dir, products=None, code_header="Codigo", price_header="preco1_g", price=1.0
 ):
     if products is None:
         products = [("P1", "Produto 1")]
     prod_wb = Workbook()
     ws = prod_wb.active
-    ws.append(["codigo", "nome", "tipo_venda"])
+    ws.append(["Codigo", "Produto", "tipo_venda"])
     for code, name in products:
         ws.append([code, name, 1])
     prod_wb.save(base_dir / "Produtos_Base.xlsx")
@@ -57,11 +57,11 @@ def _write_base_files(
             "produto_nome",
             "componente_codigo",
             "componente_nome",
-            "qtd",
-            "unidade",
-            "ppu",
-            "preco",
-            "peso",
+            "Qtd",
+            "Unidade",
+            "Ppu",
+            "Preco",
+            "Peso",
         ]
     )
     for code, _ in products:
@@ -193,10 +193,10 @@ def test_update_from_excel_uses_produto_codigo(ds, imports_dir):
     assert pvps["pvp1"] == 3.0
 
 
-def test_import_from_excel_handles_alt_headers(ds, imports_dir):
+def test_import_from_excel_handles_preco_gram_header(ds, imports_dir):
     _write_base_files(
         imports_dir,
-        code_header="Código do Produto",
+        code_header="Codigo",
         price_header="Preço1 G",
         price=2.0,
     )
@@ -206,14 +206,14 @@ def test_import_from_excel_handles_alt_headers(ds, imports_dir):
     assert pvps["pvp1"] == 2.0
 
 
-def test_update_from_excel_handles_alt_headers(ds, imports_dir):
+def test_update_from_excel_handles_preco_gram_header(ds, imports_dir):
     ds.conn.execute(
         "INSERT INTO Produtos (Codigo, Produto, Preco1G) VALUES ('P1', 'X', 1.0)"
     )
     ds.reload_ids()
     _write_base_files(
         imports_dir,
-        code_header="Código do Produto",
+        code_header="Codigo",
         price_header="Preço1 G",
         price=4.0,
     )
@@ -259,7 +259,7 @@ def test_preco_taxas_requires_codigo(ds, imports_dir, func):
         getattr(svc, func)()
 
 
-def test_import_maps_custo_to_total(ds, imports_dir):
+def test_import_reads_preco(ds, imports_dir):
     prod = Workbook()
     ws = prod.active
     ws.append(["codigo", "nome", "tipo_venda"])
@@ -275,11 +275,11 @@ def test_import_maps_custo_to_total(ds, imports_dir):
             "produto_nome",
             "componente_codigo",
             "componente_nome",
-            "qtd",
-            "unidade",
-            "ppu",
-            "custo",
-            "peso",
+            "Qtd",
+            "Unidade",
+            "Ppu",
+            "Preco",
+            "Peso",
         ]
     )
     ws.append([None, "P1", None, None, "Ing", 2, "Kg", 3, "1 234,5", None])
@@ -294,10 +294,10 @@ def test_import_maps_custo_to_total(ds, imports_dir):
     svc = ProductService(ds)
     svc.import_from_excel()
     ing = ds.get_ingredientes("P1")[0]
-    assert ing["total"] == 1234.5
+    assert ing["Preco"] == 1234.5
 
 
-def test_update_maps_custo_to_total(ds, imports_dir):
+def test_update_reads_preco(ds, imports_dir):
     ds.conn.execute("INSERT INTO Produtos (Codigo, Produto) VALUES ('P1', 'Prod')")
     ds.conn.execute(
         "INSERT INTO FichasTecnicas "
@@ -321,11 +321,11 @@ def test_update_maps_custo_to_total(ds, imports_dir):
             "produto_nome",
             "componente_codigo",
             "componente_nome",
-            "qtd",
-            "unidade",
-            "ppu",
-            "custo",
-            "peso",
+            "Qtd",
+            "Unidade",
+            "Ppu",
+            "Preco",
+            "Peso",
         ]
     )
     ws.append([None, "P1", None, None, "Ing", 3, "Kg", 2, 7, None])
@@ -340,13 +340,13 @@ def test_update_maps_custo_to_total(ds, imports_dir):
     svc = ProductService(ds)
     svc.update_from_excel()
     ing = ds.get_ingredientes("P1")[0]
-    assert ing["total"] == 7
+    assert ing["Preco"] == 7
 
 
 def test_private_update_from_excel_parses_numbers(ds, tmp_path):
     wb = Workbook()
     ws = wb.active
-    ws.append(["Código", "Nome", "Preço1 G"])
+    ws.append(["Código", "Produto", "Preço1 G"])
     ws.append(["P1", "Produto 1", "1 234,5"])
     path = tmp_path / "update.xlsx"
     wb.save(path)

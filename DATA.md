@@ -44,10 +44,6 @@
 | Preco | Preço total |
 | Peso | Peso |
 
-> Durante a importação das folhas de Excel, o cabeçalho `ComponenteNome` pode
-> surgir com nomes alternativos como `ingrediente`, `ingredientes`,
-> `designacao`, `componente`, `descricao` ou `nome_ingrediente`.
-
 ### `PrecosTaxas`
 | Campo | Descrição |
 |-------|-----------|
