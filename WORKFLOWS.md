@@ -4,13 +4,31 @@
 **Flow**
 
 ```
-User → FTApp launcher → SplashScreen → DataStore → ProductService → FTApp main window
+User → FTApp launcher → SplashScreen (click to continue) → DataStore (migrations) → ProductService → FTApp main window
+```
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant L as Launcher
+    participant S as SplashScreen
+    participant D as DataStore
+    participant P as ProductService
+    participant F as FTApp
+
+    U->>L: Run script
+    L->>S: Show splash
+    S->>U: Prompt migrations
+    U-->>S: Click "Continuar"
+    S->>D: Apply migrations
+    D->>P: Init service
+    P->>F: Open main window
 ```
 
 1. User starts `bwb-fichas_tecnicas.py`.
 2. `QApplication` and theme are created.
-3. `SplashScreen` prompts about pending migrations and continuation.
-4. `DataStore` connects to `databases/ftv.db`, creating it if missing; migrations are applied when the user accepts.
+3. `SplashScreen` exibe mensagem sobre migrações pendentes e aguarda o clique em "Continuar".
+4. Ao clicar, `DataStore` liga a `databases/ftv.db`, criando-a se necessário, e aplica as migrações antes de prosseguir.
 5. `ProductService` wraps the datastore; the main `FTApp` window is shown.
 
 **Agent responsibilities & data**
