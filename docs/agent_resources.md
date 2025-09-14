@@ -38,9 +38,9 @@ restore_backup(backup_path)
 - **sqlite3** – local database access.
 
 ## External Services
-- **ZoneSoft** – external source for products, prices, and taxes. Credentials are required but not stored in the repository.
+- **NET-bo** – external source for products, prices, and taxes provided via Excel exports. Credentials are required but not stored in the repository.
 
 ## Known Limitations
 - Import files must be `.xlsx` and use exact Portuguese names with accents.
 - Backup and migration scripts expect the database at `<root>/databases/ftv.db` unless `FTV_DB_PATH` is set.
-- ZoneSoft integration is not stubbed; network access and valid credentials are needed.
+- There is no direct integration with ZoneSoft; the process relies on manually exported Excel files from NET-bo.
