@@ -39,6 +39,15 @@ def _make_ftapp(qapp):
         def total(self):
             return 5
 
+        def get_image_path(self, codigo: str) -> None:
+            return None
+
+        def save_product_image(self, codigo: str, src_path: str) -> None:
+            pass
+
+        def delete_product_image(self, codigo: str) -> None:
+            pass
+
     ft.service = _Svc()
     ft.ds = None
     ft.cur_index = 0

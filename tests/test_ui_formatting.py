@@ -12,7 +12,7 @@ class DummyService:
         return 1
 
     def codigo_at(self, idx):
-        return "T1"
+        return None
 
     def list_tipos_artigos(self):
         return []
@@ -25,6 +25,15 @@ class DummyService:
 
     def list_active_allergens(self):
         return []
+
+    def get_image_path(self, codigo: str) -> None:
+        return None
+
+    def save_product_image(self, codigo: str, src_path: str) -> None:
+        pass
+
+    def delete_product_image(self, codigo: str) -> None:
+        pass
 
     def get_product_info(self, codigo):
         return Product(
