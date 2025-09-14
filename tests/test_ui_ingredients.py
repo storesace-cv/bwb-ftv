@@ -2,7 +2,8 @@ import pytest
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import QResizeEvent
 from services.products import ProductService
-from ui.ui_editor_fonte import FTApp
+from ui.ui_editor_fonte import FTApp, FichasTecnicasModel
+from domain import FichaTecnica
 from utils.formatting import format_pt_number
 
 
@@ -151,3 +152,9 @@ def test_apply_ingredient_widths_after_resize(qapp):
         actual = ft.tbIng.columnWidth(col)
         assert actual == pytest.approx(expected, abs=2)
     ft.close()
+
+
+def test_model_returns_dash_for_empty_ingredient(qapp):
+    model = FichasTecnicasModel([FichaTecnica("", 0, "", None, None, None)])
+    assert model.data(model.index(0, 0)) == "—"
+    assert model.data(model.index(0, 1)) is None

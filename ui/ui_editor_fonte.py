@@ -121,6 +121,8 @@ class FichasTecnicasModel(QAbstractTableModel):
             return None
         ficha = self._rows[index.row()]
         if role == Qt.DisplayRole:
+            if not ficha.ingredient or not ficha.ingredient.strip():
+                return "—" if index.column() == 0 else None
             mapping = [
                 ficha.ingredient,
                 format_pt_number(ficha.quantity),
