@@ -4,20 +4,20 @@
 **Flow**
 
 ```
-User → FTApp launcher → StartupDialog → DataStore → ProductService → FTApp main window
+User → FTApp launcher → SplashScreen → DataStore → ProductService → FTApp main window
 ```
 
 1. User starts `bwb-fichas_tecnicas.py`.
 2. `QApplication` and theme are created.
-3. `StartupDialog` asks whether to proceed.
-4. `DataStore` connects to `databases/ftv.db`, creates it if missing, and applies pending migrations after user consent.
+3. `SplashScreen` prompts about pending migrations and continuation.
+4. `DataStore` connects to `databases/ftv.db`, creating it if missing; migrations are applied when the user accepts.
 5. `ProductService` wraps the datastore; the main `FTApp` window is shown.
 
 **Agent responsibilities & data**
 
 | Agent | Responsibility | Data exchanged |
 |-------|----------------|----------------|
-| Migration Agent | Checks for pending migrations during DataStore initialization and applies them | SQLite schema metadata, migration SQL files |
+| Migration Agent | Checks for pending migrations before DataStore initialization and applies them | SQLite schema metadata, migration SQL files |
 | Backup Agent | May be invoked before migrations (not automatic) | Database file |
 | UI (implicit login) | Confirms continuation and displays main window | User choice ("Continuar"/"Sair") |
 
@@ -77,5 +77,3 @@ User edits ingredients → FTApp → ProductService.calculate_cost → total dis
 | Backup Agent (optional) | Backup before major edits | Database file |
 
 ---
-
-*No tests were run for this documentation update.*

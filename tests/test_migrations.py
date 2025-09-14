@@ -1,7 +1,6 @@
 import sqlite3
 import shutil
 from pathlib import Path
-import pytest
 
 import data.migration as migration
 from data.migration import apply_pending_migrations, get_pending_migrations
@@ -92,35 +91,21 @@ def test_datastore_migration_accept(monkeypatch, tmp_path):
     monkeypatch.setattr(ds_module, "base", tmp_path)
     monkeypatch.setattr(migration, "MIGRATIONS_DIR", mig_dir)
 
-    class FakeDialog:
-        def __init__(self, text, buttons, parent=None):
-            self.text = text
-            self.buttons = buttons
-
-        def get_choice(self):
+    class FakeSplash:
+        def overlay(self, text, buttons, y=300):
             return "Sim"
 
-    class DummyApp:
-        _inst = None
+    splash = FakeSplash()
+    pending = ds_module.DataStore.pending_migrations(db_path)
+    assert [p.name for p in pending] == ["001.sql"]
+    choice = splash.overlay(
+        "Foi detetada uma migração da base de dados. Aplicar agora?",
+        ["Sim", "Não"],
+    )
+    if choice == "Sim":
+        ds_module.DataStore.apply_migrations(db_path)
 
-        def __init__(self, *args, **kwargs):
-            DummyApp._inst = self
-
-        @classmethod
-        def instance(cls):
-            return cls._inst
-
-    import sys
-    import types
-
-    dummy_qtwidgets = types.SimpleNamespace(QApplication=DummyApp, QMessageBox=object)
-    dummy_pyqt5 = types.SimpleNamespace(QtWidgets=dummy_qtwidgets)
-    monkeypatch.setitem(sys.modules, "PyQt5", dummy_pyqt5)
-    monkeypatch.setitem(sys.modules, "PyQt5.QtWidgets", dummy_qtwidgets)
-    stub_startup = types.SimpleNamespace(StartupDialog=FakeDialog)
-    monkeypatch.setitem(sys.modules, "ui.startup_dialog", stub_startup)
-
-    ds = ds_module.DataStore()
+    ds = ds_module.DataStore(db_path=db_path)
     cur = ds.conn.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='T2'"
     )
@@ -182,9 +167,26 @@ def test_datastore_migration_decline(monkeypatch, tmp_path):
     monkeypatch.setattr(ds_module, "base", tmp_path)
     monkeypatch.setattr(migration, "MIGRATIONS_DIR", mig_dir)
 
-    assert ds_module.DataStore.pending_migrations(db_path)
-    ds_module.DataStore.apply_migrations(db_path)
-    ds_module.DataStore(db_path=db_path)
+    class FakeSplash:
+        def overlay(self, text, buttons, y=300):
+            return "Não"
+
+    splash = FakeSplash()
+    pending = ds_module.DataStore.pending_migrations(db_path)
+    assert [p.name for p in pending] == ["001.sql"]
+    choice = splash.overlay(
+        "Foi detetada uma migração da base de dados. Aplicar agora?",
+        ["Sim", "Não"],
+    )
+    if choice == "Sim":
+        ds_module.DataStore.apply_migrations(db_path)
+
+    conn = sqlite3.connect(str(db_path))
+    cur = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='T3'"
+    )
+    assert cur.fetchone() is None
+    conn.close()
 
 
 def test_update_produtos_aux_cols_migration(tmp_path, monkeypatch):
