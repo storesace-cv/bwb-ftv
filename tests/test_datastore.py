@@ -2,7 +2,6 @@ import logging
 import json
 import sqlite3
 import sys
-import types
 import pytest
 
 from data.datastore import DataStore
@@ -167,48 +166,15 @@ def test_context_manager_closes_connection():
         conn.execute("SELECT 1")
 
 
-def _stub_dialog(monkeypatch, choice):
-    class DummyDialog:
-        calls = 0
-
-        def __init__(self, *a, **k):
-            pass
-
-        def get_choice(self):
-            if DummyDialog.calls == 0:
-                DummyDialog.calls += 1
-                return choice
-            DummyDialog.calls += 1
-            return "Sim"
-
-    dummy_module = types.SimpleNamespace(StartupDialog=DummyDialog)
-    monkeypatch.setitem(sys.modules, "ui.startup_dialog", dummy_module)
-
-    class DummyApp:
-        _inst = None
-
-        def __init__(self, *a, **k):
-            DummyApp._inst = self
-
-        @classmethod
-        def instance(cls):
-            return cls._inst
-
-    qtwidgets = types.SimpleNamespace(QApplication=DummyApp)
-    monkeypatch.setitem(sys.modules, "PyQt5", types.SimpleNamespace())
-    monkeypatch.setitem(sys.modules, "PyQt5.QtWidgets", qtwidgets)
-
-
-def test_datastore_missing_path_errors(tmp_path, caplog, monkeypatch):
-    _stub_dialog(monkeypatch, None)
+def test_datastore_missing_path_errors(tmp_path, caplog):
     bad_path = tmp_path / "no" / "db" / "ftv.db"
     with caplog.at_level(logging.ERROR), pytest.raises(FileNotFoundError):
-        DataStore(db_path=str(bad_path))
+        DataStore(db_path=str(bad_path), prompt=lambda *_: None)
     assert any("FTV_DB_PATH" in r.message for r in caplog.records)
 
 
 def test_datastore_creates_empty_db(tmp_path, monkeypatch):
-    _stub_dialog(monkeypatch, "Base vazia")
+    prompt = lambda *_: "Base vazia"
     import data.datastore as ds_module
 
     monkeypatch.setattr(ds_module, "base", tmp_path)
@@ -255,7 +221,7 @@ def test_datastore_creates_empty_db(tmp_path, monkeypatch):
         encoding="utf-8",
     )
 
-    ds = ds_module.DataStore()
+    ds = ds_module.DataStore(prompt=prompt)
     cur = ds.conn.cursor()
     cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
     names = {r[0] for r in cur.fetchall()}
