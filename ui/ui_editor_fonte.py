@@ -51,6 +51,8 @@
 #      vertical; cabeçalho em comentários.
 # 2025-09-13 17:16 — v3.89 — Raiz dos blocos B2–B5 renomeada para ".C1".
 # 2025-09-13 23:08 — v3.90 — Menu Segurança com ações de cópia e reposição.
+# 2025-09-14 18:23 — v3.91 — Largura da página adaptativa; scroll horizontal
+#    desativado.
 
 import sys
 import logging
@@ -303,15 +305,17 @@ class FTApp(QWidget):
         # --- Conteúdo com scroll vertical ---
         scroll = QScrollArea(self)
         scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         page = QWidget()
         page_ly = QVBoxLayout(page)
         page_ly.setContentsMargins(0, 0, 0, 0)
         page_ly.setSpacing(8)
         scroll.setWidget(page)
-        page.setMinimumWidth(1100)
+        self.scroll = scroll
+        self.page = page
         root.addWidget(scroll, 1)
+        self._update_page_width()
 
         # ---------------- B1 — Dados Gerais (B1.C1) ----------------
         self.C1 = Zone(
@@ -586,6 +590,11 @@ class FTApp(QWidget):
         self.edPrep.setMinimumHeight(h)
         self.edPrep.setMaximumHeight(h)
         self.edPrep.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+
+    def _update_page_width(self):
+        """Ensure scroll page matches viewport width to avoid horizontal bars."""
+        if hasattr(self, "scroll") and hasattr(self, "page"):
+            self.page.setMinimumWidth(self.scroll.viewport().width())
 
     def _on_prep_changed(self):
         self._prep_dirty = True
@@ -884,6 +893,7 @@ class FTApp(QWidget):
     # ---------- Eventos ----------
     def resizeEvent(self, ev):
         super().resizeEvent(ev)
+        self._update_page_width()
         self._apply_ingredient_widths()
         self._apply_prep_autofit_or_scroll()
 
