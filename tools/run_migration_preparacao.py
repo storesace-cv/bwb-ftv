@@ -25,6 +25,8 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 from utils.paths import get_project_root  # noqa: E402
+from data.datastore import DataStore  # noqa: E402
+import data.migration as migration  # noqa: E402
 
 base = get_project_root()
 DB_PATH = base / "databases" / "ftv.db"
@@ -45,8 +47,12 @@ def main():
     if not DB_PATH.exists():
         die(2, f"Base de dados não encontrada: {DB_PATH}")
 
-    sql = SQL_PATH.read_text(encoding="utf-8")
+    pending = DataStore.pending_migrations(DB_PATH)
+    if not any(p.name == SQL_PATH.name for p in pending):
+        logger.info("[MIGRAÇÃO] Nenhuma migração 'preparacao.sql' pendente.")
+        return
 
+    sql = SQL_PATH.read_text(encoding="utf-8")
     try:
         conn = sqlite3.connect(DB_PATH)
     except Exception as e:
@@ -55,7 +61,10 @@ def main():
     try:
         with conn:
             conn.executescript(sql)
-        # Sanidade mínima: tabela existe?
+            table = migration._ensure_schema_table(conn)
+            conn.execute(
+                f"INSERT INTO {table}(Filename) VALUES (?)", (SQL_PATH.name,)
+            )
         try:
             cur = conn.execute("SELECT 1 FROM produto_preparacao LIMIT 1")
             cur.fetchone()

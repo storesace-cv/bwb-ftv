@@ -90,20 +90,13 @@ def test_datastore_migration_accept(monkeypatch, tmp_path):
 
     monkeypatch.setattr(ds_module, "base", tmp_path)
     monkeypatch.setattr(migration, "MIGRATIONS_DIR", mig_dir)
+    def fake_prompt(msg, buttons):
+        return "Sim"
 
-    class FakeSplash:
-        def overlay(self, text, buttons, y=300):
-            return "Sim"
-
-    splash = FakeSplash()
     pending = ds_module.DataStore.pending_migrations(db_path)
     assert [p.name for p in pending] == ["001.sql"]
-    choice = splash.overlay(
-        "Foi detetada uma migração da base de dados. Aplicar agora?",
-        ["Sim", "Não"],
-    )
-    if choice == "Sim":
-        ds_module.DataStore.apply_migrations(db_path)
+    applied = ds_module.DataStore.apply_migrations(db_path, prompt=fake_prompt)
+    assert applied == ["001.sql"]
 
     ds = ds_module.DataStore(db_path=db_path)
     cur = ds.conn.execute(
@@ -166,20 +159,13 @@ def test_datastore_migration_decline(monkeypatch, tmp_path):
 
     monkeypatch.setattr(ds_module, "base", tmp_path)
     monkeypatch.setattr(migration, "MIGRATIONS_DIR", mig_dir)
+    def fake_prompt(msg, buttons):
+        return "Não"
 
-    class FakeSplash:
-        def overlay(self, text, buttons, y=300):
-            return "Não"
-
-    splash = FakeSplash()
     pending = ds_module.DataStore.pending_migrations(db_path)
     assert [p.name for p in pending] == ["001.sql"]
-    choice = splash.overlay(
-        "Foi detetada uma migração da base de dados. Aplicar agora?",
-        ["Sim", "Não"],
-    )
-    if choice == "Sim":
-        ds_module.DataStore.apply_migrations(db_path)
+    applied = ds_module.DataStore.apply_migrations(db_path, prompt=fake_prompt)
+    assert applied == []
 
     conn = sqlite3.connect(str(db_path))
     cur = conn.execute(
