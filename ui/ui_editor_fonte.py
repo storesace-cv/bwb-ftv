@@ -544,15 +544,15 @@ class FTApp(QWidget):
 
     # ---------- Ingredientes: colunas ----------
     def _setup_ing_columns(self):
-        w = max(self.width(), 1100)
+        w = self.tbIng.viewport().width()
         model = self.tbIng.model()
         if not model:
             return
-        self.tbIng.setColumnWidth(0, int(w * 0.50))
-        self.tbIng.setColumnWidth(1, int(w * 0.10))
-        self.tbIng.setColumnWidth(2, int(w * 0.10))
-        self.tbIng.setColumnWidth(3, int(w * 0.14))
-        self.tbIng.setColumnWidth(4, int(w * 0.16))
+        self.tbIng.setColumnWidth(0, int(w * 0.4444))
+        self.tbIng.setColumnWidth(1, int(w * 0.1389))
+        self.tbIng.setColumnWidth(2, int(w * 0.0833))
+        self.tbIng.setColumnWidth(3, int(w * 0.1667))
+        self.tbIng.setColumnWidth(4, int(w * 0.1667))
 
     def _apply_ingredient_widths(self):
         self._setup_ing_columns()
