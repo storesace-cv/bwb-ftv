@@ -3,7 +3,7 @@
 ## 1. Camada Frontend
 - **Framework:** PyQt5  
 - **Launcher:** `bwb-fichas_tecnicas.py`  
-- **Fluxo:** aplica tema global, mostra `SplashScreen` e abre a janela principal `FTApp` (`ui/ui_editor_fonte.py`)
+- **Fluxo:** aplica tema global, mostra `SplashScreen` com clique para continuar e aviso de migrações, e só então abre a janela principal `FTApp` (`ui/ui_editor_fonte.py`)
 - **Funcionalidades:**  
   - Importação, backups e atualização → `ui/dialogs.py`  
   - Gestão de layout → `ui/layout.py`  
@@ -64,6 +64,7 @@
 ## 6. Interações entre Componentes
 graph LR
     subgraph UI
+        S[SplashScreen]
         A[FTApp & diálogos PyQt5]
     end
     subgraph Backend
@@ -83,6 +84,7 @@ graph LR
     %% Nó externo (fonte Excel)
     E[NET-bo (Excel)]
 
+    S --> C
     A --> B
     B --> C
     C --> D
