@@ -1,5 +1,7 @@
 # Esquema de base de dados e datasets auxiliares
 
+> **Nota**: Apenas os campos listados abaixo são aceites; cabeçalhos diferentes serão ignorados.
+
 ## Tabelas principais
 
 ### `Produtos`
@@ -116,3 +118,4 @@ erDiagram
     TiposArtigos ||--o{ Produtos : "TipoArtigo"
     Validade ||--o{ Produtos : "Validade"
     Temperaturas ||--o{ Produtos : "Temperatura"
+```
