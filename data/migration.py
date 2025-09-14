@@ -54,7 +54,8 @@ CREATE TABLE IF NOT EXISTS FichasTecnicas (
     Unidade TEXT,
     Ppu DECIMAL(10,2),
     Preco DECIMAL(10,2),
-    Peso DECIMAL(10,2)
+    Peso DECIMAL(10,2),
+    Ordem INTEGER
 )
 """
 
@@ -151,25 +152,30 @@ def _upgrade_tables(conn: sqlite3.Connection) -> None:
     if cur.fetchone():
         rows = list(conn.execute("PRAGMA table_info(FichasTecnicas)"))
         existing = {r[1] for r in rows}
-        if "Preco" not in existing:
-            try:
-                conn.execute(
-                    "ALTER TABLE FichasTecnicas ADD COLUMN Preco DECIMAL(10,2)"
-                )
-            except sqlite3.OperationalError:
-                cols = [
-                    "FamiliaSubfamilia",
-                    "ProdutoCodigo",
-                    "ProdutoNome",
-                    "ComponenteCodigo",
-                    "ComponenteNome",
-                    "Qtd",
-                    "Unidade",
-                    "Ppu",
-                    "Preco",
-                    "Peso",
-                ]
-                _recreate_table(conn, "FichasTecnicas", FICHAS_TECNICAS_SCHEMA, cols)
+        need = False
+        for col, decl in [("Preco", "DECIMAL(10,2)"), ("Ordem", "INTEGER")]:
+            if col not in existing:
+                try:
+                    conn.execute(
+                        f"ALTER TABLE FichasTecnicas ADD COLUMN {col} {decl}"
+                    )
+                except sqlite3.OperationalError:
+                    need = True
+        if need:
+            cols = [
+                "FamiliaSubfamilia",
+                "ProdutoCodigo",
+                "ProdutoNome",
+                "ComponenteCodigo",
+                "ComponenteNome",
+                "Qtd",
+                "Unidade",
+                "Ppu",
+                "Preco",
+                "Peso",
+                "Ordem",
+            ]
+            _recreate_table(conn, "FichasTecnicas", FICHAS_TECNICAS_SCHEMA, cols)
 
     cur = conn.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='PrecosTaxas'"

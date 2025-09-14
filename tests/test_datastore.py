@@ -72,7 +72,8 @@ def test_datastore_upgrades_missing_columns(tmp_path):
     cols = {r[1] for r in cur.fetchall()}
     assert {"UnInvVMMMPG", "TipoArtigo", "Validade", "Temperatura"} <= cols
     cur = ds.conn.execute("PRAGMA table_info(FichasTecnicas)")
-    assert any(r[1] == "Preco" for r in cur.fetchall())
+    ft_cols = {r[1] for r in cur.fetchall()}
+    assert {"Preco", "Ordem"} <= ft_cols
     ds.close()
 
 

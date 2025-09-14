@@ -36,7 +36,8 @@ CREATE TABLE IF NOT EXISTS FichasTecnicas (
     Unidade TEXT,
     Ppu DECIMAL(10,2),
     Preco DECIMAL(10,2),
-    Peso DECIMAL(10,2)
+    Peso DECIMAL(10,2),
+    Ordem INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS PrecosTaxas (
