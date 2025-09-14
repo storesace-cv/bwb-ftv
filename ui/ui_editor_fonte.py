@@ -313,7 +313,12 @@ class FTApp(QWidget):
 
         # ---------------- B1 — Dados Gerais (B1.C1) ----------------
         self.C1 = Zone(
-            "B1.C1", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
+            "B1.C1",
+            self,
+            flow="v",
+            level=0,
+            show_overlays=layout.DEV_OVERLAYS,
+            spacing=2,
         )
         page_ly.addWidget(self._section_box("[B1] - Dados Gerais", self.C1), 0)
 
@@ -325,8 +330,8 @@ class FTApp(QWidget):
         make_readonly_lineedit(self.edCodigo, False)
         self.edNome = QLineEdit()
         make_readonly_lineedit(self.edNome, True)
-        C1A1.add_row("Código:", self.edCodigo, label_minw=lbl_w, vspacing=2)
-        C1A1.add_row("Nome do Artigo:", self.edNome, label_minw=lbl_w, vspacing=2)
+        C1A1.add_row("Código:", self.edCodigo, label_minw=lbl_w, vspacing=0)
+        C1A1.add_row("Nome do Artigo:", self.edNome, label_minw=lbl_w, vspacing=1)
 
         # B1.C1.A.2
         C1A21, C1A22 = C1A2.split_h(
