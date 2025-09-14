@@ -12,6 +12,7 @@ from data.datastore import DataStore  # noqa: E402
 from services.products import ProductService  # noqa: E402
 from ui.ui_editor_fonte import FTApp  # noqa: E402
 from ui.startup_dialog import StartupDialog  # noqa: E402
+from ui.splashscreen import SplashScreen  # noqa: E402
 from utils.paths import get_project_root  # noqa: E402
 
 
@@ -34,8 +35,11 @@ def main():
     app = QApplication(sys.argv)
     _apply_global_theme(app)
 
-    escolha = StartupDialog("Avisos iniciais", ["Continuar", "Sair"]).get_choice()
-    if escolha != "Continuar":
+    splash_closed: list[bool] = []
+    splash = SplashScreen()
+    splash.clicked.connect(lambda: splash_closed.append(True))
+    splash.exec_()
+    if not splash_closed:
         sys.exit(0)
 
     # DataStore
