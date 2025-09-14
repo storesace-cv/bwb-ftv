@@ -95,6 +95,10 @@ python tools/cleanup_schema.py
 
 Certifique-se de que os três ficheiros base se encontram em `imports/`.
 
+## Segurança
+
+Para recomendações sobre gestão de palavras-passe, encriptação, utilização de tokens/API keys e políticas de permissões, consulte [docs/security.md](docs/security.md). O documento inclui também boas práticas de deploy seguro e orientação para gerir credenciais em desenvolvimento e produção.
+
 ## Troubleshooting
 
 Se o ficheiro da base de dados estiver ausente, a aplicação cria
