@@ -130,61 +130,61 @@ erDiagram
 Após importação, os ficheiros são arquivados em `imports/history` e registados em `Uploads`.
 
 ## Normalização de cabeçalhos
-- Remoção de acentos/pontuação  
-- Aliases: “Prod Venda” → `Codigo`, “Preço 1-5” → `Preco1_5`, etc.
-- “Preço n g” mapeado para colunas específicas de gramas em `Produtos`
+- Remoção de acentos/pontuação
+
+> **Nota**: Apenas os campos listados abaixo são aceites; cabeçalhos diferentes serão ignorados.
 
 ## Tabela `Produtos_Base.xlsx`
-| Cabeçalho (exemplo) | Coluna BD |
+| Cabeçalho Excel | Coluna BD |
 |---|---|
-| Código | Codigo |
+| Codigo | Codigo |
 | Produto | Produto |
-| Família | Familia |
-| Sub Família | SubFamilia |
-| Afeta Stk | AfetaStk |
+| Familia | Familia |
+| SubFamilia | SubFamilia |
+| AfetaStk | AfetaStk |
 | Menu | Menu |
-| Cod Barras | CodBarras |
-| Tipo Mercad | TipoMercad |
-| Tipo Venda | TipoVenda |
-| Tipo Produção | TipoProducao |
-| Tipo Gener | TipoGener |
-| Un Stock (V,M,P,G) | UnStockVMPG |
-| Un Venda (V+M,V) | UnVendaVMV |
-| Un Inv (V+M,M,P,G) | UnInvVMMMPG |
-| Un Produ / FT (P,V) | UnProduFtPV |
-| Cod. Auxiliar | CodAuxiliar |
-| Cod. Auxiliar 2 | CodAuxiliar2 |
+| CodBarras | CodBarras |
+| TipoMercad | TipoMercad |
+| TipoVenda | TipoVenda |
+| TipoProducao | TipoProducao |
+| TipoGener | TipoGener |
+| UnStockVMPG | UnStockVMPG |
+| UnVendaVMV | UnVendaVMV |
+| UnInvVMMMPG | UnInvVMMMPG |
+| UnProduFtPV | UnProduFtPV |
+| CodAuxiliar | CodAuxiliar |
+| CodAuxiliar2 | CodAuxiliar2 |
 | PCU | PCU |
 | PCM | PCM |
 | Descontinuado | Descontinuado |
-| Disp. Lojas | DispLojas |
+| DispLojas | DispLojas |
 
 ## Tabela `FichasTecnicas_base.xlsx`
-| Cabeçalho (exemplo) | Coluna BD |
+| Cabeçalho Excel | Coluna BD |
 |---|---|
-| Família > Subfamília | FamiliaSubfamilia |
-| Produto - Código | ProdutoCodigo |
-| Produto - Nome | ProdutoNome |
-| Componente - Código | ComponenteCodigo |
-| Componente - Nome | ComponenteNome |
-| Qtd. | Qtd |
+| FamiliaSubfamilia | FamiliaSubfamilia |
+| ProdutoCodigo | ProdutoCodigo |
+| ProdutoNome | ProdutoNome |
+| ComponenteCodigo | ComponenteCodigo |
+| ComponenteNome | ComponenteNome |
+| Qtd | Qtd |
 | Unidade | Unidade |
-| PPU | Ppu |
-| Preço | Preco |
+| Ppu | Ppu |
+| Preco | Preco |
 | Peso | Peso |
 
 ## Tabela `PreçosTaxas_base.xlsx`
-| Cabeçalho (exemplo) | Coluna BD |
+| Cabeçalho Excel | Coluna BD |
 |---|---|
-| Prod Venda | Codigo |
+| Codigo | Codigo |
 | Loja | Loja |
+| Preco1_5 | Preco1_5 |
+| Iva1_2 | Iva1_2 |
+| IsencaoIva | IsencaoIva |
+| NomeProdVenda | NomeProdVenda |
+| Familia | Familia |
+| SubFamilia | SubFamilia |
 | Ativo | Ativo |
-| Preço 1-5 | Preco1_5 |
-| Iva 1-2 | Iva1_2 |
-| Isenção IVA | IsencaoIva |
-| Nome prod venda (não necessário p/ importar) | NomeProdVenda |
-| Familia (não necessário p/ importar) | Familia |
-| Sub-Familia (não necessário p/ importar) | SubFamilia |
 
 ## Observações de importação
 - Campos numéricos (preços, quantidades, impostos) são convertidos para `decimal`.  
