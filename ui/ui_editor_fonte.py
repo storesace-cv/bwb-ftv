@@ -105,8 +105,14 @@ logger = logging.getLogger(__name__)
 
 class FichasTecnicasModel(QAbstractTableModel):
     """Table model for displaying ``FichasTecnicas`` records."""
-
     headers = ["Ingredientes", "QTD", "U.M.", "PPU", "Total"]
+    dev_headers = [
+        "FichasTecnicas.ComponenteNome",
+        "FichasTecnicas.Qtd",
+        "FichasTecnicas.Unidade",
+        "FichasTecnicas.Ppu",
+        "FichasTecnicas.Preco",
+    ]
 
     def __init__(self, rows: list[FichaTecnica] | None = None):
         super().__init__()
@@ -165,7 +171,8 @@ class FichasTecnicasModel(QAbstractTableModel):
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):  # pragma: no cover
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
-            return self.headers[section]
+            headers = self.dev_headers if layout.DEV_OVERLAYS else self.headers
+            return headers[section]
         return None
 
     def update_data(self, rows: list[FichaTecnica]):
@@ -927,6 +934,9 @@ class FTApp(QWidget):
             dev_lbl = lbl.property("devLabel")
             if user_lbl is not None and dev_lbl is not None:
                 lbl.setText(dev_lbl if layout.DEV_OVERLAYS else user_lbl)
+        self.ingModel.headerDataChanged.emit(
+            Qt.Horizontal, 0, self.ingModel.columnCount() - 1
+        )
 
     def _toggle_overlays_btn(self):
         self._toggle_overlays()
