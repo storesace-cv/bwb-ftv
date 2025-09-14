@@ -248,7 +248,11 @@ class IngredientesRepo:
         """
         cur = self.conn.cursor()
         cols = self._infer_cols()
-        if not cols:
+        if cols is None:
+            logger.warning(
+                "[IngredientesRepo] listar_por_produto: "
+                "colunas de FichasTecnicas não puderam ser inferidas"
+            )
             return []
 
         try:
@@ -290,7 +294,8 @@ class IngredientesRepo:
                 "SELECT "
                 + ", ".join(select_cols)
                 + " FROM FichasTecnicas "
-                + f"WHERE {quote_ident(cols['prod'])} = ? ORDER BY {quote_ident(order_col)}"
+                + f"WHERE {quote_ident(cols['prod'])} = ? "
+                + f"ORDER BY {quote_ident(order_col)}"
             )
             cur.execute(query, (codigo,))
             rows = cur.fetchall()
