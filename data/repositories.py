@@ -152,34 +152,38 @@ class IngredientesRepo:
         try:
             cur.execute("PRAGMA table_info(FichasTecnicas)")
             cols_raw = [r[1] for r in cur.fetchall()]
-            cols = [c.lower() for c in cols_raw]
         except sqlite3.Error as exc:
             logger.error(
                 "[IngredientesRepo] _infer_cols falhou: %s", exc, exc_info=True
             )
             return None
 
-        def has(name: str) -> bool:
-            return name.lower() in cols
+        def _norm(name: str) -> str:
+            return "".join(ch for ch in name.lower() if ch.isalpha())
 
-        def pick(cands):
+        cols_norm = [_norm(c) for c in cols_raw]
+
+        def has(name: str) -> bool:
+            return _norm(name) in cols_norm
+
+        def pick(cands, allow_heuristic: bool = False):
             for c in cands:
-                if c.lower() in cols:
-                    return cols_raw[cols.index(c.lower())]
-            # heurística por prefixos
-            for orig, c in zip(cols_raw, cols):
-                for pref in ("produto", "artigo", "codigo", "cod", "fk"):
-                    if c.startswith(pref) and any(
-                        k in c for k in ("produto", "artigo", "codigo", "cod")
-                    ):
-                        return orig
+                n = _norm(c)
+                if n in cols_norm:
+                    return cols_raw[cols_norm.index(n)]
+            if allow_heuristic:
+                for orig, n in zip(cols_raw, cols_norm):
+                    for pref in ("produto", "artigo", "codigo", "cod", "fk"):
+                        if n.startswith(pref) and any(
+                            k in n for k in ("produto", "artigo", "codigo", "cod")
+                        ):
+                            return orig
             return None
 
         # Preferências baseadas no teu schema real
         prod = (
-            "ProdutoCodigo"
-            if has("ProdutoCodigo")
-            else pick(
+            pick(["ProdutoCodigo"], allow_heuristic=False)
+            or pick(
                 [
                     "CodigoProduto",
                     "produto_codigo",
@@ -190,14 +194,14 @@ class IngredientesRepo:
                     "cod_produto",
                     "codartigo",
                     "fk_produto",
-                ]
+                ],
+                allow_heuristic=True,
             )
         )
-        # ingrediente: prefere 'componente_nome'; admite alternativas
+        # ingrediente: prefere 'ComponenteNome'; admite alternativas
         ingr = (
-            "componente_nome"
-            if has("componente_nome")
-            else pick(
+            pick(["ComponenteNome"], allow_heuristic=False)
+            or pick(
                 [
                     "ingrediente",
                     "ingredientes",
@@ -205,8 +209,8 @@ class IngredientesRepo:
                     "componente",
                     "descricao",
                     "nome_ingrediente",
-                    "componente_codigo",
-                ]
+                ],
+                allow_heuristic=False,
             )
         )
         # quantidade & unidade
