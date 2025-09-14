@@ -3,7 +3,7 @@
 ## 1. Camada Frontend
 - **Framework:** PyQt5  
 - **Launcher:** `bwb-fichas_tecnicas.py`  
-- **Fluxo:** aplica tema global, mostra `StartupDialog` e abre a janela principal `FTApp` (`ui/ui_editor_fonte.py`)  
+- **Fluxo:** aplica tema global, mostra `SplashScreen` e abre a janela principal `FTApp` (`ui/ui_editor_fonte.py`)
 - **Funcionalidades:**  
   - Importação, backups e atualização → `ui/dialogs.py`  
   - Gestão de layout → `ui/layout.py`  
