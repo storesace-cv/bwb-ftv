@@ -9,13 +9,21 @@ from PyQt5.QtWidgets import (
 )
 
 
+FIELD_STYLE = (
+    "border:none;"
+    "border-radius:4px;"
+    "background-color: rgba(0, 0, 0, 0.1);"
+)
+
+
 def make_readonly_lineedit(le: QLineEdit, bold: bool = False) -> None:
     le.setReadOnly(True)
     le.setFrame(False)
-    le.setStyleSheet("border:none; background:transparent;")
+    le.setStyleSheet(FIELD_STYLE)
     f = le.font()
     f.setBold(bold)
     le.setFont(f)
+    le.setFixedHeight(le.sizeHint().height())
 
 
 def match_font(lbl: QLabel, ref: QLineEdit) -> None:
@@ -29,8 +37,10 @@ def stack_combo(title: str):
     v.setContentsMargins(0, 0, 0, 0)
     v.setSpacing(2)
     lbl = QLabel(title)
+    lbl.setStyleSheet(FIELD_STYLE)
     v.addWidget(lbl, 0, Qt.AlignLeft | Qt.AlignVCenter)
     cb = QComboBox()
     cb.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+    cb.setStyleSheet(FIELD_STYLE)
     v.addWidget(cb, 0)
     return w, cb
