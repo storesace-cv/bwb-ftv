@@ -66,23 +66,39 @@ class ProdutosRepo:
         return {}
 
     def get_pvps(self, codigo: str) -> dict[str, list[float | None] | float | None]:
-        """Devolve ``{'pvps', 'iva'}`` a partir de ``PrecosTaxas``."""
+        """Devolve ``{"pvps", "iva"}`` a partir de ``PrecosTaxas``."""
+
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "SELECT Preco1_5, Iva1_2 FROM PrecosTaxas WHERE Codigo = ?",
+                (
+                    "SELECT Preco1, Preco2, Preco3, Preco4, Preco5, Iva1_2 "
+                    "FROM PrecosTaxas WHERE Codigo = ?"
+                ),
                 (codigo,),
             )
             r = cur.fetchone()
-            price = r[0] if r and r[0] not in (None, "") else None
-            iva = r[1] if r and r[1] not in (None, "") else None
-            if isinstance(price, str):
-                price = parse_decimal(price)
+            if not r:
+                return {"pvps": [], "iva": None}
+
+            prices_raw = r[:-1]
+            iva_raw = r[-1]
+
+            pvps: list[float | None] = []
+            for price in prices_raw:
+                if price in (None, ""):
+                    pvps.append(None)
+                    continue
                 if isinstance(price, str):
-                    try:
-                        price = float(price)
-                    except ValueError:
-                        price = None
+                    price = parse_decimal(price)
+                    if isinstance(price, str):
+                        try:
+                            price = float(price)
+                        except ValueError:
+                            price = None
+                pvps.append(price)
+
+            iva = iva_raw if iva_raw not in (None, "") else None
             if isinstance(iva, str):
                 iva = parse_decimal(iva)
                 if isinstance(iva, str):
@@ -90,9 +106,7 @@ class ProdutosRepo:
                         iva = float(iva)
                     except ValueError:
                         iva = None
-            pvps: list[float | None] = []
-            if price is not None:
-                pvps.append(price)
+
             return {"pvps": pvps, "iva": iva}
         except sqlite3.Error as exc:
             logger.error(

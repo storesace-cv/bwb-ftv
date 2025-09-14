@@ -291,11 +291,19 @@ def test_get_produto_info_repo_error(caplog):
 def test_get_pvps_parses_decimal_formats(raw, expected):
     ds = DataStore(db_path=":memory:")
     cur = ds.conn.cursor()
-    cur.execute("DELETE FROM PrecosTaxas")
+    cur.execute("DROP TABLE PrecosTaxas")
     cur.execute(
-        "INSERT INTO PrecosTaxas (Codigo, Loja, Preco1_5) VALUES (?, ?, ?)",
-        ("P1", "L1", raw),
+        (
+            "CREATE TABLE PrecosTaxas (Codigo TEXT, Loja TEXT, Preco1 TEXT, Preco2 TEXT, Preco3 TEXT, Preco4 TEXT, Preco5 TEXT, Iva1_2 TEXT)"
+        )
+    )
+    cur.execute(
+        (
+            "INSERT INTO PrecosTaxas (Codigo, Loja, Preco1, Preco2, Preco3, Preco4, Preco5) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)"
+        ),
+        ("P1", "L1", raw, raw, raw, raw, raw),
     )
     ds.conn.commit()
     pvps = ds.get_pvps("P1")
-    assert pvps["pvps"] == [expected]
+    assert pvps["pvps"] == [expected] * 5

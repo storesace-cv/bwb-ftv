@@ -37,7 +37,7 @@ def imports_dir():
 
 
 def _write_base_files(
-    base_dir, products=None, code_header="Codigo", price_header="Preco1_5", price=1.0
+    base_dir, products=None, code_header="Codigo", prices=None
 ):
     if products is None:
         products = [("P1", "Produto 1")]
@@ -69,10 +69,12 @@ def _write_base_files(
         ws.append([None, code, None, None, None, None, None, None, None, None, None])
     ft_wb.save(base_dir / "FichasTecnicas_base.xlsx")
 
+    if prices is None:
+        prices = [1.0, None, None, None, None]
     prec_wb = Workbook()
     ws = prec_wb.active
-    ws.append([code_header, price_header])
-    ws.append([products[0][0], price])
+    ws.append([code_header, "Preco1", "Preco2", "Preco3", "Preco4", "Preco5"])
+    ws.append([products[0][0], *prices])
     prec_wb.save(base_dir / "PreçosTaxas_base.xlsx")
 
 
@@ -175,11 +177,14 @@ def test_update_stores_files_in_uploads(ds, imports_dir):
 
 
 def test_import_from_excel_uses_produto_codigo(ds, imports_dir):
-    _write_base_files(imports_dir, code_header="produto_codigo", price=2.5)
+    _write_base_files(
+        imports_dir, code_header="produto_codigo", prices=[2.5, None, None, None, None]
+    )
     svc = ProductService(ds)
     svc.import_from_excel()
     pvps = ds.get_pvps("P1")
     assert pvps["pvps"][0] == 2.5
+    assert len(pvps["pvps"]) == 5
 
 
 def test_update_from_excel_uses_produto_codigo(ds, imports_dir):
@@ -187,41 +192,34 @@ def test_update_from_excel_uses_produto_codigo(ds, imports_dir):
         "INSERT INTO Produtos (Codigo, Produto, Preco1G) VALUES ('P1', 'X', 1.0)"
     )
     ds.reload_ids()
-    _write_base_files(imports_dir, code_header="produto_codigo", price=3.0)
+    _write_base_files(
+        imports_dir, code_header="produto_codigo", prices=[3.0, None, None, None, None]
+    )
     svc = ProductService(ds)
     svc.update_from_excel()
     pvps = ds.get_pvps("P1")
     assert pvps["pvps"][0] == 3.0
+    assert len(pvps["pvps"]) == 5
 
 
-def test_import_from_excel_handles_preco_range_header(ds, imports_dir):
-    _write_base_files(
-        imports_dir,
-        code_header="Codigo",
-        price_header="Preço1-5",
-        price=2.0,
-    )
+def test_import_from_excel_reads_all_prices(ds, imports_dir):
+    _write_base_files(imports_dir, prices=[1, 2, 3, 4, 5])
     svc = ProductService(ds)
     svc.import_from_excel()
     pvps = ds.get_pvps("P1")
-    assert pvps["pvps"][0] == 2.0
+    assert pvps["pvps"] == [1.0, 2.0, 3.0, 4.0, 5.0]
 
 
-def test_update_from_excel_handles_preco_range_header(ds, imports_dir):
+def test_update_from_excel_reads_all_prices(ds, imports_dir):
     ds.conn.execute(
         "INSERT INTO Produtos (Codigo, Produto, Preco1G) VALUES ('P1', 'X', 1.0)"
     )
     ds.reload_ids()
-    _write_base_files(
-        imports_dir,
-        code_header="Codigo",
-        price_header="Preço1-5",
-        price=4.0,
-    )
+    _write_base_files(imports_dir, prices=[6, 7, 8, 9, 10])
     svc = ProductService(ds)
     svc.update_from_excel()
     pvps = ds.get_pvps("P1")
-    assert pvps["pvps"][0] == 4.0
+    assert pvps["pvps"] == [6.0, 7.0, 8.0, 9.0, 10.0]
 
 
 @pytest.mark.parametrize(
@@ -229,11 +227,11 @@ def test_update_from_excel_handles_preco_range_header(ds, imports_dir):
     [("1,5", 1.5), ("1 234,5", 1234.5)],
 )
 def test_import_from_excel_parses_formatted_numbers(ds, imports_dir, price, expected):
-    _write_base_files(imports_dir, price=price)
+    _write_base_files(imports_dir, prices=[price] * 5)
     svc = ProductService(ds)
     svc.import_from_excel()
     pvps = ds.get_pvps("P1")
-    assert pvps["pvps"][0] == expected
+    assert pvps["pvps"] == [expected] * 5
 
 
 @pytest.mark.parametrize(
@@ -245,11 +243,11 @@ def test_update_from_excel_parses_formatted_numbers(ds, imports_dir, price, expe
         "INSERT INTO Produtos (Codigo, Produto, Preco1G) VALUES ('P1', 'X', 1.0)"
     )
     ds.reload_ids()
-    _write_base_files(imports_dir, price=price)
+    _write_base_files(imports_dir, prices=[price] * 5)
     svc = ProductService(ds)
     svc.update_from_excel()
     pvps = ds.get_pvps("P1")
-    assert pvps["pvps"][0] == expected
+    assert pvps["pvps"] == [expected] * 5
 
 
 @pytest.mark.parametrize("func", ["import_from_excel", "update_from_excel"])
@@ -289,8 +287,8 @@ def test_import_reads_preco(ds, imports_dir):
 
     prec = Workbook()
     ws = prec.active
-    ws.append(["codigo", "Preco1_5"])
-    ws.append(["P1", 1])
+    ws.append(["codigo", "Preco1", "Preco2", "Preco3", "Preco4", "Preco5"])
+    ws.append(["P1", 1, None, None, None, None])
     prec.save(imports_dir / "PreçosTaxas_base.xlsx")
 
     svc = ProductService(ds)
@@ -336,8 +334,8 @@ def test_update_reads_preco(ds, imports_dir):
 
     prec = Workbook()
     ws = prec.active
-    ws.append(["codigo", "Preco1_5"])
-    ws.append(["P1", 1])
+    ws.append(["codigo", "Preco1", "Preco2", "Preco3", "Preco4", "Preco5"])
+    ws.append(["P1", 1, None, None, None, None])
     prec.save(imports_dir / "PreçosTaxas_base.xlsx")
 
     svc = ProductService(ds)

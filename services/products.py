@@ -35,6 +35,11 @@ PRECO_GRAM_LOOKUP = {
 NUMERIC_NAMES = {
     "preco",
     "preco1_5",
+    "preco1",
+    "preco2",
+    "preco3",
+    "preco4",
+    "preco5",
     "preco1g",
     "preco2g",
     "preco3g",
@@ -87,6 +92,8 @@ def canonicalize_header(text: str, table: str | None = None) -> str:
         return "Preco1_5"
     if key in {"iva12", "iva1_2"}:
         return "Iva1_2"
+    if key in {"preco1", "preco2", "preco3", "preco4", "preco5"}:
+        return f"Preco{key[-1]}"
     if key in PRECO_GRAM_LOOKUP:
         preco_g, preco = PRECO_GRAM_LOOKUP[key]
         return preco_g if table == "Produtos" else preco
