@@ -253,7 +253,8 @@ class IngredientesRepo:
 
         try:
             cur.execute("PRAGMA table_info(FichasTecnicas)")
-            table_cols = [c[1].lower() for c in cur.fetchall()]
+            cols_raw = [c[1] for c in cur.fetchall()]
+            cols_lc = [c.lower() for c in cols_raw]
         except sqlite3.Error as exc:
             logger.error(
                 "[IngredientesRepo] listar_por_produto(%s) falhou: %s",
@@ -263,16 +264,17 @@ class IngredientesRepo:
             )
             return []
 
-        if "total" in table_cols:
-            cost_col = "total"
-        elif "custo" in table_cols:
-            cost_col = "custo"
-        elif "preco" in table_cols:
-            cost_col = "preco"
-        else:
+        def pick(name: str) -> str | None:
+            try:
+                return cols_raw[cols_lc.index(name)]
+            except ValueError:
+                return None
+
+        cost_col = pick("total") or pick("custo") or pick("preco")
+        if not cost_col:
             return []
 
-        order_col = "ordem" if "ordem" in table_cols else "rowid"
+        order_col = pick("ordem") or "rowid"
 
         try:
             select_cols = [
