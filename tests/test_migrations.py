@@ -36,7 +36,7 @@ def test_apply_pending_migrations(tmp_path, monkeypatch):
     assert cur.fetchone()[0] == "001.sql"
 
 
-def test_datastore_migration_accept(monkeypatch, tmp_path):
+def test_datastore_migration_auto(monkeypatch, tmp_path):
     import data.datastore as ds_module
 
     db_dir = tmp_path / "databases"
@@ -90,12 +90,10 @@ def test_datastore_migration_accept(monkeypatch, tmp_path):
 
     monkeypatch.setattr(ds_module, "base", tmp_path)
     monkeypatch.setattr(migration, "MIGRATIONS_DIR", mig_dir)
-    def fake_prompt(msg, buttons):
-        return "Sim"
 
     pending = ds_module.DataStore.pending_migrations(db_path)
     assert [p.name for p in pending] == ["001.sql"]
-    applied = ds_module.DataStore.apply_migrations(db_path, prompt=fake_prompt)
+    applied = ds_module.DataStore.apply_migrations(db_path)
     assert applied == ["001.sql"]
 
     ds = ds_module.DataStore(db_path=db_path)
@@ -103,76 +101,6 @@ def test_datastore_migration_accept(monkeypatch, tmp_path):
         "SELECT name FROM sqlite_master WHERE type='table' AND name='T2'"
     )
     assert cur.fetchone() is not None
-
-
-def test_datastore_migration_decline(monkeypatch, tmp_path):
-    import data.datastore as ds_module
-
-    db_dir = tmp_path / "databases"
-    db_dir.mkdir()
-    db_path = db_dir / "ftv.db"
-    conn = sqlite3.connect(str(db_path))
-    conn.execute(
-        "CREATE TABLE Produtos ("
-        "Codigo TEXT PRIMARY KEY,"
-        "Produto TEXT,"
-        "Familia TEXT,"
-        "SubFamilia TEXT,"
-        "AfetaStk TEXT,"
-        "Menu TEXT,"
-        "CodBarras TEXT,"
-        "TipoMercad TEXT,"
-        "TipoVenda TEXT,"
-        "TipoProducao TEXT,"
-        "TipoGener TEXT,"
-        "UnStockVMPG TEXT,"
-        "UnVendaVMV TEXT,"
-        "UnInvVMMMPG TEXT,"
-        "UnProduFtPV TEXT,"
-        "CodAuxiliar TEXT,"
-        "CodAuxiliar2 TEXT,"
-        "PCU DECIMAL(10,2),"
-        "PCM DECIMAL(10,2),"
-        "Descontinuado TEXT,"
-        "DispLojas TEXT"
-        ")"
-    )
-    conn.execute(
-        "CREATE TABLE FichasTecnicas ("
-        "FamiliaSubfamilia TEXT, "
-        "ProdutoCodigo TEXT, "
-        "ProdutoNome TEXT, "
-        "ComponenteCodigo TEXT, "
-        "ComponenteNome TEXT, "
-        "Qtd REAL, "
-        "Unidade TEXT, "
-        "Ppu REAL, "
-        "Preco REAL, "
-        "Peso REAL)"
-    )
-    conn.commit()
-    conn.close()
-
-    mig_dir = tmp_path / "data" / "migrations"
-    mig_dir.mkdir(parents=True)
-    (mig_dir / "001.sql").write_text("CREATE TABLE T3(Id INTEGER);", encoding="utf-8")
-
-    monkeypatch.setattr(ds_module, "base", tmp_path)
-    monkeypatch.setattr(migration, "MIGRATIONS_DIR", mig_dir)
-    def fake_prompt(msg, buttons):
-        return "Não"
-
-    pending = ds_module.DataStore.pending_migrations(db_path)
-    assert [p.name for p in pending] == ["001.sql"]
-    applied = ds_module.DataStore.apply_migrations(db_path, prompt=fake_prompt)
-    assert applied == []
-
-    conn = sqlite3.connect(str(db_path))
-    cur = conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='T3'"
-    )
-    assert cur.fetchone() is None
-    conn.close()
 
 
 def test_update_produtos_aux_cols_migration(tmp_path, monkeypatch):

@@ -33,10 +33,14 @@ class SplashScreen(QDialog):
         if self._message is None:
             self._message = QLabel(self)
             self._message.setAlignment(Qt.AlignCenter)
-            self._message.setStyleSheet("color: white; background: transparent;")
+            self._message.setStyleSheet(
+                "color: white; font-weight: bold; background: red;"
+            )
             self._message.setGeometry(0, 260, 800, 40)
         self._message.setText(text)
         self._message.show()
+        self._message.raise_()
+        self.show()
 
     def add_button_box(
         self, buttons: QDialogButtonBox.StandardButtons = QDialogButtonBox.Ok

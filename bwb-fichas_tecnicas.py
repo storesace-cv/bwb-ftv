@@ -37,20 +37,12 @@ def main():
     splash = SplashScreen()
     pending = DataStore.pending_migrations()
     if pending:
-        choice = splash.overlay(
-            "Foi detetada uma migração da base de dados. Aplicar agora?",
-            ["Sim", "Não"],
-            y=300,
-        )
-        if choice != "Sim":
-            sys.exit(0)
+        splash.show_message("A migrar base de dados…")
+        QApplication.processEvents()
         DataStore.apply_migrations()
+        splash.close()
     else:
-        splash_closed: list[bool] = []
-        splash.clicked.connect(lambda: splash_closed.append(True))
         splash.exec_()
-        if not splash_closed:
-            sys.exit(0)
 
     # DataStore
     ds = DataStore()
