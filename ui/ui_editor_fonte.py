@@ -406,6 +406,8 @@ class FTApp(QWidget):
         self.tbIng.setModel(self.ingModel)
         self.tbIng.verticalHeader().setVisible(False)
         self.tbIng.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.tbIng.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.tbIng.setViewportMargins(0, 0, 0, 4)
         hh = self.tbIng.horizontalHeader()
         vh = self.tbIng.verticalHeader()
         header_h = hh.height() or hh.minimumSectionSize()
@@ -565,6 +567,7 @@ class FTApp(QWidget):
         max_visible = 5
         visible_rows = min(rows, max_visible)
         total_h = hh.height() + row_h * visible_rows + self.tbIng.frameWidth() * 2
+        total_h += self.tbIng.horizontalScrollBar().height()
         scroll = self.tbIng.verticalScrollBar()
         if rows <= max_visible:
             self.tbIng.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
