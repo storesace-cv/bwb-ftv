@@ -376,9 +376,6 @@ class FTApp(QWidget):
             )
             lbl = QLabel(f"PVP{i+1}")
             val = QLabel("—")
-            make_readonly_lineedit(
-                QLineEdit(), False
-            )  # just to get style, we'll style label
             val.setStyleSheet("border:none; background:transparent; font-weight:600;")
             col.add(lbl, 0)
             col.add(val, 0)
