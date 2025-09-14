@@ -1,5 +1,5 @@
 import pytest
-from PyQt5.QtCore import QSize
+from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import QResizeEvent
 from services.products import ProductService
 from ui.ui_editor_fonte import FTApp
@@ -52,6 +52,14 @@ class StubDataStore:
         ]
 
 
+class NameOnlyStubDataStore(StubDataStore):
+    def get_ingredientes(self, codigo):
+        return [
+            {"ComponenteNome": "Sugar"},
+            {"ComponenteNome": "Salt"},
+        ]
+
+
 def test_load_record_populates_ingredients(qapp):
     ds = StubDataStore()
     service = ProductService(ds)
@@ -69,6 +77,19 @@ def test_load_record_populates_ingredients(qapp):
     assert not ft.tbIng.isColumnHidden(0)
     assert model.columnCount() == 5
     assert not ft.tbIng.verticalHeader().isVisible()
+    ft.close()
+
+
+def test_load_record_uses_componente_nome_when_only_key(qapp):
+    ds = NameOnlyStubDataStore()
+    service = ProductService(ds)
+    ft = FTApp(service)
+    ft._load_record(0)
+    model = ft.tbIng.model()
+    assert model.rowCount() == 2
+    assert model.headerData(0, Qt.Horizontal) == "Ingredientes"
+    assert model.data(model.index(0, 0)) == "Sugar"
+    assert model.data(model.index(1, 0)) == "Salt"
     ft.close()
 
 
