@@ -1,37 +1,71 @@
 # bwb-ftv
 Fichas Técnicas Valorizadas
 
-## Dependências do Sistema
+Aplicação para gerir fichas técnicas de produtos e receitas na restauração.
+Importa dados a partir de folhas de cálculo Excel, sincroniza com o
+ecossistema ZoneSoft, regista alergénios por ingrediente e armazena toda a
+informação numa base de dados SQLite.
 
-Antes de executar a aplicação, atualize as listas de pacotes e instale a biblioteca OpenGL:
+Principais funcionalidades:
+
+- Importação de produtos, fichas técnicas e preços via Excel.
+- Integração com ZoneSoft para atualização de preços e taxas.
+- Gestão de alergénios ao nível de ingredientes e produtos finais.
+- Base de dados local em SQLite com suporte a backups e migrações de esquema.
+
+## Tecnologias
+
+- **Python 3 / PyQt5** – Interface gráfica da aplicação.
+- **openpyxl** – Leitura e validação dos ficheiros Excel.
+- **sqlite3** – Armazenamento local dos dados.
+- **ZoneSoft** – Fonte externa de produtos, preços e taxas.
+
+## Instalação
+
+Atualize os pacotes do sistema e instale a biblioteca OpenGL necessária para o
+PyQt5:
 
 ```bash
 sudo apt-get update
 sudo apt-get install -y libgl1 # use libgl1-mesa-glx se libgl1 não estiver disponível
 ```
 
-## Database configuration
+Depois, instale as dependências Python:
 
-Por omissão a aplicação utiliza a base de dados SQLite em
+```bash
+pip install -r requirements.txt
+```
+
+## Configuração
+
+Por omissão, a aplicação utiliza a base de dados SQLite em
 `<raiz do projeto>/databases/ftv.db`. O diretório é criado automaticamente e o
 ficheiro é inicializado caso esteja em falta.
 
-
-Para alterar o local da base de dados defina a variável de ambiente
+Para utilizar outro local, defina a variável de ambiente
 `FTV_DB_PATH` com o caminho completo para o ficheiro desejado:
 
 ```bash
 export FTV_DB_PATH=/caminho/para/custom.db
 ```
 
-## Modo de depuração
-
-Para ativar logs detalhados, defina a variável de ambiente `debug` como `0` ao
-iniciar a aplicação:
+Para ativar logs detalhados, defina a variável `debug` como `0` ao iniciar a
+aplicação:
 
 ```bash
 debug=0 python bwb-fichas_tecnicas.py
 ```
+
+## Execução
+
+Inicie a interface principal com:
+
+```bash
+python bwb-fichas_tecnicas.py
+```
+
+Coloque os ficheiros Excel base em `imports/` para importar dados e, se
+necessário, sincronize o esquema com `python tools/cleanup_schema.py`.
 
 ## Importação de dados
 
