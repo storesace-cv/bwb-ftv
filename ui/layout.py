@@ -83,6 +83,7 @@ class Zone(QWidget):
         value_widget: QWidget,
         label_minw: int | None = None,
         vspacing: int = 2,
+        overlay_text: str | None = None,
     ) -> QLabel:
         row = QWidget(self)
         row.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -94,10 +95,13 @@ class Zone(QWidget):
         grid.setHorizontalSpacing(12)
         grid.setVerticalSpacing(min(vspacing, 5))
         grid.setColumnStretch(1, 1)
-        lbl = QLabel(label_text, row)
+        display = overlay_text if (DEV_OVERLAYS and overlay_text is not None) else label_text
+        lbl = QLabel(display, row)
         lbl.setStyleSheet(
             "background-color: rgba(0, 0, 0, 0.03); border-radius: 4px;"
         )
+        lbl.setProperty("userLabel", label_text)
+        lbl.setProperty("devLabel", overlay_text)
         lbl.setAlignment(Qt.AlignTop | Qt.AlignRight)
         if label_minw is not None:
             lbl.setFixedWidth(label_minw)

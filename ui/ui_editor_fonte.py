@@ -336,8 +336,20 @@ class FTApp(QWidget):
         make_readonly_lineedit(self.edCodigo, False)
         self.edNome = QLineEdit()
         make_readonly_lineedit(self.edNome, True)
-        C1A1.add_row("Código:", self.edCodigo, label_minw=lbl_w, vspacing=0)
-        C1A1.add_row("Nome do Artigo:", self.edNome, label_minw=lbl_w, vspacing=1)
+        C1A1.add_row(
+            "Código:",
+            self.edCodigo,
+            label_minw=lbl_w,
+            vspacing=0,
+            overlay_text="Produtos.Codigo",
+        )
+        C1A1.add_row(
+            "Nome do Artigo:",
+            self.edNome,
+            label_minw=lbl_w,
+            vspacing=1,
+            overlay_text="Produtos.Nome",
+        )
 
         # B1.C1.A.2
         C1A21, C1A22 = C1A2.split_h(
@@ -350,9 +362,19 @@ class FTApp(QWidget):
         self.lbSubFamiliaVal = QLabel("")
         match_font(self.lbFamiliaVal, self.edNome)
         match_font(self.lbSubFamiliaVal, self.edNome)
-        C1A21_top.add_row("Família:", self.lbFamiliaVal, label_minw=lbl_w, vspacing=0)
         C1A21_top.add_row(
-            "Sub-família:", self.lbSubFamiliaVal, label_minw=lbl_w, vspacing=0
+            "Família:",
+            self.lbFamiliaVal,
+            label_minw=lbl_w,
+            vspacing=0,
+            overlay_text="Produtos.Familia",
+        )
+        C1A21_top.add_row(
+            "Sub-família:",
+            self.lbSubFamiliaVal,
+            label_minw=lbl_w,
+            vspacing=0,
+            overlay_text="Produtos.SubFamilia",
         )
 
         # Base: cinco colunas iguais com PVP1..PVP5 (etiqueta por cima)
@@ -891,6 +913,11 @@ class FTApp(QWidget):
         for z in self.findChildren(Zone):
             if z.tag.count(".") == 1 and layout.validate_tag(z.tag):
                 z.apply_overlays(layout.DEV_OVERLAYS)
+        for lbl in self.findChildren(QLabel):
+            user_lbl = lbl.property("userLabel")
+            dev_lbl = lbl.property("devLabel")
+            if user_lbl is not None and dev_lbl is not None:
+                lbl.setText(dev_lbl if layout.DEV_OVERLAYS else user_lbl)
 
     def _toggle_overlays_btn(self):
         self._toggle_overlays()
