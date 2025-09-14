@@ -58,10 +58,6 @@ import sys
 import logging
 import html as html_module
 import html.parser as html_parser
-import time
-from pathlib import Path
-
-from PIL import Image
 from PyQt5.QtCore import Qt, QAbstractTableModel, QTimer
 from PyQt5.QtGui import QFont, QKeySequence, QTextOption, QPixmap
 from PyQt5.QtWidgets import (
@@ -89,7 +85,6 @@ from data.datastore import DataStore
 from services.products import ProductService
 from domain import FichaTecnica
 from utils.formatting import format_pt_number
-from utils.paths import get_project_root
 
 from . import layout
 from .layout import Zone
@@ -112,25 +107,27 @@ logger = logging.getLogger(__name__)
 class ImagePreview(QLabel):
     """Simple preview widget for product images."""
 
-    def __init__(self, codigo: str | None = None, parent=None):
+    def __init__(
+        self,
+        codigo: str | None = None,
+        service: ProductService | None = None,
+        parent=None,
+    ):
         super().__init__(parent)
         self.setAlignment(Qt.AlignCenter)
         self.setStyleSheet("border:1px solid #ccc; padding:8px;")
         self.codigo = None
-        self._root = get_project_root()
-        self.image_dir = self._root / "databases" / "images"
-        self.image_dir.mkdir(parents=True, exist_ok=True)
-        if codigo:
+        self.service = service
+        if codigo and self.service:
             self.load_image(codigo)
-
-    def _file_for(self, codigo: str) -> Path:
-        return self.image_dir / f"{codigo}.png"
 
     # Helper methods -------------------------------------------------
     def load_image(self, codigo: str):
         """Load and show the image for ``codigo`` if available."""
         self.codigo = codigo
-        path = self._file_for(codigo)
+        if not self.service:
+            return
+        path = self.service.get_image_path(codigo)
         if path.exists():
             pix = QPixmap(str(path))
             pix = pix.scaled(600, 600, Qt.KeepAspectRatio, Qt.SmoothTransformation)
@@ -142,32 +139,31 @@ class ImagePreview(QLabel):
 
     def save_image(self, src: str):
         """Copy ``src`` to the images folder resizing to 600×600."""
-        if not self.codigo or not src:
+        if not self.codigo or not src or not self.service:
             return
-        dest = self._file_for(self.codigo)
-        img = Image.open(src)
-        img.thumbnail((600, 600))
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        img.save(dest, format="PNG")
+        try:
+            self.service.save_product_image(self.codigo, src)
+        except Exception:
+            logger.exception("[ImagePreview] save_image")
+            return
         self.load_image(self.codigo)
 
     def delete_image(self):
         """Archive the current image and clear the preview."""
-        if not self.codigo:
+        if not self.codigo or not self.service:
             return
-        path = self._file_for(self.codigo)
-        if path.exists():
-            ts = int(time.time())
-            backup = path.with_name(f"{self.codigo}.{ts}.png")
-            path.rename(backup)
+        try:
+            self.service.delete_product_image(self.codigo)
+        except Exception:
+            logger.exception("[ImagePreview] delete_image")
         self.setPixmap(QPixmap())
         self.setText("Sem imagem")
 
     # Events ---------------------------------------------------------
     def mousePressEvent(self, event):  # pragma: no cover - GUI
-        if not self.codigo:
+        if not self.codigo or not self.service:
             return
-        path = self._file_for(self.codigo)
+        path = self.service.get_image_path(self.codigo)
         if not path.exists():
             fname, _ = QFileDialog.getOpenFileName(
                 self,
@@ -538,7 +534,7 @@ class FTApp(QWidget):
             init_code = self.service.codigo_at(self.cur_index)
         except Exception:
             init_code = None
-        self.image_preview = ImagePreview(init_code)
+        self.image_preview = ImagePreview(init_code, self.service)
         C1B.add(self.image_preview, 1)
 
         # ---------------- B2 — Ingredientes (B2.C1) ----------------

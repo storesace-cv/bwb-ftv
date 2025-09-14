@@ -8,7 +8,9 @@ from pathlib import Path
 from typing import Iterable, Iterator, List
 import unicodedata
 import re
+import time
 from contextlib import closing, contextmanager
+from PIL import Image
 from openpyxl import load_workbook
 
 from data.datastore import DataStore
@@ -156,6 +158,42 @@ def sync_table_schema(conn, table: str, headers: list[str]) -> list[str]:
     return norm_headers
 
 
+def get_image_path(codigo: str) -> Path:
+    """Return the path for the product image of ``codigo``."""
+
+    root = get_project_root()
+    img_dir = root / "databases" / "images"
+    img_dir.mkdir(parents=True, exist_ok=True)
+    return img_dir / f"{codigo}.png"
+
+
+def save_product_image(codigo: str, src_path: str | Path) -> Path:
+    """Save ``src_path`` as the product image for ``codigo``.
+
+    The image is resized to fit within 600×600 and stored as PNG in the
+    ``databases/images`` directory.
+    """
+
+    dest = get_image_path(codigo)
+    img = Image.open(src_path)
+    img.thumbnail((600, 600))
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    img.save(dest, format="PNG")
+    return dest
+
+
+def delete_product_image(codigo: str) -> Path | None:
+    """Archive and remove the image for ``codigo`` if it exists."""
+
+    path = get_image_path(codigo)
+    if path.exists():
+        ts = int(time.time())
+        backup = path.with_name(f"{codigo}.{ts}.png")
+        path.rename(backup)
+        return backup
+    return None
+
+
 class ProductService:
     """High level API used by the UI to interact with products and helpers."""
 
@@ -195,6 +233,16 @@ class ProductService:
 
     def set_temperatura(self, codigo: str, temperatura_cod) -> bool:
         return self.ds.set_temperatura(codigo, temperatura_cod)
+
+    # -- images ---------------------------------------------------------
+    def get_image_path(self, codigo: str) -> Path:
+        return get_image_path(codigo)
+
+    def save_product_image(self, codigo: str, src_path: str | Path) -> Path:
+        return save_product_image(codigo, src_path)
+
+    def delete_product_image(self, codigo: str) -> Path | None:
+        return delete_product_image(codigo)
 
     # -- product retrieval ------------------------------------------------
     def get_product_info(self, codigo: str) -> Product:
