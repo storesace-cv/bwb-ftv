@@ -355,8 +355,10 @@ class FTApp(QWidget):
         P111, P112 = P11.split_h((1, 1))
         # Agora temos 5 zonas: P111, P112, P12.A, P12.B, (criar quinta)
         # Para simplicidade, recriamos com um loop que adiciona 5 colunas iguais
-        C1A21_base.ly.takeAt(0)
-        C1A21_base.ly.takeAt(0)
+        while C1A21_base.ly.count() > 1:
+            item = C1A21_base.ly.takeAt(1)
+            if (w := item.widget()) is not None:
+                w.setParent(None)
         # Reconstruir base em 5 colunas iguais
         base_cont = QWidget(C1A21_base)
         base_h = QHBoxLayout(base_cont)
