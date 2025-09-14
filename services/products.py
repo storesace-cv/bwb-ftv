@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import sqlite3
 from pathlib import Path
 from typing import Iterable, Iterator, List
@@ -15,6 +16,9 @@ from data.migration import setup_database
 from domain import Product, Ingredient, FichaTecnica
 from utils.paths import get_project_root
 from utils.formatting import parse_decimal
+
+
+logger = logging.getLogger(__name__)
 
 
 HEADER_ALIASES = {
@@ -194,17 +198,28 @@ class ProductService:
         rows = self.ds.get_ingredientes(codigo)
         fichas: list[FichaTecnica] = []
         for row in rows:
+            name = (
+                row.get("ComponenteNome")
+                or row.get("nome")
+                or row.get("ingrediente")
+                or row.get("designacao")
+                or ""
+            )
+            if not name:
+                logger.warning(
+                    "[ProductService] Nome do ingrediente vazio em %s: %s",
+                    codigo,
+                    row,
+                )
             fichas.append(
                 FichaTecnica(
-                    ingredient=row.get("ComponenteNome")
-                    or row.get("nome")
-                    or row.get("ingrediente")
-                    or row.get("designacao")
-                    or "",
-                    quantity=row.get("qtd")
-                    or row.get("quantidade")
-                    or row.get("QTD")
-                    or 0,
+                    ingredient=name,
+                    quantity=(
+                        row.get("qtd")
+                        or row.get("quantidade")
+                        or row.get("QTD")
+                        or 0
+                    ),
                     unit=row.get("unidade") or "",
                     ppu=row.get("ppu"),
                     total=row.get("total"),
@@ -244,14 +259,28 @@ def get_product_info(ds: DataStore, codigo: str) -> Product:
 
     ingredients: List[Ingredient] = []
     for row in ing_rows:
+        name = (
+            row.get("ComponenteNome")
+            or row.get("nome")
+            or row.get("ingrediente")
+            or row.get("designacao")
+            or ""
+        )
+        if not name:
+            logger.warning(
+                "[ProductService] Nome do ingrediente vazio em %s: %s",
+                codigo,
+                row,
+            )
         ingredients.append(
             Ingredient(
-                name=row.get("ComponenteNome")
-                or row.get("nome")
-                or row.get("ingrediente")
-                or row.get("designacao")
-                or "",
-                quantity=row.get("qtd") or row.get("quantidade") or row.get("QTD") or 0,
+                name=name,
+                quantity=(
+                    row.get("qtd")
+                    or row.get("quantidade")
+                    or row.get("QTD")
+                    or 0
+                ),
                 unit=row.get("unidade") or "",
                 ppu=row.get("ppu"),
                 total=row.get("total"),
