@@ -34,7 +34,7 @@ class StubDataStore:
     def get_ingredientes(self, codigo):
         return [
             {
-                "nome": "Sugar",
+                "ComponenteNome": "Sugar",
                 "qtd": 1.5,
                 "unidade": "kg",
                 "ppu": 2.0,
@@ -42,7 +42,7 @@ class StubDataStore:
                 "codigo": "A1",
             },
             {
-                "nome": "Salt",
+                "ComponenteNome": "Salt",
                 "qtd": 0.5,
                 "unidade": "kg",
                 "ppu": 1.5,
@@ -61,7 +61,7 @@ def test_load_record_populates_ingredients(qapp):
     assert model.rowCount() == 2
     expected = ds.get_ingredientes("P1")
     for row, data in enumerate(expected):
-        assert model.data(model.index(row, 0)) == data["nome"]
+        assert model.data(model.index(row, 0)) == data["ComponenteNome"]
         assert model.data(model.index(row, 1)) == format_pt_number(data["qtd"])
         assert model.data(model.index(row, 2)) == data["unidade"]
         assert model.data(model.index(row, 3)) == format_pt_number(data["ppu"])
@@ -79,7 +79,7 @@ class VarStubDataStore(StubDataStore):
     def get_ingredientes(self, codigo):
         return [
             {
-                "nome": f"Ing{i}",
+                "ComponenteNome": f"Ing{i}",
                 "qtd": 1.0,
                 "unidade": "kg",
                 "ppu": 1.0,

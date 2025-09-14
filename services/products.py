@@ -196,7 +196,8 @@ class ProductService:
         for row in rows:
             fichas.append(
                 FichaTecnica(
-                    ingredient=row.get("nome")
+                    ingredient=row.get("ComponenteNome")
+                    or row.get("nome")
                     or row.get("ingrediente")
                     or row.get("designacao")
                     or "",
@@ -245,7 +246,8 @@ def get_product_info(ds: DataStore, codigo: str) -> Product:
     for row in ing_rows:
         ingredients.append(
             Ingredient(
-                name=row.get("nome")
+                name=row.get("ComponenteNome")
+                or row.get("nome")
                 or row.get("ingrediente")
                 or row.get("designacao")
                 or "",
