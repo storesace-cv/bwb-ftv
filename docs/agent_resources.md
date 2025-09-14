@@ -1,6 +1,7 @@
 # Agent Resource Reference
 
 This document summarizes the APIs, databases, libraries, and external services available to the project's automation agents.
+The application was created by [BWB – Business with Brains](https://bwb.pt).
 
 ## Databases
 - **SQLite `ftv.db`** – Primary data store located at `databases/ftv.db`. Set `FTV_DB_PATH` to override the location.

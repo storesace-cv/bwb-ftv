@@ -5,6 +5,7 @@ A aplicação permite gerir fichas técnicas de produtos e receitas na restaura�
 Importa dados a partir de folhas de cálculo Excel exportados do NET-bo,
 sincroniza com o ecossistema NET-bo, regista alergénios por ingrediente e armazena toda a
 informação numa base de dados SQLite.
+Esta aplicação foi criada pela [BWB – Business with Brains](https://bwb.pt).
 
 Principais funcionalidades:
 
