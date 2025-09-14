@@ -104,7 +104,7 @@ logger = logging.getLogger(__name__)
 class FichasTecnicasModel(QAbstractTableModel):
     """Table model for displaying ``FichasTecnicas`` records."""
 
-    headers = ["ComponenteNome", "QTD", "U.M.", "PPU", "Total"]
+    headers = ["Ingredientes", "QTD", "U.M.", "PPU", "Total"]
 
     def __init__(self, rows: list[FichaTecnica] | None = None):
         super().__init__()
