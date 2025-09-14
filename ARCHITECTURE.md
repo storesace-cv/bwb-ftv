@@ -62,7 +62,6 @@
   - Não existe ligação direta ao ZoneSoft, dependência de exportações manuais  
 
 ## 6. Interações entre Componentes
-```mermaid
 graph LR
     subgraph UI
         A[FTApp & diálogos PyQt5]
