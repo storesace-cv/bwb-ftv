@@ -1,7 +1,6 @@
 import logging
 import json
 import sqlite3
-import sys
 import pytest
 
 from data.datastore import DataStore
@@ -175,7 +174,8 @@ def test_datastore_missing_path_errors(tmp_path, caplog):
 
 
 def test_datastore_creates_empty_db(tmp_path, monkeypatch):
-    prompt = lambda *_: "Base vazia"
+    def prompt(*_):
+        return "Base vazia"
     import data.datastore as ds_module
 
     monkeypatch.setattr(ds_module, "base", tmp_path)
@@ -294,13 +294,16 @@ def test_get_pvps_parses_decimal_formats(raw, expected):
     cur.execute("DROP TABLE PrecosTaxas")
     cur.execute(
         (
-            "CREATE TABLE PrecosTaxas (Codigo TEXT, Loja TEXT, Preco1 TEXT, Preco2 TEXT, Preco3 TEXT, Preco4 TEXT, Preco5 TEXT, Iva1_2 TEXT)"
+            "CREATE TABLE PrecosTaxas ("
+            "Codigo TEXT, Loja TEXT, Preco1 TEXT, Preco2 TEXT, "
+            "Preco3 TEXT, Preco4 TEXT, Preco5 TEXT, Iva1_2 TEXT)"
         )
     )
     cur.execute(
         (
-            "INSERT INTO PrecosTaxas (Codigo, Loja, Preco1, Preco2, Preco3, Preco4, Preco5) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO PrecosTaxas ("
+            "Codigo, Loja, Preco1, Preco2, Preco3, Preco4, Preco5"
+            ") VALUES (?, ?, ?, ?, ?, ?, ?)"
         ),
         ("P1", "L1", raw, raw, raw, raw, raw),
     )
