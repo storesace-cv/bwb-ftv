@@ -43,6 +43,7 @@
 | Ppu | Preço por unidade |
 | Preco | Preço total |
 | Peso | Peso |
+| Ordem | Mantém a ordem dos componentes |
 
 ### `PrecosTaxas`
 | Campo | Descrição |
@@ -172,6 +173,7 @@ Após importação, os ficheiros são arquivados em `imports/history` e registad
 | Ppu | Ppu |
 | Preco | Preco |
 | Peso | Peso |
+| Ordem | Ordem |
 
 ## Tabela `PreçosTaxas_base.xlsx`
 | Cabeçalho Excel | Coluna BD |
