@@ -85,6 +85,7 @@ class Zone(QWidget):
         vspacing: int = 2,
     ) -> QLabel:
         row = QWidget(self)
+        row.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         row.setStyleSheet("border:none; background:transparent;")
         grid = QGridLayout(row)
         grid.setContentsMargins(0, 0, 0, 0)
@@ -105,7 +106,7 @@ class Zone(QWidget):
             pass
         grid.addWidget(lbl, 0, 0, alignment=Qt.AlignTop | Qt.AlignRight)
         grid.addWidget(value_widget, 0, 1, alignment=Qt.AlignTop | Qt.AlignLeft)
-        self.ly.addWidget(row)
+        self.ly.addWidget(row, 0, Qt.AlignTop)
         self._labels.append(lbl)
         self.sync_label_widths()
         return lbl
