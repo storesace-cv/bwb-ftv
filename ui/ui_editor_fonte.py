@@ -403,7 +403,12 @@ class FTApp(QWidget):
         self.tbIng = QTableView(self)
         self.tbIng.setModel(self.ingModel)
         self.tbIng.verticalHeader().setVisible(False)
-        self.tbIng.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.tbIng.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        hh = self.tbIng.horizontalHeader()
+        vh = self.tbIng.verticalHeader()
+        header_h = hh.height() or hh.minimumSectionSize()
+        initial_h = header_h + vh.defaultSectionSize() + self.tbIng.frameWidth() * 2
+        self.tbIng.setFixedHeight(initial_h)
         self.tbIng.setEditTriggers(QTableView.DoubleClicked | QTableView.EditKeyPressed)
         self.C2.add(self.tbIng, 1)
         self._setup_ing_columns()
