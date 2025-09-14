@@ -213,13 +213,21 @@ class ProductService:
                     codigo,
                     row,
                 )
+            quantity = row.get("Qtd") or 0
+            ppu = row.get("Ppu")
+            total = row.get("Preco")
+            if total is None and ppu is not None:
+                try:
+                    total = float(ppu) * float(quantity)
+                except (TypeError, ValueError):
+                    total = None
             fichas.append(
                 FichaTecnica(
                     ingredient=name,
-                    quantity=row.get("Qtd") or 0,
+                    quantity=quantity,
                     unit=row.get("Unidade") or "",
-                    ppu=row.get("Ppu"),
-                    total=row.get("Preco"),
+                    ppu=ppu,
+                    total=total,
                     code=row.get("ComponenteCodigo"),
                 )
             )
@@ -267,13 +275,21 @@ def get_product_info(ds: DataStore, codigo: str) -> Product:
                 codigo,
                 row,
             )
+        quantity = row.get("Qtd") or 0
+        ppu = row.get("Ppu")
+        total = row.get("Preco")
+        if total is None and ppu is not None:
+            try:
+                total = float(ppu) * float(quantity)
+            except (TypeError, ValueError):
+                total = None
         ingredients.append(
             Ingredient(
                 name=name,
-                quantity=row.get("Qtd") or 0,
+                quantity=quantity,
                 unit=row.get("Unidade") or "",
-                ppu=row.get("Ppu"),
-                total=row.get("Preco"),
+                ppu=ppu,
+                total=total,
                 code=row.get("ComponenteCodigo"),
             )
         )

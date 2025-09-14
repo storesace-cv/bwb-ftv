@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 from services.products import calculate_cost, get_product_info, ProductService
 from data.datastore import DataStore
 from domain.models import Ingredient
+from utils.formatting import format_pt_number
 
 
 def test_calculate_cost_uses_ppu_when_total_missing():
@@ -61,9 +62,9 @@ def test_get_product_info_builds_product_from_datastore():
     assert product.pvps == [10.0]
     assert len(product.ingredients) == 2
     assert product.ingredients[0].name == "Ing1"
-    assert product.ingredients[0].total == 6.0
+    assert format_pt_number(product.ingredients[0].total) == format_pt_number(6.0)
     assert product.ingredients[1].name == "Ing2"
-    assert product.ingredients[1].total is None
+    assert format_pt_number(product.ingredients[1].total) == format_pt_number(2.0)
     assert product.ingredients[1].ppu == 2.0
 
 
@@ -79,6 +80,33 @@ def test_list_fichas_tecnicas_logs_missing_ingredient_name(caplog):
 
     assert fichas[0].ingredient == ""
     assert "P1" in caplog.text
+
+
+def test_list_fichas_tecnicas_calculates_total_when_preco_missing():
+    ds = MagicMock(spec=DataStore)
+    ds.get_ingredientes.return_value = [
+        {
+            "ComponenteNome": "Ing1",
+            "Qtd": 2,
+            "Unidade": "kg",
+            "Ppu": 3.0,
+            "Preco": 6.0,
+            "ComponenteCodigo": "I1",
+        },
+        {
+            "ComponenteNome": "Ing2",
+            "Qtd": 1.5,
+            "Unidade": "kg",
+            "Ppu": 2.0,
+            "ComponenteCodigo": "I2",
+        },
+    ]
+    service = ProductService(ds)
+
+    fichas = service.list_fichas_tecnicas("P1")
+
+    assert format_pt_number(fichas[0].total) == format_pt_number(6.0)
+    assert format_pt_number(fichas[1].total) == format_pt_number(3.0)
 
 
 def test_get_product_info_logs_missing_ingredient_name(caplog):
