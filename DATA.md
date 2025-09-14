@@ -52,7 +52,11 @@
 |-------|-----------|
 | **Codigo** | Código do produto |
 | **Loja** | Loja (chave composta) |
-| Preco1_5 | Preço por loja |
+| Preco1 | Preço PVP1 |
+| Preco2 | Preço PVP2 |
+| Preco3 | Preço PVP3 |
+| Preco4 | Preço PVP4 |
+| Preco5 | Preço PVP5 |
 | Iva1_2 | Taxa de IVA |
 | IsencaoIva | Indicação de isenção |
 | NomeProdVenda | Nome para venda |
