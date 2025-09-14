@@ -140,6 +140,15 @@ class FichasTecnicasModel(QAbstractTableModel):
             ]
             val = mapping[index.column()]
             return val if val is not None else ""
+        if role == Qt.TextAlignmentRole:
+            aligns = [
+                Qt.AlignLeft | Qt.AlignVCenter,
+                Qt.AlignCenter | Qt.AlignVCenter,
+                Qt.AlignRight | Qt.AlignVCenter,
+                Qt.AlignRight | Qt.AlignVCenter,
+                Qt.AlignRight | Qt.AlignVCenter,
+            ]
+            return aligns[index.column()]
         return None
 
     def setData(self, index, value, role=Qt.EditRole):  # pragma: no cover - GUI
@@ -170,9 +179,12 @@ class FichasTecnicasModel(QAbstractTableModel):
         return base
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):  # pragma: no cover
-        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
-            headers = self.dev_headers if layout.DEV_OVERLAYS else self.headers
-            return headers[section]
+        if orientation == Qt.Horizontal:
+            if role == Qt.DisplayRole:
+                headers = self.dev_headers if layout.DEV_OVERLAYS else self.headers
+                return headers[section]
+            if role == Qt.TextAlignmentRole:
+                return Qt.AlignCenter | Qt.AlignVCenter
         return None
 
     def update_data(self, rows: list[FichaTecnica]):
@@ -588,11 +600,12 @@ class FTApp(QWidget):
         model = self.tbIng.model()
         if not model:
             return
-        self.tbIng.setColumnWidth(0, int(w * 0.4444))
-        self.tbIng.setColumnWidth(1, int(w * 0.1389))
-        self.tbIng.setColumnWidth(2, int(w * 0.0833))
-        self.tbIng.setColumnWidth(3, int(w * 0.1667))
-        self.tbIng.setColumnWidth(4, int(w * 0.1667))
+        self.tbIng.setColumnWidth(0, int(w * 0.52))
+        self.tbIng.setColumnWidth(1, int(w * 0.08))
+        self.tbIng.setColumnWidth(2, int(w * 0.125))
+        self.tbIng.setColumnWidth(3, int(w * 0.15))
+        self.tbIng.setColumnWidth(4, int(w * 0.125))
+        self.tbIng.horizontalHeader().setDefaultAlignment(Qt.AlignCenter)
 
     def _apply_ingredient_widths(self):
         self._setup_ing_columns()

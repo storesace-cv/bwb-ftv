@@ -171,12 +171,34 @@ def test_apply_ingredient_widths_after_resize(qapp):
     ft._apply_ingredient_widths()
     qapp.processEvents()
 
-    ratios = {0: 0.4444, 1: 0.1389, 2: 0.0833, 3: 0.1667, 4: 0.1667}
+    ratios = {0: 0.52, 1: 0.08, 2: 0.125, 3: 0.15, 4: 0.125}
     width = ft.tbIng.viewport().width()
     for col, ratio in ratios.items():
         expected = width * ratio
         actual = ft.tbIng.columnWidth(col)
         assert actual == pytest.approx(expected, abs=2)
+    ft.close()
+
+
+def test_alignment_roles(qapp):
+    ds = StubDataStore()
+    service = ProductService(ds)
+    ft = FTApp(service)
+    ft._load_record(0)
+    model = ft.tbIng.model()
+    aligns = [
+        Qt.AlignLeft | Qt.AlignVCenter,
+        Qt.AlignCenter | Qt.AlignVCenter,
+        Qt.AlignRight | Qt.AlignVCenter,
+        Qt.AlignRight | Qt.AlignVCenter,
+        Qt.AlignRight | Qt.AlignVCenter,
+    ]
+    for col, expected in enumerate(aligns):
+        assert model.data(model.index(0, col), Qt.TextAlignmentRole) == expected
+        assert (
+            model.headerData(col, Qt.Horizontal, Qt.TextAlignmentRole)
+            == Qt.AlignCenter | Qt.AlignVCenter
+        )
     ft.close()
 
 
