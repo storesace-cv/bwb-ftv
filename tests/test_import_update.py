@@ -21,7 +21,7 @@ def ds():
         "CREATE TABLE FichasTecnicas ("
         "FamiliaSubfamilia TEXT, ProdutoCodigo TEXT, ProdutoNome TEXT, "
         "ComponenteCodigo TEXT, ComponenteNome TEXT, Qtd REAL, Unidade TEXT, "
-        "Ppu REAL, Preco REAL, Peso REAL)"
+        "Ppu REAL, Preco REAL, Peso REAL, Ordem INTEGER)"
     )
     return ds
 
@@ -62,10 +62,11 @@ def _write_base_files(
             "Ppu",
             "Preco",
             "Peso",
+            "Ordem",
         ]
     )
     for code, _ in products:
-        ws.append([None, code, None, None, None, None, None, None, None, None])
+        ws.append([None, code, None, None, None, None, None, None, None, None, None])
     ft_wb.save(base_dir / "FichasTecnicas_base.xlsx")
 
     prec_wb = Workbook()
@@ -280,9 +281,10 @@ def test_import_reads_preco(ds, imports_dir):
             "Ppu",
             "Preco",
             "Peso",
+            "Ordem",
         ]
     )
-    ws.append([None, "P1", None, None, "Ing", 2, "Kg", 3, "1 234,5", None])
+    ws.append([None, "P1", None, None, "Ing", 2, "Kg", 3, "1 234,5", None, None])
     ft.save(imports_dir / "FichasTecnicas_base.xlsx")
 
     prec = Workbook()
@@ -326,9 +328,10 @@ def test_update_reads_preco(ds, imports_dir):
             "Ppu",
             "Preco",
             "Peso",
+            "Ordem",
         ]
     )
-    ws.append([None, "P1", None, None, "Ing", 3, "Kg", 2, 7, None])
+    ws.append([None, "P1", None, None, "Ing", 3, "Kg", 2, 7, None, None])
     ft.save(imports_dir / "FichasTecnicas_base.xlsx")
 
     prec = Workbook()
