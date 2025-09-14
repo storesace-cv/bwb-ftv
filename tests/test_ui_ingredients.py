@@ -30,7 +30,7 @@ class StubDataStore:
         return {"codigo": codigo, "produto": "Prod"}
 
     def get_pvps(self, codigo):
-        return {}
+        return {"pvp": None, "iva": None}
 
     def get_ingredientes(self, codigo):
         return [

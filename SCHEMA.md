@@ -49,8 +49,8 @@
 |---|---|
 | **Codigo** | Código do produto |
 | **Loja** | Loja (chave composta) |
-| Preco1–5 | Preços por loja |
-| Iva1–2 | Taxas de IVA |
+| Preco1_5 | Preço por loja |
+| Iva1_2 | Taxa de IVA |
 | IsencaoIva | Indicação de isenção |
 | NomeProdVenda | Nome para venda |
 | Familia | Família |
@@ -131,7 +131,7 @@ Após importação, os ficheiros são arquivados em `imports/history` e registad
 
 ## Normalização de cabeçalhos
 - Remoção de acentos/pontuação  
-- Aliases: “Prod Venda” → `Codigo`, “Preço 1” → `Preco1`, etc.  
+- Aliases: “Prod Venda” → `Codigo`, “Preço 1-5” → `Preco1_5`, etc.
 - “Preço n g” mapeado para colunas específicas de gramas em `Produtos`
 
 ## Tabela `Produtos_Base.xlsx`
@@ -179,9 +179,8 @@ Após importação, os ficheiros são arquivados em `imports/history` e registad
 | Prod Venda | Codigo |
 | Loja | Loja |
 | Ativo | Ativo |
-| Preço 1–5 | Preco1–Preco5 |
-| Iva 1 | Iva1 |
-| Iva 2 | Iva2 |
+| Preço 1-5 | Preco1_5 |
+| Iva 1-2 | Iva1_2 |
 | Isenção IVA | IsencaoIva |
 | Nome prod venda (não necessário p/ importar) | NomeProdVenda |
 | Familia (não necessário p/ importar) | Familia |

@@ -34,11 +34,7 @@ PRECO_GRAM_LOOKUP = {
 
 NUMERIC_NAMES = {
     "preco",
-    "preco1",
-    "preco2",
-    "preco3",
-    "preco4",
-    "preco5",
+    "preco1_5",
     "preco1g",
     "preco2g",
     "preco3g",
@@ -48,8 +44,7 @@ NUMERIC_NAMES = {
     "qtd",
     "peso",
     "iva",
-    "iva1",
-    "iva2",
+    "iva1_2",
 }
 
 
@@ -88,6 +83,10 @@ def canonicalize_header(text: str, table: str | None = None) -> str:
             if table in {"FichasTecnicas", "ProdutoPreparacao"}
             else "Codigo"
         )
+    if key in {"preco15", "preco1_5"}:
+        return "Preco1_5"
+    if key in {"iva12", "iva1_2"}:
+        return "Iva1_2"
     if key in PRECO_GRAM_LOOKUP:
         preco_g, preco = PRECO_GRAM_LOOKUP[key]
         return preco_g if table == "Produtos" else preco
@@ -244,9 +243,11 @@ class ProductService:
 
 
 def get_product_info(ds: DataStore, codigo: str) -> Product:
-    """Retrieve product information, pvps and ingredients as a :class:`Product`."""
+    """Retrieve product information, price info and ingredients as a :class:`Product`."""
     info = ds.get_produto_info(codigo) if ds else {}
     pvps: dict[str, float | None] = ds.get_pvps(codigo) if ds else {}
+    pvp = pvps.get("pvp")
+    iva = pvps.get("iva")
     ing_rows = ds.get_ingredientes(codigo) if ds else []
 
     ingredients: List[Ingredient] = []
@@ -277,7 +278,8 @@ def get_product_info(ds: DataStore, codigo: str) -> Product:
         tipo_artigo_cod=info.get("tipoartigo"),
         validade_cod=info.get("validade"),
         temperatura_cod=info.get("temperatura"),
-        pvps=pvps,
+        pvp=pvp,
+        iva=iva,
         ingredients=ingredients,
     )
 

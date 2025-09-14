@@ -63,13 +63,8 @@ CREATE TABLE IF NOT EXISTS PrecosTaxas (
     Codigo TEXT NOT NULL,
     Loja TEXT NOT NULL,
     Ativo TEXT,
-    Preco1 DECIMAL(10,2),
-    Preco2 DECIMAL(10,2),
-    Preco3 DECIMAL(10,2),
-    Preco4 DECIMAL(10,2),
-    Preco5 DECIMAL(10,2),
-    Iva1 DECIMAL(10,2),
-    Iva2 DECIMAL(10,2),
+    Preco1_5 DECIMAL(10,2),
+    Iva1_2 DECIMAL(10,2),
     IsencaoIva TEXT,
     NomeProdVenda TEXT,
     Familia TEXT,
@@ -183,16 +178,7 @@ def _upgrade_tables(conn: sqlite3.Connection) -> None:
         rows = list(conn.execute("PRAGMA table_info(PrecosTaxas)"))
         types = {r[1]: r[2].upper() for r in rows}
         pk_cols = [r[1] for r in rows if r[5] > 0]
-        required = [
-            "Preco1",
-            "Preco2",
-            "Preco3",
-            "Preco4",
-            "Preco5",
-            "Iva1",
-            "Iva2",
-            "Loja",
-        ]
+        required = ["Preco1_5", "Iva1_2", "Loja"]
         has_cols = all(c in types for c in required)
         need = has_cols and pk_cols != ["Codigo", "Loja"]
         if has_cols:
@@ -205,13 +191,8 @@ def _upgrade_tables(conn: sqlite3.Connection) -> None:
                 "Codigo",
                 "Loja",
                 "Ativo",
-                "Preco1",
-                "Preco2",
-                "Preco3",
-                "Preco4",
-                "Preco5",
-                "Iva1",
-                "Iva2",
+                "Preco1_5",
+                "Iva1_2",
                 "IsencaoIva",
                 "NomeProdVenda",
                 "Familia",
