@@ -93,7 +93,7 @@ class Zone(QWidget):
         grid.setColumnStretch(1, 1)
         lbl = QLabel(label_text, row)
         lbl.setStyleSheet("border:none; background:transparent;")
-        lbl.setAlignment(Qt.AlignVCenter | Qt.AlignRight)
+        lbl.setAlignment(Qt.AlignTop | Qt.AlignRight)
         if label_minw is not None:
             lbl.setFixedWidth(label_minw)
         value_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -103,8 +103,8 @@ class Zone(QWidget):
             )
         except Exception:
             pass
-        grid.addWidget(lbl, 0, 0, alignment=Qt.AlignVCenter | Qt.AlignRight)
-        grid.addWidget(value_widget, 0, 1, alignment=Qt.AlignVCenter | Qt.AlignLeft)
+        grid.addWidget(lbl, 0, 0, alignment=Qt.AlignTop | Qt.AlignRight)
+        grid.addWidget(value_widget, 0, 1, alignment=Qt.AlignTop | Qt.AlignLeft)
         self.ly.addWidget(row)
         self._labels.append(lbl)
         self.sync_label_widths()
