@@ -331,4 +331,4 @@ def test_get_pvps_parses_decimal_formats(raw, expected):
     )
     ds.conn.commit()
     pvps = ds.get_pvps("P1")
-    assert pvps["pvp"] == expected
+    assert pvps["pvps"] == [expected]

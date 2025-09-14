@@ -39,6 +39,6 @@ class Product:
     tipo_artigo_cod: int | None = None
     validade_cod: int | None = None
     temperatura_cod: int | None = None
-    pvp: float | None = None
+    pvps: List[float | None] = field(default_factory=list)
     iva: float | None = None
     ingredients: List[Ingredient] = field(default_factory=list)

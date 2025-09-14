@@ -772,7 +772,8 @@ class FTApp(QWidget):
             self.lbFamiliaVal.setText(product.familia or "")
             self.lbSubFamiliaVal.setText(product.subfamilia or "")
 
-            self.lbPVP.setText(format_pt_number(product.pvp))
+            first_price = product.pvps[0] if product.pvps else None
+            self.lbPVP.setText(format_pt_number(first_price))
 
             def _select_by_code(combo, code_value):
                 if code_value is None:

@@ -65,8 +65,8 @@ class ProdutosRepo:
             return {k.lower(): row[k] for k in row.keys()}
         return {}
 
-    def get_pvps(self, codigo: str) -> dict[str, float | None]:
-        """Devolve ``{'pvp', 'iva'}`` a partir de ``PrecosTaxas``."""
+    def get_pvps(self, codigo: str) -> dict[str, list[float | None] | float | None]:
+        """Devolve ``{'pvps', 'iva'}`` a partir de ``PrecosTaxas``."""
         cur = self.conn.cursor()
         try:
             cur.execute(
@@ -74,15 +74,15 @@ class ProdutosRepo:
                 (codigo,),
             )
             r = cur.fetchone()
-            pvp = r[0] if r and r[0] not in (None, "") else None
+            price = r[0] if r and r[0] not in (None, "") else None
             iva = r[1] if r and r[1] not in (None, "") else None
-            if isinstance(pvp, str):
-                pvp = parse_decimal(pvp)
-                if isinstance(pvp, str):
+            if isinstance(price, str):
+                price = parse_decimal(price)
+                if isinstance(price, str):
                     try:
-                        pvp = float(pvp)
+                        price = float(price)
                     except ValueError:
-                        pvp = None
+                        price = None
             if isinstance(iva, str):
                 iva = parse_decimal(iva)
                 if isinstance(iva, str):
@@ -90,7 +90,10 @@ class ProdutosRepo:
                         iva = float(iva)
                     except ValueError:
                         iva = None
-            return {"pvp": pvp, "iva": iva}
+            pvps: list[float | None] = []
+            if price is not None:
+                pvps.append(price)
+            return {"pvps": pvps, "iva": iva}
         except sqlite3.Error as exc:
             logger.error(
                 "[ProdutosRepo] get_pvps(%s) falhou: %s",
@@ -98,7 +101,7 @@ class ProdutosRepo:
                 exc,
                 exc_info=True,
             )
-            return {"pvp": None, "iva": None}
+            return {"pvps": [], "iva": None}
 
     def set_tipo_artigo(self, codigo: str, tipo_cod) -> bool:
         """Atualiza o campo ``TipoArtigo`` de um produto."""

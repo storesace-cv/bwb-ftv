@@ -179,7 +179,7 @@ def test_import_from_excel_uses_produto_codigo(ds, imports_dir):
     svc = ProductService(ds)
     svc.import_from_excel()
     pvps = ds.get_pvps("P1")
-    assert pvps["pvp"] == 2.5
+    assert pvps["pvps"][0] == 2.5
 
 
 def test_update_from_excel_uses_produto_codigo(ds, imports_dir):
@@ -191,7 +191,7 @@ def test_update_from_excel_uses_produto_codigo(ds, imports_dir):
     svc = ProductService(ds)
     svc.update_from_excel()
     pvps = ds.get_pvps("P1")
-    assert pvps["pvp"] == 3.0
+    assert pvps["pvps"][0] == 3.0
 
 
 def test_import_from_excel_handles_preco_range_header(ds, imports_dir):
@@ -204,7 +204,7 @@ def test_import_from_excel_handles_preco_range_header(ds, imports_dir):
     svc = ProductService(ds)
     svc.import_from_excel()
     pvps = ds.get_pvps("P1")
-    assert pvps["pvp"] == 2.0
+    assert pvps["pvps"][0] == 2.0
 
 
 def test_update_from_excel_handles_preco_range_header(ds, imports_dir):
@@ -221,7 +221,7 @@ def test_update_from_excel_handles_preco_range_header(ds, imports_dir):
     svc = ProductService(ds)
     svc.update_from_excel()
     pvps = ds.get_pvps("P1")
-    assert pvps["pvp"] == 4.0
+    assert pvps["pvps"][0] == 4.0
 
 
 @pytest.mark.parametrize(
@@ -233,7 +233,7 @@ def test_import_from_excel_parses_formatted_numbers(ds, imports_dir, price, expe
     svc = ProductService(ds)
     svc.import_from_excel()
     pvps = ds.get_pvps("P1")
-    assert pvps["pvp"] == expected
+    assert pvps["pvps"][0] == expected
 
 
 @pytest.mark.parametrize(
@@ -249,7 +249,7 @@ def test_update_from_excel_parses_formatted_numbers(ds, imports_dir, price, expe
     svc = ProductService(ds)
     svc.update_from_excel()
     pvps = ds.get_pvps("P1")
-    assert pvps["pvp"] == expected
+    assert pvps["pvps"][0] == expected
 
 
 @pytest.mark.parametrize("func", ["import_from_excel", "update_from_excel"])
