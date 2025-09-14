@@ -20,7 +20,12 @@ def test_listar_por_produto_orders_by_custom_column():
         '''
     )
     conn.executemany(
-        'INSERT INTO FichasTecnicas ("ProdutoCodigo", "ComponenteNome", "Qtd", "Unidade", "Ppu", "Preco", "ComponenteCodigo", "Ordem") VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        (
+            "INSERT INTO FichasTecnicas ("
+            '"ProdutoCodigo", "ComponenteNome", "Qtd", "Unidade", '
+            '"Ppu", "Preco", "ComponenteCodigo", "Ordem"'
+            ") VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+        ),
         [
             ("P1", "B", 2.0, "kg", 1.5, 3.0, "B1", 2),
             ("P1", "A", 1.0, "kg", 1.0, 1.0, "A1", 1),

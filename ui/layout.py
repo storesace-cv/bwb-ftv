@@ -95,7 +95,11 @@ class Zone(QWidget):
         grid.setHorizontalSpacing(12)
         grid.setVerticalSpacing(min(vspacing, 5))
         grid.setColumnStretch(1, 1)
-        display = overlay_text if (DEV_OVERLAYS and overlay_text is not None) else label_text
+        display = (
+            overlay_text
+            if (DEV_OVERLAYS and overlay_text is not None)
+            else label_text
+        )
         lbl = QLabel(display, row)
         lbl.setStyleSheet(
             "background-color: rgba(0, 0, 0, 0.03); border-radius: 4px;"

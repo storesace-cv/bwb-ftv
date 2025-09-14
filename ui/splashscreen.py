@@ -67,6 +67,6 @@ class SplashScreen(QDialog):
         for label in buttons:
             btn = QPushButton(label)
             box.addButton(btn, QDialogButtonBox.ActionRole)
-            btn.clicked.connect(lambda _, l=label: _set_choice(l))
+            btn.clicked.connect(lambda _, lbl=label: _set_choice(lbl))
         self.exec_()
         return choice["value"]
