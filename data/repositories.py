@@ -9,6 +9,15 @@ from utils.formatting import parse_decimal
 logger = logging.getLogger(__name__)
 
 
+def quote_ident(name: str) -> str:
+    """Return *name* quoted as an SQL identifier.
+
+    Any existing double quotes are doubled to preserve them inside the
+    identifier.
+    """
+    return '"' + name.replace('"', '""') + '"'
+
+
 class ProdutosRepo:
     def __init__(self, conn: sqlite3.Connection):
         self.conn = conn
@@ -263,18 +272,22 @@ class IngredientesRepo:
         order_col = "ordem" if "ordem" in table_cols else "rowid"
 
         try:
-            select_cols = [cols["ingr"], cols["qty"], cols["unit"], "ppu", cost_col]
+            select_cols = [
+                quote_ident(cols["ingr"]),
+                quote_ident(cols["qty"]),
+                quote_ident(cols["unit"]),
+                quote_ident("ppu"),
+                quote_ident(cost_col),
+            ]
             if cols.get("code"):
-                select_cols.append(cols["code"])
-            cur.execute(
-                (
-                    "SELECT "
-                    + ", ".join(select_cols)
-                    + " FROM FichasTecnicas "
-                    + f"WHERE {cols['prod']} = ? ORDER BY {order_col}"
-                ),
-                (codigo,),
+                select_cols.append(quote_ident(cols["code"]))
+            query = (
+                "SELECT "
+                + ", ".join(select_cols)
+                + " FROM FichasTecnicas "
+                + f"WHERE {quote_ident(cols['prod'])} = ? ORDER BY {quote_ident(order_col)}"
             )
+            cur.execute(query, (codigo,))
             rows = cur.fetchall()
             idx = {"ingr": 0, "qty": 1, "unit": 2, "ppu": 3, "cost": 4}
             if cols.get("code"):
@@ -341,8 +354,8 @@ class IngredientesRepo:
                     return []
                 sql = (
                     "SELECT "
-                    + ", ".join(sel)
-                    + " FROM FichasTecnicas WHERE ProdutoCodigo=?"
+                    + ", ".join(quote_ident(c) for c in sel)
+                    + f" FROM FichasTecnicas WHERE {quote_ident('ProdutoCodigo')}=?"
                 )
                 cur.execute(sql, (codigo,))
                 rows = cur.fetchall()
