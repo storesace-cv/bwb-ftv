@@ -64,6 +64,8 @@ def configure_logging():
     # ensure import directories exist alongside logging setup
     imports_dir = root / "imports"
     (imports_dir / "history").mkdir(parents=True, exist_ok=True)
+    images_dir = root / "databases" / "images"
+    images_dir.mkdir(parents=True, exist_ok=True)
 
     if os.getenv("debug") == "0":
         log_file = log_dir / "ftv.log"
