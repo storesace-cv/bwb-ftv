@@ -44,4 +44,4 @@ restore_backup(backup_path)
 ## Known Limitations
 - Import files must be `.xlsx` and use exact Portuguese names with accents.
 - Backup and migration scripts expect the database at `<root>/databases/ftv.db` unless `FTV_DB_PATH` is set.
-- There is no direct integration with ZoneSoft; the process relies on manually exported Excel files from NET-bo.
+- There is no direct integration with NET-bo; products, prices, and taxes must be manually exported and imported via Excel files.
