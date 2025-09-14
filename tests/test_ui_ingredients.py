@@ -40,7 +40,7 @@ class StubDataStore:
                 "Unidade": "kg",
                 "Ppu": 2.0,
                 "Preco": 3.0,
-                "Codigo": "A1",
+                "ComponenteCodigo": "A1",
             },
             {
                 "ComponenteNome": "Salt",
@@ -48,7 +48,7 @@ class StubDataStore:
                 "Unidade": "kg",
                 "Ppu": 1.5,
                 "Preco": 0.75,
-                "Codigo": "A2",
+                "ComponenteCodigo": "A2",
             },
         ]
 
@@ -106,7 +106,7 @@ class VarStubDataStore(StubDataStore):
                 "Unidade": "kg",
                 "Ppu": 1.0,
                 "Preco": 1.0,
-                "Codigo": f"C{i}",
+                "ComponenteCodigo": f"C{i}",
             }
             for i in range(self.n)
         ]

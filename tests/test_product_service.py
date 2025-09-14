@@ -40,14 +40,14 @@ def test_get_product_info_builds_product_from_datastore():
             "Unidade": "kg",
             "Ppu": 3.0,
             "Preco": 6.0,
-            "Codigo": "I1",
+            "ComponenteCodigo": "I1",
         },
         {
             "ComponenteNome": "Ing2",
             "Qtd": 1,
             "Unidade": "kg",
             "Ppu": 2.0,
-            "Codigo": "I2",
+            "ComponenteCodigo": "I2",
         },
     ]
 
@@ -71,7 +71,7 @@ def test_get_product_info_builds_product_from_datastore():
 def test_list_fichas_tecnicas_logs_missing_ingredient_name(caplog):
     ds = MagicMock(spec=DataStore)
     ds.get_ingredientes.return_value = [
-        {"Qtd": 1, "Unidade": "kg", "Codigo": "I1"}
+        {"Qtd": 1, "Unidade": "kg", "ComponenteCodigo": "I1"}
     ]
     service = ProductService(ds)
 
@@ -87,7 +87,7 @@ def test_get_product_info_logs_missing_ingredient_name(caplog):
     ds.get_produto_info.return_value = {"codigo": "P1", "produto": "Produto 1"}
     ds.get_pvps.return_value = {}
     ds.get_ingredientes.return_value = [
-        {"Qtd": 2, "Unidade": "kg", "Codigo": "I1"}
+        {"Qtd": 2, "Unidade": "kg", "ComponenteCodigo": "I1"}
     ]
 
     with caplog.at_level(logging.WARNING):

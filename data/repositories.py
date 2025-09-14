@@ -9,6 +9,24 @@ from utils.formatting import parse_decimal
 logger = logging.getLogger(__name__)
 
 
+def _infer_cols(headers: list[str]):
+    """Return indexes for required ``FichasTecnicas`` columns.
+
+    The input ``headers`` are expected to use the canonical names directly,
+    so this helper resolves their positions without considering aliases.
+    ``ComponenteCodigo`` is optional and ``None`` is returned if missing.
+    """
+
+    idx = {h: i for i, h in enumerate(headers)}
+    return (
+        idx["ProdutoCodigo"],
+        idx["ComponenteNome"],
+        idx["Qtd"],
+        idx["Unidade"],
+        idx.get("ComponenteCodigo"),
+    )
+
+
 def quote_ident(name: str) -> str:
     """Return *name* quoted as an SQL identifier.
 
@@ -156,41 +174,24 @@ class IngredientesRepo:
         self.conn = conn
 
     def listar_por_produto(self, codigo: str):
-        """Devolve dados do produto em FichasTecnicas.
+        """Devolve dados do produto em ``FichasTecnicas``.
 
-        Retorna uma lista de dicts com chaves: ``ComponenteNome``, ``Qtd``,
-        ``Unidade``, ``Ppu``, ``Preco`` e ``Codigo`` (quando disponível).
+        Retorna uma lista de dicts com as chaves canónicas
+        ``ComponenteNome``, ``Qtd``, ``Unidade``, ``Ppu``, ``Preco`` e
+        ``ComponenteCodigo``.
         """
 
         cur = self.conn.cursor()
         try:
-            cur.execute("PRAGMA table_info(FichasTecnicas)")
-            cols = [c[1] for c in cur.fetchall()]
-        except sqlite3.Error as exc:
-            logger.error(
-                "[IngredientesRepo] listar_por_produto(%s) falhou: %s",
-                codigo,
-                exc,
-                exc_info=True,
+            cur.execute(
+                """
+                SELECT ComponenteNome, Qtd, Unidade, Ppu, Preco, ComponenteCodigo
+                FROM FichasTecnicas
+                WHERE ProdutoCodigo=?
+                ORDER BY Ordem
+                """,
+                (codigo,),
             )
-            return []
-
-        has_ordem = "Ordem" in cols
-        has_code = "ComponenteCodigo" in cols
-
-        select_cols = ["ComponenteNome", "Qtd", "Unidade", "Ppu", "Preco"]
-        if has_code:
-            select_cols.append("ComponenteCodigo")
-
-        query = (
-            "SELECT "
-            + ", ".join(quote_ident(c) for c in select_cols)
-            + " FROM FichasTecnicas WHERE ProdutoCodigo=? "
-            + ("ORDER BY Ordem" if has_ordem else "ORDER BY rowid")
-        )
-
-        try:
-            cur.execute(query, (codigo,))
             rows = cur.fetchall()
         except sqlite3.Error as exc:
             logger.error(
@@ -203,16 +204,16 @@ class IngredientesRepo:
 
         out = []
         for r in rows:
-            item = {
-                "ComponenteNome": r[0],
-                "Qtd": r[1],
-                "Unidade": r[2],
-                "Ppu": r[3],
-                "Preco": r[4],
-            }
-            if has_code:
-                item["Codigo"] = r[5]
-            out.append(item)
+            out.append(
+                {
+                    "ComponenteNome": r[0],
+                    "Qtd": r[1],
+                    "Unidade": r[2],
+                    "Ppu": r[3],
+                    "Preco": r[4],
+                    "ComponenteCodigo": r[5],
+                }
+            )
         return out
 
 
