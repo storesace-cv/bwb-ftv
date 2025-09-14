@@ -27,7 +27,12 @@ class DummyService:
         return []
 
     def get_product_info(self, codigo):
-        return Product(code=codigo, pvps=[1234.56], iva=None, ingredients=[])
+        return Product(
+            code=codigo,
+            pvps=[1234.56, 2345.67, None, 0, 789.01],
+            iva=None,
+            ingredients=[],
+        )
 
     def calculate_cost(self, product):
         return 1234.56
@@ -40,6 +45,8 @@ def test_format_pt_number_basic():
 
 def test_ftapp_formats_numbers(qapp):
     ft = FTApp(DummyService())
-    assert ft.lbPVP.text() == "1\u00A0234,56"
-    assert ft.edCustoTotal.text() == "1\u00A0234,56"
+    expected_prices = [1234.56, 2345.67, None, 0, 789.01]
+    expected_texts = [format_pt_number(p) for p in expected_prices]
+    assert [lb.text() for lb in ft.lbPVPs] == expected_texts
+    assert ft.edCustoTotal.text() == format_pt_number(1234.56)
     ft.close()

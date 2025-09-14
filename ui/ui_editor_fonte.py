@@ -383,22 +383,29 @@ class FTApp(QWidget):
         base_h.setContentsMargins(0, 0, 0, 0)
         base_h.setSpacing(C1A21_base.ly.spacing())
         C1A21_base.ly.insertWidget(1, base_cont, 1)
-        col = Zone(
-            f"{C1A21_base.tag}.1",
-            base_cont,
-            flow="v",
-            margins=2,
-            spacing=2,
-            level=C1A21_base._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-        )
-        lbl = QLabel("PVP")
-        val = QLabel("—")
-        val.setStyleSheet("border:none; background:transparent; font-weight:600;")
-        col.add(lbl, 0)
-        col.add(val, 0)
-        self.lbPVP = val
-        base_h.addWidget(col, 1)
+
+        self.lbPVPs: list[QLabel] = []
+        for idx in range(1, 6):
+            col = Zone(
+                f"{C1A21_base.tag}.{idx}",
+                base_cont,
+                flow="v",
+                margins=2,
+                spacing=2,
+                level=C1A21_base._level + 1,
+                show_overlays=layout.DEV_OVERLAYS,
+            )
+            label_text = f"PVP{idx}"
+            overlay = f"PrecosTaxas.Preco{idx}"
+            lbl = QLabel(overlay if layout.DEV_OVERLAYS else label_text)
+            lbl.setProperty("userLabel", label_text)
+            lbl.setProperty("devLabel", overlay)
+            val = QLabel("—")
+            val.setStyleSheet("border:none; background:transparent; font-weight:600;")
+            col.add(lbl, 0)
+            col.add(val, 0)
+            self.lbPVPs.append(val)
+            base_h.addWidget(col, 1)
 
         # Combos diretamente em B1.C1.A.2.B (sem .B.2)
         w_tipos, self.cbTipos = stack_combo("Tipos Artigos")
@@ -794,8 +801,10 @@ class FTApp(QWidget):
             self.lbFamiliaVal.setText(product.familia or "")
             self.lbSubFamiliaVal.setText(product.subfamilia or "")
 
-            first_price = product.pvps[0] if product.pvps else None
-            self.lbPVP.setText(format_pt_number(first_price))
+            pvps = list(product.pvps or [])
+            pvps.extend([None] * (5 - len(pvps)))
+            for lbl, price in zip(self.lbPVPs, pvps):
+                lbl.setText(format_pt_number(price))
 
             def _select_by_code(combo, code_value):
                 if code_value is None:
