@@ -374,6 +374,12 @@ class FTApp(QWidget):
                 level=C1A21_base._level + 1,
                 show_overlays=layout.DEV_OVERLAYS,
             )
+            if i == 1:
+                val = QLabel("")
+                col.add(val, 0)
+                self.lbPVP.append(val)
+                base_h.addWidget(col, 1)
+                continue
             lbl = QLabel(f"PVP{i+1}")
             val = QLabel("—")
             val.setStyleSheet("border:none; background:transparent; font-weight:600;")
