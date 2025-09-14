@@ -228,9 +228,6 @@ class FTApp(QWidget):
         self.btOverlay = QPushButton("Overlays: ON")
         self.btOverlay.clicked.connect(self._toggle_overlays_btn)
         top.addWidget(self.btOverlay, 0, Qt.AlignLeft)
-        self.btSave = QPushButton("Guardar")
-        self.btSave.clicked.connect(lambda: self._save_prep(force=True))
-        top.addWidget(self.btSave, 0, Qt.AlignLeft)
         top.addStretch(1)
         from PyQt5.QtWidgets import QMenu, QToolButton
 
