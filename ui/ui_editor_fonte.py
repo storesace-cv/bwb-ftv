@@ -560,7 +560,7 @@ class FTApp(QWidget):
         hh = self.tbIng.horizontalHeader()
         rows = self.tbIng.model().rowCount()
         row_h = vh.defaultSectionSize()
-        max_visible = 8
+        max_visible = 5
         visible_rows = min(rows, max_visible)
         total_h = hh.height() + row_h * visible_rows + self.tbIng.frameWidth() * 2
         scroll = self.tbIng.verticalScrollBar()
@@ -796,6 +796,7 @@ class FTApp(QWidget):
                     for ing in product.ingredients
                 ]
             self.ingModel.update_data(fichas)
+            self._apply_ing_autofit_or_scroll()
 
             self._apply_ingredient_widths()
             self.edCustoTotal.setText(
