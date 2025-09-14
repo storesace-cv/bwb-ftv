@@ -207,7 +207,10 @@ class IngredientesRepo:
                 allow_heuristic=True,
             )
         )
-        # ingrediente: prefere 'ComponenteNome'; admite alternativas
+        # ingrediente: o campo de Excel "ComponenteNome" é preferido;
+        # o importador também reconhece aliases como
+        # "ingrediente", "ingredientes", "designacao", "componente",
+        # "descricao" e "nome_ingrediente".
         ingr = (
             pick(["ComponenteNome"], allow_heuristic=False)
             or pick(
