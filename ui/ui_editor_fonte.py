@@ -350,11 +350,6 @@ class FTApp(QWidget):
         )
 
         # Base: cinco colunas iguais com PVP1..PVP5 (etiqueta por cima)
-        P1, P2 = C1A21_base.split_h((1, 1))
-        P11, P12 = P1.split_h((1, 1))
-        P111, P112 = P11.split_h((1, 1))
-        # Agora temos 5 zonas: P111, P112, P12.A, P12.B, (criar quinta)
-        # Reconstruir base em 5 colunas iguais
         base_cont = QWidget(C1A21_base)
         base_h = QHBoxLayout(base_cont)
         base_h.setContentsMargins(0, 0, 0, 0)
