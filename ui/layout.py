@@ -86,21 +86,26 @@ class Zone(QWidget):
     ) -> QLabel:
         row = QWidget(self)
         row.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        row.setStyleSheet("border:none; background:transparent;")
+        row.setStyleSheet(
+            "background-color: rgba(0, 0, 0, 0.05); border-radius: 4px;"
+        )
         grid = QGridLayout(row)
         grid.setContentsMargins(0, 0, 0, 0)
         grid.setHorizontalSpacing(12)
-        grid.setVerticalSpacing(vspacing)
+        grid.setVerticalSpacing(min(vspacing, 5))
         grid.setColumnStretch(1, 1)
         lbl = QLabel(label_text, row)
-        lbl.setStyleSheet("border:none; background:transparent;")
+        lbl.setStyleSheet(
+            "background-color: rgba(0, 0, 0, 0.03); border-radius: 4px;"
+        )
         lbl.setAlignment(Qt.AlignTop | Qt.AlignRight)
         if label_minw is not None:
             lbl.setFixedWidth(label_minw)
         value_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         try:
             value_widget.setStyleSheet(
-                value_widget.styleSheet() + "border:none; background:transparent;"
+                value_widget.styleSheet()
+                + "background-color: rgba(0, 0, 0, 0.03); border-radius: 4px;"
             )
         except Exception:
             pass
