@@ -36,19 +36,19 @@ class StubDataStore:
         return [
             {
                 "ComponenteNome": "Sugar",
-                "qtd": 1.5,
-                "unidade": "kg",
-                "ppu": 2.0,
-                "total": 3.0,
-                "codigo": "A1",
+                "Qtd": 1.5,
+                "Unidade": "kg",
+                "Ppu": 2.0,
+                "Preco": 3.0,
+                "Codigo": "A1",
             },
             {
                 "ComponenteNome": "Salt",
-                "qtd": 0.5,
-                "unidade": "kg",
-                "ppu": 1.5,
-                "total": 0.75,
-                "codigo": "A2",
+                "Qtd": 0.5,
+                "Unidade": "kg",
+                "Ppu": 1.5,
+                "Preco": 0.75,
+                "Codigo": "A2",
             },
         ]
 
@@ -71,10 +71,10 @@ def test_load_record_populates_ingredients(qapp):
     expected = ds.get_ingredientes("P1")
     for row, data in enumerate(expected):
         assert model.data(model.index(row, 0)) == data["ComponenteNome"]
-        assert model.data(model.index(row, 1)) == format_pt_number(data["qtd"])
-        assert model.data(model.index(row, 2)) == data["unidade"]
-        assert model.data(model.index(row, 3)) == format_pt_number(data["ppu"])
-        assert model.data(model.index(row, 4)) == format_pt_number(data["total"])
+        assert model.data(model.index(row, 1)) == format_pt_number(data["Qtd"])
+        assert model.data(model.index(row, 2)) == data["Unidade"]
+        assert model.data(model.index(row, 3)) == format_pt_number(data["Ppu"])
+        assert model.data(model.index(row, 4)) == format_pt_number(data["Preco"])
     assert not ft.tbIng.isColumnHidden(0)
     assert model.columnCount() == 5
     assert not ft.tbIng.verticalHeader().isVisible()
@@ -102,11 +102,11 @@ class VarStubDataStore(StubDataStore):
         return [
             {
                 "ComponenteNome": f"Ing{i}",
-                "qtd": 1.0,
-                "unidade": "kg",
-                "ppu": 1.0,
-                "total": 1.0,
-                "codigo": f"C{i}",
+                "Qtd": 1.0,
+                "Unidade": "kg",
+                "Ppu": 1.0,
+                "Preco": 1.0,
+                "Codigo": f"C{i}",
             }
             for i in range(self.n)
         ]
