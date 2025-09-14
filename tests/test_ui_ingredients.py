@@ -3,6 +3,7 @@ from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import QResizeEvent
 from services.products import ProductService
 from ui.ui_editor_fonte import FTApp, FichasTecnicasModel
+from ui import layout
 from domain import FichaTecnica
 from utils.formatting import format_pt_number
 
@@ -82,6 +83,8 @@ def test_load_record_populates_ingredients(qapp):
 
 
 def test_load_record_uses_componente_nome_when_only_key(qapp):
+    original = layout.DEV_OVERLAYS
+    layout.DEV_OVERLAYS = False
     ds = NameOnlyStubDataStore()
     service = ProductService(ds)
     ft = FTApp(service)
@@ -91,6 +94,21 @@ def test_load_record_uses_componente_nome_when_only_key(qapp):
     assert model.headerData(0, Qt.Horizontal) == "Ingredientes"
     assert model.data(model.index(0, 0)) == "Sugar"
     assert model.data(model.index(1, 0)) == "Salt"
+    ft.close()
+    layout.DEV_OVERLAYS = original
+
+
+def test_toggle_overlay_updates_headers(qapp):
+    ds = StubDataStore()
+    service = ProductService(ds)
+    ft = FTApp(service)
+    ft._load_record(0)
+    model = ft.tbIng.model()
+    assert model.headerData(0, Qt.Horizontal) == "FichasTecnicas.ComponenteNome"
+    ft._toggle_overlays()
+    assert model.headerData(0, Qt.Horizontal) == "Ingredientes"
+    ft._toggle_overlays()
+    assert model.headerData(0, Qt.Horizontal) == "FichasTecnicas.ComponenteNome"
     ft.close()
 
 
