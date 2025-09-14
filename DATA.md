@@ -45,6 +45,7 @@
 | Ppu | Preço por unidade |
 | Preco | Preço total |
 | Peso | Peso |
+| Ordem | Mantém a ordem dos componentes |
 
 ### `PrecosTaxas`
 | Campo | Descrição |

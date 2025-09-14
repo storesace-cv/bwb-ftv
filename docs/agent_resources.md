@@ -6,6 +6,7 @@ The application was created by [BWB – Business with Brains](https://bwb.pt).
 ## Databases
 - **SQLite `ftv.db`** – Primary data store located at `databases/ftv.db`. Set `FTV_DB_PATH` to override the location.
 - A missing database triggers interactive creation of an empty file.
+- `FichasTecnicas` includes an `Ordem` column to preserve component order.
 
 ### Usage
 ```python
