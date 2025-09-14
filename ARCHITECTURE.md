@@ -81,6 +81,9 @@ graph LR
         AI4[Backup]
     end
 
+    %% Nó externo (fonte Excel)
+    E[NET-bo (Excel)]
+
     A --> B
     B --> C
     C --> D
@@ -88,4 +91,5 @@ graph LR
     AI2 --> B
     AI3 --> C
     AI4 --> C
-    B <--> External[NET-bo (Excel)]
+    B --> E
+    E --> B
