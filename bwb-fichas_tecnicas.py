@@ -11,7 +11,6 @@ from PyQt5.QtGui import QFont
 from data.datastore import DataStore  # noqa: E402
 from services.products import ProductService  # noqa: E402
 from ui.ui_editor_fonte import FTApp  # noqa: E402
-from ui.startup_dialog import StartupDialog  # noqa: E402
 from ui.splashscreen import SplashScreen  # noqa: E402
 from utils.paths import get_project_root  # noqa: E402
 
@@ -27,7 +26,7 @@ def _apply_global_theme(app):
         app.setFont(f)
         # pode-se adicionar QSS leve aqui se precisares
     except Exception as e:
-        StartupDialog(f"[THEME] Falha a aplicar fonte global: {e}", ["OK"]).get_choice()
+        logger.warning("[THEME] Falha a aplicar fonte global: %s", e)
 
 
 def main():
@@ -35,12 +34,23 @@ def main():
     app = QApplication(sys.argv)
     _apply_global_theme(app)
 
-    splash_closed: list[bool] = []
     splash = SplashScreen()
-    splash.clicked.connect(lambda: splash_closed.append(True))
-    splash.exec_()
-    if not splash_closed:
-        sys.exit(0)
+    pending = DataStore.pending_migrations()
+    if pending:
+        choice = splash.overlay(
+            "Foi detetada uma migração da base de dados. Aplicar agora?",
+            ["Sim", "Não"],
+            y=300,
+        )
+        if choice != "Sim":
+            sys.exit(0)
+        DataStore.apply_migrations()
+    else:
+        splash_closed: list[bool] = []
+        splash.clicked.connect(lambda: splash_closed.append(True))
+        splash.exec_()
+        if not splash_closed:
+            sys.exit(0)
 
     # DataStore
     ds = DataStore()

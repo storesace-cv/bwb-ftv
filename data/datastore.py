@@ -6,9 +6,13 @@ import logging
 import os
 import sqlite3
 from pathlib import Path
+from typing import Callable, Iterable
 
 from utils import get_project_root
-from .migration import get_pending_migrations, setup_database
+from .migration import (
+    get_pending_migrations as _get_pending_migrations,
+    setup_database,
+)
 
 base = get_project_root()
 
@@ -43,8 +47,36 @@ class DataStore:
       a ligação à BD
     """
 
-    def __init__(self, db_path=None, demo: bool = False):
+    @classmethod
+    def pending_migrations(cls, db_path=None):
+        """Return a list of pending migration files for ``db_path``."""
+        db_path = Path(db_path or base / "databases" / "ftv.db")
+        if not db_path.exists():
+            return []
+        conn = sqlite3.connect(str(db_path))
+        try:
+            return _get_pending_migrations(conn)
+        finally:
+            conn.close()
+
+    @classmethod
+    def apply_migrations(cls, db_path=None):
+        """Apply migrations for ``db_path`` and ensure core tables."""
+        db_path = db_path or base / "databases" / "ftv.db"
+        conn = sqlite3.connect(str(db_path))
+        try:
+            setup_database(conn)
+        finally:
+            conn.close()
+
+    def __init__(
+        self,
+        db_path=None,
+        demo: bool = False,
+        prompt: Callable[[str, Iterable[str]], str] | None = None,
+    ):
         self.demo = bool(demo)
+        self._prompt = prompt
 
         # Caminho default: raiz do projeto /databases/ftv.db
         db_path = db_path or os.getenv("FTV_DB_PATH")
@@ -62,51 +94,35 @@ class DataStore:
                     f"[DataStore] Base de dados não encontrada em '{db_path}'. "
                     "Copie o ficheiro ou defina FTV_DB_PATH."
                 )
-                from PyQt5.QtWidgets import QApplication
-                from ui.startup_dialog import StartupDialog
-
-                if QApplication.instance() is None:
-                    QApplication([])
-                choice = StartupDialog(
-                    "Base de dados não encontrada.",
-                    ["Base vazia"],
-                ).get_choice()
-                try:
+                if self._prompt is not None:
+                    try:
+                        choice = self._prompt(
+                            "Base de dados não encontrada.", ["Base vazia"]
+                        )
+                    except Exception as exc:
+                        logger.error(
+                            "[DataStore] Falha no callback de prompt: %s", exc,
+                            exc_info=True,
+                        )
+                        raise FileNotFoundError(msg) from exc
                     if choice == "Base vazia":
-                        _create_empty_db(db_path)
+                        try:
+                            _create_empty_db(db_path)
+                        except Exception as exc:
+                            logger.error(
+                                "[DataStore] Falha a preparar BD: %s", exc,
+                                exc_info=True,
+                            )
+                            raise FileNotFoundError(msg) from exc
                     else:
-                        logger.error(msg, exc_info=True)
+                        logger.error(msg)
                         raise FileNotFoundError(msg)
-                except Exception as exc:
-                    logger.error(
-                        "[DataStore] Falha a preparar BD: %s", exc, exc_info=True
-                    )
-                    raise FileNotFoundError(msg) from exc
+                else:
+                    logger.error(msg)
+                    raise FileNotFoundError(msg)
             try:
                 self.conn = sqlite3.connect(str(db_path))
                 self.conn.row_factory = sqlite3.Row
-                if not is_memory:
-                    default_db = base / "databases" / "ftv.db"
-                    if db_path.resolve() == default_db.resolve():
-                        pending = get_pending_migrations(self.conn)
-                        if pending:
-                            from PyQt5.QtWidgets import QApplication
-                            from ui.startup_dialog import StartupDialog
-
-                            if QApplication.instance() is None:
-                                QApplication([])
-                            choice = StartupDialog(
-                                (
-                                    "Foi detetada uma migração da base de dados. "
-                                    "Aplicar agora?"
-                                ),
-                                ["Sim", "Não"],
-                            ).get_choice()
-                            if choice != "Sim":
-                                self.conn.close()
-                                raise RuntimeError(
-                                    "Migração cancelada pelo utilizador."
-                                )
                 setup_database(self.conn)
                 self._ensure_required_tables()
             except sqlite3.Error as exc:

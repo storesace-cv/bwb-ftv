@@ -182,35 +182,9 @@ def test_datastore_migration_decline(monkeypatch, tmp_path):
     monkeypatch.setattr(ds_module, "base", tmp_path)
     monkeypatch.setattr(migration, "MIGRATIONS_DIR", mig_dir)
 
-    class FakeDialog:
-        def __init__(self, text, buttons, parent=None):
-            pass
-
-        def get_choice(self):
-            return "Não"
-
-    class DummyApp:
-        _inst = None
-
-        def __init__(self, *args, **kwargs):
-            DummyApp._inst = self
-
-        @classmethod
-        def instance(cls):
-            return cls._inst
-
-    import sys
-    import types
-
-    dummy_qtwidgets = types.SimpleNamespace(QApplication=DummyApp, QMessageBox=object)
-    dummy_pyqt5 = types.SimpleNamespace(QtWidgets=dummy_qtwidgets)
-    monkeypatch.setitem(sys.modules, "PyQt5", dummy_pyqt5)
-    monkeypatch.setitem(sys.modules, "PyQt5.QtWidgets", dummy_qtwidgets)
-    stub_startup = types.SimpleNamespace(StartupDialog=FakeDialog)
-    monkeypatch.setitem(sys.modules, "ui.startup_dialog", stub_startup)
-
-    with pytest.raises(RuntimeError):
-        ds_module.DataStore()
+    assert ds_module.DataStore.pending_migrations(db_path)
+    ds_module.DataStore.apply_migrations(db_path)
+    ds_module.DataStore(db_path=db_path)
 
 
 def test_update_produtos_aux_cols_migration(tmp_path, monkeypatch):
