@@ -126,7 +126,12 @@ def test_apply_ing_autofit_or_scroll(rows, qapp):
     frame = ft.tbIng.frameWidth()
     row_h = vh.defaultSectionSize()
     visible = min(rows, 5)
-    expected_h = hh.height() + row_h * visible + frame * 2
+    expected_h = (
+        hh.height()
+        + row_h * visible
+        + frame * 2
+        + ft.tbIng.horizontalScrollBar().height()
+    )
     assert ft.tbIng.height() == expected_h
     assert ft.tbIng.verticalScrollBar().isVisible() == (rows >= 6)
     ft.close()
