@@ -64,7 +64,11 @@ CREATE TABLE IF NOT EXISTS PrecosTaxas (
     Codigo TEXT NOT NULL,
     Loja TEXT NOT NULL,
     Ativo TEXT,
-    Preco1_5 DECIMAL(10,2),
+    Preco1 DECIMAL(10,2),
+    Preco2 DECIMAL(10,2),
+    Preco3 DECIMAL(10,2),
+    Preco4 DECIMAL(10,2),
+    Preco5 DECIMAL(10,2),
     Iva1_2 DECIMAL(10,2),
     IsencaoIva TEXT,
     NomeProdVenda TEXT,
@@ -185,8 +189,18 @@ def _upgrade_tables(conn: sqlite3.Connection) -> None:
         types = {r[1]: r[2].upper() for r in rows}
         pk_cols = [r[1] for r in rows if r[5] > 0]
         need = False
+        if "Preco1_5" in types and "Preco1" not in types:
+            try:
+                conn.execute("ALTER TABLE PrecosTaxas RENAME COLUMN Preco1_5 TO Preco1")
+                types["Preco1"] = types.pop("Preco1_5")
+            except sqlite3.OperationalError:
+                need = True
         col_defs = {
-            "Preco1_5": "DECIMAL(10,2)",
+            "Preco1": "DECIMAL(10,2)",
+            "Preco2": "DECIMAL(10,2)",
+            "Preco3": "DECIMAL(10,2)",
+            "Preco4": "DECIMAL(10,2)",
+            "Preco5": "DECIMAL(10,2)",
             "Iva1_2": "DECIMAL(10,2)",
             "Loja": "TEXT",
         }
@@ -205,7 +219,11 @@ def _upgrade_tables(conn: sqlite3.Connection) -> None:
                 "Codigo",
                 "Loja",
                 "Ativo",
-                "Preco1_5",
+                "Preco1",
+                "Preco2",
+                "Preco3",
+                "Preco4",
+                "Preco5",
                 "Iva1_2",
                 "IsencaoIva",
                 "NomeProdVenda",
