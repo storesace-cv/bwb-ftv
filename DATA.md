@@ -49,8 +49,8 @@
 |-------|-----------|
 | **Codigo** | Código do produto |
 | **Loja** | Loja (chave composta) |
-| Preco1–5 | Preços por loja |
-| Iva1–2 | Taxas de IVA |
+| Preco1_5 | Preço por loja |
+| Iva1_2 | Taxa de IVA |
 | IsencaoIva | Indicação de isenção |
 | NomeProdVenda | Nome para venda |
 | Familia | Família do produto |

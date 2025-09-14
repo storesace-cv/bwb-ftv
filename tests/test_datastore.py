@@ -326,9 +326,9 @@ def test_get_pvps_parses_decimal_formats(raw, expected):
     cur = ds.conn.cursor()
     cur.execute("DELETE FROM PrecosTaxas")
     cur.execute(
-        "INSERT INTO PrecosTaxas (Codigo, Loja, Preco1) VALUES (?, ?, ?)",
+        "INSERT INTO PrecosTaxas (Codigo, Loja, Preco1_5) VALUES (?, ?, ?)",
         ("P1", "L1", raw),
     )
     ds.conn.commit()
     pvps = ds.get_pvps("P1")
-    assert pvps["pvp1"] == expected
+    assert pvps["pvp"] == expected

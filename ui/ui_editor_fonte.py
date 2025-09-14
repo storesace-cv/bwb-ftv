@@ -361,24 +361,22 @@ class FTApp(QWidget):
         base_h.setContentsMargins(0, 0, 0, 0)
         base_h.setSpacing(C1A21_base.ly.spacing())
         C1A21_base.ly.insertWidget(1, base_cont, 1)
-        self.lbPVP = []
-        for i in range(5):
-            col = Zone(
-                f"{C1A21_base.tag}.{i+1}",
-                base_cont,
-                flow="v",
-                margins=2,
-                spacing=2,
-                level=C1A21_base._level + 1,
-                show_overlays=layout.DEV_OVERLAYS,
-            )
-            lbl = QLabel(f"PVP{i+1}")
-            val = QLabel("—")
-            val.setStyleSheet("border:none; background:transparent; font-weight:600;")
-            col.add(lbl, 0)
-            col.add(val, 0)
-            self.lbPVP.append(val)
-            base_h.addWidget(col, 1)
+        col = Zone(
+            f"{C1A21_base.tag}.1",
+            base_cont,
+            flow="v",
+            margins=2,
+            spacing=2,
+            level=C1A21_base._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+        )
+        lbl = QLabel("PVP")
+        val = QLabel("—")
+        val.setStyleSheet("border:none; background:transparent; font-weight:600;")
+        col.add(lbl, 0)
+        col.add(val, 0)
+        self.lbPVP = val
+        base_h.addWidget(col, 1)
 
         # Combos diretamente em B1.C1.A.2.B (sem .B.2)
         w_tipos, self.cbTipos = stack_combo("Tipos Artigos")
@@ -774,17 +772,7 @@ class FTApp(QWidget):
             self.lbFamiliaVal.setText(product.familia or "")
             self.lbSubFamiliaVal.setText(product.subfamilia or "")
 
-            pvps = product.pvps
-            values = [
-                pvps.get("pvp1"),
-                pvps.get("pvp2"),
-                pvps.get("pvp3"),
-                pvps.get("pvp4"),
-                pvps.get("pvp5"),
-            ]
-            for i, val in enumerate(values):
-                if i < len(self.lbPVP):
-                    self.lbPVP[i].setText(format_pt_number(val))
+            self.lbPVP.setText(format_pt_number(product.pvp))
 
             def _select_by_code(combo, code_value):
                 if code_value is None:

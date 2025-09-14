@@ -66,33 +66,31 @@ class ProdutosRepo:
         return {}
 
     def get_pvps(self, codigo: str) -> dict[str, float | None]:
-        """Devolve {'pvp1', 'pvp2', 'pvp3', 'pvp4', 'pvp5'} a partir de PrecosTaxas."""
+        """Devolve ``{'pvp', 'iva'}`` a partir de ``PrecosTaxas``."""
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "SELECT Preco1, Preco2, Preco3, Preco4, Preco5 "
-                "FROM PrecosTaxas WHERE Codigo = ?",
+                "SELECT Preco1_5, Iva1_2 FROM PrecosTaxas WHERE Codigo = ?",
                 (codigo,),
             )
             r = cur.fetchone()
-            vals = []
-            for i in range(5):
-                val = r[i] if r and r[i] not in (None, "") else None
-                if isinstance(val, str):
-                    val = parse_decimal(val)
-                    if isinstance(val, str):
-                        try:
-                            val = float(val)
-                        except ValueError:
-                            pass
-                vals.append(val)
-            return {
-                "pvp1": vals[0],
-                "pvp2": vals[1],
-                "pvp3": vals[2],
-                "pvp4": vals[3],
-                "pvp5": vals[4],
-            }
+            pvp = r[0] if r and r[0] not in (None, "") else None
+            iva = r[1] if r and r[1] not in (None, "") else None
+            if isinstance(pvp, str):
+                pvp = parse_decimal(pvp)
+                if isinstance(pvp, str):
+                    try:
+                        pvp = float(pvp)
+                    except ValueError:
+                        pvp = None
+            if isinstance(iva, str):
+                iva = parse_decimal(iva)
+                if isinstance(iva, str):
+                    try:
+                        iva = float(iva)
+                    except ValueError:
+                        iva = None
+            return {"pvp": pvp, "iva": iva}
         except sqlite3.Error as exc:
             logger.error(
                 "[ProdutosRepo] get_pvps(%s) falhou: %s",
@@ -100,13 +98,7 @@ class ProdutosRepo:
                 exc,
                 exc_info=True,
             )
-            return {
-                "pvp1": None,
-                "pvp2": None,
-                "pvp3": None,
-                "pvp4": None,
-                "pvp5": None,
-            }
+            return {"pvp": None, "iva": None}
 
     def set_tipo_artigo(self, codigo: str, tipo_cod) -> bool:
         """Atualiza o campo ``TipoArtigo`` de um produto."""
