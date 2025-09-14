@@ -1121,6 +1121,18 @@ class FTApp(QWidget):
 
 def main():
     app = QApplication(sys.argv)
+
+    glass_theme = (
+        """
+        QWidget {
+            background-color: rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+        }
+        """
+    )
+    app.setStyleSheet(glass_theme)
+
     ds = DataStore()
     svc = ProductService(ds)
     w = FTApp(svc)
