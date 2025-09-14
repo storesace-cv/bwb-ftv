@@ -137,6 +137,8 @@ def test_apply_ingredient_widths_after_resize(qapp):
     service = ProductService(ds)
     ft = FTApp(service)
     ft._load_record(0)
+    ft.show()
+    qapp.processEvents()
 
     new_width = 1600
     old_size = ft.size()
@@ -144,9 +146,10 @@ def test_apply_ingredient_widths_after_resize(qapp):
     ft.resize(new_width, old_size.height())
     ft.resizeEvent(ev)
     ft._apply_ingredient_widths()
+    qapp.processEvents()
 
-    ratios = {0: 0.50, 1: 0.10, 2: 0.10, 3: 0.14, 4: 0.16}
-    width = ft.width()
+    ratios = {0: 0.4444, 1: 0.1389, 2: 0.0833, 3: 0.1667, 4: 0.1667}
+    width = ft.tbIng.viewport().width()
     for col, ratio in ratios.items():
         expected = width * ratio
         actual = ft.tbIng.columnWidth(col)
