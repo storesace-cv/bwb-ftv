@@ -1,7 +1,8 @@
+import logging
 import pytest
 from unittest.mock import MagicMock
 
-from services.products import calculate_cost, get_product_info
+from services.products import calculate_cost, get_product_info, ProductService
 from data.datastore import DataStore
 from domain.models import Ingredient
 
@@ -65,3 +66,32 @@ def test_get_product_info_builds_product_from_datastore():
     assert product.ingredients[1].name == "Ing2"
     assert product.ingredients[1].total is None
     assert product.ingredients[1].ppu == 2.0
+
+
+def test_list_fichas_tecnicas_logs_missing_ingredient_name(caplog):
+    ds = MagicMock(spec=DataStore)
+    ds.get_ingredientes.return_value = [
+        {"qtd": 1, "unidade": "kg", "codigo": "I1"}
+    ]
+    service = ProductService(ds)
+
+    with caplog.at_level(logging.WARNING):
+        fichas = service.list_fichas_tecnicas("P1")
+
+    assert fichas[0].ingredient == ""
+    assert "P1" in caplog.text
+
+
+def test_get_product_info_logs_missing_ingredient_name(caplog):
+    ds = MagicMock(spec=DataStore)
+    ds.get_produto_info.return_value = {"codigo": "P1", "produto": "Produto 1"}
+    ds.get_pvps.return_value = {}
+    ds.get_ingredientes.return_value = [
+        {"qtd": 2, "unidade": "kg", "codigo": "I1"}
+    ]
+
+    with caplog.at_level(logging.WARNING):
+        product = get_product_info(ds, "P1")
+
+    assert product.ingredients[0].name == ""
+    assert "P1" in caplog.text
