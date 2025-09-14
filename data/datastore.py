@@ -60,17 +60,10 @@ class DataStore:
             conn.close()
 
     @classmethod
-    def apply_migrations(
-        cls,
-        db_path=None,
-        prompt: Callable[[str, Iterable[str]], str] | None = None,
-    ) -> list[str]:
+    def apply_migrations(cls, db_path=None) -> list[str]:
         """Apply migrations for ``db_path`` and ensure core tables.
 
-        If pending migrations are detected, an optional ``prompt`` callback can
-        confirm whether they should be applied.  Returns a list with the names
-        of the migrations that were executed.  If the user declines, no
-        migrations are applied and an empty list is returned.
+        Returns a list with the filenames of the migrations that were executed.
         """
 
         db_path = db_path or base / "databases" / "ftv.db"
@@ -80,24 +73,6 @@ class DataStore:
             if pending:
                 names = ", ".join(p.name for p in pending)
                 logger.info("[DataStore] Migrações pendentes: %s", names)
-                proceed = True
-                if prompt is not None:
-                    try:
-                        choice = prompt(
-                            "Foi detetada uma migração da base de dados. Aplicar agora?",
-                            ["Sim", "Não"],
-                        )
-                        proceed = choice == "Sim"
-                    except Exception as exc:
-                        logger.error(
-                            "[DataStore] Falha no callback de prompt: %s",
-                            exc,
-                            exc_info=True,
-                        )
-                        proceed = False
-                if not proceed:
-                    logger.info("[DataStore] Migração cancelada pelo utilizador.")
-                    return []
             setup_database(conn)
             return [p.name for p in pending]
         finally:
