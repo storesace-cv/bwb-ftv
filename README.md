@@ -1,15 +1,15 @@
 # bwb-ftv
 Fichas Técnicas Valorizadas
 
-Aplicação para gerir fichas técnicas de produtos e receitas na restauração.
-Importa dados a partir de folhas de cálculo Excel, sincroniza com o
-ecossistema ZoneSoft, regista alergénios por ingrediente e armazena toda a
+A aplicação permite gerir fichas técnicas de produtos e receitas na restauração.
+Importa dados a partir de folhas de cálculo Excel exportados do NET-bo,
+sincroniza com o ecossistema NET-bo, regista alergénios por ingrediente e armazena toda a
 informação numa base de dados SQLite.
 
 Principais funcionalidades:
 
 - Importação de produtos, fichas técnicas e preços via Excel.
-- Integração com ZoneSoft para atualização de preços e taxas.
+- Integração com NET-bo para atualização de preços e taxas através de ficheiros Excel exportados.
 - Gestão de alergénios ao nível de ingredientes e produtos finais.
 - Base de dados local em SQLite com suporte a backups e migrações de esquema.
 
@@ -18,7 +18,7 @@ Principais funcionalidades:
 - **Python 3 / PyQt5** – Interface gráfica da aplicação.
 - **openpyxl** – Leitura e validação dos ficheiros Excel.
 - **sqlite3** – Armazenamento local dos dados.
-- **ZoneSoft** – Fonte externa de produtos, preços e taxas.
+- **NET-bo** – Fonte externa de produtos, preços e taxas via exportações Excel.
 
 ## Instalação
 
