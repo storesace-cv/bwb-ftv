@@ -357,16 +357,16 @@ class DataStore:
             )
             return {}
 
-    def get_pvps(self, codigo: str) -> dict[str, float | None]:
+    def get_pvps(self, codigo: str) -> dict[str, list[float | None] | float | None]:
         if not self.produtos:
-            return {"pvp": None, "iva": None}
+            return {"pvps": [], "iva": None}
         try:
             return self.produtos.get_pvps(codigo)
         except sqlite3.Error as exc:
             logger.error(
                 "[DataStore] get_pvps(%s) falhou: %s", codigo, exc, exc_info=True
             )
-            return {"pvp": None, "iva": None}
+            return {"pvps": [], "iva": None}
 
     def get_ingredientes(self, codigo: str):
         if not self.ingredientes:

@@ -27,7 +27,7 @@ class DummyService:
         return []
 
     def get_product_info(self, codigo):
-        return Product(code=codigo, pvp=1234.56, iva=None, ingredients=[])
+        return Product(code=codigo, pvps=[1234.56], iva=None, ingredients=[])
 
     def calculate_cost(self, product):
         return 1234.56

@@ -245,8 +245,8 @@ class ProductService:
 def get_product_info(ds: DataStore, codigo: str) -> Product:
     """Retrieve product information, price info and ingredients as a :class:`Product`."""
     info = ds.get_produto_info(codigo) if ds else {}
-    pvps: dict[str, float | None] = ds.get_pvps(codigo) if ds else {}
-    pvp = pvps.get("pvp")
+    pvps: dict[str, list[float | None] | float | None] = ds.get_pvps(codigo) if ds else {}
+    prices = pvps.get("pvps") or []
     iva = pvps.get("iva")
     ing_rows = ds.get_ingredientes(codigo) if ds else []
 
@@ -277,8 +277,8 @@ def get_product_info(ds: DataStore, codigo: str) -> Product:
         subfamilia=info.get("subfamilia"),
         tipo_artigo_cod=info.get("tipoartigo"),
         validade_cod=info.get("validade"),
-        temperatura_cod=info.get("temperatura"),
-        pvp=pvp,
+       temperatura_cod=info.get("temperatura"),
+        pvps=prices,
         iva=iva,
         ingredients=ingredients,
     )
