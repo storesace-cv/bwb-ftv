@@ -142,10 +142,6 @@ directory at the project root. The names are fixed and **accent-sensitive**:
 Veja [docs/mapeamento_campos.md](docs/mapeamento_campos.md)
 para a correspondência completa de cabeçalhos Excel ↔ campos de base de dados.
 Apenas `PrecosTaxas.Iva1` é utilizado em cálculos de IVA.
-See [docs/mapeamento_campos.md](docs/mapeamento_campos.md) for the full mapping
-of Excel headers ↔ database fields. Only `PrecosTaxas.Iva1` is used in VAT
-calculations.
-
 No início da operação os ficheiros são validados: se algum estiver em falta ou não tiver
 extensão `.xlsx`, a importação é interrompida com erro.
 Após processamento com sucesso, cada ficheiro é movido para `imports/history` com um
@@ -155,11 +151,6 @@ At the start of the operation the files are validated: if any are missing or not
 `.xlsx`, the import stops with an error.
 After successful processing, each file is moved to `imports/history` with a timestamp
 (`YYYYMMDDHHMMSS`) appended to the name, allowing a history of loads.
-
-Ao importar `FichasTecnicas_base.xlsx` a coluna de custo deve chamar-se
-`Preco`, correspondendo diretamente ao campo `Preco` na base de dados.
-When importing `FichasTecnicas_base.xlsx`, the cost column must be named
-`Preco`, matching the `Preco` field in the database.
 
 ## Migração de esquema / Schema Migration
 
