@@ -851,18 +851,11 @@ class FTApp(QWidget):
 
         self.fcostFilterGroup = QButtonGroup(self)
         self.fcostFilterGroup.setExclusive(True)
-        self.fcostFilterGroup.addButton(self.btFcostBom)
-        self.fcostFilterGroup.addButton(self.btFcostAceitavel)
-        self.fcostFilterGroup.addButton(self.btFcostMau)
-
-        self.btFcostBom.clicked.connect(
-            lambda _checked, lv=1: self._on_fcost_filter_selected(lv)
-        )
-        self.btFcostAceitavel.clicked.connect(
-            lambda _checked, lv=2: self._on_fcost_filter_selected(lv)
-        )
-        self.btFcostMau.clicked.connect(
-            lambda _checked, lv=3: self._on_fcost_filter_selected(lv)
+        self.fcostFilterGroup.addButton(self.btFcostBom, 1)
+        self.fcostFilterGroup.addButton(self.btFcostAceitavel, 2)
+        self.fcostFilterGroup.addButton(self.btFcostMau, 3)
+        self.fcostFilterGroup.buttonClicked[int].connect(
+            self._on_fcost_filter_selected
         )
         self.btFcostReset.clicked.connect(self._on_fcost_filter_reset)
 
@@ -1353,29 +1346,11 @@ class FTApp(QWidget):
             pass
 
     def _on_fcost_filter_selected(self, level: int):
-        if self._active_fcost_filter == level:
-            self._active_fcost_filter = None
-            try:
-                self.service.ds.set_fcost_level(None)
-            except Exception:
-                pass
-            try:
-                btn = {
-                    1: self.btFcostBom,
-                    2: self.btFcostAceitavel,
-                    3: self.btFcostMau,
-                }[level]
-                self.fcostFilterGroup.blockSignals(True)
-                btn.setChecked(False)
-                self.fcostFilterGroup.blockSignals(False)
-            except Exception:
-                pass
-        else:
-            self._active_fcost_filter = level
-            try:
-                self.service.ds.set_fcost_level(level)
-            except Exception:
-                pass
+        self._active_fcost_filter = level
+        try:
+            self.service.ds.set_fcost_level(level)
+        except Exception:
+            pass
         self.cur_index = 0
         self._load_record(0)
 
@@ -1385,14 +1360,17 @@ class FTApp(QWidget):
             self.service.ds.set_fcost_level(None)
         except Exception:
             pass
-        try:
-            self.fcostFilterGroup.blockSignals(True)
-            self.btFcostBom.setChecked(False)
-            self.btFcostAceitavel.setChecked(False)
-            self.btFcostMau.setChecked(False)
-            self.fcostFilterGroup.blockSignals(False)
-        except Exception:
-            pass
+        group = getattr(self, "fcostFilterGroup", None)
+        if group:
+            group.blockSignals(True)
+            try:
+                group.setExclusive(False)
+                self.btFcostBom.setChecked(False)
+                self.btFcostAceitavel.setChecked(False)
+                self.btFcostMau.setChecked(False)
+            finally:
+                group.setExclusive(True)
+                group.blockSignals(False)
         self.cur_index = 0
         self._load_record(0)
 
