@@ -456,7 +456,9 @@ class FTApp(QWidget):
         top = QHBoxLayout()
         top.setContentsMargins(0, 0, 0, 0)
         top.setSpacing(8)
-        self.btOverlay = QPushButton("Overlays: ON")
+        self.btOverlay = QPushButton(
+            f"Overlays: {'ON' if layout.DEV_OVERLAYS else 'OFF'}"
+        )
         self.btOverlay.clicked.connect(self._toggle_overlays_btn)
         top.addWidget(self.btOverlay, 0, Qt.AlignLeft)
         top.addStretch(1)

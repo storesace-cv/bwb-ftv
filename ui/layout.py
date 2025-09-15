@@ -1,3 +1,4 @@
+import os
 import re
 
 from PyQt5.QtCore import Qt
@@ -10,7 +11,12 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-DEV_OVERLAYS = True
+_ENV_DEV_OVERLAYS = os.getenv("BWB_DEV_OVERLAYS")
+DEV_OVERLAYS = (
+    _ENV_DEV_OVERLAYS.strip().lower() in {"1", "true", "yes", "on"}
+    if _ENV_DEV_OVERLAYS is not None
+    else False
+)
 
 DEFAULT_ZONE_MARGINS = (3, 5)
 
@@ -63,6 +69,7 @@ class Zone(QWidget):
         self.setObjectName(tag)
         self._level = level
         self._labels: list[QLabel] = []
+        self._overlay_active = False
         if flow == "v":
             self.ly = QVBoxLayout(self)
         else:
@@ -105,8 +112,10 @@ class Zone(QWidget):
         self.apply_overlays(show_overlays)
 
     def apply_overlays(self, on: bool) -> None:
-        self.setProperty("overlays", "on" if on else "off")
-        if on:
+        active = bool(on) and DEV_OVERLAYS
+        self._overlay_active = active
+        self.setProperty("overlays", "on" if active else "off")
+        if active:
             self.setStyleSheet(
                 f"background:{bg_for_level(self._level)}; border:1px dashed red;"
             )
@@ -117,7 +126,7 @@ class Zone(QWidget):
         for lbl in self._labels:
             user_label = lbl.property("userLabel")
             dev_label = lbl.property("devLabel")
-            lbl.setText(dev_label if on and dev_label else user_label)
+            lbl.setText(dev_label if active and dev_label else user_label)
             refresh_style(lbl)
         refresh_style(self._tag_lbl)
         refresh_style(self)
@@ -150,7 +159,7 @@ class Zone(QWidget):
         grid.setColumnStretch(1, 1)
         display = (
             overlay_text
-            if (DEV_OVERLAYS and overlay_text is not None)
+            if (self._overlay_active and overlay_text is not None)
             else label_text
         )
         lbl = QLabel(display, row)
