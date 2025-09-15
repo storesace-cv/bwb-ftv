@@ -584,8 +584,8 @@ def import_from_excel(ds: DataStore | None = None) -> None:
     for tbl in ("Produtos", "FichasTecnicas", "PrecosTaxas"):
         try:
             cur.execute(f"DELETE FROM {quote_ident(tbl)}")
-        except Exception:
-            pass
+        except sqlite3.Error as exc:
+            logger.warning("failed to delete data from %s: %s", tbl, exc)
     conn.commit()
 
     def _load_insert(file_path: Path, table: str) -> None:
