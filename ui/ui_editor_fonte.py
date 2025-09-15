@@ -61,6 +61,7 @@
 #    mantém "0%" quando falta IVA.
 # 2025-09-15 05:15 — v3.96 — Food Cost "--" quando falta IVA; loga "missing Iva1".
 # 2025-09-15 15:40 — v3.97 — Filtro Food Cost (Bom/Aceitável/Mau) com botões exclusivos.
+# 2025-09-15 17:15 — v3.98 — Código/Nome fixos fora do scroll; B1.C1 inicia após cabeçalho.
 
 import sys
 import logging
@@ -553,6 +554,43 @@ class FTApp(QWidget):
         top.addWidget(self.btMenu, 0, Qt.AlignRight)
         root.addLayout(top)
 
+        lbl_w = 110
+
+        # --- Cabeçalho fixo com identificação ---
+        header = QWidget(self)
+        header.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        header_ly = QVBoxLayout(header)
+        header_ly.setContentsMargins(0, 0, 0, 0)
+        header_ly.setSpacing(0)
+        self.C0 = Zone(
+            "B1.C0",
+            header,
+            flow="v",
+            level=0,
+            show_overlays=layout.DEV_OVERLAYS,
+            spacing=2,
+        )
+        header_ly.addWidget(self.C0)
+        self.edCodigo = QLineEdit()
+        make_readonly_lineedit(self.edCodigo, False)
+        self.edNome = QLineEdit()
+        make_readonly_lineedit(self.edNome, True)
+        self.C0.add_row(
+            "Código:",
+            self.edCodigo,
+            label_minw=lbl_w,
+            vspacing=0,
+            overlay_text="Produtos.Codigo",
+        )
+        self.C0.add_row(
+            "Nome do Artigo:",
+            self.edNome,
+            label_minw=lbl_w,
+            vspacing=1,
+            overlay_text="Produtos.Nome",
+        )
+        root.addWidget(header, 0)
+
         # --- Conteúdo com scroll vertical ---
         scroll = QScrollArea(self)
         scroll.setWidgetResizable(True)
@@ -580,27 +618,24 @@ class FTApp(QWidget):
         page_ly.addWidget(self._section_box("[B1] - Dados Gerais", self.C1), 0)
 
         C1A, C1B = self.C1.split_h((3, 1))
-        C1A1, C1A2 = C1A.split_v((1, 3))
 
-        lbl_w = 110
-        self.edCodigo = QLineEdit()
-        make_readonly_lineedit(self.edCodigo, False)
-        self.edNome = QLineEdit()
-        make_readonly_lineedit(self.edNome, True)
-        C1A1.add_row(
-            "Código:",
-            self.edCodigo,
-            label_minw=lbl_w,
-            vspacing=0,
-            overlay_text="Produtos.Codigo",
+        C1A_cont = QWidget(C1A)
+        C1A_cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        C1A_cont_ly = QVBoxLayout(C1A_cont)
+        C1A_cont_ly.setContentsMargins(0, 0, 0, 0)
+        C1A_cont_ly.setSpacing(C1A.ly.spacing())
+        C1A.ly.addWidget(C1A_cont, 1)
+
+        C1A2 = Zone(
+            "B1.C1.A.2",
+            C1A_cont,
+            flow="v",
+            margins=4,
+            spacing=C1A.ly.spacing(),
+            level=C1A._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
         )
-        C1A1.add_row(
-            "Nome do Artigo:",
-            self.edNome,
-            label_minw=lbl_w,
-            vspacing=1,
-            overlay_text="Produtos.Nome",
-        )
+        C1A_cont_ly.addWidget(C1A2, 1)
 
         # B1.C1.A.2
         C1A21, C1A22 = C1A2.split_h(
