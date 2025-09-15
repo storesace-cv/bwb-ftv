@@ -1168,20 +1168,35 @@ class FTApp(QWidget):
         product = getattr(self, "current_product", None)
         if not product:
             return
+        identifier = getattr(product, "code", None) or getattr(product, "name", "<unknown>")
         try:
             total = parse_decimal(self.edCustoTotal.text())
             total = float(total)
-        except (TypeError, ValueError):
+        except (TypeError, ValueError) as exc:
+            logger.warning("[FoodCost] invalid total for %s: %s", identifier, exc)
             total = None
         pvps = list(getattr(product, "pvps", []) or [])
         pvps.extend([None] * (5 - len(pvps)))
         iva = getattr(product, "iva", None)
         for lbl, pvp in zip(self.lbFoodCosts, pvps):
             if pvp in (None, 0) or iva in (None, 0):
+                logger.warning(
+                    "[FoodCost] missing pvp or iva for %s (pvp=%s, iva=%s)",
+                    identifier,
+                    pvp,
+                    iva,
+                )
                 lbl.setText("0%")
                 continue
-            pct = calculate_food_cost(total, pvp, iva)
+            pct = calculate_food_cost(total, pvp, iva, identifier)
             if pct is None:
+                logger.warning(
+                    "[FoodCost] could not compute percentage for %s (total=%s, pvp=%s, iva=%s)",
+                    identifier,
+                    total,
+                    pvp,
+                    iva,
+                )
                 lbl.setText("N/A")
             else:
                 lbl.setText(format_pt_number(pct))

@@ -421,7 +421,7 @@ def calculate_cost(ingredients: Iterable[Ingredient]) -> float:
     return total
 
 
-def calculate_food_cost(total, pvp, iva):
+def calculate_food_cost(total, pvp, iva, product: str | None = None):
     """Return food cost percentage for given total cost and PVP.
 
     Parameters
@@ -432,6 +432,8 @@ def calculate_food_cost(total, pvp, iva):
         Product sale price including VAT.
     iva : float | int | str
         VAT percentage (e.g., ``23`` for 23%).
+    product : str | None, optional
+        Product code or name used in warning messages.
 
     Returns
     -------
@@ -444,7 +446,10 @@ def calculate_food_cost(total, pvp, iva):
     # emitting warnings, as they often arise from incomplete data entry.
     for name, value in {"total": total, "pvp": pvp, "iva": iva}.items():
         if value is None or value == "":
-            logger.debug("%s is missing", name)
+            if product:
+                logger.debug("%s is missing for %s", name, product)
+            else:
+                logger.debug("%s is missing", name)
             return None
 
     try:
@@ -452,20 +457,38 @@ def calculate_food_cost(total, pvp, iva):
         pvp = float(pvp)
         iva = float(iva)
     except (TypeError, ValueError) as exc:
-        logger.warning("invalid numeric value for total, pvp or iva: %s", exc)
+        if product:
+            logger.warning(
+                "invalid numeric value for total, pvp or iva in %s: %s",
+                product,
+                exc,
+            )
+        else:
+            logger.warning("invalid numeric value for total, pvp or iva: %s", exc)
         return None
 
     if pvp <= 0:
-        logger.debug("pvp must be greater than zero")
+        if product:
+            logger.debug("pvp must be greater than zero for %s", product)
+        else:
+            logger.debug("pvp must be greater than zero")
         return None
 
     try:
         pvp_sem_iva = pvp / (1 + iva / 100)
     except (ZeroDivisionError, TypeError) as exc:
-        logger.warning("cannot compute pvp without IVA: %s", exc)
+        if product:
+            logger.warning(
+                "cannot compute pvp without IVA for %s: %s", product, exc
+            )
+        else:
+            logger.warning("cannot compute pvp without IVA: %s", exc)
         return None
     if pvp_sem_iva == 0:
-        logger.warning("pvp without IVA is zero")
+        if product:
+            logger.warning("pvp without IVA is zero for %s", product)
+        else:
+            logger.warning("pvp without IVA is zero")
         return None
     return (total / pvp_sem_iva) * 100
 

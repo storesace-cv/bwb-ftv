@@ -46,6 +46,12 @@ def test_calculate_food_cost_invalid_inputs():
     assert calculate_food_cost(10, 50, None) is None
 
 
+def test_calculate_food_cost_logs_product(caplog):
+    with caplog.at_level(logging.WARNING):
+        assert calculate_food_cost(10, "x", 23, product="P1") is None
+    assert "P1" in caplog.text
+
+
 def test_get_product_info_builds_product_from_datastore():
     ds = MagicMock(spec=DataStore)
     ds.get_produto_info.return_value = {"codigo": "P1", "produto": "Produto 1"}
