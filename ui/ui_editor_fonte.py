@@ -556,35 +556,45 @@ class FTApp(QWidget):
 
         lbl_w = 110
 
-        # --- Cabeçalho flutuante (duplicado de B1.C1.A.1) ---
+        # --- Cabeçalho flutuante (duplicado de B0.C1.A) ---
         header = QWidget(self)
         header.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         header_ly = QVBoxLayout(header)
         header_ly.setContentsMargins(0, 0, 0, 0)
         header_ly.setSpacing(8)
         self.header = header
-        self.headerC1A1 = Zone(
-            "B1.C1.A.1",
+        self.headerC1 = Zone(
+            "B0.C1",
             header,
             flow="v",
             margins=4,
             spacing=2,
-            level=2,
+            level=0,
             show_overlays=layout.DEV_OVERLAYS,
         )
-        header_ly.addWidget(self.headerC1A1, 0)
+        header_ly.addWidget(self.headerC1, 0)
+        self.headerC1A = Zone(
+            "B0.C1.A",
+            self.headerC1,
+            flow="v",
+            margins=4,
+            spacing=2,
+            level=1,
+            show_overlays=layout.DEV_OVERLAYS,
+        )
+        self.headerC1.add(self.headerC1A)
         self.headerEdCodigo = QLineEdit()
         make_readonly_lineedit(self.headerEdCodigo, False)
         self.headerEdNome = QLineEdit()
         make_readonly_lineedit(self.headerEdNome, True)
-        self.headerC1A1.add_row(
+        self.headerC1A.add_row(
             "Código:",
             self.headerEdCodigo,
             label_minw=lbl_w,
             vspacing=0,
             overlay_text="Produtos.Codigo",
         )
-        self.headerC1A1.add_row(
+        self.headerC1A.add_row(
             "Nome do Artigo:",
             self.headerEdNome,
             label_minw=lbl_w,
