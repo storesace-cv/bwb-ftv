@@ -5,6 +5,7 @@ from pathlib import Path
 
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 from utils.paths import get_project_root
+from utils.formatting import format_pt_number
 from data import create_backup, restore_backup
 
 logger = logging.getLogger(__name__)
@@ -128,6 +129,114 @@ def restore_database(parent, datastore, on_restore: Callable | None = None):
     except Exception as exc:  # pragma: no cover - UI feedback only
         logger.exception("Restore failed", exc_info=exc)
         QMessageBox.critical(parent, "Reposição", f"Falha na reposição: {exc}")
+
+
+def edit_fcost_values(parent, repo) -> None:
+    """Edit ``FcostValues`` ranges using a simple table dialog."""
+
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtWidgets import (
+        QDialog,
+        QHBoxLayout,
+        QTableWidget,
+        QTableWidgetItem,
+        QPushButton,
+        QVBoxLayout,
+    )
+
+    dlg = QDialog(parent)
+    dlg.setWindowTitle("Valores FCOST")
+    vbox = QVBoxLayout(dlg)
+
+    tbl = QTableWidget(0, 5)
+    tbl.setHorizontalHeaderLabels(
+        ["Nivel", "Nome", "ValorMin", "ValorMax", "Comentário"]
+    )
+    tbl.horizontalHeader().setStretchLastSection(True)
+    tbl.setStyleSheet(
+        "QTableWidget::item:hover { background: #00008b; color: #fff; }"
+    )
+    vbox.addWidget(tbl)
+
+    hbox = QHBoxLayout()
+    vbox.addLayout(hbox)
+    bt_save = QPushButton("Gravar")
+    hbox.addWidget(bt_save)
+    bt_close = QPushButton("Fechar")
+    hbox.addWidget(bt_close)
+
+    def refresh():
+        tbl.setRowCount(0)
+        for nivel, nome, vmin, vmax, comentario in repo.list_levels():
+            row = tbl.rowCount()
+            tbl.insertRow(row)
+
+            nivel_item = QTableWidgetItem(str(nivel))
+            nivel_item.setFlags(nivel_item.flags() & ~Qt.ItemIsEditable)
+
+            nome_item = QTableWidgetItem(nome)
+            nome_item.setFlags(nome_item.flags() & ~Qt.ItemIsEditable)
+
+            vmin_item = QTableWidgetItem(format_pt_number(vmin, missing=""))
+            vmin_item.setFlags(vmin_item.flags() | Qt.ItemIsEditable)
+
+            vmax_item = QTableWidgetItem(format_pt_number(vmax, missing=""))
+            vmax_item.setFlags(vmax_item.flags() | Qt.ItemIsEditable)
+
+            comentario_item = QTableWidgetItem(comentario or "")
+            comentario_item.setFlags(
+                comentario_item.flags() & ~Qt.ItemIsEditable
+            )
+
+            for item in [
+                nivel_item,
+                nome_item,
+                vmin_item,
+                vmax_item,
+                comentario_item,
+            ]:
+                if comentario:
+                    item.setToolTip(comentario)
+
+            tbl.setItem(row, 0, nivel_item)
+            tbl.setItem(row, 1, nome_item)
+            tbl.setItem(row, 2, vmin_item)
+            tbl.setItem(row, 3, vmax_item)
+            tbl.setItem(row, 4, comentario_item)
+
+    def save_changes():
+        for row in range(tbl.rowCount()):
+            vmin_item = tbl.item(row, 2)
+            vmax_item = tbl.item(row, 3)
+            if not vmin_item.text().strip() or not vmax_item.text().strip():
+                QMessageBox.warning(
+                    dlg,
+                    "Valores FCOST",
+                    "Todos os valores devem estar preenchidos.",
+                )
+                return
+
+        for row in range(tbl.rowCount()):
+            nivel = int(tbl.item(row, 0).text())
+            vmin_text = tbl.item(row, 2).text()
+            vmax_text = tbl.item(row, 3).text()
+            if not repo.update_range(nivel, vmin_text, vmax_text):
+                QMessageBox.warning(
+                    dlg,
+                    "Valores FCOST",
+                    "Intervalo inválido detectado.",
+                )
+                refresh()
+                return
+
+        QMessageBox.information(dlg, "Valores FCOST", "Valores atualizados.")
+        dlg.accept()
+
+    bt_save.clicked.connect(save_changes)
+    bt_close.clicked.connect(dlg.reject)
+
+    refresh()
+    dlg.exec_()
 
 
 def manage_aux_table(
