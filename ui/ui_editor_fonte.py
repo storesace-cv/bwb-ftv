@@ -1512,12 +1512,45 @@ class FTApp(QWidget):
         self._apply_ingredient_widths()
         self._apply_prep_autofit_or_scroll()
 
+    def _is_header_widget(self, widget) -> bool:
+        """Return ``True`` if ``widget`` belongs to the floating header."""
+
+        header = getattr(self, "header", None)
+        if not header or widget is None:
+            return False
+        current = widget
+        while current is not None:
+            if current is header:
+                return True
+            parent_fn = getattr(current, "parentWidget", None)
+            if not callable(parent_fn):
+                break
+            current = parent_fn()
+        return False
+
+    def _iter_layout_children(self, widget_type, *, include_header: bool = False):
+        """Yield child widgets that belong to the printable ``self.page``.
+
+        The floating header duplicates elements from ``self.page``. To avoid
+        listing these widgets twice in exports or reports we keep it excluded by
+        default. Pass ``include_header=True`` for operations (like toggling
+        overlays) that must update both regions.
+        """
+
+        page = getattr(self, "page", None)
+        if page is not None:
+            yield from page.findChildren(widget_type)
+        if include_header:
+            header = getattr(self, "header", None)
+            if header is not None:
+                yield from header.findChildren(widget_type)
+
     def _toggle_overlays(self):
         layout.DEV_OVERLAYS = not layout.DEV_OVERLAYS
-        for z in self.findChildren(Zone):
+        for z in self._iter_layout_children(Zone, include_header=True):
             if z.tag.count(".") == 1 and layout.validate_tag(z.tag):
                 z.apply_overlays(layout.DEV_OVERLAYS)
-        for lbl in self.findChildren(QLabel):
+        for lbl in self._iter_layout_children(QLabel, include_header=True):
             user_lbl = lbl.property("userLabel")
             dev_lbl = lbl.property("devLabel")
             if user_lbl is not None and dev_lbl is not None:
@@ -1667,7 +1700,9 @@ class FTApp(QWidget):
                 return any(k in s for k in keys)
 
             if not (cb_tipo and cb_val and cb_temp):
-                for cb in self.findChildren(QComboBox):
+                for cb in self._iter_layout_children(QComboBox):
+                    if self._is_header_widget(cb):
+                        continue
                     name = cb.objectName() or ""
                     if cb_tipo is None and has_any(name, ["tipo", "art"]):
                         cb_tipo = cb
