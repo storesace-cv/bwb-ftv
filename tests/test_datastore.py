@@ -125,6 +125,35 @@ def test_reload_ids_fallback_to_fichastecnicas(caplog):
     assert any("FichasTecnicas" in r.message for r in caplog.records)
 
 
+def test_reload_ids_filters_by_fcost_level():
+    ds = DataStore(db_path=":memory:")
+    cur = ds.conn.cursor()
+    cur.execute("DELETE FROM Produtos")
+    cur.execute("DELETE FROM FichasTecnicas")
+    cur.execute("DELETE FROM PrecosTaxas")
+    cur.execute("DELETE FROM FcostValues")
+    cur.execute(
+        "INSERT INTO FcostValues (Nivel, Nome, ValorMin, ValorMax, Comentario) "
+        "VALUES (1, 'L1', 20, 30, '')"
+    )
+    cur.executemany(
+        "INSERT INTO Produtos (Codigo, Produto, TipoVenda) VALUES (?, ?, 1)",
+        [("P1", "Produto 1"), ("P2", "Produto 2")],
+    )
+    cur.executemany(
+        "INSERT INTO FichasTecnicas (ProdutoCodigo, Preco) VALUES (?, ?)",
+        [("P1", 10), ("P2", 10)],
+    )
+    cur.executemany(
+        "INSERT INTO PrecosTaxas (Codigo, Loja, Preco1, Iva1) VALUES (?, ?, ?, ?)",
+        [("P1", "1", 50, 23), ("P2", "1", 20, 23)],
+    )
+    ds.conn.commit()
+
+    ds.set_fcost_level(1)
+    assert ds._ids == ["P1"]
+
+
 def test_list_active_allergens_db():
     ds = DataStore(db_path=":memory:")
     cur = ds.conn.cursor()

@@ -511,6 +511,28 @@ class FcostValuesRepo:
             )
             return []
 
+    def get_range(self, nivel: int) -> tuple[float, float] | None:
+        """Return ``(ValorMin, ValorMax)`` for ``nivel`` or ``None`` if missing."""
+
+        cur = self.conn.cursor()
+        try:
+            cur.execute(
+                "SELECT ValorMin, ValorMax FROM FcostValues WHERE Nivel = ?",
+                (nivel,),
+            )
+            row = cur.fetchone()
+            if not row:
+                return None
+            return row[0], row[1]
+        except sqlite3.Error as exc:
+            logger.error(
+                "[FcostValuesRepo] get_range(%s) falhou: %s",
+                nivel,
+                exc,
+                exc_info=True,
+            )
+            return None
+
     def update_range(self, nivel: int, vmin, vmax) -> bool:
         """Update the ``ValorMin`` and ``ValorMax`` for a level."""
 
