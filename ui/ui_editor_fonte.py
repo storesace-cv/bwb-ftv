@@ -865,6 +865,30 @@ class FTApp(QWidget):
         C3A.add(C3AB, 0)
         fcB1, fcB2, fcB3, fcB4, fcB5 = C3AB.split_h((1, 1, 1, 1, 1))
 
+        level_comments: dict[str, str] = {}
+        repo = getattr(self.ds, "fcost", None)
+
+        def _row_value(row, key, index):
+            try:
+                return row[key]
+            except (TypeError, KeyError, IndexError):
+                try:
+                    return row[index]
+                except (TypeError, IndexError):
+                    return None
+
+        if repo is not None:
+            try:
+                for level in repo.list_levels():
+                    nome = _row_value(level, "Nome", 1)
+                    comentario = _row_value(level, "Comentario", 4) or ""
+                    if nome:
+                        level_comments[str(nome)] = comentario
+            except Exception:
+                logger.exception(
+                    "[FTApp] Falha a obter comentários de Food Cost ao preparar botões."
+                )
+
         self.btFcostBom = QPushButton("Bom")
         self.btFcostBom.setCheckable(True)
         self.btFcostBom.setStyleSheet(
@@ -885,6 +909,7 @@ class FTApp(QWidget):
             }
             """
         )
+        self.btFcostBom.setToolTip(level_comments.get("Bom", ""))
         fcB2.add(self.btFcostBom, 0)
 
         self.btFcostAceitavel = QPushButton("Aceitável")
@@ -907,6 +932,7 @@ class FTApp(QWidget):
             }
             """
         )
+        self.btFcostAceitavel.setToolTip(level_comments.get("Aceitável", ""))
         fcB3.add(self.btFcostAceitavel, 0)
 
         self.btFcostMau = QPushButton("Mau")
@@ -929,6 +955,7 @@ class FTApp(QWidget):
             }
             """
         )
+        self.btFcostMau.setToolTip(level_comments.get("Mau", ""))
         fcB4.add(self.btFcostMau, 0)
 
         self.btFcostReset = QPushButton("Todos")
