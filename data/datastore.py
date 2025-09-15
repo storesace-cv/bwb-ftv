@@ -202,6 +202,19 @@ class DataStore:
         self.fcost_level = level
         self.reload_ids()
 
+    def get_active_fcost_range(self) -> tuple[float, float] | None:
+        """Obter ``(ValorMin, ValorMax)`` do nível de Food Cost ativo."""
+
+        if self.fcost_level is None or not self.fcost:
+            return None
+        try:
+            return self.fcost.get_range(self.fcost_level)
+        except sqlite3.Error as exc:
+            logger.error(
+                "[DataStore] get_active_fcost_range falhou: %s", exc, exc_info=True
+            )
+            return None
+
     def _ensure_required_tables(self):
         """Verifica se tabelas e colunas essenciais existem na base de dados."""
 
@@ -363,7 +376,7 @@ class DataStore:
         ids = [str(x) for x in ids if x not in (None, "")]
 
         if self.fcost_level is not None and self.fcost:
-            rng = self.fcost.get_range(self.fcost_level)
+            rng = self.get_active_fcost_range()
             if rng:
                 from services.products import calculate_food_cost
 
