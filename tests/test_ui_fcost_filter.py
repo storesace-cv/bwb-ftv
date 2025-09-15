@@ -115,3 +115,16 @@ def test_fcost_filter_levels(qapp):
     assert ft.current_product.code == 'P1'
     ft.close()
     ds.close()
+
+
+def test_fcost_filter_reset(qapp):
+    ds = _setup_ds()
+    service = ProductService(ds)
+    ft = FTApp(service)
+    ft._on_fcost_filter_selected(2)
+    assert service.ds._ids == ['P2']
+    ft.btFcostReset.click()
+    assert service.ds._ids == ['P1', 'P2', 'P3']
+    assert ft._active_fcost_filter is None
+    ft.close()
+    ds.close()
