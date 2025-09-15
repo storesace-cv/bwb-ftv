@@ -83,10 +83,9 @@ class Zone(QWidget):
             self.setStyleSheet("")
             self._tag_lbl.hide()
         for lbl in self._labels:
-            user_label = lbl.property("userLabel") or ""
+            user_label = lbl.property("userLabel")
             dev_label = lbl.property("devLabel")
-            text = dev_label if on and dev_label else user_label
-            lbl.setText(text)
+            lbl.setText(dev_label if on and dev_label else user_label)
             refresh_style(lbl)
         refresh_style(self._tag_lbl)
         refresh_style(self)
