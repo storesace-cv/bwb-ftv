@@ -15,6 +15,7 @@ from openpyxl import load_workbook
 
 from data.datastore import DataStore
 from data.migration import setup_database
+from data.repositories import quote_ident
 from domain import Product, Ingredient, FichaTecnica
 from utils.paths import get_project_root
 from utils.formatting import parse_decimal
@@ -102,7 +103,7 @@ def sync_table_schema(conn, table: str, headers: list[str]) -> list[str]:
 
     norm_headers: list[str] = [canonicalize_header(h, table=table) for h in headers]
 
-    cur.execute(f"PRAGMA table_info({table})")
+    cur.execute(f"PRAGMA table_info({quote_ident(table)})")
     info_rows = cur.fetchall()
     info = {
         row[1].lower(): {"orig": row[1], "type": row[2], "pk": row[5]}
@@ -113,7 +114,9 @@ def sync_table_schema(conn, table: str, headers: list[str]) -> list[str]:
     for h in norm_headers:
         key = h.lower()
         if h and key not in existing:
-            cur.execute(f"ALTER TABLE {table} ADD COLUMN {h}")
+            cur.execute(
+                f"ALTER TABLE {quote_ident(table)} ADD COLUMN {quote_ident(h)}"
+            )
             info[key] = {"orig": h, "type": "", "pk": 0}
             existing.add(key)
 
@@ -125,18 +128,27 @@ def sync_table_schema(conn, table: str, headers: list[str]) -> list[str]:
             col_info = info.get(h.lower(), {})
             name = col_info.get("orig", h)
             col_type = col_info.get("type") or ""
-            col_def = name if not col_type else f"{name} {col_type}"
+            col_name = quote_ident(name)
+            col_def = col_name if not col_type else f"{col_name} {col_type}"
             if col_info.get("pk"):
                 col_def += " PRIMARY KEY"
             col_defs.append(col_def)
 
-        cur.execute(f"CREATE TABLE {table}_new ({', '.join(col_defs)})")
+        new_table = f"{table}_new"
+        cur.execute(
+            f"CREATE TABLE {quote_ident(new_table)} ({', '.join(col_defs)})"
+        )
         common = [info[h.lower()]["orig"] for h in norm_headers if h.lower() in info]
         if common:
-            cols = ",".join(common)
-            cur.execute(f"INSERT INTO {table}_new ({cols}) SELECT {cols} FROM {table}")
-        cur.execute(f"DROP TABLE {table}")
-        cur.execute(f"ALTER TABLE {table}_new RENAME TO {table}")
+            cols = ",".join(quote_ident(c) for c in common)
+            cur.execute(
+                f"INSERT INTO {quote_ident(new_table)} ({cols}) "
+                f"SELECT {cols} FROM {quote_ident(table)}"
+            )
+        cur.execute(f"DROP TABLE {quote_ident(table)}")
+        cur.execute(
+            f"ALTER TABLE {quote_ident(new_table)} RENAME TO {quote_ident(table)}"
+        )
 
     conn.commit()
     return norm_headers
@@ -482,7 +494,7 @@ def _load_workbook_rows(
         headers = [canonicalize_header(h, table=table) for h in raw_headers]
         numeric_cols = {
             r[1]
-            for r in conn.execute(f"PRAGMA table_info({table})")
+            for r in conn.execute(f"PRAGMA table_info({quote_ident(table)})")
             if r[2]
             and any(t in r[2].upper() for t in ("REAL", "INT", "NUM", "DEC", "FLOAT"))
         }
@@ -531,7 +543,12 @@ def import_from_excel(ds: DataStore | None = None) -> None:
                 continue
             if table == "PrecosTaxas":
                 mapped = [canonicalize_header(h, table=table) for h in raw_headers]
-                existing = [r[1] for r in conn.execute(f"PRAGMA table_info({table})")]
+                existing = [
+                    r[1]
+                    for r in conn.execute(
+                        f"PRAGMA table_info({quote_ident(table)})"
+                    )
+                ]
                 headers = mapped + [c for c in existing if c not in mapped]
             else:
                 headers = raw_headers
@@ -540,7 +557,7 @@ def import_from_excel(ds: DataStore | None = None) -> None:
     cur = conn.cursor()
     for tbl in ("Produtos", "FichasTecnicas", "PrecosTaxas"):
         try:
-            cur.execute(f"DELETE FROM {tbl}")
+            cur.execute(f"DELETE FROM {quote_ident(tbl)}")
         except Exception:
             pass
     conn.commit()
@@ -556,7 +573,10 @@ def import_from_excel(ds: DataStore | None = None) -> None:
             if not cols:
                 return
             placeholders = ",".join(["?"] * len(cols))
-            sql = f"INSERT INTO {table} ({','.join(cols)}) VALUES ({placeholders})"
+            cols_sql = ",".join(quote_ident(c) for c in cols)
+            sql = (
+                f"INSERT INTO {quote_ident(table)} ({cols_sql}) VALUES ({placeholders})"
+            )
             data: list[tuple] = []
             for row in rows:
                 row_map = {}
@@ -588,16 +608,26 @@ def import_from_excel(ds: DataStore | None = None) -> None:
                     "PreçosTaxas_base.xlsx missing 'Codigo' column; found: "
                     + ", ".join(headers)
                 )
-            existing = [r[1] for r in conn.execute("PRAGMA table_info(PrecosTaxas)")]
+            existing = [
+                r[1]
+                for r in conn.execute(
+                    f"PRAGMA table_info({quote_ident('PrecosTaxas')})"
+                )
+            ]
             headers = sync_table_schema(
-                conn, "PrecosTaxas", headers + [c for c in existing if c not in headers]
+                conn,
+                "PrecosTaxas",
+                headers + [c for c in existing if c not in headers],
             )
             cols = [h for h in headers if h]
             if not cols:
                 return
-            conn.execute("DELETE FROM PrecosTaxas")
+            conn.execute(f"DELETE FROM {quote_ident('PrecosTaxas')}")
             placeholders = ",".join(["?"] * len(cols))
-            sql = f"INSERT INTO PrecosTaxas ({','.join(cols)}) VALUES ({placeholders})"
+            cols_sql = ",".join(quote_ident(c) for c in cols)
+            sql = (
+                f"INSERT INTO {quote_ident('PrecosTaxas')} ({cols_sql}) VALUES ({placeholders})"
+            )
             data: list[tuple] = []
             for row in rows:
                 row_map = {}
@@ -670,8 +700,9 @@ def update_from_excel(ds: DataStore | None = None) -> None:
             return
         placeholders = ",".join(["?"] * len(cols))
         if table == "FichasTecnicas":
+            cols_sql = ",".join(quote_ident(c) for c in cols)
             insert_sql = (
-                f"INSERT INTO {table} ({','.join(cols)}) VALUES ({placeholders})"
+                f"INSERT INTO {quote_ident(table)} ({cols_sql}) VALUES ({placeholders})"
             )
             grouped: dict[str, list[tuple]] = {}
             for row in rows:
@@ -686,13 +717,15 @@ def update_from_excel(ds: DataStore | None = None) -> None:
                 )
             for codigo, data in grouped.items():
                 conn.execute(
-                    "DELETE FROM FichasTecnicas WHERE ProdutoCodigo=?",
+                    f"DELETE FROM {quote_ident('FichasTecnicas')} "
+                    f"WHERE {quote_ident('ProdutoCodigo')}=?",
                     (codigo,),
                 )
                 conn.executemany(insert_sql, data)
         else:
+            cols_sql = ",".join(quote_ident(c) for c in cols)
             sql = (
-                f"INSERT OR REPLACE INTO {table} ({','.join(cols)}) "
+                f"INSERT OR REPLACE INTO {quote_ident(table)} ({cols_sql}) "
                 f"VALUES ({placeholders})"
             )
             data: list[tuple] = []
@@ -723,7 +756,12 @@ def update_from_excel(ds: DataStore | None = None) -> None:
             mapped.append("Loja")
             rows = [tuple(list(r) + ["1"]) for r in rows]
         has_codigo = "Codigo" in mapped
-        existing = [r[1] for r in conn.execute("PRAGMA table_info(PrecosTaxas)")]
+        existing = [
+            r[1]
+            for r in conn.execute(
+                f"PRAGMA table_info({quote_ident('PrecosTaxas')})"
+            )
+        ]
         headers = sync_table_schema(
             conn, "PrecosTaxas", mapped + [c for c in existing if c not in mapped]
         )
@@ -739,13 +777,18 @@ def update_from_excel(ds: DataStore | None = None) -> None:
             return
         numeric_cols = {
             r[1]
-            for r in conn.execute("PRAGMA table_info(PrecosTaxas)")
+            for r in conn.execute(
+                f"PRAGMA table_info({quote_ident('PrecosTaxas')})"
+            )
             if r[2]
             and any(t in r[2].upper() for t in ("REAL", "INT", "NUM", "DEC", "FLOAT"))
         }
-        conn.execute("DELETE FROM PrecosTaxas")
+        conn.execute(f"DELETE FROM {quote_ident('PrecosTaxas')}")
         placeholders = ",".join(["?"] * len(cols))
-        sql = f"INSERT INTO PrecosTaxas ({','.join(cols)}) VALUES ({placeholders})"
+        cols_sql = ",".join(quote_ident(c) for c in cols)
+        sql = (
+            f"INSERT INTO {quote_ident('PrecosTaxas')} ({cols_sql}) VALUES ({placeholders})"
+        )
         data: list[tuple] = []
         for row in rows:
             row_map = {}
@@ -803,7 +846,7 @@ def _import_single_excel(path: Path, ds: DataStore | None) -> None:
         )
     code_idx = headers.index("codigo")
     cur = conn.cursor()
-    cur.execute("PRAGMA table_info(Produtos)")
+    cur.execute(f"PRAGMA table_info({quote_ident('Produtos')})")
     db_cols = [r[1].lower() for r in cur.fetchall()]
     name_idx = (
         headers.index("produto")
@@ -822,7 +865,7 @@ def _import_single_excel(path: Path, ds: DataStore | None) -> None:
     )
     iva_idx = headers.index("iva") if "iva" in headers and "iva" in db_cols else None
 
-    cur.execute("DELETE FROM Produtos")
+    cur.execute(f"DELETE FROM {quote_ident('Produtos')}")
     cols = ["Codigo"]
     if name_idx is not None:
         cols.append("Produto")
@@ -833,7 +876,10 @@ def _import_single_excel(path: Path, ds: DataStore | None) -> None:
     if iva_idx is not None:
         cols.append("Iva")
     placeholders = ",".join(["?"] * len(cols))
-    sql = f"INSERT INTO Produtos ({','.join(cols)}) VALUES ({placeholders})"
+    cols_sql = ",".join(quote_ident(c) for c in cols)
+    sql = (
+        f"INSERT INTO {quote_ident('Produtos')} ({cols_sql}) VALUES ({placeholders})"
+    )
 
     for row in rows:
         codigo = row[code_idx]
@@ -881,10 +927,12 @@ def _update_from_excel(path: Path, ds: DataStore | None) -> None:
         code_idx = headers.index("Codigo")
 
         cur = conn.cursor()
-        cur.execute("PRAGMA table_info(Produtos)")
+        cur.execute(f"PRAGMA table_info({quote_ident('Produtos')})")
         db_cols = [r[1] for r in cur.fetchall()]
         if "Produto" in headers and "Produto" not in db_cols:
-            cur.execute("ALTER TABLE Produtos ADD COLUMN Produto")
+            cur.execute(
+                f"ALTER TABLE {quote_ident('Produtos')} ADD COLUMN {quote_ident('Produto')}"
+            )
             db_cols.append("Produto")
         name_idx = (
             headers.index("Produto")
@@ -909,36 +957,41 @@ def _update_from_excel(path: Path, ds: DataStore | None) -> None:
             codigo = row[code_idx]
             if codigo is None:
                 continue
-            cur.execute("SELECT 1 FROM Produtos WHERE Codigo=?", (codigo,))
+            cur.execute(
+                f"SELECT 1 FROM {quote_ident('Produtos')} "
+                f"WHERE {quote_ident('Codigo')}=?",
+                (codigo,),
+            )
             exists = cur.fetchone() is not None
             if exists:
                 updates = []
                 params = []
                 if name_idx is not None:
-                    updates.append("Produto=?")
+                    updates.append(f"{quote_ident('Produto')}=?")
                     params.append(row[name_idx])
                 if p1_idx is not None:
                     val = row[p1_idx]
                     if headers[p1_idx] in numeric_cols:
                         val = parse_decimal(val)
-                    updates.append("Preco1G=?")
+                    updates.append(f"{quote_ident('Preco1G')}=?")
                     params.append(val)
                 if p2_idx is not None:
                     val = row[p2_idx]
                     if headers[p2_idx] in numeric_cols:
                         val = parse_decimal(val)
-                    updates.append("Preco2G=?")
+                    updates.append(f"{quote_ident('Preco2G')}=?")
                     params.append(val)
                 if iva_idx is not None:
                     val = row[iva_idx]
                     if headers[iva_idx] in numeric_cols:
                         val = parse_decimal(val)
-                    updates.append("Iva=?")
+                    updates.append(f"{quote_ident('Iva')}=?")
                     params.append(val)
                 if updates:
                     params.append(codigo)
                     cur.execute(
-                        f"UPDATE Produtos SET {', '.join(updates)} WHERE Codigo=?",
+                        f"UPDATE {quote_ident('Produtos')} SET {', '.join(updates)} "
+                        f"WHERE {quote_ident('Codigo')}=?",
                         params,
                     )
             else:
@@ -966,8 +1019,9 @@ def _update_from_excel(path: Path, ds: DataStore | None) -> None:
                     cols.append("Iva")
                     vals.append(val)
                 placeholders = ",".join(["?"] * len(vals))
+                cols_sql = ",".join(quote_ident(c) for c in cols)
                 cur.execute(
-                    f"INSERT INTO Produtos ({','.join(cols)}) VALUES ({placeholders})",
+                    f"INSERT INTO {quote_ident('Produtos')} ({cols_sql}) VALUES ({placeholders})",
                     vals,
                 )
     conn.commit()
