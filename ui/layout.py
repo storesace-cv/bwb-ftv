@@ -121,7 +121,7 @@ class Zone(QWidget):
             )
             self._tag_lbl.show()
         else:
-            self.setStyleSheet("")
+            self.setStyleSheet("background: transparent; border: none;")
             self._tag_lbl.hide()
         for lbl in self._labels:
             user_label = lbl.property("userLabel")
