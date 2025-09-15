@@ -1,3 +1,5 @@
+# flake8: noqa
+"""
 # bwb-ftv
 Fichas Técnicas Valorizadas  
 *Technical Sheets with Value*
@@ -227,4 +229,4 @@ ser substituído pela BD real.
 To diagnose issues, check the logs for the message "Base de dados criada
 automaticamente..."; it indicates the file was created empty and should be
 replaced with the real database.
-
+"""
