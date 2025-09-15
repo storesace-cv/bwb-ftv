@@ -82,6 +82,13 @@ class Zone(QWidget):
         else:
             self.setStyleSheet("")
             self._tag_lbl.hide()
+        for lbl in self._labels:
+            user_label = lbl.property("userLabel") or ""
+            dev_label = lbl.property("devLabel")
+            text = dev_label if on and dev_label else user_label
+            lbl.setText(text)
+            refresh_style(lbl)
+        refresh_style(self._tag_lbl)
         refresh_style(self)
         for ch in self.findChildren(Zone):
             ch.apply_overlays(on)
