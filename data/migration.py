@@ -361,6 +361,19 @@ def ensure_core_tables(conn: sqlite3.Connection) -> None:
         ),
         (
             """
+            CREATE TABLE IF NOT EXISTS FcostValues (
+                Nivel      INTEGER PRIMARY KEY,
+                Nome       TEXT NOT NULL,
+                ValorMin   REAL NOT NULL,
+                ValorMax   REAL NOT NULL,
+                Comentario TEXT NOT NULL,
+                CHECK (ValorMin < ValorMax),
+                UNIQUE (Nivel)
+            )
+            """
+        ),
+        (
+            """
             CREATE TABLE IF NOT EXISTS Uploads (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 Filename TEXT NOT NULL,

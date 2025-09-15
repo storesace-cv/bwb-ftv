@@ -148,12 +148,14 @@ class DataStore:
         self.ingredientes = None
         self.aux = None
         self.prep = None
+        self.fcost = None
         try:
             from .repositories import (
                 ProdutosRepo,
                 IngredientesRepo,
                 AuxiliaresRepo,
                 PreparacaoRepo,
+                FcostValuesRepo,
             )
 
             if self.conn:
@@ -161,6 +163,7 @@ class DataStore:
                 self.ingredientes = IngredientesRepo(self.conn)
                 self.aux = AuxiliaresRepo(self.conn)
                 self.prep = PreparacaoRepo(self.conn)
+                self.fcost = FcostValuesRepo(self.conn)
         except (ImportError, sqlite3.Error) as exc:
             logger.error(
                 "[DataStore] Falha a instanciar repositórios: %s", exc, exc_info=True
@@ -244,6 +247,13 @@ class DataStore:
             "TiposArtigos": {"Cod", "Descricao", "Ativo"},
             "Validade": {"Cod", "Descricao", "Ativo"},
             "Temperaturas": {"Cod", "Descricao", "Ativo"},
+            "FcostValues": {
+                "Nivel",
+                "Nome",
+                "ValorMin",
+                "ValorMax",
+                "Comentario",
+            },
         }
 
         try:
@@ -288,6 +298,8 @@ class DataStore:
         """
         Recarrega a lista de códigos (_ids). Tenta repos 'produtos'; senão usa
         FichasTecnicas.
+
+        Placeholder para futura filtragem baseada em ``FcostValues``.
         """
         ids: list[str] = []
         source = None
@@ -341,6 +353,7 @@ class DataStore:
         if source:
             logger.info("[DataStore] reload_ids: códigos via %s", source)
 
+        # Integrar filtragem por ``FcostValues`` aqui quando aplicável.
         self._ids = [str(x) for x in ids if x not in (None, "")]
         return len(self._ids)
 
