@@ -104,11 +104,11 @@ def test_toggle_overlay_updates_headers(qapp):
     ft = FTApp(service)
     ft._load_record(0)
     model = ft.tbIng.model()
-    assert model.headerData(0, Qt.Horizontal) == "FichasTecnicas.ComponenteNome"
-    ft._toggle_overlays()
     assert model.headerData(0, Qt.Horizontal) == "Ingredientes"
     ft._toggle_overlays()
     assert model.headerData(0, Qt.Horizontal) == "FichasTecnicas.ComponenteNome"
+    ft._toggle_overlays()
+    assert model.headerData(0, Qt.Horizontal) == "Ingredientes"
     ft.close()
 
 
