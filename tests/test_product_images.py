@@ -129,7 +129,9 @@ def test_image_preview_uses_placeholder_when_missing(qtbot, tmp_path):
     placeholder_path = Path(editor.__file__).with_name("no-image-thumb.png")
     expected = QPixmap(str(placeholder_path))
     expected = expected.scaled(
-        preview.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation
+        preview.size(),
+        Qt.KeepAspectRatio,
+        Qt.SmoothTransformation,
     )
 
     pixmap = preview.pixmap()
