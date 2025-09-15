@@ -296,17 +296,18 @@ def test_get_pvps_parses_decimal_formats(raw, expected):
         (
             "CREATE TABLE PrecosTaxas ("
             "Codigo TEXT, Loja TEXT, Preco1 TEXT, Preco2 TEXT, "
-            "Preco3 TEXT, Preco4 TEXT, Preco5 TEXT, Iva1_2 TEXT)"
+            "Preco3 TEXT, Preco4 TEXT, Preco5 TEXT, Iva1 TEXT, Iva2 TEXT)"
         )
     )
     cur.execute(
         (
             "INSERT INTO PrecosTaxas ("
-            "Codigo, Loja, Preco1, Preco2, Preco3, Preco4, Preco5"
-            ") VALUES (?, ?, ?, ?, ?, ?, ?)"
+            "Codigo, Loja, Preco1, Preco2, Preco3, Preco4, Preco5, Iva1, Iva2"
+            ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
         ),
-        ("P1", "L1", raw, raw, raw, raw, raw),
+        ("P1", "L1", raw, raw, raw, raw, raw, raw, "999"),
     )
     ds.conn.commit()
     pvps = ds.get_pvps("P1")
     assert pvps["pvps"] == [expected] * 5
+    assert pvps["iva"] == expected
