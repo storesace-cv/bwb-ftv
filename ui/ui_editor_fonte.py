@@ -740,8 +740,10 @@ class FTApp(QWidget):
             lbl = QLabel(overlay if layout.DEV_OVERLAYS else label_text)
             lbl.setProperty("userLabel", label_text)
             lbl.setProperty("devLabel", overlay)
+            match_font(lbl, self.edNome)
             val = QLabel("—")
             val.setStyleSheet(LABEL_VALUE_STYLE)
+            match_font(val, self.edNome)
             col.add(lbl, 0)
             col.add(val, 0)
             self.lbPVPs.append(val)
@@ -821,7 +823,9 @@ class FTApp(QWidget):
             show_overlays=layout.DEV_OVERLAYS,
         )
         self.C3.add(C3A, 1)
-        C3A.add(QLabel("Food Cost:"), 0)
+        food_cost_label = QLabel("Food Cost:")
+        match_font(food_cost_label, self.edNome)
+        C3A.add(food_cost_label, 0)
 
         C3AA = Zone(
             "B3.C1.A.A",
@@ -836,9 +840,12 @@ class FTApp(QWidget):
 
         self.lbFoodCosts: list[QLabel] = []
         for idx, fc in enumerate((fc1, fc2, fc3, fc4, fc5), start=1):
-            fc.add(QLabel(f"Food Cost #{idx}"), 0)
+            lbl = QLabel(f"Food Cost #{idx}")
+            match_font(lbl, self.edNome)
+            fc.add(lbl, 0)
             val = QLabel("—")
             val.setStyleSheet(LABEL_VALUE_STYLE)
+            match_font(val, self.edNome)
             fc.add(val, 0)
             self.lbFoodCosts.append(val)
 
