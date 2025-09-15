@@ -58,4 +58,5 @@ def test_ftapp_formats_numbers(qapp):
     expected_texts = [format_pt_number(p) for p in expected_prices]
     assert [lb.text() for lb in ft.lbPVPs] == expected_texts
     assert ft.edCustoTotal.text() == format_pt_number(1234.56)
+    assert [lb.text() for lb in ft.lbFoodCosts] == [format_pt_number(None)] * 5
     ft.close()

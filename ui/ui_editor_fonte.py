@@ -87,9 +87,9 @@ from PyQt5.QtWidgets import (
     QFileDialog,
 )
 from data.datastore import DataStore
-from services.products import ProductService
+from services.products import ProductService, calculate_food_cost
 from domain import FichaTecnica
-from utils.formatting import format_pt_number
+from utils.formatting import format_pt_number, parse_decimal
 
 from . import layout
 from .layout import Zone
@@ -1127,6 +1127,7 @@ class FTApp(QWidget):
             self.edCustoTotal.setText(
                 format_pt_number(self.service.calculate_cost(product))
             )
+            self._update_food_costs()
             self.lbPos.setText(f"{self.cur_index+1} / {max(1,self.service.total())}")
 
             try:
@@ -1160,11 +1161,29 @@ class FTApp(QWidget):
             self._loading = False
 
     # ---------- Cálculos ----------
+    def _update_food_costs(self):
+        """Update food cost percentage labels based on current product."""
+        product = getattr(self, "current_product", None)
+        if not product:
+            return
+        try:
+            total = parse_decimal(self.edCustoTotal.text())
+            total = float(total)
+        except (TypeError, ValueError):
+            total = None
+        pvps = list(getattr(product, "pvps", []) or [])
+        pvps.extend([None] * (5 - len(pvps)))
+        iva = getattr(product, "iva", None)
+        for lbl, pvp in zip(self.lbFoodCosts, pvps):
+            pct = calculate_food_cost(total, pvp, iva)
+            lbl.setText(format_pt_number(pct))
+
     def _update_costs_from_table(self):
         """Recalculate total cost using the service layer."""
         try:
             total = self.service.calculate_cost(self.current_product)
             self.edCustoTotal.setText(format_pt_number(total))
+            self._update_food_costs()
         except Exception:
             pass
 
