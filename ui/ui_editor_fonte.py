@@ -118,18 +118,28 @@ class ImagePreview(QLabel):
         super().__init__(parent)
         self.setAlignment(Qt.AlignCenter)
         self.setStyleSheet("border:1px solid #ccc; padding:8px;")
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setMinimumSize(200, 200)
         self.codigo = None
         self.service = service
+        self._orig_pix: QPixmap | None = None
         if codigo and self.service:
             self.load_image(codigo)
 
     # Helper methods -------------------------------------------------
+    def _update_pixmap(self) -> None:
+        """Scale original pixmap to current widget size."""
+        if self._orig_pix:
+            pix = self._orig_pix.scaled(
+                self.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation
+            )
+            self.setPixmap(pix)
+
     def set_placeholder(self) -> None:
         """Load and display the default placeholder image."""
         path = Path(__file__).with_name("no-image-thumb.png")
-        pix = QPixmap(str(path))
-        pix = pix.scaled(600, 600, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.setPixmap(pix)
+        self._orig_pix = QPixmap(str(path))
+        self._update_pixmap()
         self.setText("")
 
     def load_image(self, codigo: str):
@@ -139,9 +149,8 @@ class ImagePreview(QLabel):
             return
         path = self.service.get_image_path(codigo)
         if path.exists():
-            pix = QPixmap(str(path))
-            pix = pix.scaled(600, 600, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-            self.setPixmap(pix)
+            self._orig_pix = QPixmap(str(path))
+            self._update_pixmap()
             self.setText("")
         else:
             self.set_placeholder()
@@ -168,6 +177,10 @@ class ImagePreview(QLabel):
         self.set_placeholder()
 
     # Events ---------------------------------------------------------
+    def resizeEvent(self, event):  # pragma: no cover - GUI
+        super().resizeEvent(event)
+        self._update_pixmap()
+
     def mousePressEvent(self, event):  # pragma: no cover - GUI
         if not self.codigo or not self.service:
             return

@@ -120,14 +120,20 @@ def test_image_preview_uses_placeholder_when_missing(qtbot, tmp_path):
     svc = DummyService()
     preview = ImagePreview("P1", svc)
     qtbot.addWidget(preview)
+    preview.show()
+    qtbot.wait(50)
+    preview.resize(300, 300)
+    qtbot.wait(50)
 
     import ui.ui_editor_fonte as editor
 
     placeholder_path = Path(editor.__file__).with_name("no-image-thumb.png")
     expected = QPixmap(str(placeholder_path))
-    expected = expected.scaled(600, 600, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    expected = expected.scaled(preview.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
     pixmap = preview.pixmap()
     assert pixmap is not None
     assert not pixmap.isNull()
+    assert pixmap.width() <= preview.width()
+    assert pixmap.height() <= preview.height()
     assert pixmap.toImage() == expected.toImage()
