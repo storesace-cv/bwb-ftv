@@ -110,6 +110,7 @@ from .dialogs import (
 )
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
+LABEL_VALUE_STYLE = "border:none; background:transparent; font-weight:600;"
 
 logger = logging.getLogger(__name__)
 
@@ -740,7 +741,7 @@ class FTApp(QWidget):
             lbl.setProperty("userLabel", label_text)
             lbl.setProperty("devLabel", overlay)
             val = QLabel("—")
-            val.setStyleSheet("border:none; background:transparent; font-weight:600;")
+            val.setStyleSheet(LABEL_VALUE_STYLE)
             col.add(lbl, 0)
             col.add(val, 0)
             self.lbPVPs.append(val)
@@ -837,6 +838,7 @@ class FTApp(QWidget):
         for idx, fc in enumerate((fc1, fc2, fc3, fc4, fc5), start=1):
             fc.add(QLabel(f"Food Cost #{idx}"), 0)
             val = QLabel("—")
+            val.setStyleSheet(LABEL_VALUE_STYLE)
             fc.add(val, 0)
             self.lbFoodCosts.append(val)
 
