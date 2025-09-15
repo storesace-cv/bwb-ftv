@@ -83,12 +83,22 @@ def _ensure_table(conn, exemplos_type: str) -> None:
         cur.execute(f"ALTER TABLE Alergenicos ADD COLUMN {name} {definition}")
 
 
-def import_allergens(path: Path, conn) -> None:
+def import_allergens(path: Path, conn, *, archive: bool = True) -> None:
     """Import allergen definitions from ``path`` into ``conn``.
 
     The JSON file is expected to contain an array of objects with the keys
     ``id``, ``nome``, ``nome_ingles``, ``descricao``, ``exemplos`` and ``notas``.
     The import is idempotent thanks to an ``ON CONFLICT`` upsert on ``Id``.
+
+    Parameters
+    ----------
+    path:
+        Location of the JSON payload with allergen definitions.
+    conn:
+        Database connection where the data will be imported.
+    archive:
+        When ``True`` (the default) the source file is archived to
+        ``databases/backups`` once the import completes.
     """
 
     is_sqlite = isinstance(conn, sqlite3.Connection)
@@ -170,10 +180,11 @@ def import_allergens(path: Path, conn) -> None:
 
     conn.commit()
 
-    backups_dir = get_project_root() / "databases" / "backups"
-    archive_with_timestamp(
-        path,
-        backups_dir,
-        prefix="allergens",
-        suffix=".json",
-    )
+    if archive:
+        backups_dir = get_project_root() / "databases" / "backups"
+        archive_with_timestamp(
+            path,
+            backups_dir,
+            prefix="allergens",
+            suffix=".json",
+        )
