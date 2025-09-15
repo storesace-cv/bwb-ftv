@@ -10,5 +10,7 @@ This project uses a structured naming scheme for identifying overlay segments:
 - **Vertical subdivisions**: `.1`, `.2`, etc.
 - **Order**: Start with the block identifier followed by the cell name, then alternate horizontal and vertical markers as needed (e.g., `B1.C1.A.2.B`).
 
-Overlays can obscure the underlying UI, so these names should only be visible when the **Overlays** toggle is switched ON.
+![Example of the `B1.C1.A.2.B` naming](b1-c1-a2b-diagram.svg)
+
+Overlays can obscure the underlying UI, so these names should only be visible when the **Overlays** toggle is switched ON. Click the **Overlays** button or press **Ctrl+D** in the application to toggle these labels.
 

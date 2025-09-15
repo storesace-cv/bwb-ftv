@@ -1,0 +1,22 @@
+<svg width="200" height="120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer block B1 -->
+  <rect x="0" y="0" width="200" height="120" fill="none" stroke="black" />
+  <text x="5" y="15" font-size="12">B1</text>
+
+  <!-- Split A/B -->
+  <line x1="100" y1="0" x2="100" y2="120" stroke="black" />
+  <text x="25" y="15" font-size="12">A</text>
+  <text x="150" y="15" font-size="12">B</text>
+
+  <!-- Split 1/2 within A -->
+  <line x1="0" y1="60" x2="100" y2="60" stroke="black" />
+  <text x="5" y="35" font-size="12">1</text>
+  <text x="5" y="95" font-size="12">2</text>
+
+  <!-- Split A/B within A.2 -->
+  <line x1="50" y1="60" x2="50" y2="120" stroke="black" />
+
+  <!-- Highlight final region B1.C1.A.2.B -->
+  <rect x="50" y="60" width="50" height="60" fill="#ffd9d9" stroke="red" />
+  <text x="55" y="95" font-size="12">B1.C1.A.2.B</text>
+</svg>
