@@ -159,11 +159,10 @@ def save_product_image(codigo: str, src_path: str | Path) -> Path:
     """
 
     dest = get_image_path(codigo)
-    img = Image.open(src_path)
-    img.thumbnail((600, 600))
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    img.info.pop("icc_profile", None)
-    img.save(dest, format="PNG")
+    with Image.open(src_path) as img:
+        img.thumbnail((600, 600))
+        img.info.pop("icc_profile", None)
+        img.save(dest, format="PNG")
     return dest
 
 
@@ -194,11 +193,10 @@ def save_preparacao_image(
     """Save ``src_path`` as the image for a preparation step."""
 
     dest = get_preparacao_image_path(codigo, idx)
-    img = Image.open(src_path)
-    img.thumbnail((600, 600))
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    img.info.pop("icc_profile", None)
-    img.save(dest, format="PNG")
+    with Image.open(src_path) as img:
+        img.thumbnail((600, 600))
+        img.info.pop("icc_profile", None)
+        img.save(dest, format="PNG")
     return dest
 
 
