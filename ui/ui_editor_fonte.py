@@ -68,7 +68,7 @@ import logging
 import html as html_module
 import html.parser as html_parser
 from pathlib import Path
-from PyQt5.QtCore import Qt, QAbstractTableModel, QTimer
+from PyQt5.QtCore import Qt, QAbstractTableModel, QTimer, QPoint
 from PyQt5.QtGui import QFont, QKeySequence, QTextOption, QPixmap
 from PyQt5.QtWidgets import (
     QApplication,
@@ -556,6 +556,43 @@ class FTApp(QWidget):
 
         lbl_w = 110
 
+        # --- Cabeçalho flutuante (duplicado de B1.C0) ---
+        header = QWidget(self)
+        header.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        header_ly = QVBoxLayout(header)
+        header_ly.setContentsMargins(0, 0, 0, 0)
+        header_ly.setSpacing(8)
+        self.header = header
+        self.headerC0 = Zone(
+            "B1.C0",
+            header,
+            flow="v",
+            level=0,
+            show_overlays=layout.DEV_OVERLAYS,
+            spacing=2,
+        )
+        header_ly.addWidget(self.headerC0, 0)
+        self.headerEdCodigo = QLineEdit()
+        make_readonly_lineedit(self.headerEdCodigo, False)
+        self.headerEdNome = QLineEdit()
+        make_readonly_lineedit(self.headerEdNome, True)
+        self.headerC0.add_row(
+            "Código:",
+            self.headerEdCodigo,
+            label_minw=lbl_w,
+            vspacing=0,
+            overlay_text="Produtos.Codigo",
+        )
+        self.headerC0.add_row(
+            "Nome do Artigo:",
+            self.headerEdNome,
+            label_minw=lbl_w,
+            vspacing=1,
+            overlay_text="Produtos.Nome",
+        )
+        root.addWidget(header, 0)
+        header.hide()
+
         # --- Conteúdo com scroll vertical ---
         scroll = QScrollArea(self)
         scroll.setWidgetResizable(True)
@@ -599,6 +636,11 @@ class FTApp(QWidget):
             overlay_text="Produtos.Nome",
         )
         page_ly.addWidget(self.C0, 0)
+        scroll.verticalScrollBar().valueChanged.connect(
+            self._toggle_header_on_scroll
+        )
+        self.edCodigo.textChanged.connect(self.headerEdCodigo.setText)
+        self.edNome.textChanged.connect(self.headerEdNome.setText)
 
         # ---------------- B1 — Dados Gerais (B1.C1) ----------------
         self.C1 = Zone(
@@ -996,11 +1038,25 @@ class FTApp(QWidget):
         footer.addStretch(1)
         root.addLayout(footer)
 
+        self._toggle_header_on_scroll(self.scroll.verticalScrollBar().value())
+
         # Atalho teclado para overlays
         QShortcut(QKeySequence("Ctrl+D"), self, activated=self._toggle_overlays)
         QShortcut(
             QKeySequence("Ctrl+S"), self, activated=lambda: self._save_prep(force=True)
         )
+
+    def _toggle_header_on_scroll(self, value: int):
+        header = getattr(self, "header", None)
+        if not header or not getattr(self, "scroll", None) or not getattr(self, "C0", None):
+            return
+        viewport = self.scroll.viewport()
+        top_left = self.C0.mapTo(viewport, QPoint(0, 0))
+        should_show = top_left.y() < 0
+        if should_show and not header.isVisible():
+            header.show()
+        elif not should_show and header.isVisible():
+            header.hide()
 
     # ---------- Alergénios grid ----------
     def _build_allergens_grid(self):
