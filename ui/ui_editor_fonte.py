@@ -60,6 +60,7 @@
 # 2025-09-15 04:12 — v3.95 — Food Cost "--N/A--" sem PVP ou falha de cálculo;
 #    mantém "0%" quando falta IVA.
 # 2025-09-15 05:15 — v3.96 — Food Cost "--" quando falta IVA; loga "missing Iva1".
+# 2025-09-15 15:40 — v3.97 — Filtro Food Cost (Bom/Aceitável/Mau) com botões exclusivos.
 
 import sys
 import logging
@@ -85,6 +86,7 @@ from PyQt5.QtWidgets import (
     QShortcut,
     QTextEdit,
     QCheckBox,
+    QButtonGroup,
     QToolBar,
     QAction,
     QFileDialog,
@@ -420,6 +422,7 @@ class FTApp(QWidget):
         self.cur_index = 0
         self.current_product = None
         self._prep_dirty = False
+        self._active_fcost_filter: int | None = None
         self._build_ui()
         self._connect_nav()
         self._load_record(self.cur_index)
@@ -748,6 +751,45 @@ class FTApp(QWidget):
             val = QLabel("—")
             fc.add(val, 0)
             self.lbFoodCosts.append(val)
+
+        C3AB = Zone(
+            "B3.C1.A.B",
+            C3A,
+            flow="h",
+            level=2,
+            show_overlays=layout.DEV_OVERLAYS,
+        )
+        C3AB.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        C3A.add(C3AB, 0)
+        fcB1, fcB2, fcB3, fcB4, fcB5 = C3AB.split_h((1, 1, 1, 1, 1))
+
+        self.btFcostBom = QPushButton("Bom")
+        self.btFcostBom.setCheckable(True)
+        fcB2.add(self.btFcostBom, 0)
+
+        self.btFcostAceitavel = QPushButton("Aceitável")
+        self.btFcostAceitavel.setCheckable(True)
+        fcB3.add(self.btFcostAceitavel, 0)
+
+        self.btFcostMau = QPushButton("Mau")
+        self.btFcostMau.setCheckable(True)
+        fcB4.add(self.btFcostMau, 0)
+
+        self.fcostFilterGroup = QButtonGroup(self)
+        self.fcostFilterGroup.setExclusive(True)
+        self.fcostFilterGroup.addButton(self.btFcostBom)
+        self.fcostFilterGroup.addButton(self.btFcostAceitavel)
+        self.fcostFilterGroup.addButton(self.btFcostMau)
+
+        self.btFcostBom.clicked.connect(
+            lambda _checked, lv=1: self._on_fcost_filter_selected(lv)
+        )
+        self.btFcostAceitavel.clicked.connect(
+            lambda _checked, lv=2: self._on_fcost_filter_selected(lv)
+        )
+        self.btFcostMau.clicked.connect(
+            lambda _checked, lv=3: self._on_fcost_filter_selected(lv)
+        )
 
         # ---------------- B4 — Preparação (B4) ----------------
         self.B4 = Zone(
@@ -1234,6 +1276,10 @@ class FTApp(QWidget):
             self._update_food_costs()
         except Exception:
             pass
+
+    def _on_fcost_filter_selected(self, level: int):
+        self._active_fcost_filter = level
+        self._update_food_costs()
 
     def _on_tipo_artigo_changed(self, idx: int):
         if getattr(self, "_loading", False):
