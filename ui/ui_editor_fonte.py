@@ -103,6 +103,7 @@ from .dialogs import (
     update_data,
     backup_database,
     restore_database,
+    edit_fcost_values,
 )
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
@@ -481,6 +482,12 @@ class FTApp(QWidget):
         actTheme = QAction("Tema", self)
         mUtil.addAction(actTheme)
         self.mnuRoot.addMenu(mUtil)
+        mConf = QMenu("Configurações", self.mnuRoot)
+        mParams = QMenu("Parametrizações", mConf)
+        actFoodCost = QAction("Food Cost", self)
+        mParams.addAction(actFoodCost)
+        mConf.addMenu(mParams)
+        self.mnuRoot.addMenu(mConf)
         self.btMenu.setMenu(self.mnuRoot)
         # ligações básicas
         actReload.triggered.connect(
@@ -536,6 +543,9 @@ class FTApp(QWidget):
             lambda: QMessageBox.information(
                 self, "Tema", "Alternância de tema pendente."
             )
+        )
+        actFoodCost.triggered.connect(
+            lambda: edit_fcost_values(self, self.ds.fcost)
         )
         top.addWidget(self.btMenu, 0, Qt.AlignRight)
         root.addLayout(top)
