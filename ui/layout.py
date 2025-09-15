@@ -28,6 +28,16 @@ def bg_for_level(level: int) -> str:
     return colors[level % len(colors)] if DEV_OVERLAYS else "transparent"
 
 
+def refresh_style(widget: QWidget) -> None:
+    """Force ``widget`` to refresh its style after property updates."""
+
+    style = widget.style()
+    if style is not None:
+        style.unpolish(widget)
+        style.polish(widget)
+    widget.update()
+
+
 class Zone(QWidget):
     """Célula real (com tag e overlay opcional)."""
 
@@ -63,6 +73,7 @@ class Zone(QWidget):
         self.apply_overlays(show_overlays)
 
     def apply_overlays(self, on: bool) -> None:
+        self.setProperty("overlays", "on" if on else "off")
         if on:
             self.setStyleSheet(
                 f"background:{bg_for_level(self._level)}; border:1px dashed red;"
@@ -71,6 +82,7 @@ class Zone(QWidget):
         else:
             self.setStyleSheet("")
             self._tag_lbl.hide()
+        refresh_style(self)
         for ch in self.findChildren(Zone):
             ch.apply_overlays(on)
 
