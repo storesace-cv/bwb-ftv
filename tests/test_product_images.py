@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 
-import pytest
 from PIL import Image
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
@@ -129,7 +128,9 @@ def test_image_preview_uses_placeholder_when_missing(qtbot, tmp_path):
 
     placeholder_path = Path(editor.__file__).with_name("no-image-thumb.png")
     expected = QPixmap(str(placeholder_path))
-    expected = expected.scaled(preview.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    expected = expected.scaled(
+        preview.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation
+    )
 
     pixmap = preview.pixmap()
     assert pixmap is not None
