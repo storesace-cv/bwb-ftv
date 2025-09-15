@@ -1170,7 +1170,10 @@ class FTApp(QWidget):
         product = getattr(self, "current_product", None)
         if not product:
             return
-        identifier = getattr(product, "code", None) or getattr(product, "name", "<unknown>")
+        identifier = (
+            getattr(product, "code", None)
+            or getattr(product, "name", "<unknown>")
+        )
         try:
             total = parse_decimal(self.edCustoTotal.text())
             total = float(total)
@@ -1200,7 +1203,8 @@ class FTApp(QWidget):
             pct = calculate_food_cost(total, pvp, iva, identifier)
             if pct is None:
                 logger.warning(
-                    "[FoodCost] could not compute percentage for %s (total=%s, pvp=%s, iva=%s)",
+                    "[FoodCost] could not compute percentage for %s "
+                    "(total=%s, pvp=%s, iva=%s)",
                     identifier,
                     total,
                     pvp,
