@@ -685,6 +685,23 @@ class FTApp(QWidget):
         self.C2.add(self.tbIng, 1)
         self._setup_ing_columns()
 
+        # Zona para custos totais após a tabela de ingredientes
+        self.C2Custo = Zone(
+            "B2.C2",
+            self.C2,
+            flow="h",
+            level=1,
+            show_overlays=layout.DEV_OVERLAYS,
+        )
+        self.C2Custo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.C2.add(self.C2Custo, 0)
+        self.C2Custo.ly.addStretch(1)
+        self.C2Custo.add(QLabel("Custo Total:"), 0)
+        self.edCustoTotal = QLineEdit()
+        make_readonly_lineedit(self.edCustoTotal, True)
+        self.edCustoTotal.setFixedWidth(self.edCustoTotal.sizeHint().width() * 2)
+        self.C2Custo.add(self.edCustoTotal, 0)
+
         # ---------------- B3 — Custos (B3.C1) ----------------
         self.C3 = Zone(
             "B3.C1", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
@@ -699,20 +716,7 @@ class FTApp(QWidget):
             show_overlays=layout.DEV_OVERLAYS,
         )
         self.C3.add(C3A, 1)
-        C3AA, C3AB = C3A.split_h((1, 1))
-
-        # C1 swap aplicado: C1.A.A = Custo Total | C1.A.B = "Food Cost:"
-        ct_row = QWidget()
-        ct_ly = QVBoxLayout(ct_row)
-        ct_ly.setContentsMargins(0, 0, 0, 0)
-        ct_ly.setSpacing(4)
-        ct_ly.addWidget(QLabel("Custo Total:"))
-        self.edCustoTotal = QLineEdit()
-        make_readonly_lineedit(self.edCustoTotal, True)
-        ct_ly.addWidget(self.edCustoTotal)
-        C3AA.add(ct_row, 0)
-
-        C3AB.add(QLabel("Food Cost:"), 0)
+        C3A.add(QLabel("Food Cost:"), 0)
 
         # ---------------- B4 — Preparação (B4) ----------------
         self.B4 = Zone(
