@@ -178,6 +178,7 @@ def save_product_image(codigo: str, src_path: str | Path) -> Path:
     img = Image.open(src_path)
     img.thumbnail((600, 600))
     dest.parent.mkdir(parents=True, exist_ok=True)
+    img.info.pop("icc_profile", None)
     img.save(dest, format="PNG")
     return dest
 
@@ -212,6 +213,7 @@ def save_preparacao_image(
     img = Image.open(src_path)
     img.thumbnail((600, 600))
     dest.parent.mkdir(parents=True, exist_ok=True)
+    img.info.pop("icc_profile", None)
     img.save(dest, format="PNG")
     return dest
 
