@@ -487,3 +487,89 @@ class PreparacaoRepo:
             (codigo, html),
         )
         self.conn.commit()
+
+
+class FcostValuesRepo:
+    """Repository for accessing and updating ``FcostValues`` levels."""
+
+    def __init__(self, conn: sqlite3.Connection):
+        self.conn = conn
+
+    def list_levels(self):
+        """Return all cost levels ordered by ``Nivel``."""
+
+        cur = self.conn.cursor()
+        try:
+            cur.execute(
+                "SELECT Nivel, Nome, ValorMin, ValorMax, Comentario "
+                "FROM FcostValues ORDER BY Nivel"
+            )
+            return cur.fetchall()
+        except sqlite3.Error as exc:
+            logger.error(
+                "[FcostValuesRepo] list_levels() falhou: %s", exc, exc_info=True
+            )
+            return []
+
+    def update_range(self, nivel: int, vmin, vmax) -> bool:
+        """Update the ``ValorMin`` and ``ValorMax`` for a level."""
+
+        vmin = parse_decimal(vmin)
+        vmax = parse_decimal(vmax)
+        try:
+            vmin_f = float(vmin)
+            vmax_f = float(vmax)
+        except (TypeError, ValueError):
+            return False
+
+        cur = self.conn.cursor()
+        try:
+            cur.execute("BEGIN")
+
+            if not (vmin_f < vmax_f):
+                self.conn.rollback()
+                return False
+
+            # Verify previous level
+            cur.execute(
+                "SELECT ValorMax FROM FcostValues WHERE Nivel < ? "
+                "ORDER BY Nivel DESC LIMIT 1",
+                (nivel,),
+            )
+            prev = cur.fetchone()
+            if prev and vmin_f < prev[0]:
+                self.conn.rollback()
+                return False
+
+            # Verify next level
+            cur.execute(
+                "SELECT ValorMin FROM FcostValues WHERE Nivel > ? "
+                "ORDER BY Nivel ASC LIMIT 1",
+                (nivel,),
+            )
+            nxt = cur.fetchone()
+            if nxt and vmax_f > nxt[0]:
+                self.conn.rollback()
+                return False
+
+            cur.execute(
+                "UPDATE FcostValues SET ValorMin = ?, ValorMax = ? WHERE Nivel = ?",
+                (vmin_f, vmax_f, nivel),
+            )
+            if cur.rowcount == 0:
+                self.conn.rollback()
+                return False
+
+            self.conn.commit()
+            return True
+        except sqlite3.Error as exc:
+            logger.error(
+                "[FcostValuesRepo] update_range(%s, %s, %s) falhou: %s",
+                nivel,
+                vmin,
+                vmax,
+                exc,
+                exc_info=True,
+            )
+            self.conn.rollback()
+            return False
