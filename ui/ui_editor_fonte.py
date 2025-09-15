@@ -434,6 +434,9 @@ class FTApp(QWidget):
 
     def _section_box(self, title: str, zone: Zone) -> QGroupBox:
         box = QGroupBox(title)
+        box.setStyleSheet(
+            "QGroupBox { font-size: 400%; font-weight: bold; text-transform: uppercase; }"
+        )
         box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         ly = QVBoxLayout(box)
         ly.setContentsMargins(3, 5, 3, 5)
