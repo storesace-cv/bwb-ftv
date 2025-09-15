@@ -13,6 +13,22 @@ MIGRATIONS_DIR = BASE_DIR / "data" / "migrations"
 
 DEFAULT_VALIDADE = [(1, "24h"), (2, "48h")]
 DEFAULT_TEMPERATURAS = [(1, "Quente"), (2, "Frio")]
+DEFAULT_ALERGENIOS = [
+    (1, "Glúten"),
+    (2, "Crustáceos"),
+    (3, "Ovos"),
+    (4, "Peixe"),
+    (5, "Amendoins"),
+    (6, "Soja"),
+    (7, "Leite"),
+    (8, "Frutos de casca rija"),
+    (9, "Aipo"),
+    (10, "Mostarda"),
+    (11, "Sementes de sésamo"),
+    (12, "Dióxido de enxofre e sulfitos"),
+    (13, "Tremoço"),
+    (14, "Moluscos"),
+]
 
 PRODUTOS_SCHEMA = """
 CREATE TABLE IF NOT EXISTS Produtos (
@@ -395,8 +411,26 @@ def ensure_core_tables(conn: sqlite3.Connection) -> None:
     for stmt in statements:
         conn.execute(stmt)
     conn.commit()
+    _seed_alergenios(conn)
     _seed_validade(conn)
     _seed_temperaturas(conn)
+
+
+def _seed_alergenios(conn: sqlite3.Connection) -> None:
+    """Populate ``Alergenios`` with default records if empty."""
+
+    try:
+        cur = conn.execute("SELECT COUNT(*) FROM Alergenios")
+        if cur.fetchone()[0] == 0:
+            conn.executemany(
+                "INSERT INTO Alergenios (Id, Nome, Ativo) VALUES (?, ?, 1)",
+                DEFAULT_ALERGENIOS,
+            )
+            conn.commit()
+    except sqlite3.Error:
+        # Table missing or other errors are ignored here; callers may handle
+        # them separately.
+        pass
 
 
 def _seed_validade(conn: sqlite3.Connection) -> None:

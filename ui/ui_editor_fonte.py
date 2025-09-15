@@ -485,9 +485,11 @@ class FTApp(QWidget):
         actTipos = QAction("Tipos Artigos", self)
         actVal = QAction("Validade", self)
         actTemps = QAction("Temperaturas", self)
+        actAlerg = QAction("Alergénios", self)
         mTab.addAction(actTipos)
         mTab.addAction(actVal)
         mTab.addAction(actTemps)
+        mTab.addAction(actAlerg)
         self.mnuRoot.addMenu(mTab)
         mUtil = QMenu("Utilitários", self.mnuRoot)
         actTheme = QAction("Tema", self)
@@ -548,6 +550,18 @@ class FTApp(QWidget):
                     "update": self.ds.aux.update_temperatura,
                 },
                 on_change=self._aux_refresh_lists,
+            )
+        )
+        actAlerg.triggered.connect(
+            lambda: manage_aux_table(
+                self,
+                "Alergénios",
+                {
+                    "list": self.ds.aux.list_alergenios_admin,
+                    "add": self.ds.aux.add_alergenio,
+                    "set_active": self.ds.aux.set_alergenio_ativo,
+                    "update": self.ds.aux.update_alergenio,
+                },
             )
         )
         actTheme.triggered.connect(

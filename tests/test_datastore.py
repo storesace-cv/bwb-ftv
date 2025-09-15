@@ -1,5 +1,4 @@
 import logging
-import json
 import sqlite3
 import pytest
 
@@ -166,24 +165,11 @@ def test_list_active_allergens_db():
     assert ds.list_active_allergens() == [(1, "B"), (2, "A")]
 
 
-def test_list_active_allergens_json():
-    ds = DataStore(db_path=":memory:")
-    ds.conn.execute("DELETE FROM Alergenios")
-    ds.conn.execute(
-        "INSERT INTO Config (Key, Value) VALUES (?, ?)",
-        ("allergens", json.dumps({"alergenios": ["A", "B"]})),
-    )
-    ds.conn.commit()
-    assert ds.list_active_allergens() == [(1, "A"), (2, "B")]
-
-
-def test_list_active_allergens_default():
+def test_list_active_allergens_empty():
     ds = DataStore(db_path=":memory:")
     ds.conn.execute("DELETE FROM Alergenios")
     ds.conn.commit()
-    items = ds.list_active_allergens()
-    assert len(items) == 14
-    assert items[0] == (1, "Glúten")
+    assert ds.list_active_allergens() == []
 
 
 def test_context_manager_closes_connection():

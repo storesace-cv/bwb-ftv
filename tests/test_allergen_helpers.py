@@ -1,4 +1,3 @@
-import json
 from data.datastore import DataStore
 
 
@@ -21,33 +20,3 @@ def test_allergens_from_db_invalid_rows():
 def test_allergens_from_db_no_connection():
     ds = DataStore(demo=True)
     assert ds._allergens_from_db() is None
-
-
-def test_allergens_from_json_missing():
-    ds = DataStore(db_path=":memory:")
-    assert ds._allergens_from_json() is None
-
-
-def test_allergens_from_json_invalid():
-    ds = DataStore(db_path=":memory:")
-    ds.conn.execute("INSERT INTO Config (Key, Value) VALUES ('allergens', '{bad json')")
-    ds.conn.commit()
-    assert ds._allergens_from_json() is None
-
-
-def test_allergens_from_json_filters_invalid():
-    ds = DataStore(db_path=":memory:")
-    data = {"alergenios": ["A", {"nome": "", "id": 2}, {"id": "x", "nome": "B"}]}
-    ds.conn.execute(
-        "INSERT INTO Config (Key, Value) VALUES (?, ?)",
-        ("allergens", json.dumps(data)),
-    )
-    ds.conn.commit()
-    assert ds._allergens_from_json() == [(1, "A"), (2, "B")]
-
-
-def test_default_allergens():
-    ds = DataStore(demo=True)
-    items = ds._default_allergens()
-    assert len(items) == 14
-    assert items[0] == (1, "Glúten")

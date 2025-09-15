@@ -450,6 +450,48 @@ class AuxiliaresRepo:
             )
             return False
 
+    def list_alergenios_admin(self):
+        return self._admin_list("Alergenios", "list_alergenios_admin")
+
+    def add_alergenio(self, nome: str):
+        return self._admin_add("Alergenios", "add_alergenio", nome)
+
+    def update_alergenio(self, cod, nome: str) -> bool:
+        cur = self.conn.cursor()
+        try:
+            cur.execute(
+                "UPDATE Alergenios SET nome=? WHERE id=?",
+                (nome, cod),
+            )
+            self.conn.commit()
+            return cur.rowcount > 0
+        except sqlite3.Error as exc:
+            logger.error(
+                "[AuxiliaresRepo] update_alergenio(%s) falhou: %s",
+                cod,
+                exc,
+                exc_info=True,
+            )
+            return False
+
+    def set_alergenio_ativo(self, cod, ativo: int) -> bool:
+        return self._admin_set_active("Alergenios", "set_alergenio_ativo", cod, ativo)
+
+    def delete_alergenio(self, cod) -> bool:
+        cur = self.conn.cursor()
+        try:
+            cur.execute("DELETE FROM Alergenios WHERE Id = ?", (cod,))
+            self.conn.commit()
+            return cur.rowcount > 0
+        except sqlite3.Error as exc:
+            logger.error(
+                "[AuxiliaresRepo] delete_alergenio(%s) falhou: %s",
+                cod,
+                exc,
+                exc_info=True,
+            )
+            return False
+
 
 class PreparacaoRepo:
     def __init__(self, conn: sqlite3.Connection):
