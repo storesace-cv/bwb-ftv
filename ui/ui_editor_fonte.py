@@ -1177,17 +1177,11 @@ class FTApp(QWidget):
         pvps.extend([None] * (5 - len(pvps)))
         iva = getattr(product, "iva", None)
         for lbl, pvp in zip(self.lbFoodCosts, pvps):
+            if pvp in (None, 0) or iva in (None, 0):
+                lbl.setText("0%")
+                continue
             pct = calculate_food_cost(total, pvp, iva)
             if pct is None:
-                missing = []
-                if pvp in (None, 0):
-                    missing.append("pvp")
-                if iva in (None, 0):
-                    missing.append("iva")
-                if missing:
-                    logger.debug(
-                        "cannot compute food cost: missing %s", " e ".join(missing)
-                    )
                 lbl.setText("N/A")
             else:
                 lbl.setText(format_pt_number(pct))
