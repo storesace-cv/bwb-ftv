@@ -76,6 +76,10 @@ Para importar ou atualizar dados coloque os três ficheiros Excel dentro do dire
 - `PreçosTaxas_base.xlsx`
 - `Produtos_Base.xlsx`
 
+Veja [docs/mapeamento_campos.md](docs/mapeamento_campos.md) para a correspondência
+completa de cabeçalhos Excel ↔ campos de base de dados. Apenas `PrecosTaxas.Iva1`
+é utilizado em cálculos de IVA.
+
 No início da operação os ficheiros são validados: se algum estiver em falta ou não tiver extensão `.xlsx`, a importação é interrompida com erro. Após processamento com sucesso, cada ficheiro é movido para `imports/history` com um carimbo temporal (`YYYYMMDDHHMMSS`) anexado ao nome, permitindo manter um histórico de cargas.
 
 Ao importar `FichasTecnicas_base.xlsx` a coluna de custo deve chamar-se
