@@ -1184,14 +1184,15 @@ class FTApp(QWidget):
         pvps = list(getattr(product, "pvps", []) or [])
         pvps.extend([None] * (5 - len(pvps)))
         iva = getattr(product, "iva", None)
-        for lbl, pvp in zip(self.lbFoodCosts, pvps):
+        for idx, (lbl, pvp) in enumerate(zip(self.lbFoodCosts, pvps)):
             if pvp in (None, 0):
-                logger.warning(
-                    "[FoodCost] missing pvp for %s (pvp=%s)",
-                    identifier,
-                    pvp,
-                )
                 lbl.setText("--N/A--")
+                if idx == 0:
+                    logger.warning(
+                        "[FoodCost] missing pvp for %s (pvp=%s)",
+                        identifier,
+                        pvp,
+                    )
                 continue
             if iva in (None, 0):
                 logger.warning(
