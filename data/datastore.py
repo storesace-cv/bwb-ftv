@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Data access layer for the FTV project."""
 
-import json
 import logging
 import os
 import sqlite3
@@ -617,94 +616,7 @@ class DataStore:
             )
         return result or None
 
-    def _allergens_from_json(self):
-        if self.conn is None:
-            return None
-        try:
-            cur = self.conn.execute("SELECT Value FROM Config WHERE Key='allergens'")
-            row = cur.fetchone()
-            if not row or not row[0]:
-                return None
-            data = json.loads(row[0])
-            payload = (
-                data.get("alergenios")
-                if isinstance(data, dict) and "alergenios" in data
-                else data
-            )
-            items = []
-            if isinstance(payload, list):
-                tmp = []
-                for idx, item in enumerate(payload, 1):
-                    if isinstance(item, str):
-                        nm = item.strip()
-                        if nm:
-                            tmp.append((idx, nm))
-                    elif isinstance(item, dict):
-                        nm = item.get("nome") or item.get("name")
-                        if nm and str(nm).strip():
-                            rid = item.get("id")
-                            try:
-                                rid_int = (
-                                    int(rid)
-                                    if rid is not None and str(rid).strip() != ""
-                                    else idx
-                                )
-                            except (ValueError, TypeError):
-                                rid_int = idx
-                            tmp.append((rid_int, str(nm).strip()))
-                seen = set()
-                for rid, nm in tmp:
-                    key = nm.strip().lower()
-                    if key not in seen:
-                        seen.add(key)
-                        items.append((rid, nm))
-            if items:
-                return [(i + 1, nm) for i, (_, nm) in enumerate(items)]
-        except (json.JSONDecodeError, sqlite3.Error, TypeError, ValueError) as exc:
-            logger.error(
-                "[DataStore] list_active_allergens config falhou: %s",
-                exc,
-                exc_info=True,
-            )
-        return None
-
-    def _default_allergens(self):
-        default = [
-            "Glúten",
-            "Crustáceos",
-            "Ovos",
-            "Peixe",
-            "Amendoins",
-            "Soja",
-            "Leite",
-            "Frutos de casca rija",
-            "Aipo",
-            "Mostarda",
-            "Sementes de sésamo",
-            "Dióxido de enxofre e sulfitos",
-            "Tremoço",
-            "Moluscos",
-        ]
-        return [(i + 1, nm) for i, nm in enumerate(default)]
-
     def list_active_allergens(self):
-        """
-        Devolve lista de tuplos (id, nome) de alergénios ativos.
-
-        Ordem de tentativa:
-          1) BD (tabela alergenios: id, nome, ativo)
-          2) Tabela Config (chave 'allergens' contendo JSON)
-          3) Lista padrão (14 principais)
-
-        Returns:
-            list[tuple[int, str]]
-        """
-        for getter in (
-            self._allergens_from_db,
-            self._allergens_from_json,
-            self._default_allergens,
-        ):
-            items = getter()
-            if items:
-                return items
-        return []
+        """Devolve lista de tuplos ``(id, nome)`` de alergénios ativos."""
+        items = self._allergens_from_db()
+        return items or []
