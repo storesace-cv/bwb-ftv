@@ -9,24 +9,6 @@ from utils.formatting import parse_decimal
 logger = logging.getLogger(__name__)
 
 
-def _infer_cols(headers: list[str]):
-    """Return indexes for required ``FichasTecnicas`` columns.
-
-    The input ``headers`` are expected to use the canonical names directly,
-    so this helper resolves their positions without considering aliases.
-    ``ComponenteCodigo`` is optional and ``None`` is returned if missing.
-    """
-
-    idx = {h: i for i, h in enumerate(headers)}
-    return (
-        idx["ProdutoCodigo"],
-        idx["ComponenteNome"],
-        idx["Qtd"],
-        idx["Unidade"],
-        idx.get("ComponenteCodigo"),
-    )
-
-
 def quote_ident(name: str) -> str:
     """Return *name* quoted as an SQL identifier.
 
