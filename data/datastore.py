@@ -262,7 +262,7 @@ class DataStore:
                 "Peso",
             },
             "PrecosTaxas": {"Codigo", "Loja"},
-            "Alergenios": {"Id", "Nome", "Ativo"},
+            "Alergenicos": {"Id", "Nome"},
             "TiposArtigos": {"Cod", "Descricao", "Ativo"},
             "Validade": {"Cod", "Descricao", "Ativo"},
             "Temperaturas": {"Cod", "Descricao", "Ativo"},
@@ -583,7 +583,7 @@ class DataStore:
             return None
         try:
             cur = self.conn.cursor()
-            cur.execute("SELECT id, nome FROM alergenios WHERE ativo=1 ORDER BY id")
+            cur.execute("SELECT Id, Nome FROM Alergenicos ORDER BY Id")
             rows = cur.fetchall()
         except sqlite3.Error as exc:
             logger.error(
@@ -617,6 +617,6 @@ class DataStore:
         return result or None
 
     def list_active_allergens(self):
-        """Devolve lista de tuplos ``(id, nome)`` de alergénios ativos."""
+        """Devolve lista de tuplos ``(id, nome)`` de alergénios disponíveis."""
         items = self._allergens_from_db()
         return items or []
