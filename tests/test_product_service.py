@@ -2,7 +2,12 @@ import logging
 import pytest
 from unittest.mock import MagicMock
 
-from services.products import calculate_cost, get_product_info, ProductService
+from services.products import (
+    calculate_cost,
+    calculate_food_cost,
+    get_product_info,
+    ProductService,
+)
 from data.datastore import DataStore
 from domain.models import Ingredient
 from utils.formatting import format_pt_number
@@ -28,6 +33,17 @@ def test_calculate_cost_prefers_total_when_present():
     cost = calculate_cost(ingredients)
 
     assert cost == pytest.approx(8.0)
+
+
+def test_calculate_food_cost_basic():
+    result = calculate_food_cost(25, 50, 23)
+    assert result == pytest.approx(61.5)
+
+
+def test_calculate_food_cost_invalid_inputs():
+    assert calculate_food_cost(None, 50, 23) is None
+    assert calculate_food_cost(10, 0, 23) is None
+    assert calculate_food_cost(10, 50, None) is None
 
 
 def test_get_product_info_builds_product_from_datastore():

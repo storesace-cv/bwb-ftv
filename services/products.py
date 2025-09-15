@@ -419,6 +419,44 @@ def calculate_cost(ingredients: Iterable[Ingredient]) -> float:
     return total
 
 
+def calculate_food_cost(total, pvp, iva):
+    """Return food cost percentage for given total cost and PVP.
+
+    Parameters
+    ----------
+    total : float | int | str
+        Total cost of ingredients.
+    pvp : float | int | str
+        Product sale price including VAT.
+    iva : float | int | str
+        VAT percentage (e.g., ``23`` for 23%).
+
+    Returns
+    -------
+    float | None
+        Percentage representing the food cost, or ``None`` when any input is
+        invalid or zero.
+    """
+
+    try:
+        total = float(total)
+        pvp = float(pvp)
+        iva = float(iva)
+    except (TypeError, ValueError):
+        return None
+
+    if pvp <= 0:
+        return None
+
+    try:
+        pvp_sem_iva = pvp / (1 + iva / 100)
+    except Exception:
+        return None
+    if pvp_sem_iva == 0:
+        return None
+    return (total / pvp_sem_iva) * 100
+
+
 @contextmanager
 def _load_workbook_rows(
     path: Path, table: str, conn
