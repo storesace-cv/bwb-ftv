@@ -194,6 +194,40 @@ def delete_product_image(codigo: str) -> Path | None:
     return None
 
 
+def get_preparacao_image_path(codigo: str, idx: int) -> Path:
+    """Return the path for a preparation step image."""
+
+    root = get_project_root()
+    img_dir = root / "databases" / "images" / "preparacoes"
+    img_dir.mkdir(parents=True, exist_ok=True)
+    return img_dir / f"{codigo}-{idx}.png"
+
+
+def save_preparacao_image(
+    codigo: str, idx: int, src_path: str | Path
+) -> Path:
+    """Save ``src_path`` as the image for a preparation step."""
+
+    dest = get_preparacao_image_path(codigo, idx)
+    img = Image.open(src_path)
+    img.thumbnail((600, 600))
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    img.save(dest, format="PNG")
+    return dest
+
+
+def delete_preparacao_image(codigo: str, idx: int) -> Path | None:
+    """Archive and remove a preparation step image if it exists."""
+
+    path = get_preparacao_image_path(codigo, idx)
+    if path.exists():
+        ts = int(time.time())
+        backup = path.with_name(f"{codigo}-{idx}.{ts}.png")
+        path.rename(backup)
+        return backup
+    return None
+
+
 class ProductService:
     """High level API used by the UI to interact with products and helpers."""
 
@@ -243,6 +277,17 @@ class ProductService:
 
     def delete_product_image(self, codigo: str) -> Path | None:
         return delete_product_image(codigo)
+
+    def get_preparacao_image_path(self, codigo: str, idx: int) -> Path:
+        return get_preparacao_image_path(codigo, idx)
+
+    def save_preparacao_image(
+        self, codigo: str, idx: int, src_path: str | Path
+    ) -> Path:
+        return save_preparacao_image(codigo, idx, src_path)
+
+    def delete_preparacao_image(self, codigo: str, idx: int) -> Path | None:
+        return delete_preparacao_image(codigo, idx)
 
     # -- product retrieval ------------------------------------------------
     def get_product_info(self, codigo: str) -> Product:
