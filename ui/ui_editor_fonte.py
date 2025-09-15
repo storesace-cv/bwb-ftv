@@ -1278,8 +1278,31 @@ class FTApp(QWidget):
             pass
 
     def _on_fcost_filter_selected(self, level: int):
-        self._active_fcost_filter = level
-        self._update_food_costs()
+        if self._active_fcost_filter == level:
+            self._active_fcost_filter = None
+            try:
+                self.service.ds.set_fcost_level(None)
+            except Exception:
+                pass
+            try:
+                btn = {
+                    1: self.btFcostBom,
+                    2: self.btFcostAceitavel,
+                    3: self.btFcostMau,
+                }[level]
+                self.fcostFilterGroup.blockSignals(True)
+                btn.setChecked(False)
+                self.fcostFilterGroup.blockSignals(False)
+            except Exception:
+                pass
+        else:
+            self._active_fcost_filter = level
+            try:
+                self.service.ds.set_fcost_level(level)
+            except Exception:
+                pass
+        self.cur_index = 0
+        self._load_record(0)
 
     def _on_tipo_artigo_changed(self, idx: int):
         if getattr(self, "_loading", False):
