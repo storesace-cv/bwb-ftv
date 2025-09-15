@@ -42,6 +42,30 @@ def test_delete_product_image_renames_with_timestamp(tmp_path, monkeypatch):
     assert not original.exists()
 
 
+def test_save_product_image_missing_file(tmp_path, monkeypatch, caplog):
+    """Missing source image should be logged and return None."""
+
+    monkeypatch.setattr(products, "get_project_root", lambda: tmp_path)
+    missing = tmp_path / "missing.png"
+    with caplog.at_level("ERROR"):
+        dest = products.save_product_image("P1", missing)
+    assert dest is None
+    assert "missing.png" in caplog.text
+
+
+def test_save_product_image_invalid_file(tmp_path, monkeypatch, caplog):
+    """Invalid image data should be logged and return None."""
+
+    monkeypatch.setattr(products, "get_project_root", lambda: tmp_path)
+    src = tmp_path / "src.png"
+    src.write_text("not an image")
+    with caplog.at_level("ERROR"):
+        dest = products.save_product_image("P1", src)
+    assert dest is None
+    assert "src.png" in caplog.text
+    assert not products.get_image_path("P1").exists()
+
+
 def test_image_preview_click_flow(qtbot, tmp_path, monkeypatch):
     class DummyService:
         def __init__(self):
