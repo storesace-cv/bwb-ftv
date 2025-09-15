@@ -53,11 +53,13 @@
 # 2025-09-13 23:08 — v3.90 — Menu Segurança com ações de cópia e reposição.
 # 2025-09-14 18:23 — v3.91 — Largura da página adaptativa; scroll horizontal
 #    desativado.
+# 2025-09-15 01:19 — v3.92 — Placeholder padrão para imagens ausentes.
 
 import sys
 import logging
 import html as html_module
 import html.parser as html_parser
+from pathlib import Path
 from PyQt5.QtCore import Qt, QAbstractTableModel, QTimer
 from PyQt5.QtGui import QFont, QKeySequence, QTextOption, QPixmap
 from PyQt5.QtWidgets import (
@@ -122,6 +124,14 @@ class ImagePreview(QLabel):
             self.load_image(codigo)
 
     # Helper methods -------------------------------------------------
+    def set_placeholder(self) -> None:
+        """Load and display the default placeholder image."""
+        path = Path(__file__).with_name("no-image-thumb.png")
+        pix = QPixmap(str(path))
+        pix = pix.scaled(600, 600, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.setPixmap(pix)
+        self.setText("")
+
     def load_image(self, codigo: str):
         """Load and show the image for ``codigo`` if available."""
         self.codigo = codigo
@@ -134,8 +144,7 @@ class ImagePreview(QLabel):
             self.setPixmap(pix)
             self.setText("")
         else:
-            self.setPixmap(QPixmap())
-            self.setText("Sem imagem")
+            self.set_placeholder()
 
     def save_image(self, src: str):
         """Copy ``src`` to the images folder resizing to 600×600."""
@@ -156,8 +165,7 @@ class ImagePreview(QLabel):
             self.service.delete_product_image(self.codigo)
         except Exception:
             logger.exception("[ImagePreview] delete_image")
-        self.setPixmap(QPixmap())
-        self.setText("Sem imagem")
+        self.set_placeholder()
 
     # Events ---------------------------------------------------------
     def mousePressEvent(self, event):  # pragma: no cover - GUI
