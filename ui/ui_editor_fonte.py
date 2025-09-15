@@ -847,6 +847,7 @@ class FTApp(QWidget):
             match_font(lbl, self.edNome)
             fc.add(lbl, 0)
             val = QLabel("—")
+            val.setAlignment(Qt.AlignCenter)
             val.setStyleSheet(LABEL_VALUE_STYLE)
             match_font(val, self.edNome)
             fc.add(val, 0)
