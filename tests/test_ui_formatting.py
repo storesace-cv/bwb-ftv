@@ -67,8 +67,8 @@ def test_ftapp_formats_numbers(qapp):
     expected_fc_texts = [
         format_pt_number(100),
         format_pt_number(50),
-        f"{format_pt_number(0)}%",
-        f"{format_pt_number(0)}%",
+        "N/A",
+        "N/A",
         format_pt_number(20),
     ]
     assert [lb.text() for lb in ft.lbFoodCosts] == expected_fc_texts
@@ -86,7 +86,7 @@ def test_ftapp_food_cost_missing_iva(qapp):
             )
 
     ft = FTApp(NoIVAService())
-    assert [lb.text() for lb in ft.lbFoodCosts] == [f"{format_pt_number(0)}%"] * 5
+    assert [lb.text() for lb in ft.lbFoodCosts] == ["N/A"] * 5
     ft.close()
 
 

@@ -1185,10 +1185,10 @@ class FTApp(QWidget):
                 if iva in (None, 0):
                     missing.append("iva")
                 if missing:
-                    logger.warning(
+                    logger.debug(
                         "cannot compute food cost: missing %s", " e ".join(missing)
                     )
-                lbl.setText(f"{format_pt_number(0)}%")
+                lbl.setText("N/A")
             else:
                 lbl.setText(format_pt_number(pct))
 
