@@ -439,6 +439,13 @@ def calculate_food_cost(total, pvp, iva):
         Percentage representing the food cost, or ``None`` when any input is
         invalid or zero.
     """
+    # Validate inputs before attempting any numeric conversion. ``None`` or
+    # empty string values should short-circuit the calculation without
+    # emitting warnings, as they often arise from incomplete data entry.
+    for name, value in {"total": total, "pvp": pvp, "iva": iva}.items():
+        if value is None or value == "":
+            logger.debug("%s is missing", name)
+            return None
 
     try:
         total = float(total)
