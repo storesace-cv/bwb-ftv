@@ -689,7 +689,7 @@ class FTApp(QWidget):
         self.C3 = Zone(
             "B3.C1", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
         )
-        page_ly.addWidget(self._section_box("[B3] - Custos", self.C3), 0)
+        page_ly.addWidget(self._section_box("[B3] - Food Cost", self.C3), 0)
 
         C3A = Zone(
             "B3.C1.A",
