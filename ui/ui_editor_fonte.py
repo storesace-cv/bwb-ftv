@@ -54,6 +54,7 @@
 # 2025-09-14 18:23 — v3.91 — Largura da página adaptativa; scroll horizontal
 #    desativado.
 # 2025-09-15 01:19 — v3.92 — Placeholder padrão para imagens ausentes.
+# 2025-09-15 02:40 — v3.93 — B4 com galeria de 4 imagens (PrepImagePreview).
 
 import sys
 import logging
@@ -215,6 +216,87 @@ class ImagePreview(QLabel):
             elif clicked == btn_del:
                 self.delete_image()
 
+# -----------------------------------------------------------
+
+
+class PrepImagePreview(ImagePreview):
+    """Preview widget for preparation step images."""
+
+    def __init__(
+        self,
+        idx: int,
+        service: ProductService | None = None,
+        parent=None,
+    ):
+        super().__init__(codigo=None, service=service, parent=parent)
+        self.idx = idx
+
+    def load_image(self, codigo: str):  # type: ignore[override]
+        """Load and show the preparation image for ``codigo`` and step ``idx``."""
+        self.codigo = codigo
+        if not self.service:
+            return
+        path = self.service.get_preparacao_image_path(codigo, self.idx)
+        if path.exists():
+            self._orig_pix = QPixmap(str(path))
+            self._update_pixmap()
+            self.setText("")
+        else:
+            self.set_placeholder()
+
+    def save_image(self, src: str):  # type: ignore[override]
+        if not self.codigo or not src or not self.service:
+            return
+        try:
+            self.service.save_preparacao_image(self.codigo, self.idx, src)
+        except Exception:
+            logger.exception("[PrepImagePreview] save_image")
+            return
+        self.load_image(self.codigo)
+
+    def delete_image(self):  # type: ignore[override]
+        if not self.codigo or not self.service:
+            return
+        try:
+            self.service.delete_preparacao_image(self.codigo, self.idx)
+        except Exception:
+            logger.exception("[PrepImagePreview] delete_image")
+        self.set_placeholder()
+
+    def mousePressEvent(self, event):  # pragma: no cover - GUI
+        if not self.codigo or not self.service:
+            return
+        path = self.service.get_preparacao_image_path(self.codigo, self.idx)
+        if not path.exists():
+            fname, _ = QFileDialog.getOpenFileName(
+                self,
+                "Selecionar imagem",
+                "",
+                "Images (*.png *.jpg *.jpeg *.bmp)",
+            )
+            if fname:
+                self.save_image(fname)
+        else:
+            msg = QMessageBox(self)
+            msg.setWindowTitle("Imagem")
+            msg.setText("Pretende substituir ou apagar a imagem?")
+            btn_sub = msg.addButton("Substituir", QMessageBox.AcceptRole)
+            btn_del = msg.addButton("Apagar", QMessageBox.DestructiveRole)
+            msg.addButton("Cancelar", QMessageBox.RejectRole)
+            msg.exec_()
+            clicked = msg.clickedButton()
+            if clicked == btn_sub:
+                fname, _ = QFileDialog.getOpenFileName(
+                    self,
+                    "Selecionar imagem",
+                    "",
+                    "Images (*.png *.jpg *.jpeg *.bmp)",
+                )
+                if fname:
+                    self.save_image(fname)
+            elif clicked == btn_del:
+                self.delete_image()
+
 # ------------------------ Main App ------------------------
 
 
@@ -319,6 +401,10 @@ class FTApp(QWidget):
         self._build_ui()
         self._connect_nav()
         self._load_record(self.cur_index)
+        codigo = getattr(self.current_product, "code", None)
+        if codigo:
+            for pv in getattr(self, "prep_previews", []):
+                pv.load_image(codigo)
 
     def _section_box(self, title: str, zone: Zone) -> QGroupBox:
         box = QGroupBox(title)
@@ -610,11 +696,43 @@ class FTApp(QWidget):
 
         C3AB.add(QLabel("Food Cost:"), 0)
 
-        # ---------------- B4 — Preparação (B4.C1) ----------------
-        self.C4 = Zone(
-            "B4.C1", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
+        # ---------------- B4 — Preparação (B4) ----------------
+        self.B4 = Zone(
+            "B4", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
         )
-        page_ly.addWidget(self._section_box("[B4] - Preparação", self.C4), 1)
+        page_ly.addWidget(self._section_box("[B4] - Preparação", self.B4), 1)
+
+        self.C4 = Zone(
+            "B4.C1", self.B4, flow="v", level=1, show_overlays=layout.DEV_OVERLAYS
+        )
+        self.B4.add(self.C4, 1)
+
+        self.C4_imgs = Zone(
+            "B4.C2", self.B4, flow="h", level=1, show_overlays=layout.DEV_OVERLAYS
+        )
+        self.B4.add(self.C4_imgs, 0)
+
+        self.prep_previews: list[PrepImagePreview] = []
+        for idx in range(1, 5):
+            z = Zone(
+                f"B4.C2.{idx}",
+                self.C4_imgs,
+                flow="v",
+                level=2,
+                show_overlays=layout.DEV_OVERLAYS,
+            )
+            self.C4_imgs.add(z, 1)
+            preview = PrepImagePreview(idx, self.service)
+            z.add(preview, 1)
+            self.prep_previews.append(preview)
+
+        try:
+            init_code_imgs = self.service.codigo_at(self.cur_index)
+        except Exception:
+            init_code_imgs = None
+        if init_code_imgs:
+            for pv in self.prep_previews:
+                pv.load_image(init_code_imgs)
 
         # Toolbar de formatação
         toolbar = QToolBar()
@@ -993,6 +1111,11 @@ class FTApp(QWidget):
                 self.image_preview.load_image(codigo)
             except Exception as e:
                 logger.exception("[ImagePreview] %s", e)
+            for pv in getattr(self, "prep_previews", []):
+                try:
+                    pv.load_image(codigo)
+                except Exception as e:
+                    logger.exception("[PrepImagePreview] %s", e)
         finally:
             self._loading = False
 
