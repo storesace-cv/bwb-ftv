@@ -212,6 +212,38 @@ def delete_preparacao_image(codigo: str, idx: int) -> Path | None:
     return None
 
 
+def _row_to_ingredient(row: dict, codigo: str) -> Ingredient:
+    """Convert a raw ingredient ``row`` into an :class:`Ingredient`.
+
+    Shared by different product retrieval helpers to ensure consistent
+    handling of missing names and automatic total calculation.
+    """
+
+    name = row.get("ComponenteNome") or ""
+    if not name:
+        logger.warning(
+            "[ProductService] Nome do ingrediente vazio em %s: %s",
+            codigo,
+            row,
+        )
+    quantity = row.get("Qtd") or 0
+    ppu = row.get("Ppu")
+    total = row.get("Preco")
+    if total is None and ppu is not None:
+        try:
+            total = float(ppu) * float(quantity)
+        except (TypeError, ValueError):
+            total = None
+    return Ingredient(
+        name=name,
+        quantity=quantity,
+        unit=row.get("Unidade") or "",
+        ppu=ppu,
+        total=total,
+        code=row.get("ComponenteCodigo"),
+    )
+
+
 class ProductService:
     """High level API used by the UI to interact with products and helpers."""
 
@@ -281,34 +313,18 @@ class ProductService:
         """Return technical sheet rows for ``codigo`` as dataclasses."""
 
         rows = self.ds.get_ingredientes(codigo)
-        fichas: list[FichaTecnica] = []
-        for row in rows:
-            name = row.get("ComponenteNome") or ""
-            if not name:
-                logger.warning(
-                    "[ProductService] Nome do ingrediente vazio em %s: %s",
-                    codigo,
-                    row,
-                )
-            quantity = row.get("Qtd") or 0
-            ppu = row.get("Ppu")
-            total = row.get("Preco")
-            if total is None and ppu is not None:
-                try:
-                    total = float(ppu) * float(quantity)
-                except (TypeError, ValueError):
-                    total = None
-            fichas.append(
-                FichaTecnica(
-                    ingredient=name,
-                    quantity=quantity,
-                    unit=row.get("Unidade") or "",
-                    ppu=ppu,
-                    total=total,
-                    code=row.get("ComponenteCodigo"),
-                )
+        return [
+            FichaTecnica(
+                ingredient=ing.name,
+                quantity=ing.quantity,
+                unit=ing.unit,
+                ppu=ing.ppu,
+                total=ing.total,
+                code=ing.code,
             )
-        return fichas
+            for row in rows
+            for ing in [_row_to_ingredient(row, codigo)]
+        ]
 
     # -- cost calculations ------------------------------------------------
     def calculate_cost(
@@ -343,33 +359,7 @@ def get_product_info(ds: DataStore, codigo: str) -> Product:
     iva = pvps.get("iva")
     ing_rows = ds.get_ingredientes(codigo) if ds else []
 
-    ingredients: List[Ingredient] = []
-    for row in ing_rows:
-        name = row.get("ComponenteNome") or ""
-        if not name:
-            logger.warning(
-                "[ProductService] Nome do ingrediente vazio em %s: %s",
-                codigo,
-                row,
-            )
-        quantity = row.get("Qtd") or 0
-        ppu = row.get("Ppu")
-        total = row.get("Preco")
-        if total is None and ppu is not None:
-            try:
-                total = float(ppu) * float(quantity)
-            except (TypeError, ValueError):
-                total = None
-        ingredients.append(
-            Ingredient(
-                name=name,
-                quantity=quantity,
-                unit=row.get("Unidade") or "",
-                ppu=ppu,
-                total=total,
-                code=row.get("ComponenteCodigo"),
-            )
-        )
+    ingredients = [_row_to_ingredient(row, codigo) for row in ing_rows]
 
     return Product(
         code=info.get("codigo") or codigo,
