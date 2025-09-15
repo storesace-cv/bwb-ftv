@@ -55,6 +55,8 @@
 #    desativado.
 # 2025-09-15 01:19 — v3.92 — Placeholder padrão para imagens ausentes.
 # 2025-09-15 02:40 — v3.93 — B4 com galeria de 4 imagens (PrepImagePreview).
+# 2025-09-15 02:51 — v3.94 — Preenchimento sequencial das imagens de
+#    preparação.
 
 import sys
 import logging
@@ -266,6 +268,22 @@ class PrepImagePreview(ImagePreview):
     def mousePressEvent(self, event):  # pragma: no cover - GUI
         if not self.codigo or not self.service:
             return
+
+        # Antes de permitir ações no passo atual, garantir que todas as
+        # imagens anteriores existem. Se alguma estiver em falta,
+        # delegar o clique para o respetivo ``PrepImagePreview`` e sair.
+        for prev_idx in range(1, self.idx):
+            prev_path = self.service.get_preparacao_image_path(
+                self.codigo, prev_idx
+            )
+            if not prev_path.exists():
+                parent = self.parent()
+                while parent and not hasattr(parent, "prep_previews"):
+                    parent = parent.parent()
+                if parent is not None:
+                    parent.prep_previews[prev_idx - 1].mousePressEvent(event)
+                return
+
         path = self.service.get_preparacao_image_path(self.codigo, self.idx)
         if not path.exists():
             fname, _ = QFileDialog.getOpenFileName(
