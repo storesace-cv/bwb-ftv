@@ -17,6 +17,7 @@ Exit codes:
   2 = ficheiro(s) em falta
   3 = erro de execução SQL
   4 = BD não é um ficheiro SQLite válido ou não abriu
+  5 = falha ao fechar a base de dados após a migração
 """
 import logging
 import sqlite3
@@ -77,8 +78,11 @@ def main():
     finally:
         try:
             conn.close()
-        except Exception:
-            pass
+        except sqlite3.Error as exc:
+            logger.warning(
+                "[MIGRAÇÃO][AVISO] Falha ao fechar a base de dados: %s", exc
+            )
+            sys.exit(5)
 
 
 if __name__ == "__main__":
