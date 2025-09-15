@@ -436,8 +436,8 @@ class FTApp(QWidget):
         box = QGroupBox(title)
         box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         ly = QVBoxLayout(box)
-        ly.setContentsMargins(8, 8, 8, 8)
-        ly.setSpacing(8)
+        ly.setContentsMargins(3, 5, 3, 5)
+        ly.setSpacing(5)
         ly.addWidget(zone)
         return box
 
@@ -445,8 +445,8 @@ class FTApp(QWidget):
         self.setWindowTitle(APP_TITLE)
         self.resize(1180, 860)
         root = QVBoxLayout(self)
-        root.setContentsMargins(8, 8, 8, 8)
-        root.setSpacing(8)
+        root.setContentsMargins(3, 5, 3, 5)
+        root.setSpacing(5)
 
         # --- Top bar: Overlay (esq) + Menu (dir) ---
         top = QHBoxLayout()
