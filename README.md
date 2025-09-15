@@ -7,6 +7,34 @@ sincroniza com o ecossistema NET-bo, regista alergénios por ingrediente e armaz
 informação numa base de dados SQLite.
 Esta aplicação foi criada pela [BWB – Business with Brains](https://bwb.pt).
 
+## Quick Start
+
+Sequência mínima para executar a aplicação:
+
+**Unix**
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp /caminho/para/Produtos_Base.xlsx imports/
+cp /caminho/para/FichasTecnicas_base.xlsx imports/
+cp /caminho/para/PreçosTaxas_base.xlsx imports/
+python bwb-fichas_tecnicas.py
+```
+
+**Windows**
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install -r requirements.txt
+copy C:\caminho\para\Produtos_Base.xlsx imports\
+copy C:\caminho\para\FichasTecnicas_base.xlsx imports\
+copy C:\caminho\para\PreçosTaxas_base.xlsx imports\
+python bwb-fichas_tecnicas.py
+```
+
 Principais funcionalidades:
 
 - Importação de produtos, fichas técnicas e preços via Excel.
@@ -120,7 +148,7 @@ Para utilizar a base de dados com conteúdo:
    - **Windows**
 
      ```powershell
-     copy C:\\caminho\\para\\ftv.db databases\ftv.db
+     copy C:\caminho\para\\ftv.db databases\ftv.db
      ```
 
 2. **Defina a variável de ambiente `FTV_DB_PATH`**
@@ -134,7 +162,7 @@ Para utilizar a base de dados com conteúdo:
    - **Windows**
 
      ```powershell
-     setx FTV_DB_PATH "C:\\caminho\\para\\ftv.db"
+     setx FTV_DB_PATH "C:\caminho\para\\ftv.db"
      ```
 
 Para diagnosticar problemas, verifique nos logs a mensagem
