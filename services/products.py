@@ -444,17 +444,21 @@ def calculate_food_cost(total, pvp, iva):
         total = float(total)
         pvp = float(pvp)
         iva = float(iva)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError) as exc:
+        logger.warning("invalid numeric value for total, pvp or iva: %s", exc)
         return None
 
     if pvp <= 0:
+        logger.warning("pvp must be greater than zero")
         return None
 
     try:
         pvp_sem_iva = pvp / (1 + iva / 100)
-    except Exception:
+    except (ZeroDivisionError, TypeError) as exc:
+        logger.warning("cannot compute pvp without IVA: %s", exc)
         return None
     if pvp_sem_iva == 0:
+        logger.warning("pvp without IVA is zero")
         return None
     return (total / pvp_sem_iva) * 100
 
