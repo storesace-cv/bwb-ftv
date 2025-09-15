@@ -262,7 +262,7 @@ class DataStore:
                 "Peso",
             },
             "PrecosTaxas": {"Codigo", "Loja"},
-            "Alergenicos": {"Id", "Nome"},
+            "Alergenios": {"Id", "Nome"},
             "TiposArtigos": {"Cod", "Descricao", "Ativo"},
             "Validade": {"Cod", "Descricao", "Ativo"},
             "Temperaturas": {"Cod", "Descricao", "Ativo"},
@@ -583,7 +583,7 @@ class DataStore:
             return None
         try:
             cur = self.conn.cursor()
-            cur.execute("SELECT Id, Nome FROM Alergenicos ORDER BY Id")
+            cur.execute("SELECT Id, Nome FROM Alergenios ORDER BY Id")
             rows = cur.fetchall()
         except sqlite3.Error as exc:
             logger.error(

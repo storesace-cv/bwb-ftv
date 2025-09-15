@@ -80,7 +80,7 @@ def test_import_allergens_can_skip_archiving(tmp_path):
         allergen_service.import_allergens(source, conn, archive=False)
         cur = conn.cursor()
         cur.execute(
-            "SELECT Nome, NomeIngles FROM Alergenicos WHERE Id = ?",
+            "SELECT Nome, NomeIngles FROM Alergenios WHERE Id = ?",
             (payload[0]["id"],),
         )
         row = cur.fetchone()

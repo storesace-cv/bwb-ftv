@@ -88,6 +88,9 @@
 | Nome | Nome do alergénio |
 | Ativo | Indicador de ativo |
 
+> Nota: o ``DataStore`` valida a tabela ``Alergenios`` e exige, pelo menos,
+> as colunas ``Id`` e ``Nome`` para manter a compatibilidade com a aplicação.
+
 ### `TiposArtigos`
 | Campo | Descrição |
 |-------|-----------|
