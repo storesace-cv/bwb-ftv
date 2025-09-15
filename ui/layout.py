@@ -12,6 +12,8 @@ from PyQt5.QtWidgets import (
 
 DEV_OVERLAYS = True
 
+DEFAULT_ZONE_MARGINS = (3, 5)
+
 
 # Updated to allow block-prefixed cell identifiers like ``B1.C1``
 _TAG_RE = re.compile(r"^B\d+(?:\.C\d+(?:\.(?:A|B|\d+))*)?$")
@@ -46,7 +48,10 @@ class Zone(QWidget):
         tag: str,
         parent=None,
         flow="v",
-        margins=8,
+        margins: int | tuple[int, int] | None = DEFAULT_ZONE_MARGINS,
+        *,
+        margin_h: int | None = None,
+        margin_v: int | None = None,
         spacing=6,
         level: int = 0,
         show_overlays: bool = True,
@@ -62,7 +67,34 @@ class Zone(QWidget):
             self.ly = QVBoxLayout(self)
         else:
             self.ly = QHBoxLayout(self)
-        self.ly.setContentsMargins(margins, margins, margins, margins)
+
+        if margins is None:
+            margin_h_val, margin_v_val = DEFAULT_ZONE_MARGINS
+        elif isinstance(margins, (tuple, list)):
+            if len(margins) != 2:
+                raise ValueError("Expected a (horizontal, vertical) margin tuple")
+            margin_h_val, margin_v_val = margins
+        else:
+            margin_h_val = margin_v_val = margins
+
+        if margin_h is not None:
+            margin_h_val = margin_h
+        if margin_v is not None:
+            margin_v_val = margin_v
+
+        self._margin_h = int(margin_h_val)
+        self._margin_v = int(margin_v_val)
+        self._margin_spec: tuple[int, int] = (self._margin_h, self._margin_v)
+
+        if self._margin_spec == DEFAULT_ZONE_MARGINS:
+            self.ly.setContentsMargins(3, 5, 3, 5)
+        else:
+            self.ly.setContentsMargins(
+                self._margin_h,
+                self._margin_v,
+                self._margin_h,
+                self._margin_v,
+            )
         self.ly.setSpacing(spacing)
 
         self._tag_lbl = QLabel(self.tag, self)
@@ -168,7 +200,7 @@ class Zone(QWidget):
                 tag,
                 cont,
                 flow="v",
-                margins=4,
+                margins=self._margin_spec,
                 spacing=self.ly.spacing(),
                 level=self._level + 1,
                 show_overlays=DEV_OVERLAYS,
@@ -193,7 +225,7 @@ class Zone(QWidget):
                 tag,
                 cont,
                 flow="v",
-                margins=4,
+                margins=self._margin_spec,
                 spacing=self.ly.spacing(),
                 level=self._level + 1,
                 show_overlays=DEV_OVERLAYS,
