@@ -10,7 +10,7 @@ import unicodedata
 import re
 import time
 from contextlib import closing, contextmanager
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from openpyxl import load_workbook
 
 from data.datastore import DataStore
@@ -176,18 +176,23 @@ def get_image_path(codigo: str) -> Path:
     return img_dir / f"{codigo}.png"
 
 
-def save_product_image(codigo: str, src_path: str | Path) -> Path:
+def save_product_image(codigo: str, src_path: str | Path) -> Path | None:
     """Save ``src_path`` as the product image for ``codigo``.
 
     The image is resized to fit within 600×600 and stored as PNG in the
-    ``databases/images`` directory.
+    ``databases/images`` directory.  Returns ``None`` if the image could not
+    be processed.
     """
 
     dest = get_image_path(codigo)
-    with Image.open(src_path) as img:
-        img.thumbnail((600, 600))
-        img.info.pop("icc_profile", None)
-        img.save(dest, format="PNG")
+    try:
+        with Image.open(src_path) as img:
+            img.thumbnail((600, 600))
+            img.info.pop("icc_profile", None)
+            img.save(dest, format="PNG")
+    except (OSError, UnidentifiedImageError) as exc:  # pragma: no cover - logs
+        logger.error("[ProductService] Failed to save image %s: %s", src_path, exc)
+        return None
     return dest
 
 
@@ -198,7 +203,13 @@ def delete_product_image(codigo: str) -> Path | None:
     if path.exists():
         ts = int(time.time())
         backup = path.with_name(f"{codigo}.{ts}.png")
-        path.rename(backup)
+        try:
+            path.rename(backup)
+        except OSError as exc:  # pragma: no cover - logs
+            logger.error(
+                "[ProductService] Failed to archive image %s: %s", path, exc
+            )
+            return None
         return backup
     return None
 
@@ -214,14 +225,22 @@ def get_preparacao_image_path(codigo: str, idx: int) -> Path:
 
 def save_preparacao_image(
     codigo: str, idx: int, src_path: str | Path
-) -> Path:
-    """Save ``src_path`` as the image for a preparation step."""
+) -> Path | None:
+    """Save ``src_path`` as the image for a preparation step.
+
+    Returns ``None`` if the image could not be processed."""
 
     dest = get_preparacao_image_path(codigo, idx)
-    with Image.open(src_path) as img:
-        img.thumbnail((600, 600))
-        img.info.pop("icc_profile", None)
-        img.save(dest, format="PNG")
+    try:
+        with Image.open(src_path) as img:
+            img.thumbnail((600, 600))
+            img.info.pop("icc_profile", None)
+            img.save(dest, format="PNG")
+    except (OSError, UnidentifiedImageError) as exc:  # pragma: no cover - logs
+        logger.error(
+            "[ProductService] Failed to save prep image %s: %s", src_path, exc
+        )
+        return None
     return dest
 
 
@@ -232,7 +251,13 @@ def delete_preparacao_image(codigo: str, idx: int) -> Path | None:
     if path.exists():
         ts = int(time.time())
         backup = path.with_name(f"{codigo}-{idx}.{ts}.png")
-        path.rename(backup)
+        try:
+            path.rename(backup)
+        except OSError as exc:  # pragma: no cover - logs
+            logger.error(
+                "[ProductService] Failed to archive prep image %s: %s", path, exc
+            )
+            return None
         return backup
     return None
 
@@ -313,7 +338,7 @@ class ProductService:
     def get_image_path(self, codigo: str) -> Path:
         return get_image_path(codigo)
 
-    def save_product_image(self, codigo: str, src_path: str | Path) -> Path:
+    def save_product_image(self, codigo: str, src_path: str | Path) -> Path | None:
         return save_product_image(codigo, src_path)
 
     def delete_product_image(self, codigo: str) -> Path | None:
@@ -324,7 +349,7 @@ class ProductService:
 
     def save_preparacao_image(
         self, codigo: str, idx: int, src_path: str | Path
-    ) -> Path:
+    ) -> Path | None:
         return save_preparacao_image(codigo, idx, src_path)
 
     def delete_preparacao_image(self, codigo: str, idx: int) -> Path | None:
