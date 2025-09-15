@@ -58,3 +58,36 @@ def test_import_allergens_archives_source_file(tmp_path, monkeypatch):
         payload, ensure_ascii=False
     )
     assert not source.exists()
+
+
+def test_import_allergens_can_skip_archiving(tmp_path):
+    payload = [
+        {
+            "id": 7,
+            "nome": "Soja",
+            "nome_ingles": "Soy",
+            "descricao": "Leguminosa",
+            "exemplos": ["Tofu"],
+            "notas": "",
+        }
+    ]
+
+    source = tmp_path / "allergens.json"
+    source.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+
+    conn = sqlite3.connect(":memory:")
+    try:
+        allergen_service.import_allergens(source, conn, archive=False)
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT Nome, NomeIngles FROM Alergenicos WHERE Id = ?",
+            (payload[0]["id"],),
+        )
+        row = cur.fetchone()
+        assert row == (payload[0]["nome"], payload[0]["nome_ingles"])
+    finally:
+        conn.close()
+
+    backups_dir = tmp_path / "databases" / "backups"
+    assert not backups_dir.exists()
+    assert source.exists()

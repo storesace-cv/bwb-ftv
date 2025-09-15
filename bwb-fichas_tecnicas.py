@@ -9,10 +9,12 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QFont
 
 from data.datastore import DataStore  # noqa: E402
+from services.allergens import import_allergens  # noqa: E402
 from services.products import ProductService  # noqa: E402
 from ui.ui_editor_fonte import FTApp  # noqa: E402
 from ui.splashscreen import SplashScreen  # noqa: E402
 from utils.paths import get_project_root  # noqa: E402
+from utils.files import archive_with_timestamp  # noqa: E402
 
 
 logger = logging.getLogger(__name__)
@@ -47,6 +49,43 @@ def main():
     # DataStore
     ds = DataStore()
     logger.info("[LAUNCHER] DataStore importado de: %s", DataStore.__module__)
+
+    root = get_project_root()
+    allergens_path = root / "databases" / "allergens.json"
+    if allergens_path.exists():
+        if ds.conn is None:
+            logger.error(
+                "[LAUNCHER] Ficheiro de alergénios encontrado mas ligação à BD indisponível"
+            )
+        else:
+            logger.info("[LAUNCHER] A importar alergénios de %s", allergens_path)
+            try:
+                import_allergens(allergens_path, ds.conn, archive=False)
+            except Exception as exc:  # pragma: no cover - defensive log guard
+                logger.error(
+                    "[LAUNCHER] Falha a importar alergénios: %s", exc, exc_info=True
+                )
+            else:
+                logger.info("[LAUNCHER] Alergénios importados com sucesso")
+                backups_dir = root / "databases" / "backups"
+                try:
+                    archived_path = archive_with_timestamp(
+                        allergens_path,
+                        backups_dir,
+                        prefix="allergens",
+                        suffix=".json",
+                    )
+                except Exception as exc:  # pragma: no cover - defensive log guard
+                    logger.error(
+                        "[LAUNCHER] Falha a arquivar ficheiro de alergénios: %s",
+                        exc,
+                        exc_info=True,
+                    )
+                else:
+                    logger.info(
+                        "[LAUNCHER] Ficheiro de alergénios arquivado em %s", archived_path
+                    )
+
     svc = ProductService(ds)
 
     # Janela
