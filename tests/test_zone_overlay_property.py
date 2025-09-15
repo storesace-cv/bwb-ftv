@@ -1,9 +1,21 @@
 from PyQt5.QtWidgets import QLabel
 
+import pytest
+
 from ui import layout
 
 
-def test_zone_overlay_property_updates(qapp):
+@pytest.fixture
+def overlays_enabled():
+    original = layout.DEV_OVERLAYS
+    layout.DEV_OVERLAYS = True
+    try:
+        yield
+    finally:
+        layout.DEV_OVERLAYS = original
+
+
+def test_zone_overlay_property_updates(qapp, overlays_enabled):
     zone = layout.Zone("B1", show_overlays=True)
     assert zone.property("overlays") == "on"
     zone.apply_overlays(False)
@@ -12,14 +24,14 @@ def test_zone_overlay_property_updates(qapp):
     assert zone.property("overlays") == "on"
 
 
-def test_zone_apply_overlays_restores_text_and_border(qapp):
+def test_zone_apply_overlays_restores_text_and_border(qapp, overlays_enabled):
     zone = layout.Zone("B1", show_overlays=False)
     value_widget = QLabel("value", zone)
     label = zone.add_row("Nome", value_widget, overlay_text="Overlay")
 
     zone.apply_overlays(False)
     assert label.text() == "Nome"
-    assert zone.styleSheet() == ""
+    assert zone.styleSheet() == "background: transparent; border: none;"
 
     zone.apply_overlays(True)
     assert label.text() == "Overlay"
@@ -27,7 +39,7 @@ def test_zone_apply_overlays_restores_text_and_border(qapp):
 
     zone.apply_overlays(False)
     assert label.text() == "Nome"
-    assert zone.styleSheet() == ""
+    assert zone.styleSheet() == "background: transparent; border: none;"
 
 
 def test_zone_add_row_has_no_debug_styles_by_default(qapp):
@@ -43,7 +55,7 @@ def test_zone_add_row_has_no_debug_styles_by_default(qapp):
     assert "border-radius" not in value_widget.styleSheet()
 
 
-def test_zone_add_row_allows_opt_in_debug_styles(qapp):
+def test_zone_add_row_allows_opt_in_debug_styles(qapp, overlays_enabled):
     zone = layout.Zone("B1")
     value_widget = QLabel("valor")
     label = zone.add_row("Nome", value_widget, overlay_text="Overlay", debug_styles=True)
@@ -62,4 +74,15 @@ def test_zone_add_row_allows_opt_in_debug_styles(qapp):
 
     zone.apply_overlays(False)
     assert label.text() == "Nome"
-    assert zone.styleSheet() == ""
+    assert zone.styleSheet() == "background: transparent; border: none;"
+
+
+def test_zone_hides_overlays_when_globally_disabled(qapp):
+    original = layout.DEV_OVERLAYS
+    layout.DEV_OVERLAYS = False
+    try:
+        zone = layout.Zone("B1", show_overlays=True)
+        assert zone.property("overlays") == "off"
+        assert zone.styleSheet() == "background: transparent; border: none;"
+    finally:
+        layout.DEV_OVERLAYS = original
