@@ -731,7 +731,7 @@ class FTApp(QWidget):
                 base_cont,
                 flow="v",
                 margins=2,
-                spacing=2,
+                spacing=6,
                 level=C1A21_base._level + 1,
                 show_overlays=layout.DEV_OVERLAYS,
             )
