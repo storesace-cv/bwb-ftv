@@ -718,6 +718,24 @@ class FTApp(QWidget):
         self.C3.add(C3A, 1)
         C3A.add(QLabel("Food Cost:"), 0)
 
+        C3AA = Zone(
+            "B3.C1.A.A",
+            C3A,
+            flow="h",
+            level=2,
+            show_overlays=layout.DEV_OVERLAYS,
+        )
+        C3AA.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        C3A.add(C3AA, 0)
+        fc1, fc2, fc3, fc4, fc5 = C3AA.split_h((1, 1, 1, 1, 1))
+
+        self.lbFoodCosts: list[QLabel] = []
+        for idx, fc in enumerate((fc1, fc2, fc3, fc4, fc5), start=1):
+            fc.add(QLabel(f"Food Cost #{idx}"), 0)
+            val = QLabel("—")
+            fc.add(val, 0)
+            self.lbFoodCosts.append(val)
+
         # ---------------- B4 — Preparação (B4) ----------------
         self.B4 = Zone(
             "B4", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS

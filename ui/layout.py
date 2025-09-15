@@ -137,33 +137,28 @@ class Zone(QWidget):
         h = QHBoxLayout(cont)
         h.setContentsMargins(0, 0, 0, 0)
         h.setSpacing(self.ly.spacing())
-        left_tag = self.tag + ".A"
-        right_tag = self.tag + ".B"
-        for t in (left_tag, right_tag):
-            if not validate_tag(t):
-                raise ValueError(f"Invalid zone tag: {t}")
-        left = Zone(
-            left_tag,
-            cont,
-            flow="v",
-            margins=4,
-            spacing=self.ly.spacing(),
-            level=self._level + 1,
-            show_overlays=DEV_OVERLAYS,
-        )
-        right = Zone(
-            right_tag,
-            cont,
-            flow="v",
-            margins=4,
-            spacing=self.ly.spacing(),
-            level=self._level + 1,
-            show_overlays=DEV_OVERLAYS,
-        )
-        h.addWidget(left, ratios[0])
-        h.addWidget(right, ratios[1])
+        if len(ratios) == 2:
+            tags = ["A", "B"]
+        else:
+            tags = [str(i) for i in range(1, len(ratios) + 1)]
+        zones = []
+        for tag_suf, ratio in zip(tags, ratios):
+            tag = f"{self.tag}.{tag_suf}"
+            if not validate_tag(tag):
+                raise ValueError(f"Invalid zone tag: {tag}")
+            zone = Zone(
+                tag,
+                cont,
+                flow="v",
+                margins=4,
+                spacing=self.ly.spacing(),
+                level=self._level + 1,
+                show_overlays=DEV_OVERLAYS,
+            )
+            h.addWidget(zone, ratio)
+            zones.append(zone)
         self.ly.addWidget(cont, 1)
-        return left, right
+        return tuple(zones)
 
     def split_v(self, ratios=(1, 1)):
         cont = QWidget(self)
