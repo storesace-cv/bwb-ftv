@@ -86,6 +86,9 @@
 | Nome | Nome do alergénio |
 | Ativo | Indicador de ativo |
 
+> Nota: o ``DataStore`` exige a presença da tabela ``Alergenios`` com as colunas
+> ``Id`` e ``Nome`` para garantir que as sincronizações de alergénios funcionem.
+
 ### `TiposArtigos`
 | Campo | Descrição |
 |---|---|

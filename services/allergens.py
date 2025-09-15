@@ -44,7 +44,7 @@ def _load_payload(path: Path) -> list[dict[str, Any]]:
 
 
 def _ensure_table(conn, exemplos_type: str) -> None:
-    """Ensure the ``Alergenicos`` table exists with the required columns."""
+    """Ensure the ``Alergenios`` table exists with the required columns."""
 
     columns: Iterable[tuple[str, str]] = (
         ("Id", "INTEGER PRIMARY KEY"),
@@ -57,18 +57,18 @@ def _ensure_table(conn, exemplos_type: str) -> None:
     column_defs = ", ".join(f"{name} {definition}" for name, definition in columns)
 
     cur = conn.cursor()
-    cur.execute(f"CREATE TABLE IF NOT EXISTS Alergenicos ({column_defs})")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS Alergenios ({column_defs})")
 
     existing_columns: set[str]
     if isinstance(conn, sqlite3.Connection):
-        cur.execute("PRAGMA table_info(Alergenicos)")
+        cur.execute("PRAGMA table_info(Alergenios)")
         existing_columns = {row[1] for row in cur.fetchall()}
     else:
         cur.execute(
             """
             SELECT column_name
             FROM information_schema.columns
-            WHERE table_name = 'alergenicos'
+            WHERE table_name = 'alergenios'
               AND table_schema = current_schema()
             """
         )
@@ -79,8 +79,8 @@ def _ensure_table(conn, exemplos_type: str) -> None:
             continue
         if name == "Id":
             # ``Id`` must be part of the original schema; adding it later is non-trivial.
-            raise ValueError("Table Alergenicos exists without primary key column 'Id'")
-        cur.execute(f"ALTER TABLE Alergenicos ADD COLUMN {name} {definition}")
+            raise ValueError("Table Alergenios exists without primary key column 'Id'")
+        cur.execute(f"ALTER TABLE Alergenios ADD COLUMN {name} {definition}")
 
 
 def import_allergens(path: Path, conn, *, archive: bool = True) -> None:
@@ -155,7 +155,7 @@ def import_allergens(path: Path, conn, *, archive: bool = True) -> None:
     if records:
         if is_sqlite:
             insert_sql = (
-                "INSERT INTO Alergenicos (Id, Nome, NomeIngles, Descricao, Exemplos, Notas) "
+                "INSERT INTO Alergenios (Id, Nome, NomeIngles, Descricao, Exemplos, Notas) "
                 "VALUES (?, ?, ?, ?, ?, ?) "
                 "ON CONFLICT(Id) DO UPDATE SET "
                 "Nome=excluded.Nome, "
@@ -166,7 +166,7 @@ def import_allergens(path: Path, conn, *, archive: bool = True) -> None:
             )
         else:
             insert_sql = (
-                "INSERT INTO Alergenicos (Id, Nome, NomeIngles, Descricao, Exemplos, Notas) "
+                "INSERT INTO Alergenios (Id, Nome, NomeIngles, Descricao, Exemplos, Notas) "
                 "VALUES (%s, %s, %s, %s, %s::jsonb, %s) "
                 "ON CONFLICT (Id) DO UPDATE SET "
                 "Nome = EXCLUDED.Nome, "

@@ -59,7 +59,7 @@ def test_import_allergens_rejects_invalid_entries(
     assert "Invalid allergen id" in str(excinfo.value)
 
     cur = ds.conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM Alergenicos")
+    cur.execute("SELECT COUNT(*) FROM Alergenios")
     assert cur.fetchone()[0] == 0
 
     backups_dir = tmp_path / "databases" / "backups"
@@ -106,7 +106,7 @@ def test_import_allergens_persists_rows_and_archives_source(
     cur = ds.conn.cursor()
     cur.execute(
         "SELECT Id, Nome, NomeIngles, Descricao, Exemplos, Notas "
-        "FROM Alergenicos ORDER BY Id"
+        "FROM Alergenios ORDER BY Id"
     )
     rows = [
         (
