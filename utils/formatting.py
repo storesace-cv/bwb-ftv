@@ -14,7 +14,7 @@ def parse_decimal(value):
     """
 
     if isinstance(value, str):
-        cleaned = value.replace(" ", "").replace(",", ".")
+        cleaned = value.replace(" ", "").replace(NBSP, "").replace(",", ".")
         try:
             return float(Decimal(cleaned))
         except (InvalidOperation, ValueError):
