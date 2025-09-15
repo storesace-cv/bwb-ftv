@@ -13,12 +13,15 @@ class SplashScreen(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowFlags(Qt.SplashScreen | Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setStyleSheet("background: transparent;")
         self.setFixedSize(800, 500)
 
         pixmap = QPixmap(str(Path(__file__).with_name("bwb-Splash.png")))
         self._background = QLabel(self)
         self._background.setPixmap(pixmap)
         self._background.setGeometry(0, 0, 800, 500)
+        self._background.setStyleSheet("background: transparent;")
 
         self._message: QLabel | None = None
         self._box: QDialogButtonBox | None = None
