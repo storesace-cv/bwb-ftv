@@ -1096,7 +1096,9 @@ class FTApp(QWidget):
             pvps = list(product.pvps or [])
             pvps.extend([None] * (5 - len(pvps)))
             for lbl, price in zip(self.lbPVPs, pvps):
-                lbl.setText(format_pt_number(price))
+                lbl.setText(
+                    "N/A" if price in (None, 0) else format_pt_number(price)
+                )
 
             def _select_by_code(combo, code_value):
                 if code_value is None:

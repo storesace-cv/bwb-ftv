@@ -55,8 +55,13 @@ def test_format_pt_number_basic():
 
 def test_ftapp_formats_numbers(qapp):
     ft = FTApp(DummyService())
-    expected_prices = [123, 246, None, 0, 615]
-    expected_texts = [format_pt_number(p) for p in expected_prices]
+    expected_texts = [
+        format_pt_number(123),
+        format_pt_number(246),
+        "N/A",
+        "N/A",
+        format_pt_number(615),
+    ]
     assert [lb.text() for lb in ft.lbPVPs] == expected_texts
     assert ft.edCustoTotal.text() == format_pt_number(100)
     expected_fc_texts = [
