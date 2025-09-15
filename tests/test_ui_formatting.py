@@ -1,3 +1,5 @@
+import logging
+
 from domain import Product
 from services.products import calculate_food_cost
 from ui.ui_editor_fonte import FTApp
@@ -75,7 +77,7 @@ def test_ftapp_formats_numbers(qapp):
     ft.close()
 
 
-def test_ftapp_food_cost_missing_iva(qapp):
+def test_ftapp_food_cost_missing_iva(qapp, caplog):
     class NoIVAService(DummyService):
         def get_product_info(self, codigo):
             return Product(
@@ -85,8 +87,10 @@ def test_ftapp_food_cost_missing_iva(qapp):
                 ingredients=[],
             )
 
-    ft = FTApp(NoIVAService())
-    assert [lb.text() for lb in ft.lbFoodCosts] == ["0%"] * 5
+    with caplog.at_level(logging.WARNING):
+        ft = FTApp(NoIVAService())
+    assert [lb.text() for lb in ft.lbFoodCosts] == ["--"] * 5
+    assert any("missing Iva1" in rec.message for rec in caplog.records)
     ft.close()
 
 
