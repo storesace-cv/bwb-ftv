@@ -134,12 +134,15 @@ class Zone(QWidget):
         label_minw: int | None = None,
         vspacing: int = 2,
         overlay_text: str | None = None,
+        *,
+        debug_styles: bool = False,
     ) -> QLabel:
         row = QWidget(self)
         row.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        row.setStyleSheet(
-            "background-color: rgba(0, 0, 0, 0.05); border-radius: 4px;"
-        )
+        if debug_styles:
+            row.setStyleSheet(
+                "background-color: rgba(0, 0, 0, 0.05); border-radius: 4px;"
+            )
         grid = QGridLayout(row)
         grid.setContentsMargins(0, 0, 0, 0)
         grid.setHorizontalSpacing(12)
@@ -151,22 +154,25 @@ class Zone(QWidget):
             else label_text
         )
         lbl = QLabel(display, row)
-        lbl.setStyleSheet(
-            "background-color: rgba(0, 0, 0, 0.03); border-radius: 4px;"
-        )
+        if debug_styles:
+            lbl.setStyleSheet(
+                "background-color: rgba(0, 0, 0, 0.03); border-radius: 4px;"
+            )
         lbl.setProperty("userLabel", label_text)
         lbl.setProperty("devLabel", overlay_text)
         lbl.setAlignment(Qt.AlignTop | Qt.AlignRight)
         if label_minw is not None:
             lbl.setFixedWidth(label_minw)
         value_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        try:
-            value_widget.setStyleSheet(
-                value_widget.styleSheet()
-                + "background-color: rgba(0, 0, 0, 0.03); border-radius: 4px;"
-            )
-        except Exception:
-            pass
+        if debug_styles:
+            try:
+                existing_style = value_widget.styleSheet()
+                extra = "background-color: rgba(0, 0, 0, 0.03); border-radius: 4px;"
+                value_widget.setStyleSheet(
+                    (existing_style + (" " if existing_style else "")) + extra
+                )
+            except Exception:
+                pass
         grid.addWidget(lbl, 0, 0, alignment=Qt.AlignTop | Qt.AlignRight)
         grid.addWidget(value_widget, 0, 1, alignment=Qt.AlignTop | Qt.AlignLeft)
         self.ly.addWidget(row, 0, Qt.AlignTop)
