@@ -4,6 +4,9 @@
 __pycache__/
 *.pyc
 
+# Environment files
+.env
+
 # Ignore logs, reports, and databases
 logs/
 reports/
