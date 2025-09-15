@@ -523,7 +523,14 @@ class FcostValuesRepo:
             row = cur.fetchone()
             if not row:
                 return None
-            return row[0], row[1]
+
+            vmin, vmax = row[0], row[1]
+            vmin = parse_decimal(vmin)
+            vmax = parse_decimal(vmax)
+            try:
+                return float(vmin), float(vmax)
+            except (TypeError, ValueError):
+                return None
         except sqlite3.Error as exc:
             logger.error(
                 "[FcostValuesRepo] get_range(%s) falhou: %s",
