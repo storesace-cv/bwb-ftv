@@ -55,25 +55,6 @@ NUMERIC_NAMES = {
 }
 
 
-def _infer_cols(headers: list[str]):
-    """Return indexes for required FichasTecnicas columns.
-
-    Spreadsheets are expected to use the canonical column names directly,
-    so this helper simply resolves their positions without considering
-    alternative aliases. ``ComponenteCodigo`` is optional and may be absent,
-    in which case ``None`` is returned for its index.
-    """
-
-    idx = {h: i for i, h in enumerate(headers)}
-    return (
-        idx["ProdutoCodigo"],
-        idx["ComponenteNome"],
-        idx["Qtd"],
-        idx["Unidade"],
-        idx.get("ComponenteCodigo"),
-    )
-
-
 def canonicalize_header(text: str, table: str | None = None) -> str:
     """Return a canonical CamelCase column name for a spreadsheet header."""
 
