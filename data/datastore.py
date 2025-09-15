@@ -149,6 +149,7 @@ class DataStore:
         self.aux = None
         self.prep = None
         self.fcost = None
+        self.fcost_level: int | None = None
         try:
             from .repositories import (
                 ProdutosRepo,
@@ -194,6 +195,12 @@ class DataStore:
     def __exit__(self, exc_type, exc, tb):
         self.close()
         return False
+
+    def set_fcost_level(self, level: int | None):
+        """Definir nível de Food Cost para filtragem e recarregar códigos."""
+
+        self.fcost_level = level
+        self.reload_ids()
 
     def _ensure_required_tables(self):
         """Verifica se tabelas e colunas essenciais existem na base de dados."""
@@ -353,8 +360,47 @@ class DataStore:
         if source:
             logger.info("[DataStore] reload_ids: códigos via %s", source)
 
-        # Integrar filtragem por ``FcostValues`` aqui quando aplicável.
-        self._ids = [str(x) for x in ids if x not in (None, "")]
+        ids = [str(x) for x in ids if x not in (None, "")]
+
+        if self.fcost_level is not None and self.fcost:
+            rng = self.fcost.get_range(self.fcost_level)
+            if rng:
+                from services.products import calculate_food_cost
+
+                vmin, vmax = rng
+                filtered: list[str] = []
+                for codigo in ids:
+                    ingredientes = self.get_ingredientes(codigo)
+                    total = 0.0
+                    for ing in ingredientes:
+                        preco = ing.get("Preco")
+                        if preco not in (None, ""):
+                            try:
+                                total += float(preco)
+                                continue
+                            except (TypeError, ValueError):
+                                pass
+                        ppu = ing.get("Ppu")
+                        qtd = ing.get("Qtd")
+                        try:
+                            total += float(ppu) * float(qtd)
+                        except (TypeError, ValueError):
+                            pass
+
+                    pvps_info = self.get_pvps(codigo)
+                    iva = pvps_info.get("iva")
+                    pvps = pvps_info.get("pvps") or []
+                    info = self.get_produto_info(codigo) or {}
+                    nome = info.get("produto") or codigo
+
+                    for pvp in pvps:
+                        pct = calculate_food_cost(total, pvp, iva, product=nome)
+                        if pct is not None and vmin <= pct <= vmax:
+                            filtered.append(codigo)
+                            break
+                ids = filtered
+
+        self._ids = ids
         return len(self._ids)
 
     def total(self) -> int:
