@@ -14,7 +14,7 @@ DEV_OVERLAYS = True
 
 
 # Updated to allow block-prefixed cell identifiers like ``B1.C1``
-_TAG_RE = re.compile(r"^B\d+\.C\d+(?:\.(?:A|B|\d+))*$")
+_TAG_RE = re.compile(r"^B\d+(?:\.C\d+(?:\.(?:A|B|\d+))*)?$")
 
 
 def validate_tag(tag: str) -> bool:
