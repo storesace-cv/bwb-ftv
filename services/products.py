@@ -456,7 +456,7 @@ def calculate_food_cost(total, pvp, iva):
         return None
 
     if pvp <= 0:
-        logger.warning("pvp must be greater than zero")
+        logger.debug("pvp must be greater than zero")
         return None
 
     try:
