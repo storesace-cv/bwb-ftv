@@ -289,9 +289,10 @@ class DataStore:
         Recarrega a lista de códigos (_ids). Tenta repos 'produtos'; senão usa
         FichasTecnicas.
         """
-        ids = []
-        # 1) tentar via repositório
+        ids: list[str] = []
         source = None
+
+        # 1) tentar via repositório
         if self.produtos:
             try:
                 ids = self.produtos.listar_codigos() or []
@@ -302,56 +303,43 @@ class DataStore:
                     "[DataStore] listar_codigos falhou: %s", exc, exc_info=True
                 )
                 ids = []
+
         # 2) fallback direto à BD
         if not ids and self.conn:
             try:
                 cur = self.conn.cursor()
-                try:
-                    cur.execute(
-                        """
-                        SELECT DISTINCT p.Codigo
-                        FROM Produtos p
-                        JOIN FichasTecnicas ft ON ft.ProdutoCodigo = p.Codigo
-                        WHERE p.TipoVenda = 1
-                        ORDER BY p.Codigo
-                        """
+                cur.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='Produtos'"
+                )
+                has_produtos = cur.fetchone() is not None
+                if has_produtos:
+                    query = (
+                        "SELECT DISTINCT COALESCE(p.Codigo, ft.ProdutoCodigo) AS Codigo "
+                        "FROM FichasTecnicas ft "
+                        "LEFT JOIN Produtos p ON ft.ProdutoCodigo = p.Codigo "
+                        "WHERE p.TipoVenda = 1 "
+                        "ORDER BY Codigo"
                     )
-                    ids = [r[0] for r in cur.fetchall()]
                     source = "Produtos"
-                except sqlite3.Error as exc:
-                    logger.warning("[DataStore] fallback para FichasTecnicas: %s", exc)
-                    if "no such table: Produtos" in str(exc):
-                        # ``Produtos`` não existe: usar códigos diretamente de
-                        # ``FichasTecnicas``.
-                        logger.info(
-                            "[DataStore] tabela 'Produtos' inexistente; "
-                            "a usar ProdutoCodigo de FichasTecnicas",
-                        )
-                        cur.execute(
-                            "SELECT DISTINCT ProdutoCodigo FROM FichasTecnicas "
-                            "ORDER BY ProdutoCodigo"
-                        )
-                        ids = [r[0] for r in cur.fetchall()]
-                        source = "FichasTecnicas"
-                    else:
-                        cur.execute(
-                            """
-                            SELECT DISTINCT p.Codigo
-                            FROM FichasTecnicas ft
-                            JOIN Produtos p ON ft.ProdutoCodigo = p.Codigo
-                            WHERE p.TipoVenda = 1
-                            ORDER BY p.Codigo
-                            """
-                        )
-                        ids = [r[0] for r in cur.fetchall()]
-                        source = "Produtos"
+                else:
+                    query = (
+                        "SELECT DISTINCT ft.ProdutoCodigo AS Codigo "
+                        "FROM FichasTecnicas ft "
+                        "ORDER BY ft.ProdutoCodigo"
+                    )
+                    source = "FichasTecnicas"
+
+                cur.execute(query)
+                ids = [r[0] for r in cur.fetchall()]
             except sqlite3.Error as exc:
                 logger.error(
                     "[DataStore] reload_ids falhou na BD: %s", exc, exc_info=True
                 )
                 ids = []
+
         if source:
             logger.info("[DataStore] reload_ids: códigos via %s", source)
+
         self._ids = [str(x) for x in ids if x not in (None, "")]
         return len(self._ids)
 
