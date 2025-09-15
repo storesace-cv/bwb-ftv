@@ -58,8 +58,8 @@ def test_ftapp_formats_numbers(qapp):
     expected_texts = [
         format_pt_number(123),
         format_pt_number(246),
-        "N/A",
-        "N/A",
+        "--N/A--",
+        "--N/A--",
         format_pt_number(615),
     ]
     assert [lb.text() for lb in ft.lbPVPs] == expected_texts
