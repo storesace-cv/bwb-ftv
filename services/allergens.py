@@ -7,6 +7,9 @@ import sqlite3
 from pathlib import Path
 from typing import Any, Iterable
 
+from utils.files import archive_with_timestamp
+from utils.paths import get_project_root
+
 
 def _normalise_optional_text(value: Any) -> str | None:
     """Return a cleaned text representation or ``None`` for empty values."""
@@ -166,3 +169,11 @@ def import_allergens(path: Path, conn) -> None:
         cur.executemany(insert_sql, records)
 
     conn.commit()
+
+    backups_dir = get_project_root() / "databases" / "backups"
+    archive_with_timestamp(
+        path,
+        backups_dir,
+        prefix="allergens",
+        suffix=".json",
+    )
