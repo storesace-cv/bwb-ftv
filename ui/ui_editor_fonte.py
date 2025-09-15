@@ -57,6 +57,8 @@
 # 2025-09-15 02:40 — v3.93 — B4 com galeria de 4 imagens (PrepImagePreview).
 # 2025-09-15 02:51 — v3.94 — Preenchimento sequencial das imagens de
 #    preparação.
+# 2025-09-15 04:12 — v3.95 — Food Cost "--N/A--" sem PVP ou falha de cálculo;
+#    mantém "0%" quando falta IVA.
 
 import sys
 import logging
@@ -1179,11 +1181,18 @@ class FTApp(QWidget):
         pvps.extend([None] * (5 - len(pvps)))
         iva = getattr(product, "iva", None)
         for lbl, pvp in zip(self.lbFoodCosts, pvps):
-            if pvp in (None, 0) or iva in (None, 0):
+            if pvp in (None, 0):
                 logger.warning(
-                    "[FoodCost] missing pvp or iva for %s (pvp=%s, iva=%s)",
+                    "[FoodCost] missing pvp for %s (pvp=%s)",
                     identifier,
                     pvp,
+                )
+                lbl.setText("--N/A--")
+                continue
+            if iva in (None, 0):
+                logger.warning(
+                    "[FoodCost] missing iva for %s (iva=%s)",
+                    identifier,
                     iva,
                 )
                 lbl.setText("0%")
@@ -1197,7 +1206,7 @@ class FTApp(QWidget):
                     pvp,
                     iva,
                 )
-                lbl.setText("N/A")
+                lbl.setText("--N/A--")
             else:
                 lbl.setText(format_pt_number(pct))
 

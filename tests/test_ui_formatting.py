@@ -67,8 +67,8 @@ def test_ftapp_formats_numbers(qapp):
     expected_fc_texts = [
         format_pt_number(100),
         format_pt_number(50),
-        "0%",
-        "0%",
+        "--N/A--",
+        "--N/A--",
         format_pt_number(20),
     ]
     assert [lb.text() for lb in ft.lbFoodCosts] == expected_fc_texts
