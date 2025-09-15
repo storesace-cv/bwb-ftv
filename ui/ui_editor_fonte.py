@@ -717,37 +717,38 @@ class FTApp(QWidget):
             overlay_text="Produtos.SubFamilia",
         )
 
-        # Base: cinco colunas iguais com PVP1..PVP5 (etiqueta por cima)
-        base_cont = QWidget(C1A21_base)
-        base_h = QHBoxLayout(base_cont)
-        base_h.setContentsMargins(0, 0, 0, 0)
-        base_h.setSpacing(C1A21_base.ly.spacing())
-        C1A21_base.ly.insertWidget(1, base_cont, 1)
-
+        # Base: zona horizontal com cinco colunas PVP1..PVP5 (etiqueta por cima)
         self.lbPVPs: list[QLabel] = []
-        for idx in range(1, 6):
-            col = Zone(
-                f"{C1A21_base.tag}.{idx}",
-                base_cont,
-                flow="v",
-                margins=2,
-                spacing=6,
-                level=C1A21_base._level + 1,
-                show_overlays=layout.DEV_OVERLAYS,
-            )
-            label_text = f"PVP{idx}"
+
+        pvp_label = QLabel("PVP:")
+        match_font(pvp_label, self.edNome)
+        C1A21_base.add(pvp_label, 0)
+
+        C1A21_base_zone = Zone(
+            f"{C1A21_base.tag}.A",
+            C1A21_base,
+            flow="h",
+            level=C1A21_base._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+        )
+        C1A21_base_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        C1A21_base.add(C1A21_base_zone, 0)
+        pvp1, pvp2, pvp3, pvp4, pvp5 = C1A21_base_zone.split_h((1, 1, 1, 1, 1))
+
+        for idx, zone in enumerate((pvp1, pvp2, pvp3, pvp4, pvp5), start=1):
+            label_text = f"PVP #{idx}"
             overlay = f"PrecosTaxas.Preco{idx}"
             lbl = QLabel(overlay if layout.DEV_OVERLAYS else label_text)
             lbl.setProperty("userLabel", label_text)
             lbl.setProperty("devLabel", overlay)
             match_font(lbl, self.edNome)
+            zone.add(lbl, 0)
+
             val = QLabel("—")
             val.setStyleSheet(LABEL_VALUE_STYLE)
             match_font(val, self.edNome)
-            col.add(lbl, 0)
-            col.add(val, 0)
+            zone.add(val, 0)
             self.lbPVPs.append(val)
-            base_h.addWidget(col, 1)
 
         # Combos diretamente em B1.C1.A.2.B (sem .B.2)
         w_tipos, self.cbTipos = stack_combo("Tipos Artigos")
