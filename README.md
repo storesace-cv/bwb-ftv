@@ -74,8 +74,12 @@ pip install -r requirements.txt
 
 ## Configuração / Configuration
 
-Por omissão, a aplicação utiliza a base de dados SQLite em `<raiz do projeto>/databases/ftv.db`. O diretório é criado automaticamente e o ficheiro é inicializado caso esteja em falta.  
-By default, the application uses the SQLite database at `<project root>/databases/ftv.db`. The directory is created automatically and the file is initialized if missing.
+Por omissão, a aplicação utiliza a base de dados SQLite em
+`<raiz do projeto>/databases/ftv.db`.
+O diretório é criado automaticamente e o ficheiro é inicializado caso esteja em falta.
+By default, the application uses the SQLite database at
+`<project root>/databases/ftv.db`.
+The directory is created automatically and the file is initialized if missing.
 
 Para utilizar outro local, defina a variável de ambiente `FTV_DB_PATH` com o caminho completo para o ficheiro desejado:  
 To use another location, set the `FTV_DB_PATH` environment variable with the full path to the desired file:
@@ -112,19 +116,33 @@ To import or update data, place the three Excel files inside the `imports/` dire
 - `PreçosTaxas_base.xlsx`
 - `Produtos_Base.xlsx`
 
-Veja [docs/mapeamento_campos.md](docs/mapeamento_campos.md) para a correspondência completa de cabeçalhos Excel ↔ campos de base de dados. Apenas `PrecosTaxas.Iva1` é utilizado em cálculos de IVA.  
+Veja [docs/mapeamento_campos.md](docs/mapeamento_campos.md)
+para a correspondência completa de cabeçalhos Excel ↔ campos de base de dados.
+Apenas `PrecosTaxas.Iva1` é utilizado em cálculos de IVA.
 See [docs/mapeamento_campos.md](docs/mapeamento_campos.md) for the full mapping of Excel headers ↔ database fields. Only `PrecosTaxas.Iva1` is used in VAT calculations.
 
-No início da operação os ficheiros são validados: se algum estiver em falta ou não tiver extensão `.xlsx`, a importação é interrompida com erro. Após processamento com sucesso, cada ficheiro é movido para `imports/history` com um carimbo temporal (`YYYYMMDDHHMMSS`) anexado ao nome, permitindo manter um histórico de cargas.  
-At the start of the operation the files are validated: if any are missing or not `.xlsx`, the import stops with an error. After successful processing, each file is moved to `imports/history` with a timestamp (`YYYYMMDDHHMMSS`) appended to the name, allowing a history of loads.
+No início da operação os ficheiros são validados: se algum estiver em falta ou não tiver
+extensão `.xlsx`, a importação é interrompida com erro.
+Após processamento com sucesso, cada ficheiro é movido para `imports/history` com um
+carimbo temporal (`YYYYMMDDHHMMSS`) anexado ao nome, permitindo manter um histórico de
+cargas.
+At the start of the operation the files are validated: if any are missing or not
+`.xlsx`, the import stops with an error.
+After successful processing, each file is moved to `imports/history` with a timestamp
+(`YYYYMMDDHHMMSS`) appended to the name, allowing a history of loads.
 
 Ao importar `FichasTecnicas_base.xlsx` a coluna de custo deve chamar-se `Preco`, correspondendo diretamente ao campo `Preco` na base de dados.  
 When importing `FichasTecnicas_base.xlsx`, the cost column must be named `Preco`, matching the `Preco` field in the database.
 
 ## Migração de esquema / Schema Migration
 
-Para bases de dados já existentes, utilize o script `tools/cleanup_schema.py` para sincronizar as tabelas `Produtos`, `FichasTecnicas` e `PrecosTaxas` com os cabeçalhos actuais dos ficheiros Excel. Antes de qualquer alteração é criado um backup (`ftv.db.bak`) da base de dados.  
-For existing databases, use the `tools/cleanup_schema.py` script to synchronize the `Produtos`, `FichasTecnicas`, and `PrecosTaxas` tables with the current Excel headers. Before any change, a backup (`ftv.db.bak`) of the database is created.
+Para bases de dados já existentes, utilize o script `tools/cleanup_schema.py` para
+sincronizar as tabelas `Produtos`, `FichasTecnicas` e `PrecosTaxas` com os cabeçalhos
+actuais dos ficheiros Excel.
+Antes de qualquer alteração é criado um backup (`ftv.db.bak`) da base de dados.
+For existing databases, use the `tools/cleanup_schema.py` script to synchronize the
+`Produtos`, `FichasTecnicas`, and `PrecosTaxas` tables with the current Excel headers.
+Before any change, a backup (`ftv.db.bak`) of the database is created.
 
 ```bash
 python tools/cleanup_schema.py
@@ -135,8 +153,15 @@ Ensure that the three base files are in `imports/`.
 
 ## Segurança / Security
 
-Para recomendações sobre gestão de palavras-passe, encriptação, utilização de tokens/API keys e políticas de permissões, consulte [docs/security.md](docs/security.md). O documento inclui também boas práticas de deploy seguro e orientação para gerir credenciais em desenvolvimento e produção.  
-For recommendations on password management, encryption, use of tokens/API keys, and permission policies, see [docs/security.md](docs/security.md). The document also includes best practices for secure deployment and guidance on managing credentials in development and production.
+Para recomendações sobre gestão de palavras-passe, encriptação, utilização de
+tokens/API keys e políticas de permissões, consulte
+[docs/security.md](docs/security.md).
+O documento inclui também boas práticas de deploy seguro e orientação para gerir
+credenciais em desenvolvimento e produção.
+For recommendations on password management, encryption, use of tokens/API keys, and
+permission policies, see [docs/security.md](docs/security.md).
+The document also includes best practices for secure deployment and guidance on managing
+credentials in development and production.
 
 ## Resolução de Problemas / Troubleshooting
 
