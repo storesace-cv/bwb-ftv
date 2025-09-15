@@ -214,20 +214,39 @@ class AuxiliaresRepo:
 
     # --- Helpers para operações administrativas genericamente ---
 
-    def _admin_list(self, table: str, log_label: str):
+    def _admin_list(
+        self,
+        table: str,
+        log_label: str,
+        *,
+        id_col: str = "cod",
+        desc_col: str = "descricao",
+        active_col: str = "ativo",
+    ):
         cur = self.conn.cursor()
         try:
-            cur.execute(f"SELECT cod, descricao, ativo FROM {table} ORDER BY cod")
+            cur.execute(
+                f"SELECT {id_col}, {desc_col}, {active_col} "
+                f"FROM {table} ORDER BY {id_col}"
+            )
             return [(r[0], r[1], r[2]) for r in cur.fetchall()]
         except sqlite3.Error as exc:
             logger.error(f"[AuxiliaresRepo] {log_label} falhou: %s", exc, exc_info=True)
             return []
 
-    def _admin_add(self, table: str, log_label: str, descricao: str):
+    def _admin_add(
+        self,
+        table: str,
+        log_label: str,
+        descricao: str,
+        *,
+        desc_col: str = "descricao",
+        active_col: str = "ativo",
+    ):
         cur = self.conn.cursor()
         try:
             cur.execute(
-                f"INSERT INTO {table} (descricao, ativo) VALUES (?, 1)",
+                f"INSERT INTO {table} ({desc_col}, {active_col}) VALUES (?, 1)",
                 (descricao,),
             )
             self.conn.commit()
@@ -236,11 +255,20 @@ class AuxiliaresRepo:
             logger.error(f"[AuxiliaresRepo] {log_label} falhou: %s", exc, exc_info=True)
             return None
 
-    def _admin_set_active(self, table: str, log_label: str, cod, ativo: int) -> bool:
+    def _admin_set_active(
+        self,
+        table: str,
+        log_label: str,
+        cod,
+        ativo: int,
+        *,
+        id_col: str = "cod",
+        active_col: str = "ativo",
+    ) -> bool:
         cur = self.conn.cursor()
         try:
             cur.execute(
-                f"UPDATE {table} SET ativo=? WHERE cod=?",
+                f"UPDATE {table} SET {active_col}=? WHERE {id_col}=?",
                 (int(ativo), cod),
             )
             self.conn.commit()
@@ -451,10 +479,22 @@ class AuxiliaresRepo:
             return False
 
     def list_alergenios_admin(self):
-        return self._admin_list("Alergenios", "list_alergenios_admin")
+        return self._admin_list(
+            "Alergenios",
+            "list_alergenios_admin",
+            id_col="Id",
+            desc_col="Nome",
+            active_col="Ativo",
+        )
 
     def add_alergenio(self, nome: str):
-        return self._admin_add("Alergenios", "add_alergenio", nome)
+        return self._admin_add(
+            "Alergenios",
+            "add_alergenio",
+            nome,
+            desc_col="Nome",
+            active_col="Ativo",
+        )
 
     def update_alergenio(self, cod, nome: str) -> bool:
         cur = self.conn.cursor()
@@ -475,7 +515,14 @@ class AuxiliaresRepo:
             return False
 
     def set_alergenio_ativo(self, cod, ativo: int) -> bool:
-        return self._admin_set_active("Alergenios", "set_alergenio_ativo", cod, ativo)
+        return self._admin_set_active(
+            "Alergenios",
+            "set_alergenio_ativo",
+            cod,
+            ativo,
+            id_col="Id",
+            active_col="Ativo",
+        )
 
     def delete_alergenio(self, cod) -> bool:
         cur = self.conn.cursor()

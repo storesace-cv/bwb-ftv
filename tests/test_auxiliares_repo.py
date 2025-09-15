@@ -35,6 +35,15 @@ def _make_repo():
     )
     cur.execute(
         """
+        CREATE TABLE Alergenios (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            Nome TEXT,
+            Ativo INTEGER
+        )
+        """
+    )
+    cur.execute(
+        """
         CREATE TABLE Produtos (
             Cod INTEGER PRIMARY KEY AUTOINCREMENT,
             TipoArtigo INTEGER,
@@ -128,6 +137,29 @@ def test_temperaturas_crud_failure():
     conn2, repo2 = _make_repo_no_tables()
     assert repo2.add_temperatura("x") is None
     assert repo2.list_temperaturas_admin() == []
+    conn.close()
+    conn2.close()
+
+
+def test_alergenios_crud_success():
+    conn, repo = _make_repo()
+    aid = repo.add_alergenio("Glúten")
+    assert aid == 1
+    assert repo.list_alergenios_admin() == [(1, "Glúten", 1)]
+    assert repo.update_alergenio(1, "Lactose") is True
+    assert repo.list_alergenios_admin()[0][1] == "Lactose"
+    assert repo.set_alergenio_ativo(1, 0) is True
+    assert repo.list_alergenios_admin()[0][2] == 0
+    conn.close()
+
+
+def test_alergenios_crud_failure():
+    conn, repo = _make_repo()
+    assert repo.update_alergenio(999, "Sem") is False
+    assert repo.set_alergenio_ativo(999, 0) is False
+    conn2, repo2 = _make_repo_no_tables()
+    assert repo2.add_alergenio("Outro") is None
+    assert repo2.list_alergenios_admin() == []
     conn.close()
     conn2.close()
 
