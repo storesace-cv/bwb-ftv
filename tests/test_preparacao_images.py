@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 
-import pytest
 from PIL import Image
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFileDialog
