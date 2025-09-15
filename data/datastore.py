@@ -314,7 +314,8 @@ class DataStore:
                 has_produtos = cur.fetchone() is not None
                 if has_produtos:
                     query = (
-                        "SELECT DISTINCT COALESCE(p.Codigo, ft.ProdutoCodigo) AS Codigo "
+                        "SELECT DISTINCT COALESCE(p.Codigo, ft.ProdutoCodigo) AS "
+                        "Codigo "
                         "FROM FichasTecnicas ft "
                         "LEFT JOIN Produtos p ON ft.ProdutoCodigo = p.Codigo "
                         "WHERE p.TipoVenda = 1 "
