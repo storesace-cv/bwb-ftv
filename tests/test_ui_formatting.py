@@ -1,4 +1,5 @@
 from domain import Product
+from services.products import calculate_food_cost
 from ui.ui_editor_fonte import FTApp
 from utils.formatting import format_pt_number
 
@@ -76,4 +77,17 @@ def test_ftapp_food_cost_missing_iva(qapp):
 
     ft = FTApp(NoIVAService())
     assert [lb.text() for lb in ft.lbFoodCosts] == [format_pt_number(None)] * 5
+    ft.close()
+
+
+def test_ftapp_food_costs_large_total(qapp):
+    class HighTotalService(DummyService):
+        def calculate_cost(self, product):
+            return 1234.56
+
+    ft = FTApp(HighTotalService())
+    expected = format_pt_number(
+        calculate_food_cost(1234.56, 123, 23)
+    )
+    assert ft.lbFoodCosts[0].text() == expected
     ft.close()
