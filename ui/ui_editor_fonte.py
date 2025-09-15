@@ -765,15 +765,89 @@ class FTApp(QWidget):
 
         self.btFcostBom = QPushButton("Bom")
         self.btFcostBom.setCheckable(True)
+        self.btFcostBom.setStyleSheet(
+            """
+            QPushButton {
+                background-color: rgba(198,216,112,0.5);
+                border: 1px solid rgba(0,0,0,0.3);
+                border-top-color: rgba(255,255,255,0.8);
+                border-left-color: rgba(255,255,255,0.8);
+                border-bottom-color: rgba(0,0,0,0.4);
+                border-right-color: rgba(0,0,0,0.4);
+                border-radius: 6px;
+                padding: 4px;
+            }
+            QPushButton:pressed,
+            QPushButton:checked {
+                background-color: rgba(198,216,112,0.8);
+            }
+            """
+        )
         fcB2.add(self.btFcostBom, 0)
 
         self.btFcostAceitavel = QPushButton("Aceitável")
         self.btFcostAceitavel.setCheckable(True)
+        self.btFcostAceitavel.setStyleSheet(
+            """
+            QPushButton {
+                background-color: rgba(248,222,126,0.5);
+                border: 1px solid rgba(0,0,0,0.3);
+                border-top-color: rgba(255,255,255,0.8);
+                border-left-color: rgba(255,255,255,0.8);
+                border-bottom-color: rgba(0,0,0,0.4);
+                border-right-color: rgba(0,0,0,0.4);
+                border-radius: 6px;
+                padding: 4px;
+            }
+            QPushButton:pressed,
+            QPushButton:checked {
+                background-color: rgba(248,222,126,0.8);
+            }
+            """
+        )
         fcB3.add(self.btFcostAceitavel, 0)
 
         self.btFcostMau = QPushButton("Mau")
         self.btFcostMau.setCheckable(True)
+        self.btFcostMau.setStyleSheet(
+            """
+            QPushButton {
+                background-color: rgba(255,158,145,0.5);
+                border: 1px solid rgba(0,0,0,0.3);
+                border-top-color: rgba(255,255,255,0.8);
+                border-left-color: rgba(255,255,255,0.8);
+                border-bottom-color: rgba(0,0,0,0.4);
+                border-right-color: rgba(0,0,0,0.4);
+                border-radius: 6px;
+                padding: 4px;
+            }
+            QPushButton:pressed,
+            QPushButton:checked {
+                background-color: rgba(255,158,145,0.8);
+            }
+            """
+        )
         fcB4.add(self.btFcostMau, 0)
+
+        self.btFcostReset = QPushButton("Todos")
+        self.btFcostReset.setStyleSheet(
+            """
+            QPushButton {
+                background-color: rgba(200,200,200,0.5);
+                border: 1px solid rgba(0,0,0,0.3);
+                border-top-color: rgba(255,255,255,0.8);
+                border-left-color: rgba(255,255,255,0.8);
+                border-bottom-color: rgba(0,0,0,0.4);
+                border-right-color: rgba(0,0,0,0.4);
+                border-radius: 6px;
+                padding: 4px;
+            }
+            QPushButton:pressed {
+                background-color: rgba(200,200,200,0.8);
+            }
+            """
+        )
+        fcB5.add(self.btFcostReset, 0)
 
         self.fcostFilterGroup = QButtonGroup(self)
         self.fcostFilterGroup.setExclusive(True)
@@ -790,6 +864,7 @@ class FTApp(QWidget):
         self.btFcostMau.clicked.connect(
             lambda _checked, lv=3: self._on_fcost_filter_selected(lv)
         )
+        self.btFcostReset.clicked.connect(self._on_fcost_filter_reset)
 
         # ---------------- B4 — Preparação (B4) ----------------
         self.B4 = Zone(
@@ -1301,6 +1376,23 @@ class FTApp(QWidget):
                 self.service.ds.set_fcost_level(level)
             except Exception:
                 pass
+        self.cur_index = 0
+        self._load_record(0)
+
+    def _on_fcost_filter_reset(self):
+        self._active_fcost_filter = None
+        try:
+            self.service.ds.set_fcost_level(None)
+        except Exception:
+            pass
+        try:
+            self.fcostFilterGroup.blockSignals(True)
+            self.btFcostBom.setChecked(False)
+            self.btFcostAceitavel.setChecked(False)
+            self.btFcostMau.setChecked(False)
+            self.fcostFilterGroup.blockSignals(False)
+        except Exception:
+            pass
         self.cur_index = 0
         self._load_record(0)
 
