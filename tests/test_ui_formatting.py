@@ -105,3 +105,35 @@ def test_ftapp_food_costs_large_total(qapp):
     )
     assert ft.lbFoodCosts[0].text() == expected
     ft.close()
+
+
+def test_ftapp_zero_pvps_no_warning(qapp, caplog):
+    class ZeroPVPService(DummyService):
+        def get_product_info(self, codigo):
+            return Product(
+                code=codigo,
+                pvps=[123, 0, 0, 0, 0],
+                iva=23,
+                ingredients=[],
+            )
+
+    with caplog.at_level(logging.WARNING):
+        ft = FTApp(ZeroPVPService())
+    expected_pvp_texts = [
+        format_pt_number(123),
+        "--N/A--",
+        "--N/A--",
+        "--N/A--",
+        "--N/A--",
+    ]
+    assert [lb.text() for lb in ft.lbPVPs] == expected_pvp_texts
+    expected_fc_texts = [
+        format_pt_number(calculate_food_cost(100, 123, 23)),
+        "--N/A--",
+        "--N/A--",
+        "--N/A--",
+        "--N/A--",
+    ]
+    assert [lb.text() for lb in ft.lbFoodCosts] == expected_fc_texts
+    assert not any("missing pvp" in rec.message for rec in caplog.records)
+    ft.close()
