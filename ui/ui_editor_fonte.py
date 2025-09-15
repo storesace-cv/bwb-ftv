@@ -89,6 +89,7 @@ from PyQt5.QtWidgets import (
     QCheckBox,
     QButtonGroup,
     QToolBar,
+    QToolButton,
     QAction,
     QFileDialog,
 )
@@ -1000,6 +1001,10 @@ class FTApp(QWidget):
 
         # Toolbar de formatação
         toolbar = QToolBar()
+        toolbar.setToolButtonStyle(Qt.ToolButtonTextOnly)
+        reset_style = self.btFcostReset.styleSheet()
+        if reset_style:
+            toolbar.setStyleSheet(reset_style.replace("QPushButton", "QToolButton"))
         bold_act = QAction("B", self)
         bold_act.setShortcut(QKeySequence("Ctrl+B"))
         bold_act.triggered.connect(self._toggle_bold)
@@ -1028,6 +1033,14 @@ class FTApp(QWidget):
         clear_act = QAction("Limpar", self)
         clear_act.triggered.connect(self._clear_formatting)
         toolbar.addAction(clear_act)
+
+        for action in toolbar.actions():
+            button = toolbar.widgetForAction(action)
+            if isinstance(button, QToolButton):
+                button.setAutoRaise(False)
+                button.setToolButtonStyle(Qt.ToolButtonTextOnly)
+                button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
+                button.setMinimumWidth(button.sizeHint().width())
 
         self.C4.add(toolbar, 0)
 
