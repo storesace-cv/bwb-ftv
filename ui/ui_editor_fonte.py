@@ -556,34 +556,35 @@ class FTApp(QWidget):
 
         lbl_w = 110
 
-        # --- Cabeçalho flutuante (duplicado de B1.C0) ---
+        # --- Cabeçalho flutuante (duplicado de B1.C1.A.1) ---
         header = QWidget(self)
         header.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         header_ly = QVBoxLayout(header)
         header_ly.setContentsMargins(0, 0, 0, 0)
         header_ly.setSpacing(8)
         self.header = header
-        self.headerC0 = Zone(
-            "B1.C0",
+        self.headerC1A1 = Zone(
+            "B1.C1.A.1",
             header,
             flow="v",
-            level=0,
-            show_overlays=layout.DEV_OVERLAYS,
+            margins=4,
             spacing=2,
+            level=2,
+            show_overlays=layout.DEV_OVERLAYS,
         )
-        header_ly.addWidget(self.headerC0, 0)
+        header_ly.addWidget(self.headerC1A1, 0)
         self.headerEdCodigo = QLineEdit()
         make_readonly_lineedit(self.headerEdCodigo, False)
         self.headerEdNome = QLineEdit()
         make_readonly_lineedit(self.headerEdNome, True)
-        self.headerC0.add_row(
+        self.headerC1A1.add_row(
             "Código:",
             self.headerEdCodigo,
             label_minw=lbl_w,
             vspacing=0,
             overlay_text="Produtos.Codigo",
         )
-        self.headerC0.add_row(
+        self.headerC1A1.add_row(
             "Nome do Artigo:",
             self.headerEdNome,
             label_minw=lbl_w,
@@ -608,40 +609,6 @@ class FTApp(QWidget):
         root.addWidget(scroll, 1)
         self._update_page_width()
 
-        # --- Identificação do produto (B1.C0) ---
-        self.C0 = Zone(
-            "B1.C0",
-            self.page,
-            flow="v",
-            level=0,
-            show_overlays=layout.DEV_OVERLAYS,
-            spacing=2,
-        )
-        self.edCodigo = QLineEdit()
-        make_readonly_lineedit(self.edCodigo, False)
-        self.edNome = QLineEdit()
-        make_readonly_lineedit(self.edNome, True)
-        self.C0.add_row(
-            "Código:",
-            self.edCodigo,
-            label_minw=lbl_w,
-            vspacing=0,
-            overlay_text="Produtos.Codigo",
-        )
-        self.C0.add_row(
-            "Nome do Artigo:",
-            self.edNome,
-            label_minw=lbl_w,
-            vspacing=1,
-            overlay_text="Produtos.Nome",
-        )
-        page_ly.addWidget(self.C0, 0)
-        scroll.verticalScrollBar().valueChanged.connect(
-            self._toggle_header_on_scroll
-        )
-        self.edCodigo.textChanged.connect(self.headerEdCodigo.setText)
-        self.edNome.textChanged.connect(self.headerEdNome.setText)
-
         # ---------------- B1 — Dados Gerais (B1.C1) ----------------
         self.C1 = Zone(
             "B1.C1",
@@ -661,6 +628,43 @@ class FTApp(QWidget):
         C1A_cont_ly.setContentsMargins(0, 0, 0, 0)
         C1A_cont_ly.setSpacing(C1A.ly.spacing())
         C1A.ly.addWidget(C1A_cont, 1)
+
+        # --- Identificação do produto (B1.C1.A.1) ---
+        self.C1A1 = Zone(
+            "B1.C1.A.1",
+            C1A_cont,
+            flow="v",
+            margins=4,
+            spacing=C1A.ly.spacing(),
+            level=C1A._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+        )
+        C1A_cont_ly.addWidget(self.C1A1, 0)
+
+        self.edCodigo = QLineEdit()
+        make_readonly_lineedit(self.edCodigo, False)
+        self.edNome = QLineEdit()
+        make_readonly_lineedit(self.edNome, True)
+        self.C1A1.add_row(
+            "Código:",
+            self.edCodigo,
+            label_minw=lbl_w,
+            vspacing=0,
+            overlay_text="Produtos.Codigo",
+        )
+        self.C1A1.add_row(
+            "Nome do Artigo:",
+            self.edNome,
+            label_minw=lbl_w,
+            vspacing=1,
+            overlay_text="Produtos.Nome",
+        )
+
+        scroll.verticalScrollBar().valueChanged.connect(
+            self._toggle_header_on_scroll
+        )
+        self.edCodigo.textChanged.connect(self.headerEdCodigo.setText)
+        self.edNome.textChanged.connect(self.headerEdNome.setText)
 
         C1A2 = Zone(
             "B1.C1.A.2",
@@ -1048,10 +1052,11 @@ class FTApp(QWidget):
 
     def _toggle_header_on_scroll(self, value: int):
         header = getattr(self, "header", None)
-        if not header or not getattr(self, "scroll", None) or not getattr(self, "C0", None):
+        zone = getattr(self, "C1A1", None)
+        if not header or not getattr(self, "scroll", None) or zone is None:
             return
         viewport = self.scroll.viewport()
-        top_left = self.C0.mapTo(viewport, QPoint(0, 0))
+        top_left = zone.mapTo(viewport, QPoint(0, 0))
         should_show = top_left.y() < 0
         if should_show and not header.isVisible():
             header.show()
