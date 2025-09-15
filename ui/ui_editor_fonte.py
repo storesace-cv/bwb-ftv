@@ -59,6 +59,7 @@
 #    preparação.
 # 2025-09-15 04:12 — v3.95 — Food Cost "--N/A--" sem PVP ou falha de cálculo;
 #    mantém "0%" quando falta IVA.
+# 2025-09-15 05:15 — v3.96 — Food Cost "--" quando falta IVA; loga "missing Iva1".
 
 import sys
 import logging
@@ -1194,11 +1195,11 @@ class FTApp(QWidget):
                 continue
             if iva in (None, 0):
                 logger.warning(
-                    "[FoodCost] missing iva for %s (iva=%s)",
+                    "[FoodCost] missing Iva1 for %s (iva=%s)",
                     identifier,
                     iva,
                 )
-                lbl.setText("0%")
+                lbl.setText("--")
                 continue
             pct = calculate_food_cost(total, pvp, iva, identifier)
             if pct is None:
