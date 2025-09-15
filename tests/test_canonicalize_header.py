@@ -38,3 +38,8 @@ def test_price_and_iva_aliases():
     assert canonicalize_header("iva1_2") == "Iva1"
     assert canonicalize_header("iva2") == "Iva2"
     assert canonicalize_header("IsencaoIva") == "IsencaoIva"
+
+
+def test_iva_space_variations():
+    assert canonicalize_header("iva 1") == "Iva1"
+    assert canonicalize_header("iva 2") == "Iva2"
