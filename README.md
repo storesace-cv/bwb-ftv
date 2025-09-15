@@ -40,9 +40,9 @@ python bwb-fichas_tecnicas.py
 python -m venv .venv
 \.\.venv\Scripts\activate
 pip install -r requirements.txt
-copy C:\\caminho\\para\\Produtos_Base.xlsx imports\\
-copy C:\\caminho\\para\\FichasTecnicas_base.xlsx imports\\
-copy C:\\caminho\\para\\PreçosTaxas_base.xlsx imports\\
+copy C:\\<caminho para Produtos_Base.xlsx> imports\\
+copy C:\\<caminho para FichasTecnicas_base.xlsx> imports\\
+copy C:\\<caminho para PreçosTaxas_base.xlsx> imports\\
 python bwb-fichas_tecnicas.py
 ```
 
@@ -205,7 +205,7 @@ To use a database with content:
    - **Windows**
 
      ```powershell
-     copy C:\\caminho\\para\\ftv.db databases\\ftv.db
+     copy C:\\<caminho para ftv.db> databases\\ftv.db
      ```
 
 2. **Defina a variável de ambiente `FTV_DB_PATH`**
@@ -220,7 +220,7 @@ To use a database with content:
    - **Windows**
 
      ```powershell
-     setx FTV_DB_PATH "C:\\caminho\\para\\ftv.db"
+     setx FTV_DB_PATH "C:\\<caminho para ftv.db>"
      ```
 
 Para diagnosticar problemas, verifique nos logs a mensagem "Base de dados
