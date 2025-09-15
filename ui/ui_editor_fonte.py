@@ -556,21 +556,30 @@ class FTApp(QWidget):
 
         lbl_w = 110
 
-        # --- Cabeçalho fixo com identificação ---
-        header = QWidget(self)
-        header.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        header_ly = QVBoxLayout(header)
-        header_ly.setContentsMargins(0, 0, 0, 0)
-        header_ly.setSpacing(0)
+        # --- Conteúdo com scroll vertical ---
+        scroll = QScrollArea(self)
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        page = QWidget()
+        page_ly = QVBoxLayout(page)
+        page_ly.setContentsMargins(0, 0, 0, 0)
+        page_ly.setSpacing(8)
+        scroll.setWidget(page)
+        self.scroll = scroll
+        self.page = page
+        root.addWidget(scroll, 1)
+        self._update_page_width()
+
+        # --- Identificação do produto (B1.C0) ---
         self.C0 = Zone(
             "B1.C0",
-            header,
+            self.page,
             flow="v",
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
             spacing=2,
         )
-        header_ly.addWidget(self.C0)
         self.edCodigo = QLineEdit()
         make_readonly_lineedit(self.edCodigo, False)
         self.edNome = QLineEdit()
@@ -589,22 +598,7 @@ class FTApp(QWidget):
             vspacing=1,
             overlay_text="Produtos.Nome",
         )
-        root.addWidget(header, 0)
-
-        # --- Conteúdo com scroll vertical ---
-        scroll = QScrollArea(self)
-        scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        page = QWidget()
-        page_ly = QVBoxLayout(page)
-        page_ly.setContentsMargins(0, 0, 0, 0)
-        page_ly.setSpacing(8)
-        scroll.setWidget(page)
-        self.scroll = scroll
-        self.page = page
-        root.addWidget(scroll, 1)
-        self._update_page_width()
+        page_ly.addWidget(self.C0, 0)
 
         # ---------------- B1 — Dados Gerais (B1.C1) ----------------
         self.C1 = Zone(
