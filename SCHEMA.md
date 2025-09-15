@@ -55,7 +55,8 @@
 | Preco3 | Preço PVP3 |
 | Preco4 | Preço PVP4 |
 | Preco5 | Preço PVP5 |
-| Iva1_2 | Taxa de IVA |
+| Iva1 | Taxa de IVA principal |
+| Iva2 | Segunda taxa de IVA |
 | IsencaoIva | Indicação de isenção |
 | NomeProdVenda | Nome para venda |
 | Familia | Família |
@@ -189,7 +190,8 @@ Após importação, os ficheiros são arquivados em `imports/history` e registad
 | Preco3 | Preco3 |
 | Preco4 | Preco4 |
 | Preco5 | Preco5 |
-| Iva1_2 | Iva1_2 |
+| Iva1 | Iva1 |
+| Iva2 | Iva2 |
 | IsencaoIva | IsencaoIva |
 | NomeProdVenda | NomeProdVenda |
 | Familia | Familia |

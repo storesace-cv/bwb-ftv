@@ -34,5 +34,7 @@ def test_price_and_iva_aliases():
     assert canonicalize_header("preco5") == "Preco5"
     assert canonicalize_header("preco1g", table="Produtos") == "Preco1G"
     assert canonicalize_header("preco1g", table="Outros") == "Preco1"
-    assert canonicalize_header("iva1_2") == "Iva1_2"
+    assert canonicalize_header("iva1") == "Iva1"
+    assert canonicalize_header("iva1_2") == "Iva1"
+    assert canonicalize_header("iva2") == "Iva2"
     assert canonicalize_header("IsencaoIva") == "IsencaoIva"

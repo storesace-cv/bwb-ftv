@@ -50,7 +50,8 @@ NUMERIC_NAMES = {
     "qtd",
     "peso",
     "iva",
-    "iva1_2",
+    "iva1",
+    "iva2",
 }
 
 
@@ -91,8 +92,10 @@ def canonicalize_header(text: str, table: str | None = None) -> str:
         )
     if key in {"preco15", "preco1_5"}:
         return "Preco1"
-    if key in {"iva12", "iva1_2"}:
-        return "Iva1_2"
+    if key in {"iva1", "iva12", "iva1_2"}:
+        return "Iva1"
+    if key == "iva2":
+        return "Iva2"
     if key in {"preco1", "preco2", "preco3", "preco4", "preco5"}:
         return f"Preco{key[-1]}"
     if key in PRECO_GRAM_LOOKUP:

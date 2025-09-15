@@ -57,7 +57,8 @@
 | Preco3 | Preço PVP3 |
 | Preco4 | Preço PVP4 |
 | Preco5 | Preço PVP5 |
-| Iva1_2 | Taxa de IVA |
+| Iva1 | Taxa de IVA principal |
+| Iva2 | Segunda taxa de IVA |
 | IsencaoIva | Indicação de isenção |
 | NomeProdVenda | Nome para venda |
 | Familia | Família do produto |

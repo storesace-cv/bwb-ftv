@@ -72,7 +72,7 @@ class ProdutosRepo:
         try:
             cur.execute(
                 (
-                    "SELECT Preco1, Preco2, Preco3, Preco4, Preco5, Iva1_2 "
+                    "SELECT Preco1, Preco2, Preco3, Preco4, Preco5, Iva1, Iva2 "
                     "FROM PrecosTaxas WHERE Codigo = ?"
                 ),
                 (codigo,),
@@ -81,8 +81,8 @@ class ProdutosRepo:
             if not r:
                 return {"pvps": [], "iva": None}
 
-            prices_raw = r[:-1]
-            iva_raw = r[-1]
+            prices_raw = r[:5]
+            iva_raw = r[5]
 
             pvps: list[float | None] = []
             for price in prices_raw:
