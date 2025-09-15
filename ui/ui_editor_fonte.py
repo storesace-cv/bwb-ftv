@@ -1176,7 +1176,19 @@ class FTApp(QWidget):
         iva = getattr(product, "iva", None)
         for lbl, pvp in zip(self.lbFoodCosts, pvps):
             pct = calculate_food_cost(total, pvp, iva)
-            lbl.setText(format_pt_number(pct))
+            if pct is None:
+                missing = []
+                if pvp in (None, 0):
+                    missing.append("pvp")
+                if iva in (None, 0):
+                    missing.append("iva")
+                if missing:
+                    logger.warning(
+                        "cannot compute food cost: missing %s", " e ".join(missing)
+                    )
+                lbl.setText(f"{format_pt_number(0)}%")
+            else:
+                lbl.setText(format_pt_number(pct))
 
     def _update_costs_from_table(self):
         """Recalculate total cost using the service layer."""
