@@ -29,6 +29,7 @@ class AllergenServiceStub:
             list_alergenios_admin=lambda: [],
             add_alergenio=lambda *args, **kwargs: None,
             update_alergenio=lambda *args, **kwargs: None,
+            set_alergenio_ativo=lambda *args, **kwargs: None,
         )
         self.ds = SimpleNamespace(
             aux=aux_stub,

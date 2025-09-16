@@ -551,8 +551,18 @@ class AuxiliaresRepo:
     def list_alergenios_admin(self):
         cur = self.conn.cursor()
         try:
+            cur.execute("PRAGMA table_info(Alergenios)")
+            columns = {row[1] for row in cur.fetchall()}
+            if "Ativo" in columns:
+                return self._admin_list(
+                    "Alergenios",
+                    "list_alergenios_admin",
+                    id_col="Id",
+                    desc_col="Nome",
+                    active_col="Ativo",
+                )
             cur.execute("SELECT Id, Nome FROM Alergenios ORDER BY Id")
-            return [(r[0], r[1]) for r in cur.fetchall()]
+            return [(r[0], r[1], 1) for r in cur.fetchall()]
         except sqlite3.Error as exc:
             logger.error(
                 "[AuxiliaresRepo] list_alergenios_admin falhou: %s",
@@ -599,6 +609,16 @@ class AuxiliaresRepo:
                 exc_info=True,
             )
             return False
+
+    def set_alergenio_ativo(self, cod, ativo: int) -> bool:
+        return self._admin_set_active(
+            "Alergenios",
+            "set_alergenio_ativo",
+            cod,
+            ativo,
+            id_col="Id",
+            active_col="Ativo",
+        )
 
     def delete_alergenio(self, cod) -> bool:
         cur = self.conn.cursor()
