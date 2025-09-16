@@ -101,7 +101,7 @@ from domain import FichaTecnica
 from utils.formatting import format_pt_number, parse_decimal
 
 from . import layout
-from .bwb_style_1 import APP_STYLESHEET
+from .bwb_style_1 import APP_STYLESHEET, FIELD_STYLE
 from .layout import Zone
 from .utilities import (
     apply_fcfilter_btn_style,
@@ -619,10 +619,14 @@ class FTApp(QWidget):
         self.headerC1.add(self.headerC1A)
         self.headerEdCodigo = QLineEdit()
         make_readonly_lineedit(self.headerEdCodigo, False)
-        self.headerEdCodigo.setStyleSheet("background-color: transparent")
+        self.headerEdCodigo.setStyleSheet(
+            f"{FIELD_STYLE}\nbackground-color: transparent;"
+        )
         self.headerEdNome = QLineEdit()
         make_readonly_lineedit(self.headerEdNome, True)
-        self.headerEdNome.setStyleSheet("background-color: transparent")
+        self.headerEdNome.setStyleSheet(
+            f"{FIELD_STYLE}\nbackground-color: transparent;"
+        )
         self.headerC1A.add_row(
             "Código:",
             self.headerEdCodigo,
@@ -689,10 +693,14 @@ class FTApp(QWidget):
 
         self.edCodigo = QLineEdit()
         make_readonly_lineedit(self.edCodigo, False)
-        self.edCodigo.setStyleSheet("background-color: transparent")
+        self.edCodigo.setStyleSheet(
+            f"{FIELD_STYLE}\nbackground-color: transparent;"
+        )
         self.edNome = QLineEdit()
         make_readonly_lineedit(self.edNome, True)
-        self.edNome.setStyleSheet("background-color: transparent")
+        self.edNome.setStyleSheet(
+            f"{FIELD_STYLE}\nbackground-color: transparent;"
+        )
         self.C1A1.add_row(
             "Código:",
             self.edCodigo,
@@ -847,7 +855,9 @@ class FTApp(QWidget):
         self.C2Custo.add(custo_total_label, 0)
         self.edCustoTotal = QLineEdit()
         make_readonly_lineedit(self.edCustoTotal, True)
-        self.edCustoTotal.setStyleSheet("background-color: transparent")
+        self.edCustoTotal.setStyleSheet(
+            f"{FIELD_STYLE}\nbackground-color: transparent;"
+        )
         self.edCustoTotal.setFixedWidth(self.edCustoTotal.sizeHint().width() * 2)
         self.C2Custo.add(self.edCustoTotal, 0)
 
