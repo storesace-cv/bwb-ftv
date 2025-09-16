@@ -285,7 +285,9 @@ def _ensure_schema_table(conn: sqlite3.Connection) -> str:
         try:
             conn.execute("ALTER TABLE SchemaVersion RENAME COLUMN filename TO Filename")
         except sqlite3.OperationalError:
-            pass
+            logger.exception(
+                "Falha ao renomear coluna 'filename' para 'Filename' na tabela SchemaVersion."
+            )
         return "SchemaVersion"
 
     conn.execute("CREATE TABLE IF NOT EXISTS SchemaVersion (Filename TEXT PRIMARY KEY)")
@@ -323,12 +325,17 @@ def apply_pending_migrations(conn: sqlite3.Connection) -> List[str]:
             msg = str(exc).lower()
             if "no such table" in msg:
                 logger.warning(
-                    "Migração %s requer uma tabela que ainda não existe; "
-                    "vai permanecer pendente até que a tabela seja criada.",
+                    "Migração %s ignorada porque a tabela alvo não existe; "
+                    "presume-se que o esquema já está atualizado.",
                     path.name,
                 )
-                continue
-            if not any(
+            elif "no such column" in msg:
+                logger.warning(
+                    "Migração %s ignorada porque a coluna alvo não existe; "
+                    "presume-se que o esquema já está atualizado.",
+                    path.name,
+                )
+            elif not any(
                 err in msg
                 for err in (
                     "another table or index",
@@ -474,9 +481,10 @@ def _seed_alergenios(conn: sqlite3.Connection) -> None:
             )
             conn.commit()
     except sqlite3.Error:
-        # Table missing or other errors are ignored here; callers may handle
-        # them separately.
-        pass
+        logger.exception(
+            "Falha a inserir registos predefinidos na tabela Alergenios."
+        )
+        raise
 
 
 def _seed_validade(conn: sqlite3.Connection) -> None:
@@ -491,9 +499,8 @@ def _seed_validade(conn: sqlite3.Connection) -> None:
             )
             conn.commit()
     except sqlite3.Error:
-        # Table missing or other errors are ignored here; callers may handle
-        # them separately.
-        pass
+        logger.exception("Falha a inserir registos predefinidos na tabela Validade.")
+        raise
 
 
 def _seed_temperaturas(conn: sqlite3.Connection) -> None:
@@ -508,9 +515,10 @@ def _seed_temperaturas(conn: sqlite3.Connection) -> None:
             )
             conn.commit()
     except sqlite3.Error:
-        # Table missing or other errors are ignored here; callers may handle
-        # them separately.
-        pass
+        logger.exception(
+            "Falha a inserir registos predefinidos na tabela Temperaturas."
+        )
+        raise
 
 
 def ensure_preparacao_table(conn: sqlite3.Connection) -> None:
