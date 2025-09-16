@@ -731,6 +731,9 @@ class FTApp(QWidget):
         )  # B1.C1.A.2.A (famílias/PVPs) + B1.C1.A.2.B (combos)
         # B1.C1.A.2.A → divide verticalmente: topo (famílias) + base (PVP1..PVP5)
         C1A21_top, C1A21_base = C1A21.split_v((1, 2))
+        theme_name = "bwb-style-1"
+        C1A21_top.set_theme(theme_name)
+        C1A21_base.set_theme(theme_name)
         C1A21_top.apply_overlays(True)
         self.lbFamiliaVal = QLabel("")
         apply_label_style(self.lbFamiliaVal)
@@ -773,6 +776,7 @@ class FTApp(QWidget):
         pvp1, pvp2, pvp3, pvp4, pvp5 = C1A21_base_zone.split_h((1, 1, 1, 1, 1))
 
         for idx, zone in enumerate((pvp1, pvp2, pvp3, pvp4, pvp5), start=1):
+            zone.set_theme(theme_name)
             label_text = f"PVP #{idx}"
             overlay = f"PrecosTaxas.Preco{idx}"
             lbl = QLabel(overlay if layout.DEV_OVERLAYS else label_text)

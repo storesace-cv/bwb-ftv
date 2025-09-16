@@ -1,5 +1,14 @@
 """Centralised stylesheet constants for the BWB style 1 theme."""
 
+ZONE_STYLES = {
+    "bwb-style-1": (
+        "background-color: rgba(255, 255, 255, 0.35);\n"
+        "border: 1px solid rgba(0, 0, 0, 0.08);\n"
+        "border-radius: 12px;\n"
+        "padding: 6px;\n"
+    ),
+}
+
 FIELD_STYLE = (
     "QLineEdit {\n"
     "    qproperty-alignment: AlignLeft;\n"
@@ -62,6 +71,7 @@ APP_STYLESHEET = (
 )
 
 __all__ = [
+    "ZONE_STYLES",
     "FIELD_STYLE",
     "LABEL_STYLE",
     "OVERLAY_ON_STYLE",
