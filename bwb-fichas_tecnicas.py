@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QFont
 
 from data.datastore import DataStore  # noqa: E402
+from data.migration import ALERGENIOS_SEED_FLAG  # noqa: E402
 from services.allergens import import_allergens  # noqa: E402
 from services.products import ProductService  # noqa: E402
 from ui.ui_editor_fonte import FTApp  # noqa: E402
@@ -47,6 +48,20 @@ def main():
         splash.exec_()
 
     # DataStore
+    # Nota: deixamos FTV_SEED_ALERGENIOS indefinida para evitar dados fictícios
+    # antes da importação de alergénios via JSON.
+    # Note: keep FTV_SEED_ALERGENIOS unset to avoid placeholder data before
+    # importing allergens from JSON.
+    if os.getenv(ALERGENIOS_SEED_FLAG):
+        logger.info(
+            "[LAUNCHER] Seeding de alergénios ativo via %s",
+            ALERGENIOS_SEED_FLAG,
+        )
+    else:
+        logger.info(
+            "[LAUNCHER] Seeding de alergénios desativado (defina %s para valores padrão)",
+            ALERGENIOS_SEED_FLAG,
+        )
     ds = DataStore()
     logger.info("[LAUNCHER] DataStore importado de: %s", DataStore.__module__)
 

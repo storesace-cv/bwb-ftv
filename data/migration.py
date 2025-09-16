@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import sqlite3
 from typing import List
@@ -29,6 +30,9 @@ DEFAULT_ALERGENIOS = [
     (13, "Tremoço", "Lupin", None, None, None),
     (14, "Moluscos", "Molluscs", None, None, None),
 ]
+
+ALERGENIOS_SEED_FLAG = "FTV_SEED_ALERGENIOS"
+_TRUTHY_VALUES = {"1", "true", "yes", "on"}
 
 PRODUTOS_SCHEMA = """
 CREATE TABLE IF NOT EXISTS Produtos (
@@ -420,8 +424,20 @@ def ensure_core_tables(conn: sqlite3.Connection) -> None:
     _seed_temperaturas(conn)
 
 
+def _should_seed_alergenios() -> bool:
+    """Return ``True`` if default allergen seeding should run."""
+
+    value = os.getenv(ALERGENIOS_SEED_FLAG)
+    if value is None:
+        return False
+    return value.strip().lower() in _TRUTHY_VALUES
+
+
 def _seed_alergenios(conn: sqlite3.Connection) -> None:
     """Populate ``Alergenios`` with default records if empty."""
+
+    if not _should_seed_alergenios():
+        return
 
     try:
         cur = conn.execute("SELECT COUNT(*) FROM Alergenios")

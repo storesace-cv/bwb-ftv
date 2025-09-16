@@ -115,6 +115,17 @@ To enable detailed logs, set the `debug` variable to `0` when launching the appl
 debug=0 python bwb-fichas_tecnicas.py
 ```
 
+Para preencher a tabela `Alergenios` com os valores padrão, defina a variável
+de ambiente `FTV_SEED_ALERGENIOS` com um valor verdadeiro (`1`, `true`, `yes`
+ou `on`) antes de iniciar a aplicação. Quando a variável não está definida, o
+seeding fica desativado para permitir a importação prévia de um ficheiro JSON
+de alergénios.
+To populate the `Alergenios` table with the default values, set the
+`FTV_SEED_ALERGENIOS` environment variable to a truthy value (`1`, `true`,
+`yes`, or `on`) before launching the application. When the variable is not set,
+the seeding step remains disabled so that an allergens JSON file can be
+imported first.
+
 ## Execução / Running
 
 Inicie a interface principal com:  
