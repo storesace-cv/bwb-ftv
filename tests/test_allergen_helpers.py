@@ -11,11 +11,11 @@ def test_allergens_from_db_invalid_rows():
     cur = ds.conn.cursor()
     cur.execute("DELETE FROM Alergenios")
     cur.executemany(
-        "INSERT INTO Alergenios (Id, Nome, Ativo) VALUES (?, ?, ?)",
+        "INSERT INTO Alergenios (Id, Nome, NomeIngles, Ativo) VALUES (?, ?, ?, ?)",
         [
-            (1, "Good", 1),
-            (2, "", 1),
-            (3, "Inactive", 0),
+            (1, "Good", "Good", 1),
+            (2, "", "Empty", 1),
+            (3, "Inactive", "Inactive", 0),
         ],
     )
     ds.conn.commit()

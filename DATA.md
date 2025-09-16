@@ -85,7 +85,11 @@
 | Campo | Descrição |
 |-------|-----------|
 | **Id** | Identificador |
-| Nome | Nome do alergénio |
+| Nome | Nome do alergénio em português |
+| NomeIngles | Nome do alergénio em inglês |
+| Descricao | Descrição detalhada |
+| Exemplos | Exemplos de ocorrência |
+| Notas | Observações adicionais |
 | Ativo | Indicador de ativo |
 
 > Nota: o ``DataStore`` valida a tabela ``Alergenios`` e exige, pelo menos,

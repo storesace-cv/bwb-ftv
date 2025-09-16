@@ -69,6 +69,16 @@ CREATE TABLE IF NOT EXISTS Config (
     Value TEXT
 );
 
+CREATE TABLE IF NOT EXISTS Alergenios (
+    Id         INTEGER PRIMARY KEY,
+    Nome       TEXT NOT NULL,
+    NomeIngles TEXT NOT NULL,
+    Descricao  TEXT,
+    Exemplos   TEXT,
+    Notas      TEXT,
+    Ativo      INTEGER NOT NULL DEFAULT 1
+);
+
 CREATE TABLE IF NOT EXISTS FcostValues (
     Nivel INTEGER PRIMARY KEY,
     Nome TEXT NOT NULL,

@@ -18,6 +18,8 @@ def memory_datastore(monkeypatch: pytest.MonkeyPatch) -> Iterator[DataStore]:
 
     monkeypatch.setattr(DataStore, "_ensure_required_tables", lambda self: None)
     ds = DataStore(db_path=":memory:")
+    ds.conn.execute("DELETE FROM Alergenios")
+    ds.conn.commit()
     try:
         yield ds
     finally:

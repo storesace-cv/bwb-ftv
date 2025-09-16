@@ -487,21 +487,33 @@ class AuxiliaresRepo:
             active_col="Ativo",
         )
 
-    def add_alergenio(self, nome: str):
-        return self._admin_add(
-            "Alergenios",
-            "add_alergenio",
-            nome,
-            desc_col="Nome",
-            active_col="Ativo",
-        )
-
-    def update_alergenio(self, cod, nome: str) -> bool:
+    def add_alergenio(self, nome: str, nome_ingles: str | None = None):
+        nome_ingles = nome if nome_ingles is None else nome_ingles
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "UPDATE Alergenios SET nome=? WHERE id=?",
-                (nome, cod),
+                "INSERT INTO Alergenios (Nome, NomeIngles, Ativo) VALUES (?, ?, 1)",
+                (nome, nome_ingles),
+            )
+            self.conn.commit()
+            return cur.lastrowid
+        except sqlite3.Error as exc:
+            logger.error(
+                "[AuxiliaresRepo] add_alergenio falhou: %s",
+                exc,
+                exc_info=True,
+            )
+            return None
+
+    def update_alergenio(
+        self, cod, nome: str, nome_ingles: str | None = None
+    ) -> bool:
+        nome_ingles = nome if nome_ingles is None else nome_ingles
+        cur = self.conn.cursor()
+        try:
+            cur.execute(
+                "UPDATE Alergenios SET Nome=?, NomeIngles=? WHERE Id=?",
+                (nome, nome_ingles, cod),
             )
             self.conn.commit()
             return cur.rowcount > 0
