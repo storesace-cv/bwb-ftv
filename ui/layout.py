@@ -107,7 +107,7 @@ class Zone(QWidget):
         self.ly.setSpacing(spacing)
 
         self._tag_lbl = QLabel(self.tag, self)
-        self._tag_lbl.setStyleSheet("color:#c00; font-size:10px;")
+        apply_label_style(self._tag_lbl, "QLabel { color:#c00; font-size:10px; }")
         self._tag_lbl.setFixedHeight(12)
         self.ly.addWidget(self._tag_lbl, 0, Qt.AlignLeft)
 
