@@ -325,6 +325,9 @@ class ProductService:
     def list_active_allergens(self):
         return self.ds.list_active_allergens()
 
+    def get_allergen_details(self, aid):
+        return self.ds.get_allergen_details(aid)
+
     def set_tipo_artigo(self, codigo: str, tipo_cod) -> bool:
         return self.ds.set_tipo_artigo(codigo, tipo_cod)
 
