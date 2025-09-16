@@ -1,3 +1,4 @@
+from PyQt5.QtCore import qInstallMessageHandler
 from PyQt5.QtWidgets import QLabel
 
 import pytest
@@ -169,3 +170,23 @@ def test_zone_hides_overlays_when_globally_disabled(qapp):
         assert zone.styleSheet() == expected_off_style
     finally:
         layout.DEV_OVERLAYS = original
+
+
+def test_zone_apply_overlays_with_dotted_tag_has_no_stylesheet_warning(
+    qapp, overlays_enabled
+):
+    zone = layout.Zone("B1.C1", show_overlays=False)
+    captured_messages: list[str] = []
+
+    def handler(msg_type, context, message):
+        captured_messages.append(str(message))
+
+    previous_handler = qInstallMessageHandler(handler)
+    try:
+        zone.apply_overlays(True)
+    finally:
+        qInstallMessageHandler(previous_handler)
+
+    assert not any(
+        "Could not parse stylesheet" in message for message in captured_messages
+    )

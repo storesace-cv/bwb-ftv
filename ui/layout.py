@@ -39,7 +39,7 @@ _TAG_RE = re.compile(r"^B\d+(?:\.C\d+(?:\.(?:A|B|\d+))*)?$")
 def _escape_object_name(name: str) -> str:
     """Return ``name`` escaped for usage within Qt style sheets."""
 
-    return re.sub(r"([^\w-])", r"\\\\\1", name)
+    return re.sub(r"([^\w-])", r"\\\1", name)
 
 
 def validate_tag(tag: str) -> bool:
