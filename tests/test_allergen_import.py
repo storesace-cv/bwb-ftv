@@ -141,3 +141,43 @@ def test_import_allergens_persists_rows_and_archives_source(
     assert re.fullmatch(r"allergens\.[0-9]{14}\.json", archived.name)
     assert archived.read_text(encoding="utf-8") == original_text
     assert not source.exists()
+
+
+def test_import_allergens_accepts_wrapped_payload(
+    tmp_path, memory_datastore: DataStore
+) -> None:
+    """A JSON object with ``alergenios`` key should be supported."""
+
+    ds = memory_datastore
+
+    payload = [
+        {
+            "id": 1,
+            "nome": "Frutos secos",
+            "nome_ingles": "Tree nuts",
+            "descricao": "Risco de alergias",
+            "exemplos": ["Amêndoas", "Nozes"],
+            "notas": "Sem contaminação cruzada",
+        }
+    ]
+    source = tmp_path / "wrapped-allergens.json"
+    wrapped_payload = {"alergenios": payload}
+    source.write_text(json.dumps(wrapped_payload, ensure_ascii=False), encoding="utf-8")
+
+    allergen_service.import_allergens(source, ds.conn, archive=False)
+
+    cur = ds.conn.cursor()
+    cur.execute(
+        "SELECT Id, Nome, NomeIngles, Descricao, Exemplos, Notas FROM Alergenios"
+    )
+    row = cur.fetchone()
+
+    assert tuple(row) == (
+        1,
+        "Frutos secos",
+        "Tree nuts",
+        "Risco de alergias",
+        json.dumps(payload[0]["exemplos"], ensure_ascii=False),
+        "Sem contaminação cruzada",
+    )
+    assert source.exists()
