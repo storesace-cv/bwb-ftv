@@ -1516,6 +1516,9 @@ class FTApp(QWidget):
             pass
 
     def _on_fcost_filter_selected(self, level: int):
+        if getattr(self, "_active_fcost_filter", None) == level:
+            self._on_fcost_filter_reset()
+            return
         self._active_fcost_filter = level
         try:
             self.service.ds.set_fcost_level(level)

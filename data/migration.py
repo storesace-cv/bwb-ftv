@@ -14,20 +14,20 @@ MIGRATIONS_DIR = BASE_DIR / "data" / "migrations"
 DEFAULT_VALIDADE = [(1, "24h"), (2, "48h")]
 DEFAULT_TEMPERATURAS = [(1, "Quente"), (2, "Frio")]
 DEFAULT_ALERGENIOS = [
-    (1, "Glúten"),
-    (2, "Crustáceos"),
-    (3, "Ovos"),
-    (4, "Peixe"),
-    (5, "Amendoins"),
-    (6, "Soja"),
-    (7, "Leite"),
-    (8, "Frutos de casca rija"),
-    (9, "Aipo"),
-    (10, "Mostarda"),
-    (11, "Sementes de sésamo"),
-    (12, "Dióxido de enxofre e sulfitos"),
-    (13, "Tremoço"),
-    (14, "Moluscos"),
+    (1, "Glúten", "Gluten", None, None, None),
+    (2, "Crustáceos", "Crustaceans", None, None, None),
+    (3, "Ovos", "Eggs", None, None, None),
+    (4, "Peixe", "Fish", None, None, None),
+    (5, "Amendoins", "Peanuts", None, None, None),
+    (6, "Soja", "Soy", None, None, None),
+    (7, "Leite", "Milk", None, None, None),
+    (8, "Frutos de casca rija", "Tree nuts", None, None, None),
+    (9, "Aipo", "Celery", None, None, None),
+    (10, "Mostarda", "Mustard", None, None, None),
+    (11, "Sementes de sésamo", "Sesame seeds", None, None, None),
+    (12, "Dióxido de enxofre e sulfitos", "Sulphur dioxide and sulphites", None, None, None),
+    (13, "Tremoço", "Lupin", None, None, None),
+    (14, "Moluscos", "Molluscs", None, None, None),
 ]
 
 PRODUTOS_SCHEMA = """
@@ -342,9 +342,13 @@ def ensure_core_tables(conn: sqlite3.Connection) -> None:
         (
             """
             CREATE TABLE IF NOT EXISTS Alergenios (
-                Id    INTEGER PRIMARY KEY,
-                Nome  TEXT NOT NULL,
-                Ativo INTEGER NOT NULL DEFAULT 1
+                Id         INTEGER PRIMARY KEY,
+                Nome       TEXT NOT NULL,
+                NomeIngles TEXT NOT NULL,
+                Descricao  TEXT,
+                Exemplos   TEXT,
+                Notas      TEXT,
+                Ativo      INTEGER NOT NULL DEFAULT 1
             )
             """
         ),
@@ -423,7 +427,8 @@ def _seed_alergenios(conn: sqlite3.Connection) -> None:
         cur = conn.execute("SELECT COUNT(*) FROM Alergenios")
         if cur.fetchone()[0] == 0:
             conn.executemany(
-                "INSERT INTO Alergenios (Id, Nome, Ativo) VALUES (?, ?, 1)",
+                "INSERT INTO Alergenios (Id, Nome, NomeIngles, Descricao, Exemplos, Notas, Ativo) "
+                "VALUES (?, ?, ?, ?, ?, ?, 1)",
                 DEFAULT_ALERGENIOS,
             )
             conn.commit()
