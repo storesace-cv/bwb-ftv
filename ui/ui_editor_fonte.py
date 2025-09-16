@@ -428,6 +428,7 @@ class FTApp(QWidget):
         self.current_product = None
         self._prep_dirty = False
         self._active_fcost_filter: int | None = None
+        self._allergen_checkboxes: dict[int, QCheckBox] = {}
         self._build_ui()
         self._connect_nav()
         self._load_record(self.cur_index)
@@ -1159,6 +1160,8 @@ class FTApp(QWidget):
         cols = 3
         details_getter = getattr(self.service, "get_allergen_details", None)
 
+        checkboxes: dict[int, QCheckBox] = {}
+
         def _extract(values, key, idx):
             if isinstance(values, dict):
                 return values.get(key)
@@ -1196,6 +1199,10 @@ class FTApp(QWidget):
         for i, (aid, nome) in enumerate(names):
             r = i // cols
             c = i % cols
+            try:
+                key = int(aid)
+            except (TypeError, ValueError):
+                continue
             cb = QCheckBox(nome)
             details = {}
             if callable(details_getter):
@@ -1214,10 +1221,51 @@ class FTApp(QWidget):
                 if notas_txt:
                     tooltip_parts.append(notas_txt)
             cb.setToolTip("\n".join(tooltip_parts) if tooltip_parts else "")
+            cb.stateChanged.connect(
+                lambda state, key=key: self._on_allergen_state_changed(key, state)
+            )
             grid.addWidget(cb, r, c, alignment=Qt.AlignLeft)
+            checkboxes[key] = cb
         self.C5.add(gridw, 0)
+        self._allergen_checkboxes = checkboxes
 
     # ---------- Ingredientes: colunas ----------
+    def _collect_selected_allergens(self) -> list[int]:
+        boxes = getattr(self, "_allergen_checkboxes", None)
+        if not boxes:
+            return []
+        return [aid for aid, cb in boxes.items() if cb.isChecked()]
+
+    def _apply_allergen_selection(self, allergen_ids):
+        boxes = getattr(self, "_allergen_checkboxes", None)
+        if not boxes:
+            return
+        selected: set[int] = set()
+        if allergen_ids:
+            for aid in allergen_ids:
+                try:
+                    selected.add(int(aid))
+                except (TypeError, ValueError):
+                    continue
+        for aid, cb in boxes.items():
+            prev = cb.blockSignals(True)
+            cb.setChecked(aid in selected)
+            cb.blockSignals(prev)
+
+    def _on_allergen_state_changed(self, aid: int, _state: int):
+        if getattr(self, "_loading", False):
+            return
+        codigo = getattr(self.current_product, "code", None)
+        if not codigo:
+            return
+        try:
+            selected = self._collect_selected_allergens()
+            self.service.set_product_allergens(codigo, selected)
+        except Exception:
+            logger.exception(
+                "[FTApp] Falha ao atualizar alergénios do produto %s", codigo
+            )
+
     def _setup_ing_columns(self):
         w = self.tbIng.viewport().width()
         model = self.tbIng.model()
@@ -1436,6 +1484,7 @@ class FTApp(QWidget):
         self._loading = True
         try:
             codigo = self.service.codigo_at(idx)
+            self._apply_allergen_selection([])
             product = self.service.get_product_info(codigo)
             self.current_product = product
 
@@ -1492,6 +1541,15 @@ class FTApp(QWidget):
             self.edPrep.blockSignals(False)
             self._prep_dirty = False
             self._apply_prep_autofit_or_scroll()
+
+            try:
+                allergens = self.service.get_product_allergens(codigo) or []
+            except Exception:
+                logger.exception(
+                    "[FTApp] Falha ao obter alergénios do produto %s", codigo
+                )
+                allergens = []
+            self._apply_allergen_selection(allergens)
 
             try:
                 cbs = (self.cbTipos, self.cbValidade, self.cbTemp)

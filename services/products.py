@@ -328,6 +328,14 @@ class ProductService:
     def get_allergen_details(self, aid):
         return self.ds.get_allergen_details(aid)
 
+    def get_product_allergens(self, codigo: str) -> list[int]:
+        return self.ds.get_product_allergens(codigo)
+
+    def set_product_allergens(
+        self, codigo: str, allergen_ids: Iterable[int | str | None]
+    ) -> bool:
+        return self.ds.set_product_allergens(codigo, allergen_ids)
+
     def set_tipo_artigo(self, codigo: str, tipo_cod) -> bool:
         return self.ds.set_tipo_artigo(codigo, tipo_cod)
 

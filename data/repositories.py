@@ -2,6 +2,7 @@
 
 import logging
 import sqlite3
+from collections.abc import Iterable
 
 from utils.formatting import parse_decimal
 
@@ -154,6 +155,75 @@ class ProdutosRepo:
                 "[ProdutosRepo] set_temperatura(%s, %s) falhou: %s",
                 codigo,
                 temperatura_cod,
+                exc,
+                exc_info=True,
+            )
+            return False
+
+    def get_product_allergens(self, codigo: str) -> list[int]:
+        """Return allergen identifiers associated with ``codigo``."""
+
+        cur = self.conn.cursor()
+        cur.execute(
+            """
+            SELECT AlergenioId
+            FROM ProdutoAlergenio
+            WHERE ProdutoCodigo = ?
+            ORDER BY AlergenioId
+            """,
+            (codigo,),
+        )
+        result: list[int] = []
+        for row in cur.fetchall():
+            try:
+                value = row["AlergenioId"]  # type: ignore[index]
+            except (KeyError, TypeError):
+                value = row[0] if row else None
+            try:
+                if value is not None and str(value).strip() != "":
+                    result.append(int(value))
+            except (TypeError, ValueError):
+                continue
+        return result
+
+    def set_product_allergens(
+        self, codigo: str, allergen_ids: Iterable[int | str | None]
+    ) -> bool:
+        """Persist the allergen identifiers associated with ``codigo``."""
+
+        if not codigo:
+            return False
+
+        normalised: list[int] = []
+        for aid in allergen_ids:
+            if aid in (None, ""):
+                continue
+            try:
+                normalised.append(int(aid))
+            except (TypeError, ValueError):
+                continue
+        unique_ids = sorted(set(normalised))
+
+        cur = self.conn.cursor()
+        try:
+            cur.execute(
+                "DELETE FROM ProdutoAlergenio WHERE ProdutoCodigo = ?",
+                (codigo,),
+            )
+            if unique_ids:
+                cur.executemany(
+                    "INSERT INTO ProdutoAlergenio (ProdutoCodigo, AlergenioId) "
+                    "VALUES (?, ?)",
+                    [(codigo, aid) for aid in unique_ids],
+                )
+            self.conn.commit()
+            return True
+        except sqlite3.Error as exc:
+            self.conn.rollback()
+            logger.error(
+                "[ProdutosRepo] set_product_allergens(%s, %s) falhou: %s",
+                codigo,
+                unique_ids,
                 exc,
                 exc_info=True,
             )

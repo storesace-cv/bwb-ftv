@@ -144,3 +144,23 @@ def test_get_product_info_logs_missing_ingredient_name(caplog):
 
     assert product.ingredients[0].name == ""
     assert "P1" in caplog.text
+
+
+def test_product_service_get_product_allergens_delegates():
+    ds = MagicMock(spec=DataStore)
+    ds.get_product_allergens.return_value = [1, 3]
+    service = ProductService(ds)
+
+    result = service.get_product_allergens("PX")
+
+    assert result == [1, 3]
+    ds.get_product_allergens.assert_called_once_with("PX")
+
+
+def test_product_service_set_product_allergens_delegates():
+    ds = MagicMock(spec=DataStore)
+    ds.set_product_allergens.return_value = True
+    service = ProductService(ds)
+
+    assert service.set_product_allergens("PX", [2, 4]) is True
+    ds.set_product_allergens.assert_called_once_with("PX", [2, 4])
