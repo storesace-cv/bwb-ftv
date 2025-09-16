@@ -32,9 +32,6 @@ DEV_OVERLAYS = (
 
 DEFAULT_ZONE_MARGINS = (3, 5)
 
-STYLE_NAME_THEMES = {"bwb-style-1", "bwb-style-1-center"}
-
-
 # Updated to allow block-prefixed cell identifiers like ``B1.C1``
 _TAG_RE = re.compile(r"^B\d+(?:\.C\d+(?:\.(?:A|B|\d+))*)?$")
 
@@ -177,9 +174,7 @@ class Zone(QWidget):
         self._sync_style_label()
 
     def _style_label_text(self) -> str | None:
-        if self._theme_name in STYLE_NAME_THEMES:
-            return self._theme_name
-        return None
+        return self._theme_name or None
 
     def _sync_style_label(self) -> None:
         if self._overlay_active:
