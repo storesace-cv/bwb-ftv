@@ -24,6 +24,24 @@ LABEL_STYLE = (
     "}"
 )
 
+FCFILTER_BUTTON_STYLE_TEMPLATE = (
+    "/* bwb-style-fcfilters-btn */\n"
+    "QPushButton {{\n"
+    "    background-color: rgba({r},{g},{b},{normal_alpha});\n"
+    "    border: 1px solid rgba(0,0,0,0.3);\n"
+    "    border-top-color: rgba(255,255,255,0.8);\n"
+    "    border-left-color: rgba(255,255,255,0.8);\n"
+    "    border-bottom-color: rgba(0,0,0,0.4);\n"
+    "    border-right-color: rgba(0,0,0,0.4);\n"
+    "    border-radius: 6px;\n"
+    "    padding: 4px;\n"
+    "}\n"
+    "QPushButton:pressed,\n"
+    "QPushButton:checked {{\n"
+    "    background-color: rgba({r},{g},{b},{active_alpha});\n"
+    "}}\n"
+)
+
 APP_STYLESHEET = (
     "QWidget {\n"
     "    background-color: rgba(255, 255, 255, 0.25);\n"
@@ -32,4 +50,9 @@ APP_STYLESHEET = (
     "}"
 )
 
-__all__ = ["FIELD_STYLE", "LABEL_STYLE", "APP_STYLESHEET"]
+__all__ = [
+    "FIELD_STYLE",
+    "LABEL_STYLE",
+    "FCFILTER_BUTTON_STYLE_TEMPLATE",
+    "APP_STYLESHEET",
+]
