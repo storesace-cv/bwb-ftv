@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QLabel
 import pytest
 
 from ui import layout
+from ui.utilities import LABEL_STYLE
 
 
 @pytest.fixture
@@ -50,7 +51,7 @@ def test_zone_add_row_has_no_debug_styles_by_default(qapp):
     row = label.parentWidget()
     assert "background-color" not in row.styleSheet()
     assert "border-radius" not in row.styleSheet()
-    assert label.styleSheet() == ""
+    assert label.styleSheet() == LABEL_STYLE
     assert "background-color" not in value_widget.styleSheet()
     assert "border-radius" not in value_widget.styleSheet()
 
@@ -63,8 +64,11 @@ def test_zone_add_row_allows_opt_in_debug_styles(qapp, overlays_enabled):
     row = label.parentWidget()
     assert "background-color" in row.styleSheet()
     assert "border-radius" in row.styleSheet()
-    assert "background-color" in label.styleSheet()
-    assert "border-radius" in label.styleSheet()
+    expected_style = (
+        f"{LABEL_STYLE}\n"
+        "QLabel { background-color: rgba(0, 0, 0, 0.03); border-radius: 4px; }"
+    )
+    assert label.styleSheet() == expected_style
     assert "background-color" in value_widget.styleSheet()
     assert "border-radius" in value_widget.styleSheet()
 

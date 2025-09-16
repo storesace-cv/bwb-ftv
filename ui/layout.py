@@ -11,6 +11,8 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from .utilities import apply_label_style
+
 _ENV_DEV_OVERLAYS = os.getenv("BWB_DEV_OVERLAYS")
 DEV_OVERLAYS = (
     _ENV_DEV_OVERLAYS.strip().lower() in {"1", "true", "yes", "on"}
@@ -163,10 +165,12 @@ class Zone(QWidget):
             else label_text
         )
         lbl = QLabel(display, row)
-        if debug_styles:
-            lbl.setStyleSheet(
-                "background-color: rgba(0, 0, 0, 0.03); border-radius: 4px;"
-            )
+        debug_extra = (
+            "QLabel { background-color: rgba(0, 0, 0, 0.03); border-radius: 4px; }"
+            if debug_styles
+            else None
+        )
+        apply_label_style(lbl, debug_extra)
         lbl.setProperty("userLabel", label_text)
         lbl.setProperty("devLabel", overlay_text)
         lbl.setAlignment(Qt.AlignTop | Qt.AlignRight)

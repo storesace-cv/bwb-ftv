@@ -16,6 +16,33 @@ FIELD_STYLE = (
 )
 
 
+LABEL_STYLE = (
+    "QLabel {\n"
+    "    background-color: rgba(200,200,200,0.5);\n"
+    "    border: 1px solid rgba(0,0,0,0.3);\n"
+    "    border-top-color: rgba(255,255,255,0.8);\n"
+    "    border-left-color: rgba(255,255,255,0.8);\n"
+    "    border-bottom-color: rgba(0,0,0,0.4);\n"
+    "    border-right-color: rgba(0,0,0,0.4);\n"
+    "    border-radius: 6px;\n"
+    "    padding: 4px;\n"
+    "}\n"
+    "QLabel:pressed {\n"
+    "    background-color: rgba(200,200,200,0.8);\n"
+    "}"
+)
+
+
+def apply_label_style(label: QLabel, extra: str | None = None) -> None:
+    """Apply the default beveled label style to ``label``.
+
+    ``extra`` may contain additional stylesheet rules appended to the base style.
+    """
+
+    style = LABEL_STYLE if not extra else f"{LABEL_STYLE}\n{extra}"
+    label.setStyleSheet(style)
+
+
 def make_readonly_lineedit(le: QLineEdit, bold: bool = False) -> None:
     le.setReadOnly(True)
     le.setFrame(False)
@@ -37,7 +64,7 @@ def stack_combo(title: str):
     v.setContentsMargins(0, 0, 0, 0)
     v.setSpacing(2)
     lbl = QLabel(title)
-    lbl.setStyleSheet(FIELD_STYLE)
+    apply_label_style(lbl)
     v.addWidget(lbl, 0, Qt.AlignLeft | Qt.AlignVCenter)
     cb = QComboBox()
     cb.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)

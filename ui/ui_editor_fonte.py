@@ -102,7 +102,12 @@ from utils.formatting import format_pt_number, parse_decimal
 
 from . import layout
 from .layout import Zone
-from .utilities import make_readonly_lineedit, match_font, stack_combo
+from .utilities import (
+    apply_label_style,
+    make_readonly_lineedit,
+    match_font,
+    stack_combo,
+)
 from .dialogs import (
     import_data,
     manage_aux_table,
@@ -113,8 +118,6 @@ from .dialogs import (
 )
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
-LABEL_VALUE_STYLE = "border:none; background:transparent; font-weight:600;"
-
 logger = logging.getLogger(__name__)
 
 # ---------------------- Image Preview ----------------------
@@ -724,7 +727,9 @@ class FTApp(QWidget):
         C1A21_top, C1A21_base = C1A21.split_v((1, 2))
         C1A21_top.apply_overlays(True)
         self.lbFamiliaVal = QLabel("")
+        apply_label_style(self.lbFamiliaVal)
         self.lbSubFamiliaVal = QLabel("")
+        apply_label_style(self.lbSubFamiliaVal)
         match_font(self.lbFamiliaVal, self.edNome)
         match_font(self.lbSubFamiliaVal, self.edNome)
         C1A21_top.add_row(
@@ -746,6 +751,7 @@ class FTApp(QWidget):
         self.lbPVPs: list[QLabel] = []
 
         pvp_label = QLabel("PVP:")
+        apply_label_style(pvp_label)
         match_font(pvp_label, self.edNome)
         C1A21_base.add(pvp_label, 0)
 
@@ -766,11 +772,12 @@ class FTApp(QWidget):
             lbl = QLabel(overlay if layout.DEV_OVERLAYS else label_text)
             lbl.setProperty("userLabel", label_text)
             lbl.setProperty("devLabel", overlay)
+            apply_label_style(lbl)
             match_font(lbl, self.edNome)
             zone.add(lbl, 0)
 
             val = QLabel("—")
-            val.setStyleSheet(LABEL_VALUE_STYLE)
+            apply_label_style(val)
             match_font(val, self.edNome)
             zone.add(val, 0)
             self.lbPVPs.append(val)
@@ -829,7 +836,9 @@ class FTApp(QWidget):
         self.C2Custo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.C2.add(self.C2Custo, 0)
         self.C2Custo.ly.addStretch(1)
-        self.C2Custo.add(QLabel("Custo Total:"), 0)
+        custo_total_label = QLabel("Custo Total:")
+        apply_label_style(custo_total_label)
+        self.C2Custo.add(custo_total_label, 0)
         self.edCustoTotal = QLineEdit()
         make_readonly_lineedit(self.edCustoTotal, True)
         self.edCustoTotal.setFixedWidth(self.edCustoTotal.sizeHint().width() * 2)
@@ -850,6 +859,7 @@ class FTApp(QWidget):
         )
         self.C3.add(C3A, 1)
         food_cost_label = QLabel("Food Cost:")
+        apply_label_style(food_cost_label)
         match_font(food_cost_label, self.edNome)
         C3A.add(food_cost_label, 0)
 
@@ -868,11 +878,12 @@ class FTApp(QWidget):
         for idx, fc in enumerate((fc1, fc2, fc3, fc4, fc5), start=1):
             lbl = QLabel(f"Food Cost #{idx}")
             lbl.setAlignment(Qt.AlignCenter)
+            apply_label_style(lbl)
             match_font(lbl, self.edNome)
             fc.add(lbl, 0)
             val = QLabel("—")
             val.setAlignment(Qt.AlignCenter)
-            val.setStyleSheet(LABEL_VALUE_STYLE)
+            apply_label_style(val)
             match_font(val, self.edNome)
             fc.add(val, 0)
             self.lbFoodCosts.append(val)
@@ -1121,6 +1132,7 @@ class FTApp(QWidget):
         self.btFirst = QPushButton("◀◀ Primeiro")
         self.btPrev = QPushButton("◀ Anterior")
         self.lbPos = QLabel("1 / 1")
+        apply_label_style(self.lbPos)
         self.btNext = QPushButton("Seguinte ▶")
         self.btLast = QPushButton("Último ▶▶")
         footer.addWidget(self.btFirst)
