@@ -9,6 +9,7 @@ import os
 import re
 
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -18,7 +19,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from .utilities import apply_label_style
+from .utilities import apply_label_style, apply_overlay_label_style
 
 
 _ENV_DEV_OVERLAYS = os.getenv("BWB_DEV_OVERLAYS")
@@ -155,6 +156,15 @@ class Zone(QWidget):
             user_label = lbl.property("userLabel")
             dev_label = lbl.property("devLabel")
             lbl.setText(dev_label if active and dev_label else user_label)
+            font = QFont(lbl.font())
+            alignment = lbl.alignment()
+            if active:
+                apply_overlay_label_style(lbl)
+            else:
+                extra = lbl.property("labelExtraStyle")
+                apply_label_style(lbl, extra if extra else None)
+            lbl.setFont(font)
+            lbl.setAlignment(alignment)
             refresh_style(lbl)
         refresh_style(self._tag_lbl)
         refresh_style(self)
@@ -196,7 +206,11 @@ class Zone(QWidget):
             if debug_styles
             else None
         )
-        apply_label_style(lbl, debug_extra)
+        lbl.setProperty("labelExtraStyle", debug_extra)
+        if self._overlay_active:
+            apply_overlay_label_style(lbl)
+        else:
+            apply_label_style(lbl, debug_extra)
         lbl.setProperty("userLabel", label_text)
         lbl.setProperty("devLabel", overlay_text)
         lbl.setAlignment(Qt.AlignTop | Qt.AlignRight)
