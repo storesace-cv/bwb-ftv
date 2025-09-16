@@ -1,6 +1,7 @@
 from typing import Sequence
 
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QComboBox,
     QLabel,
@@ -11,7 +12,12 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from .bwb_style_1 import FIELD_STYLE, LABEL_STYLE, FCFILTER_BUTTON_STYLE_TEMPLATE
+from .bwb_style_1 import (
+    FIELD_STYLE,
+    LABEL_STYLE,
+    OVERLAY_ON_STYLE,
+    FCFILTER_BUTTON_STYLE_TEMPLATE,
+)
 
 
 def apply_label_style(label: QLabel, extra: str | None = None) -> None:
@@ -22,6 +28,19 @@ def apply_label_style(label: QLabel, extra: str | None = None) -> None:
 
     style = LABEL_STYLE if not extra else f"{LABEL_STYLE}\n{extra}"
     label.setStyleSheet(style)
+
+
+def apply_overlay_label_style(label: QLabel) -> None:
+    """Apply the transparent overlay style to ``label``.
+
+    The existing font metrics and alignment flags are preserved.
+    """
+
+    font = QFont(label.font())
+    alignment = label.alignment()
+    label.setStyleSheet(OVERLAY_ON_STYLE)
+    label.setFont(font)
+    label.setAlignment(alignment)
 
 
 def make_readonly_lineedit(le: QLineEdit, bold: bool = False) -> None:

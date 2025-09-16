@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QLabel
 import pytest
 
 from ui import layout
-from ui.utilities import LABEL_STYLE
+from ui.utilities import LABEL_STYLE, OVERLAY_ON_STYLE
 
 
 @pytest.fixture
@@ -35,26 +35,52 @@ def test_zone_apply_overlays_restores_text_and_border(qapp, overlays_enabled):
     expected_on_style = (
         f"#{zone.objectName()} {{ background:{layout.bg_for_level(zone._level)}; border:1px dashed red; }}"
     )
-    original_label_style = label.styleSheet()
+    normal_label_style = label.styleSheet()
+    assert normal_label_style == LABEL_STYLE
     original_value_style = value_widget.styleSheet()
+    font_signature = label.font().toString()
+    sample_text = "Overlay"
+    base_metrics = (
+        label.fontMetrics().height(),
+        label.fontMetrics().horizontalAdvance(sample_text),
+    )
+    base_alignment = label.alignment()
 
     zone.apply_overlays(False)
     assert label.text() == "Nome"
     assert zone.styleSheet() == expected_off_style
-    assert label.styleSheet() == original_label_style
+    assert label.styleSheet() == normal_label_style
     assert value_widget.styleSheet() == original_value_style
+    assert label.font().toString() == font_signature
+    assert (
+        label.fontMetrics().height(),
+        label.fontMetrics().horizontalAdvance(sample_text),
+    ) == base_metrics
+    assert label.alignment() == base_alignment
 
     zone.apply_overlays(True)
     assert label.text() == "Overlay"
     assert zone.styleSheet() == expected_on_style
-    assert label.styleSheet() == original_label_style
+    assert label.styleSheet() == OVERLAY_ON_STYLE
     assert value_widget.styleSheet() == original_value_style
+    assert label.font().toString() == font_signature
+    assert (
+        label.fontMetrics().height(),
+        label.fontMetrics().horizontalAdvance(sample_text),
+    ) == base_metrics
+    assert label.alignment() == base_alignment
 
     zone.apply_overlays(False)
     assert label.text() == "Nome"
     assert zone.styleSheet() == expected_off_style
-    assert label.styleSheet() == original_label_style
+    assert label.styleSheet() == normal_label_style
     assert value_widget.styleSheet() == original_value_style
+    assert label.font().toString() == font_signature
+    assert (
+        label.fontMetrics().height(),
+        label.fontMetrics().horizontalAdvance(sample_text),
+    ) == base_metrics
+    assert label.alignment() == base_alignment
 
 
 def test_zone_overlay_tag_label_preserves_inline_style(qapp, overlays_enabled):
@@ -84,7 +110,7 @@ def test_zone_add_row_has_no_debug_styles_by_default(qapp):
 
 
 def test_zone_add_row_allows_opt_in_debug_styles(qapp, overlays_enabled):
-    zone = layout.Zone("B1")
+    zone = layout.Zone("B1", show_overlays=False)
     value_widget = QLabel("valor")
     label = zone.add_row("Nome", value_widget, overlay_text="Overlay", debug_styles=True)
 
@@ -108,7 +134,7 @@ def test_zone_add_row_allows_opt_in_debug_styles(qapp, overlays_enabled):
     zone.apply_overlays(True)
     assert label.text() == "Overlay"
     assert zone.styleSheet() == expected_on_style
-    assert label.styleSheet() == expected_style
+    assert label.styleSheet() == OVERLAY_ON_STYLE
     assert "background-color" in value_widget.styleSheet()
 
     zone.apply_overlays(False)
@@ -116,6 +142,19 @@ def test_zone_add_row_allows_opt_in_debug_styles(qapp, overlays_enabled):
     assert zone.styleSheet() == expected_off_style
     assert label.styleSheet() == expected_style
     assert "background-color" in value_widget.styleSheet()
+
+
+def test_zone_add_row_uses_overlay_style_when_active(qapp, overlays_enabled):
+    zone = layout.Zone("B1", show_overlays=True)
+    value_widget = QLabel("valor", zone)
+    label = zone.add_row("Nome", value_widget, overlay_text="Overlay")
+
+    assert label.styleSheet() == OVERLAY_ON_STYLE
+    assert label.text() == "Overlay"
+
+    zone.apply_overlays(False)
+    assert label.styleSheet() == LABEL_STYLE
+    assert label.text() == "Nome"
 
 
 def test_zone_hides_overlays_when_globally_disabled(qapp):

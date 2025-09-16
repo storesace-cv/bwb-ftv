@@ -24,6 +24,15 @@ LABEL_STYLE = (
     "}"
 )
 
+OVERLAY_ON_STYLE = (
+    "QLabel {\n"
+    "    background: none;\n"
+    "    border: none;\n"
+    "    padding: 0;\n"
+    "    qproperty-alignment: AlignLeft | AlignVCenter;\n"
+    "}"
+)
+
 FCFILTER_BUTTON_STYLE_TEMPLATE = (
     "/* bwb-style-fcfilters-btn */\n"
     "QPushButton {{\n"
@@ -53,6 +62,7 @@ APP_STYLESHEET = (
 __all__ = [
     "FIELD_STYLE",
     "LABEL_STYLE",
+    "OVERLAY_ON_STYLE",
     "FCFILTER_BUTTON_STYLE_TEMPLATE",
     "APP_STYLESHEET",
 ]
