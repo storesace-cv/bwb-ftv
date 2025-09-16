@@ -104,6 +104,7 @@ from . import layout
 from .bwb_style_1 import APP_STYLESHEET
 from .layout import Zone
 from .utilities import (
+    apply_fcfilter_btn_style,
     apply_label_style,
     make_readonly_lineedit,
     match_font,
@@ -931,70 +932,19 @@ class FTApp(QWidget):
 
         self.btFcostBom = QPushButton("Bom")
         self.btFcostBom.setCheckable(True)
-        self.btFcostBom.setStyleSheet(
-            """
-            QPushButton {
-                background-color: rgba(198,216,112,0.5);
-                border: 1px solid rgba(0,0,0,0.3);
-                border-top-color: rgba(255,255,255,0.8);
-                border-left-color: rgba(255,255,255,0.8);
-                border-bottom-color: rgba(0,0,0,0.4);
-                border-right-color: rgba(0,0,0,0.4);
-                border-radius: 6px;
-                padding: 4px;
-            }
-            QPushButton:pressed,
-            QPushButton:checked {
-                background-color: rgba(198,216,112,0.8);
-            }
-            """
-        )
+        apply_fcfilter_btn_style(self.btFcostBom, (198, 216, 112))
         self.btFcostBom.setToolTip(level_comments.get("Bom", ""))
         fcB2.add(self.btFcostBom, 0)
 
         self.btFcostAceitavel = QPushButton("Aceitável")
         self.btFcostAceitavel.setCheckable(True)
-        self.btFcostAceitavel.setStyleSheet(
-            """
-            QPushButton {
-                background-color: rgba(248,222,126,0.5);
-                border: 1px solid rgba(0,0,0,0.3);
-                border-top-color: rgba(255,255,255,0.8);
-                border-left-color: rgba(255,255,255,0.8);
-                border-bottom-color: rgba(0,0,0,0.4);
-                border-right-color: rgba(0,0,0,0.4);
-                border-radius: 6px;
-                padding: 4px;
-            }
-            QPushButton:pressed,
-            QPushButton:checked {
-                background-color: rgba(248,222,126,0.8);
-            }
-            """
-        )
+        apply_fcfilter_btn_style(self.btFcostAceitavel, (248, 222, 126))
         self.btFcostAceitavel.setToolTip(level_comments.get("Aceitável", ""))
         fcB3.add(self.btFcostAceitavel, 0)
 
         self.btFcostMau = QPushButton("Mau")
         self.btFcostMau.setCheckable(True)
-        self.btFcostMau.setStyleSheet(
-            """
-            QPushButton {
-                background-color: rgba(255,158,145,0.5);
-                border: 1px solid rgba(0,0,0,0.3);
-                border-top-color: rgba(255,255,255,0.8);
-                border-left-color: rgba(255,255,255,0.8);
-                border-bottom-color: rgba(0,0,0,0.4);
-                border-right-color: rgba(0,0,0,0.4);
-                border-radius: 6px;
-                padding: 4px;
-            }
-            QPushButton:pressed,
-            QPushButton:checked {
-                background-color: rgba(255,158,145,0.8);
-            }
-            """
-        )
+        apply_fcfilter_btn_style(self.btFcostMau, (255, 158, 145))
         self.btFcostMau.setToolTip(level_comments.get("Mau", ""))
         fcB4.add(self.btFcostMau, 0)
 
