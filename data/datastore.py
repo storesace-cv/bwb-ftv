@@ -620,3 +620,43 @@ class DataStore:
         """Devolve lista de tuplos ``(id, nome)`` de alergénios disponíveis."""
         items = self._allergens_from_db()
         return items or []
+
+    def get_allergen_details(self, aid):
+        """Obter campos ``Exemplos`` e ``Notas`` de um alergénio."""
+
+        if not self.conn or self.demo:
+            return {}
+        if aid in (None, ""):
+            return {}
+        try:
+            cur = self.conn.cursor()
+            cur.execute(
+                "SELECT Exemplos, Notas FROM Alergenios WHERE Id = ?",
+                (aid,),
+            )
+            row = cur.fetchone()
+        except sqlite3.Error as exc:
+            logger.error(
+                "[DataStore] get_allergen_details(%s) BD falhou: %s",
+                aid,
+                exc,
+                exc_info=True,
+            )
+            return {}
+        if not row:
+            return {}
+        try:
+            exemplos = row["Exemplos"]  # type: ignore[index]
+        except (KeyError, IndexError, TypeError):
+            try:
+                exemplos = row[0]
+            except (IndexError, TypeError):
+                exemplos = None
+        try:
+            notas = row["Notas"]  # type: ignore[index]
+        except (KeyError, IndexError, TypeError):
+            try:
+                notas = row[1]
+            except (IndexError, TypeError):
+                notas = None
+        return {"Exemplos": exemplos, "Notas": notas}

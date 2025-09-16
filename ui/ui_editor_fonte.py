@@ -65,6 +65,7 @@
 #    B1.C1 inicia após cabeçalho.
 
 import sys
+import json
 import logging
 import html as html_module
 import html.parser as html_parser
@@ -1156,10 +1157,63 @@ class FTApp(QWidget):
         grid.setHorizontalSpacing(12)
         grid.setVerticalSpacing(6)
         cols = 3
+        details_getter = getattr(self.service, "get_allergen_details", None)
+
+        def _extract(values, key, idx):
+            if isinstance(values, dict):
+                return values.get(key)
+            if isinstance(values, (list, tuple)):
+                try:
+                    return values[idx]
+                except IndexError:
+                    return None
+            attr = getattr(values, key, None)
+            if attr is None:
+                attr = getattr(values, key.lower(), None)
+            return attr
+
+        def _parse_examples(raw):
+            if raw in (None, ""):
+                return ""
+            parsed = raw
+            if isinstance(raw, str):
+                try:
+                    parsed = json.loads(raw)
+                except (TypeError, ValueError, json.JSONDecodeError):
+                    parsed = raw
+            if isinstance(parsed, list):
+                items = [str(item).strip() for item in parsed if str(item).strip()]
+                return ", ".join(items)
+            if isinstance(parsed, dict):
+                items = [
+                    str(value).strip()
+                    for value in parsed.values()
+                    if str(value).strip()
+                ]
+                return ", ".join(items)
+            return str(parsed).strip()
+
         for i, (aid, nome) in enumerate(names):
             r = i // cols
             c = i % cols
             cb = QCheckBox(nome)
+            details = {}
+            if callable(details_getter):
+                try:
+                    details = details_getter(aid) or {}
+                except Exception:
+                    details = {}
+            exemplos_raw = _extract(details, "Exemplos", 0)
+            notas_raw = _extract(details, "Notas", 1)
+            tooltip_parts: list[str] = []
+            exemplos_txt = _parse_examples(exemplos_raw)
+            if exemplos_txt:
+                tooltip_parts.append(exemplos_txt)
+            if notas_raw not in (None, ""):
+                notas_txt = str(notas_raw).strip()
+                if notas_txt:
+                    tooltip_parts.append(notas_txt)
+            cb.setToolTip("\n".join(tooltip_parts) if tooltip_parts else "")
             grid.addWidget(cb, r, c, alignment=Qt.AlignLeft)
         self.C5.add(gridw, 0)
 
