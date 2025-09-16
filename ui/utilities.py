@@ -15,9 +15,40 @@ from PyQt5.QtWidgets import (
 from .bwb_style_1 import (
     FIELD_STYLE,
     LABEL_STYLE,
-    OVERLAY_ON_STYLE,
+    OVERLAY_ON_CLASS,
     FCFILTER_BUTTON_STYLE_TEMPLATE,
 )
+
+
+def _get_widget_classes(widget: QWidget) -> list[str]:
+    value = widget.property("class")
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [cls for cls in value.split() if cls]
+    if isinstance(value, (list, tuple)):
+        return [str(cls) for cls in value if str(cls)]
+    return [str(value)]
+
+
+def _set_widget_classes(widget: QWidget, classes: list[str]) -> None:
+    seen: list[str] = []
+    for cls in classes:
+        text = str(cls).strip()
+        if text and text not in seen:
+            seen.append(text)
+    if seen:
+        widget.setProperty("class", " ".join(seen))
+    else:
+        widget.setProperty("class", None)
+
+
+def _refresh_widget_style(widget: QWidget) -> None:
+    style = widget.style()
+    if style is not None:
+        style.unpolish(widget)
+        style.polish(widget)
+    widget.update()
 
 
 def apply_label_style(label: QLabel, extra: str | None = None) -> None:
@@ -26,8 +57,13 @@ def apply_label_style(label: QLabel, extra: str | None = None) -> None:
     ``extra`` may contain additional stylesheet rules appended to the base style.
     """
 
+    classes = _get_widget_classes(label)
+    if OVERLAY_ON_CLASS in classes:
+        classes = [cls for cls in classes if cls != OVERLAY_ON_CLASS]
+        _set_widget_classes(label, classes)
     style = LABEL_STYLE if not extra else f"{LABEL_STYLE}\n{extra}"
     label.setStyleSheet(style)
+    _refresh_widget_style(label)
 
 
 def apply_overlay_label_style(label: QLabel) -> None:
@@ -38,7 +74,12 @@ def apply_overlay_label_style(label: QLabel) -> None:
 
     font = QFont(label.font())
     alignment = label.alignment()
-    label.setStyleSheet(OVERLAY_ON_STYLE)
+    label.setStyleSheet("")
+    classes = _get_widget_classes(label)
+    if OVERLAY_ON_CLASS not in classes:
+        classes.append(OVERLAY_ON_CLASS)
+    _set_widget_classes(label, classes)
+    _refresh_widget_style(label)
     label.setFont(font)
     label.setAlignment(alignment)
 
