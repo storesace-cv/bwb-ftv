@@ -9,6 +9,8 @@ ZONE_STYLES = {
     ),
 }
 
+ZONE_OVERLAY_BORDER_STYLE = "border:1px dashed blue;"
+
 FIELD_STYLE = (
     "QLineEdit {\n"
     "    qproperty-alignment: AlignLeft;\n"
@@ -75,6 +77,7 @@ __all__ = [
     "FIELD_STYLE",
     "LABEL_STYLE",
     "OVERLAY_ON_STYLE",
+    "ZONE_OVERLAY_BORDER_STYLE",
     "FCFILTER_BUTTON_STYLE_TEMPLATE",
     "APP_STYLESHEET",
 ]

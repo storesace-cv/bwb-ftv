@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QLabel
 import pytest
 
 from ui import layout
-from ui.bwb_style_1 import ZONE_STYLES
+from ui.bwb_style_1 import ZONE_STYLES, ZONE_OVERLAY_BORDER_STYLE
 from ui.utilities import LABEL_STYLE, OVERLAY_ON_STYLE
 
 
@@ -25,11 +25,8 @@ def _overlay_stylesheet(zone: layout.Zone) -> str:
         else ""
     )
     background = layout.bg_for_level(zone._level)
-    return (
-        f"{selector} {{ background:{background}; border:1px dashed blue; }}"
-        if selector
-        else f"background:{background}; border:1px dashed blue;"
-    )
+    declarations = f"background:{background}; {ZONE_OVERLAY_BORDER_STYLE}"
+    return f"{selector} {{ {declarations} }}" if selector else declarations
 
 
 @pytest.fixture

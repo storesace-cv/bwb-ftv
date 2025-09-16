@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from .bwb_style_1 import ZONE_STYLES
+from .bwb_style_1 import ZONE_STYLES, ZONE_OVERLAY_BORDER_STYLE
 from .utilities import apply_label_style, apply_overlay_label_style
 
 
@@ -164,11 +164,9 @@ class Zone(QWidget):
         name = self.objectName()
         selector = f"#{_escape_object_name(name)}" if name else ""
         if active:
-            style = (
-                f"{selector} {{ background:{bg_for_level(self._level)}; border:1px dashed blue; }}"
-                if selector
-                else f"background:{bg_for_level(self._level)}; border:1px dashed blue;"
-            )
+            background = bg_for_level(self._level)
+            declarations = f"background:{background}; {ZONE_OVERLAY_BORDER_STYLE}"
+            style = f"{selector} {{ {declarations} }}" if selector else declarations
             self.setStyleSheet(style)
             self._tag_lbl.show()
         else:
