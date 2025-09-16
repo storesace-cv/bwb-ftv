@@ -1,6 +1,7 @@
-import sqlite3
 import sys
 import types
+
+import pytest
 
 
 qt_module = types.ModuleType("PyQt5")
@@ -44,42 +45,61 @@ sys.modules.setdefault("PyQt5.QtWidgets", qt_widgets)
 from ui.ui_editor_fonte import FTApp  # noqa: E402
 
 
-def _make_app(conn):
+class ServiceStub:
+    def __init__(
+        self,
+        *,
+        tipos: list[tuple[int, str]] | None = None,
+        validades: list[tuple[int, str]] | None = None,
+        temperaturas: list[tuple[int, str]] | None = None,
+    ):
+        self._tipos = tipos or []
+        self._validades = validades or []
+        self._temperaturas = temperaturas or []
+
+    def list_tipos_artigos(self):
+        return self._tipos
+
+    def list_validade(self):
+        return self._validades
+
+    def list_temperaturas(self):
+        return self._temperaturas
+
+
+def _make_app(service):
     app = FTApp.__new__(FTApp)
-    app.service = types.SimpleNamespace(conn=conn)
+    app.service = service
     return app
 
 
 def test_aux_fetch_lists_returns_expected():
-    conn = sqlite3.connect(":memory:")
-    cur = conn.cursor()
-    cur.execute("CREATE TABLE tipos_artigos(id INTEGER, descricao TEXT, ativo INT)")
-    cur.execute("INSERT INTO tipos_artigos VALUES (1, 'TipoA', 1), (2, 'TipoB', 0)")
-    cur.execute("CREATE TABLE validades(cod INTEGER PRIMARY KEY, nome TEXT, ativo INT)")
-    cur.executemany(
-        "INSERT INTO validades(cod, nome, ativo) VALUES (?, ?, 1)",
-        [(1, "Val1"), (2, "Val2")],
+    app = _make_app(
+        ServiceStub(
+            tipos=[(1, "TipoA")],
+            validades=[(1, "Val1"), (2, "Val2")],
+            temperaturas=[(1, "Temp1"), (2, "Temp2")],
+        )
     )
-    cur.execute("CREATE TABLE temperaturas(codigo INTEGER, designacao TEXT, ativo INT)")
-    cur.executemany(
-        "INSERT INTO temperaturas VALUES (?, ?, 1)",
-        [(1, "Temp1"), (2, "Temp2")],
-    )
-    conn.commit()
 
-    app = _make_app(conn)
-    lists = app._aux_fetch_lists()
-    assert lists == {
+    assert app._aux_fetch_lists() == {
         "tipo_artigo": [(1, "TipoA")],
         "validade": [(1, "Val1"), (2, "Val2")],
         "temperatura": [(1, "Temp1"), (2, "Temp2")],
     }
 
 
-def test_aux_fetch_lists_no_conn():
-    app = _make_app(None)
-    assert app._aux_fetch_lists() == {
-        "tipo_artigo": [],
-        "validade": [],
-        "temperatura": [],
-    }
+def test_aux_fetch_lists_missing_methods():
+    class PartialService:
+        def list_tipos_artigos(self):
+            return []
+
+    app = _make_app(PartialService())
+
+    with pytest.raises(AttributeError) as exc:
+        app._aux_fetch_lists()
+
+    message = str(exc.value)
+    assert "missing required auxiliary list method" in message
+    assert "list_validade" in message
+    assert "list_temperaturas" in message

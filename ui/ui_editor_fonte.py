@@ -1796,103 +1796,26 @@ class FTApp(QWidget):
 
         lists = {"tipo_artigo": [], "validade": [], "temperatura": []}
 
-        if all(
-            hasattr(self.service, m)
-            for m in ("list_tipos_artigos", "list_validade", "list_temperaturas")
-        ):
-            try:
-                lists["tipo_artigo"] = self.service.list_tipos_artigos()
-            except Exception:
-                pass
-            try:
-                lists["validade"] = self.service.list_validade()
-            except Exception:
-                pass
-            try:
-                lists["temperatura"] = self.service.list_temperaturas()
-            except Exception:
-                pass
-        else:
-            conn = getattr(self.service, "conn", None)
-            if conn:
-                cur = conn.cursor()
+        required_methods = (
+            "list_tipos_artigos",
+            "list_validade",
+            "list_temperaturas",
+        )
+        missing = sorted(
+            name for name in required_methods if not hasattr(self.service, name)
+        )
+        if missing:
+            svc_name = type(self.service).__name__
+            missing_fmt = ", ".join(missing)
+            raise AttributeError(
+                f"{svc_name} is missing required auxiliary list method(s): {missing_fmt}"
+            )
 
-                def resolve_table(candidates):
-                    for table in candidates:
-                        try:
-                            cur.execute(
-                                "SELECT name FROM sqlite_master "
-                                "WHERE type='table' AND name=?",
-                                (table,),
-                            )
-                            if cur.fetchone():
-                                return table
-                        except Exception:
-                            pass
-                    return None
+        lists["tipo_artigo"] = self.service.list_tipos_artigos()
+        lists["validade"] = self.service.list_validade()
+        lists["temperatura"] = self.service.list_temperaturas()
 
-                def pick_cols(table):
-                    try:
-                        cur.execute(f"PRAGMA table_info({table})")
-                        rows = cur.fetchall()
-                    except Exception:
-                        return None, None
-                    names = [r[1].lower() for r in rows]
-                    id_col = None
-                    for cand in ("id", "cod", "codigo"):
-                        if cand in names:
-                            id_col = cand
-                            break
-                    if id_col is None:
-                        for r in rows:
-                            if r[5]:
-                                id_col = r[1]
-                                break
-                    name_col = None
-                    for cand in ("descricao", "nome", "designacao"):
-                        if cand in names:
-                            name_col = cand
-                            break
-                    return id_col, name_col
-
-                def fetch_generic(table_candidates):
-                    tbl = resolve_table(table_candidates)
-                    if not tbl:
-                        return []
-                    id_col, name_col = pick_cols(tbl)
-                    if not id_col or not name_col:
-                        return []
-                    sql = (
-                        f"SELECT {id_col}, {name_col} FROM {tbl} "
-                        f"WHERE COALESCE(ativo,1)=1 ORDER BY {name_col}"
-                    )
-                    try:
-                        cur.execute(sql)
-                        rows = cur.fetchall()
-                    except Exception:
-                        return []
-                    result = []
-                    for r in rows:
-                        try:
-                            rid = int(r[0])
-                        except Exception:
-                            try:
-                                rid = int(str(r[0]).strip())
-                            except Exception:
-                                continue
-                        name = str(r[1]).strip()
-                        if name:
-                            result.append((rid, name))
-                    return result
-
-                lists["tipo_artigo"] = fetch_generic(("tipos_artigos",))
-                lists["validade"] = fetch_generic(("validade", "validades"))
-                lists["temperatura"] = fetch_generic(("temperaturas",))
-
-        try:
-            self._aux_populate_cbs(lists, cbs)
-        except Exception:
-            pass
+        self._aux_populate_cbs(lists, cbs)
         return lists
 
     def _aux_find_cbs(self):
