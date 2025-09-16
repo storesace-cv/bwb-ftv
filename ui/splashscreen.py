@@ -4,6 +4,8 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QDialog, QLabel, QDialogButtonBox, QPushButton
 
+from .utilities import apply_label_style
+
 
 class SplashScreen(QDialog):
     """Simple splash screen with optional message and buttons."""
@@ -36,8 +38,9 @@ class SplashScreen(QDialog):
         if self._message is None:
             self._message = QLabel(self)
             self._message.setAlignment(Qt.AlignCenter)
-            self._message.setStyleSheet(
-                "color: white; font-weight: bold; background: red;"
+            apply_label_style(
+                self._message,
+                "QLabel { color: white; font-weight: bold; }",
             )
             self._message.setGeometry(0, 260, 800, 40)
         self._message.setText(text)
