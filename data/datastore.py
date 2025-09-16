@@ -263,6 +263,7 @@ class DataStore:
             },
             "PrecosTaxas": {"Codigo", "Loja"},
             "Alergenios": {"Id", "Nome"},
+            "ProdutoAlergenio": {"ProdutoCodigo", "AlergenioId"},
             "TiposArtigos": {"Cod", "Descricao", "Ativo"},
             "Validade": {"Cod", "Descricao", "Ativo"},
             "Temperaturas": {"Cod", "Descricao", "Ativo"},
@@ -544,6 +545,42 @@ class DataStore:
                 "[DataStore] set_temperatura(%s, %s) falhou: %s",
                 codigo,
                 temperatura_cod,
+                exc,
+                exc_info=True,
+            )
+            return False
+
+    def get_product_allergens(self, codigo: str) -> list[int]:
+        """Return allergen identifiers linked to ``codigo``."""
+
+        if not self.produtos or not codigo:
+            return []
+        try:
+            return self.produtos.get_product_allergens(codigo)
+        except sqlite3.Error as exc:
+            logger.error(
+                "[DataStore] get_product_allergens(%s) falhou: %s",
+                codigo,
+                exc,
+                exc_info=True,
+            )
+            return []
+
+    def set_product_allergens(
+        self, codigo: str, allergen_ids: Iterable[int | str | None]
+    ) -> bool:
+        """Persist allergen identifiers for ``codigo``."""
+
+        if not self.produtos or not codigo:
+            return False
+        ids = list(allergen_ids)
+        try:
+            return self.produtos.set_product_allergens(codigo, ids)
+        except sqlite3.Error as exc:
+            logger.error(
+                "[DataStore] set_product_allergens(%s, %s) falhou: %s",
+                codigo,
+                ids,
                 exc,
                 exc_info=True,
             )

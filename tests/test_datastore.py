@@ -172,6 +172,36 @@ def test_list_active_allergens_empty():
     assert ds.list_active_allergens() == []
 
 
+def test_product_allergens_are_isolated_between_products():
+    ds = DataStore(db_path=":memory:")
+    cur = ds.conn.cursor()
+    cur.execute("DELETE FROM Produtos")
+    cur.execute("DELETE FROM ProdutoAlergenio")
+    cur.execute("DELETE FROM Alergenios")
+    cur.executemany(
+        "INSERT INTO Produtos (Codigo, Produto, TipoVenda) VALUES (?, ?, 1)",
+        [("P1", "Produto 1"), ("P2", "Produto 2")],
+    )
+    cur.executemany(
+        "INSERT INTO Alergenios (Id, Nome, NomeIngles) VALUES (?, ?, ?)",
+        [(1, "A", "A"), (2, "B", "B"), (3, "C", "C")],
+    )
+    ds.conn.commit()
+
+    assert ds.get_product_allergens("P1") == []
+    assert ds.get_product_allergens("P2") == []
+
+    assert ds.set_product_allergens("P1", [1, 2])
+    assert ds.set_product_allergens("P2", [3])
+
+    assert ds.get_product_allergens("P1") == [1, 2]
+    assert ds.get_product_allergens("P2") == [3]
+
+    assert ds.set_product_allergens("P1", [])
+    assert ds.get_product_allergens("P1") == []
+    assert ds.get_product_allergens("P2") == [3]
+
+
 def test_context_manager_closes_connection():
     with DataStore(db_path=":memory:") as ds:
         conn = ds.conn
