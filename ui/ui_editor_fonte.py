@@ -1452,12 +1452,16 @@ class FTApp(QWidget):
             try:
                 self.ds.save_preparacao_html(codigo, html)
             except Exception:
-                pass
+                logger.exception(
+                    "[Preparacao] failed to save preparation HTML for %s", codigo
+                )
         else:
             try:
                 self.ds.save_preparacao_html(codigo, "")
             except Exception:
-                pass
+                logger.exception(
+                    "[Preparacao] failed to clear preparation HTML for %s", codigo
+                )
         self._prep_dirty = False
 
     # ---------- Navegação ----------
@@ -1639,7 +1643,9 @@ class FTApp(QWidget):
         try:
             self.service.ds.set_fcost_level(level)
         except Exception:
-            pass
+            logger.exception(
+                "[FoodCost] failed to apply cost filter level %s", level
+            )
         self.cur_index = 0
         self._load_record(0)
 
@@ -1648,7 +1654,7 @@ class FTApp(QWidget):
         try:
             self.service.ds.set_fcost_level(None)
         except Exception:
-            pass
+            logger.exception("[FoodCost] failed to reset cost filter")
         group = getattr(self, "fcostFilterGroup", None)
         if group:
             group.blockSignals(True)
@@ -1778,11 +1784,11 @@ class FTApp(QWidget):
         try:
             self._aux_refresh_lists()
         except Exception:
-            pass
+            logger.exception("[Restore] failed to refresh auxiliary lists")
         try:
             self._load_record(getattr(self, "cur_index", 0))
         except Exception:
-            pass
+            logger.exception("[Restore] failed to reload current record")
 
     # ================== AUXILIARES — CANÓNICO (v2) ==================
     def _aux_fetch_lists(self, cbs=None):
