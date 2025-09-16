@@ -4,7 +4,7 @@ FIELD_STYLE = (
     "border:none;\n"
     "border-radius:4px;\n"
     "background-color: rgba(0, 0, 0, 0.1);\n"
-    "qproperty-alignment: AlignLeft | AlignVCenter;\n"
+    "qproperty-alignment: AlignLeft;\n"
 )
 
 LABEL_STYLE = (
@@ -17,7 +17,7 @@ LABEL_STYLE = (
     "    border-right-color: rgba(0,0,0,0.4);\n"
     "    border-radius: 6px;\n"
     "    padding: 4px;\n"
-    "    qproperty-alignment: AlignLeft | AlignVCenter;\n"
+    "    qproperty-alignment: AlignLeft;\n"
     "}\n"
     "QLabel:pressed {\n"
     "    background-color: rgba(200,200,200,0.8);\n"
