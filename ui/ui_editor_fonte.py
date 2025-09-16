@@ -61,12 +61,14 @@
 #    mantém "0%" quando falta IVA.
 # 2025-09-15 05:15 — v3.96 — Food Cost "--" quando falta IVA; loga "missing Iva1".
 # 2025-09-15 15:40 — v3.97 — Filtro Food Cost (Bom/Aceitável/Mau) com botões exclusivos.
-# 2025-09-15 17:15 — v3.98 — Código/Nome fixos fora do scroll; B1.C1 inicia após cabeçalho.
+# 2025-09-15 17:15 — v3.98 — Código/Nome fixos fora do scroll;
+#    B1.C1 inicia após cabeçalho.
 
 import sys
 import logging
 import html as html_module
 import html.parser as html_parser
+import re
 from pathlib import Path
 from PyQt5.QtCore import Qt, QAbstractTableModel, QTimer, QPoint
 from PyQt5.QtGui import QFont, QKeySequence, QTextOption, QPixmap
@@ -89,7 +91,6 @@ from PyQt5.QtWidgets import (
     QCheckBox,
     QButtonGroup,
     QToolBar,
-    QToolButton,
     QAction,
     QFileDialog,
 )
@@ -435,9 +436,13 @@ class FTApp(QWidget):
                 pv.load_image(codigo)
 
     def _section_box(self, title: str, zone: Zone) -> QGroupBox:
-        box = QGroupBox(title)
+        user_title = re.sub(r"^\[[^\]]+\]\s*-\s*", "", title).strip()
+        box = QGroupBox(title if layout.DEV_OVERLAYS else user_title)
+        box.setProperty("devTitle", title)
+        box.setProperty("userTitle", user_title)
         box.setStyleSheet(
-            "QGroupBox { font-size: 400%; font-weight: bold; text-transform: uppercase; }"
+            "QGroupBox { font-size: 400%; font-weight: bold; "
+            "text-transform: uppercase; }"
         )
         box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         ly = QVBoxLayout(box)
@@ -1642,6 +1647,12 @@ class FTApp(QWidget):
             dev_lbl = lbl.property("devLabel")
             if user_lbl is not None and dev_lbl is not None:
                 lbl.setText(dev_lbl if layout.DEV_OVERLAYS else user_lbl)
+        for box in self._iter_layout_children(QGroupBox, include_header=True):
+            user_title = box.property("userTitle")
+            dev_title = box.property("devTitle")
+            if user_title is not None and dev_title is not None:
+                box.setTitle(dev_title if layout.DEV_OVERLAYS else user_title)
+                layout.refresh_style(box)
         self.ingModel.headerDataChanged.emit(
             Qt.Horizontal, 0, self.ingModel.columnCount() - 1
         )
