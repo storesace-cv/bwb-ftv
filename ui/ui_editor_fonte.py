@@ -984,34 +984,19 @@ class FTApp(QWidget):
         )
         self.btFcostReset.clicked.connect(self._on_fcost_filter_reset)
 
-        # ---------------- B4 — Preparação (B4) ----------------
-        self.B4 = Zone(
-            "B4", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
-        )
-        page_ly.addWidget(self._section_box("[B4] - Preparação", self.B4), 1)
-
+        # ---------------- B4 — Preparação (B4.C1) ----------------
         self.C4 = Zone(
-            "B4.C1", self.B4, flow="v", level=1, show_overlays=layout.DEV_OVERLAYS
+            "B4.C1", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
         )
-        self.B4.add(self.C4, 1)
+        page_ly.addWidget(self._section_box("[B4] - Preparação", self.C4), 1)
 
-        self.C4_imgs = Zone(
-            "B4.C2", self.B4, flow="h", level=1, show_overlays=layout.DEV_OVERLAYS
-        )
-        self.B4.add(self.C4_imgs, 0)
+        C4_text, C4_gallery = self.C4.split_v((3, 2))
 
         self.prep_previews: list[PrepImagePreview] = []
-        for idx in range(1, 5):
-            z = Zone(
-                f"B4.C2.{idx}",
-                self.C4_imgs,
-                flow="v",
-                level=2,
-                show_overlays=layout.DEV_OVERLAYS,
-            )
-            self.C4_imgs.add(z, 1)
+        gallery_slots = C4_gallery.split_h((1, 1, 1, 1))
+        for idx, slot in enumerate(gallery_slots, start=1):
             preview = PrepImagePreview(idx, self.service)
-            z.add(preview, 1)
+            slot.add(preview, 1)
             self.prep_previews.append(preview)
 
         try:
@@ -1065,7 +1050,7 @@ class FTApp(QWidget):
                 button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
                 button.setMinimumWidth(button.sizeHint().width())
 
-        self.C4.add(toolbar, 0)
+        C4_text.add(toolbar, 0)
 
         self.edPrep = QTextEdit()
         self.edPrep.setAcceptRichText(True)
@@ -1076,7 +1061,7 @@ class FTApp(QWidget):
         self.edPrep.document().setDefaultStyleSheet("img { max-width:100%; }")
         self.edPrep.setPlaceholderText("— Texto de preparação —")
         self.edPrep.textChanged.connect(self._on_prep_changed)
-        self.C4.add(self.edPrep, 1)
+        C4_text.add(self.edPrep, 1)
 
         # ---------------- B5 — Nutrição / Alergénios (B5.C1) ----------------
         self.C5 = Zone(
