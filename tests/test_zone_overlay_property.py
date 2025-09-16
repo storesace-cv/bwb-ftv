@@ -118,6 +118,42 @@ def test_zone_overlay_tag_label_preserves_inline_style(qapp, overlays_enabled):
     assert zone._tag_lbl.styleSheet() == expected_style
 
 
+def test_zone_overlay_shows_style_name_for_supported_theme(qapp, overlays_enabled):
+    zone = layout.Zone("B1", show_overlays=False)
+    zone.set_theme("bwb-style-1")
+
+    zone.apply_overlays(True)
+
+    assert not zone._style_lbl.isHidden()
+    assert zone._style_lbl.text() == "bwb-style-1"
+
+
+def test_zone_overlay_hides_style_label_when_disabled(qapp, overlays_enabled):
+    zone = layout.Zone("B1", show_overlays=False)
+    zone.set_theme("bwb-style-1")
+
+    zone.apply_overlays(True)
+    assert not zone._style_lbl.isHidden()
+
+    zone.apply_overlays(False)
+
+    assert zone._style_lbl.isHidden()
+    assert zone._style_lbl.text() == ""
+
+
+def test_zone_set_theme_updates_style_label_when_overlay_active(
+    qapp, overlays_enabled
+):
+    zone = layout.Zone("B1", show_overlays=True)
+
+    assert zone._style_lbl.isHidden()
+
+    zone.set_theme("bwb-style-1")
+
+    assert not zone._style_lbl.isHidden()
+    assert zone._style_lbl.text() == "bwb-style-1"
+
+
 def test_zone_add_row_has_no_debug_styles_by_default(qapp):
     zone = layout.Zone("B1")
     value_widget = QLabel("valor")
