@@ -53,7 +53,6 @@ def _ensure_table(conn, exemplos_type: str) -> None:
         ("Descricao", "TEXT"),
         ("Exemplos", exemplos_type),
         ("Notas", "TEXT"),
-        ("Ativo", "INTEGER NOT NULL DEFAULT 1"),
     )
     column_defs = ", ".join(f"{name} {definition}" for name, definition in columns)
 

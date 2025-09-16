@@ -41,8 +41,7 @@ def _make_repo():
             NomeIngles TEXT,
             Descricao TEXT,
             Exemplos TEXT,
-            Notas TEXT,
-            Ativo INTEGER
+            Notas TEXT
         )
         """
     )
@@ -149,18 +148,15 @@ def test_alergenios_crud_success():
     conn, repo = _make_repo()
     aid = repo.add_alergenio("Glúten", "Gluten")
     assert aid == 1
-    assert repo.list_alergenios_admin() == [(1, "Glúten", 1)]
+    assert repo.list_alergenios_admin() == [(1, "Glúten")]
     assert repo.update_alergenio(1, "Lactose", "Lactose") is True
     assert repo.list_alergenios_admin()[0][1] == "Lactose"
-    assert repo.set_alergenio_ativo(1, 0) is True
-    assert repo.list_alergenios_admin()[0][2] == 0
     conn.close()
 
 
 def test_alergenios_crud_failure():
     conn, repo = _make_repo()
     assert repo.update_alergenio(999, "Sem", "Sem") is False
-    assert repo.set_alergenio_ativo(999, 0) is False
     conn2, repo2 = _make_repo_no_tables()
     assert repo2.add_alergenio("Outro", "Outro") is None
     assert repo2.list_alergenios_admin() == []

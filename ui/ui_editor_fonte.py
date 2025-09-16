@@ -559,7 +559,6 @@ class FTApp(QWidget):
                 {
                     "list": self.ds.aux.list_alergenios_admin,
                     "add": self.ds.aux.add_alergenio,
-                    "set_active": self.ds.aux.set_alergenio_ativo,
                     "update": self.ds.aux.update_alergenio,
                 },
             )

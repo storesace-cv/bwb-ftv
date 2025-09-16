@@ -254,14 +254,16 @@ def manage_aux_table(
     title
         Window title for the dialog.
     repo_methods
-        Mapping providing callables for ``list``, ``add``, ``set_active`` and
-        ``update``.
+        Mapping providing callables for ``list`` and ``add``.  The optional
+        keys ``set_active`` and ``update`` enable toggling or renaming entries
+        when present.
     on_change
         Optional callback invoked whenever the table content changes.
 
-    The ``repo_methods`` mapping must provide callables for ``list``, ``add``,
-    ``set_active`` and ``update`` which correspond to admin methods from
-    :class:`data.repositories.AuxiliaresRepo`.
+    The ``repo_methods`` mapping must provide callables for ``list`` and
+    ``add``.  When a callable is supplied for ``set_active`` the dialog shows a
+    toggle button to activate or deactivate entries.  When ``update`` is
+    present the description column can be edited.
     """
 
     from PyQt5.QtCore import Qt
@@ -293,12 +295,24 @@ def manage_aux_table(
     bt_toggle.setToolTip("Inactivar ou activar o registo selecionado")
     bt_toggle.setIcon(dlg.style().standardIcon(QStyle.SP_BrowserReload))
     hbox.addWidget(bt_toggle)
+
+    toggle_handler = repo_methods.get("set_active")
+    has_toggle = callable(toggle_handler)
+    bt_toggle.setVisible(has_toggle)
     bt_close = QPushButton("Fechar")
     hbox.addWidget(bt_close)
 
     def refresh():
         tbl.setRowCount(0)
-        for cod, desc, ativo in repo_methods["list"]():
+        for entry in repo_methods["list"]():
+            try:
+                cod, desc, ativo = entry
+            except ValueError:
+                try:
+                    cod, desc = entry
+                except ValueError:
+                    continue
+                ativo = 1
             row = tbl.rowCount()
             tbl.insertRow(row)
             cod_item = QTableWidgetItem(str(cod))
@@ -326,9 +340,11 @@ def manage_aux_table(
         if row < 0:
             return
         cod_item = tbl.item(row, 0)
+        if not has_toggle:
+            return
         cod, ativo = cod_item.data(Qt.UserRole)
         new_state = 0 if ativo else 1
-        if repo_methods["set_active"](cod, new_state):
+        if toggle_handler(cod, new_state):
             refresh()
             if callable(on_change):
                 on_change()
