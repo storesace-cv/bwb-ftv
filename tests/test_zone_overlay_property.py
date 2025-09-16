@@ -29,18 +29,32 @@ def test_zone_apply_overlays_restores_text_and_border(qapp, overlays_enabled):
     zone = layout.Zone("B1", show_overlays=False)
     value_widget = QLabel("value", zone)
     label = zone.add_row("Nome", value_widget, overlay_text="Overlay")
+    expected_off_style = (
+        f"#{zone.objectName()} {{ background: transparent; border: none; }}"
+    )
+    expected_on_style = (
+        f"#{zone.objectName()} {{ background:{layout.bg_for_level(zone._level)}; border:1px dashed red; }}"
+    )
+    original_label_style = label.styleSheet()
+    original_value_style = value_widget.styleSheet()
 
     zone.apply_overlays(False)
     assert label.text() == "Nome"
-    assert zone.styleSheet() == "background: transparent; border: none;"
+    assert zone.styleSheet() == expected_off_style
+    assert label.styleSheet() == original_label_style
+    assert value_widget.styleSheet() == original_value_style
 
     zone.apply_overlays(True)
     assert label.text() == "Overlay"
-    assert "border:1px dashed red" in zone.styleSheet()
+    assert zone.styleSheet() == expected_on_style
+    assert label.styleSheet() == original_label_style
+    assert value_widget.styleSheet() == original_value_style
 
     zone.apply_overlays(False)
     assert label.text() == "Nome"
-    assert zone.styleSheet() == "background: transparent; border: none;"
+    assert zone.styleSheet() == expected_off_style
+    assert label.styleSheet() == original_label_style
+    assert value_widget.styleSheet() == original_value_style
 
 
 def test_zone_overlay_tag_label_preserves_inline_style(qapp, overlays_enabled):
@@ -84,14 +98,24 @@ def test_zone_add_row_allows_opt_in_debug_styles(qapp, overlays_enabled):
     assert label.styleSheet() == expected_style
     assert "background-color" in value_widget.styleSheet()
     assert "border-radius" in value_widget.styleSheet()
+    expected_off_style = (
+        f"#{zone.objectName()} {{ background: transparent; border: none; }}"
+    )
+    expected_on_style = (
+        f"#{zone.objectName()} {{ background:{layout.bg_for_level(zone._level)}; border:1px dashed red; }}"
+    )
 
     zone.apply_overlays(True)
     assert label.text() == "Overlay"
-    assert "border:1px dashed red" in zone.styleSheet()
+    assert zone.styleSheet() == expected_on_style
+    assert label.styleSheet() == expected_style
+    assert "background-color" in value_widget.styleSheet()
 
     zone.apply_overlays(False)
     assert label.text() == "Nome"
-    assert zone.styleSheet() == "background: transparent; border: none;"
+    assert zone.styleSheet() == expected_off_style
+    assert label.styleSheet() == expected_style
+    assert "background-color" in value_widget.styleSheet()
 
 
 def test_zone_hides_overlays_when_globally_disabled(qapp):
@@ -100,6 +124,9 @@ def test_zone_hides_overlays_when_globally_disabled(qapp):
     try:
         zone = layout.Zone("B1", show_overlays=True)
         assert zone.property("overlays") == "off"
-        assert zone.styleSheet() == "background: transparent; border: none;"
+        expected_off_style = (
+            f"#{zone.objectName()} {{ background: transparent; border: none; }}"
+        )
+        assert zone.styleSheet() == expected_off_style
     finally:
         layout.DEV_OVERLAYS = original

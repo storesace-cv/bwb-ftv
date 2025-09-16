@@ -35,6 +35,12 @@ DEFAULT_ZONE_MARGINS = (3, 5)
 _TAG_RE = re.compile(r"^B\d+(?:\.C\d+(?:\.(?:A|B|\d+))*)?$")
 
 
+def _escape_object_name(name: str) -> str:
+    """Return ``name`` escaped for usage within Qt style sheets."""
+
+    return re.sub(r"([^\w-])", r"\\\\\1", name)
+
+
 def validate_tag(tag: str) -> bool:
     """Return ``True`` if ``tag`` complies with the expected pattern."""
 
@@ -127,13 +133,23 @@ class Zone(QWidget):
         active = bool(on) and DEV_OVERLAYS
         self._overlay_active = active
         self.setProperty("overlays", "on" if active else "off")
+        name = self.objectName()
+        selector = f"#{_escape_object_name(name)}" if name else ""
         if active:
-            self.setStyleSheet(
-                f"background:{bg_for_level(self._level)}; border:1px dashed red;"
+            style = (
+                f"{selector} {{ background:{bg_for_level(self._level)}; border:1px dashed red; }}"
+                if selector
+                else f"background:{bg_for_level(self._level)}; border:1px dashed red;"
             )
+            self.setStyleSheet(style)
             self._tag_lbl.show()
         else:
-            self.setStyleSheet("background: transparent; border: none;")
+            style = (
+                f"{selector} {{ background: transparent; border: none; }}"
+                if selector
+                else "background: transparent; border: none;"
+            )
+            self.setStyleSheet(style)
             self._tag_lbl.hide()
         for lbl in self._labels:
             user_label = lbl.property("userLabel")
