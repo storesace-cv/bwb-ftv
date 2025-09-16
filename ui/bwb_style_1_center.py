@@ -1,10 +1,12 @@
 """Centralised stylesheet constants for the BWB style 1 theme with horizontal text centring."""
 
 FIELD_STYLE = (
+    "QLineEdit {\n"
+    "    qproperty-alignment: AlignHCenter | AlignVCenter;\n"
+    "}\n"
     "border:none;\n"
     "border-radius:4px;\n"
     "background-color: rgba(0, 0, 0, 0.1);\n"
-    "qproperty-alignment: AlignHCenter | AlignVCenter;\n"
 )
 
 LABEL_STYLE = (
