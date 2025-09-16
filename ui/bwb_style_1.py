@@ -1,10 +1,12 @@
 """Centralised stylesheet constants for the BWB style 1 theme."""
 
 FIELD_STYLE = (
+    "QLineEdit {\n"
+    "    qproperty-alignment: AlignLeft;\n"
+    "}\n"
     "border:none;\n"
     "border-radius:4px;\n"
     "background-color: rgba(0, 0, 0, 0.1);\n"
-    "qproperty-alignment: AlignLeft;\n"
 )
 
 LABEL_STYLE = (
