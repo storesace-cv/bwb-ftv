@@ -158,8 +158,8 @@ def test_list_active_allergens_db():
     cur = ds.conn.cursor()
     cur.execute("DELETE FROM Alergenios")
     cur.executemany(
-        "INSERT INTO Alergenios (Id, Nome, NomeIngles, Ativo) VALUES (?, ?, ?, ?)",
-        [(2, "A", "A", 1), (1, "B", "B", 1), (3, "C", "C", 0)],
+        "INSERT INTO Alergenios (Id, Nome, NomeIngles) VALUES (?, ?, ?)",
+        [(2, "A", "A"), (1, "B", "B"), (3, "", "C")],
     )
     ds.conn.commit()
     assert ds.list_active_allergens() == [(1, "B"), (2, "A")]

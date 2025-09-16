@@ -75,8 +75,7 @@ CREATE TABLE IF NOT EXISTS Alergenios (
     NomeIngles TEXT NOT NULL,
     Descricao  TEXT,
     Exemplos   TEXT,
-    Notas      TEXT,
-    Ativo      INTEGER NOT NULL DEFAULT 1
+    Notas      TEXT
 );
 
 CREATE TABLE IF NOT EXISTS FcostValues (

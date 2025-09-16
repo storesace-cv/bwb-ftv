@@ -479,20 +479,24 @@ class AuxiliaresRepo:
             return False
 
     def list_alergenios_admin(self):
-        return self._admin_list(
-            "Alergenios",
-            "list_alergenios_admin",
-            id_col="Id",
-            desc_col="Nome",
-            active_col="Ativo",
-        )
+        cur = self.conn.cursor()
+        try:
+            cur.execute("SELECT Id, Nome FROM Alergenios ORDER BY Id")
+            return [(r[0], r[1]) for r in cur.fetchall()]
+        except sqlite3.Error as exc:
+            logger.error(
+                "[AuxiliaresRepo] list_alergenios_admin falhou: %s",
+                exc,
+                exc_info=True,
+            )
+            return []
 
     def add_alergenio(self, nome: str, nome_ingles: str | None = None):
         nome_ingles = nome if nome_ingles is None else nome_ingles
         cur = self.conn.cursor()
         try:
             cur.execute(
-                "INSERT INTO Alergenios (Nome, NomeIngles, Ativo) VALUES (?, ?, 1)",
+                "INSERT INTO Alergenios (Nome, NomeIngles) VALUES (?, ?)",
                 (nome, nome_ingles),
             )
             self.conn.commit()
@@ -525,16 +529,6 @@ class AuxiliaresRepo:
                 exc_info=True,
             )
             return False
-
-    def set_alergenio_ativo(self, cod, ativo: int) -> bool:
-        return self._admin_set_active(
-            "Alergenios",
-            "set_alergenio_ativo",
-            cod,
-            ativo,
-            id_col="Id",
-            active_col="Ativo",
-        )
 
     def delete_alergenio(self, cod) -> bool:
         cur = self.conn.cursor()

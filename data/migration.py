@@ -362,8 +362,7 @@ def ensure_core_tables(conn: sqlite3.Connection) -> None:
                 NomeIngles TEXT NOT NULL,
                 Descricao  TEXT,
                 Exemplos   TEXT,
-                Notas      TEXT,
-                Ativo      INTEGER NOT NULL DEFAULT 1
+                Notas      TEXT
             )
             """
         ),
@@ -454,8 +453,8 @@ def _seed_alergenios(conn: sqlite3.Connection) -> None:
         cur = conn.execute("SELECT COUNT(*) FROM Alergenios")
         if cur.fetchone()[0] == 0:
             conn.executemany(
-                "INSERT INTO Alergenios (Id, Nome, NomeIngles, Descricao, Exemplos, Notas, Ativo) "
-                "VALUES (?, ?, ?, ?, ?, ?, 1)",
+                "INSERT INTO Alergenios (Id, Nome, NomeIngles, Descricao, Exemplos, Notas) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
                 DEFAULT_ALERGENIOS,
             )
             conn.commit()

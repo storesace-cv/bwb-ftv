@@ -583,9 +583,7 @@ class DataStore:
             return None
         try:
             cur = self.conn.cursor()
-            cur.execute(
-                "SELECT Id, Nome FROM Alergenios WHERE Ativo = 1 ORDER BY Id"
-            )
+            cur.execute("SELECT Id, Nome FROM Alergenios ORDER BY Id")
             rows = cur.fetchall()
         except sqlite3.Error as exc:
             logger.error(
