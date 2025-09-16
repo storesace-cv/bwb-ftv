@@ -865,6 +865,7 @@ class FTApp(QWidget):
         self.lbFoodCosts: list[QLabel] = []
         for idx, fc in enumerate((fc1, fc2, fc3, fc4, fc5), start=1):
             lbl = QLabel(f"Food Cost #{idx}")
+            lbl.setAlignment(Qt.AlignCenter)
             match_font(lbl, self.edNome)
             fc.add(lbl, 0)
             val = QLabel("—")
