@@ -41,6 +41,12 @@
 - **Accessible tools**: `data/backup.py`, `shutil`, `pathlib`.
 - **Interactions**: Invoked by other agents before potentially destructive operations.
 
+## Guia de nomenclaturas
+- Consulte `nomenclaturas.md` na raiz do repositório como fonte de verdade para termos de domínio, variáveis de ambiente e
+  nomes de ficheiros.
+- Ao introduzir novos conceitos ou alterar significados existentes, atualize `nomenclaturas.md` no mesmo PR para manter o
+  vocabulário alinhado entre equipas.
+
 ## Nomenclatura de widgets
 - `QLabel` = "legenda"/"legendas".
 - `QLineEdit` = "campo"/"campos".
