@@ -33,8 +33,21 @@ def _load_payload(path: Path) -> list[dict[str, Any]]:
     except json.JSONDecodeError as exc:
         raise ValueError(f"Invalid JSON payload in {path}: {exc}") from exc
 
-    if not isinstance(payload, list):
-        raise ValueError(f"Expected a JSON array in {path}, got {type(payload).__name__}")
+    if isinstance(payload, dict):
+        if "alergenios" not in payload:
+            raise ValueError(
+                f"Expected JSON object in {path} to contain key 'alergenios'"
+            )
+        payload = payload["alergenios"]
+        if not isinstance(payload, list):
+            raise ValueError(
+                f"Expected 'alergenios' in {path} to be a list, got {type(payload).__name__}"
+            )
+    elif not isinstance(payload, list):
+        raise ValueError(
+            "Expected a JSON array or object with key 'alergenios' in "
+            f"{path}, got {type(payload).__name__}"
+        )
     for index, item in enumerate(payload):
         if not isinstance(item, dict):
             raise ValueError(
