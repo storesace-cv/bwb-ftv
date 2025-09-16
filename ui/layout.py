@@ -19,6 +19,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from .bwb_style_1 import ZONE_STYLES
 from .utilities import apply_label_style, apply_overlay_label_style
 
 
@@ -87,6 +88,7 @@ class Zone(QWidget):
         self._level = level
         self._labels: list[QLabel] = []
         self._overlay_active = False
+        self._theme_name: str | None = None
         if flow == "v":
             self.ly = QVBoxLayout(self)
         else:
@@ -128,7 +130,32 @@ class Zone(QWidget):
         self._tag_lbl.setFixedHeight(12)
         self.ly.addWidget(self._tag_lbl, 0, Qt.AlignLeft)
 
+        selector = f"#{_escape_object_name(self.objectName())}" if self.objectName() else ""
+        self._base_stylesheet = (
+            f"{selector} {{ background: transparent; border: none; }}"
+            if selector
+            else "background: transparent; border: none;"
+        )
+
         self.apply_overlays(show_overlays)
+
+    @property
+    def base_stylesheet(self) -> str:
+        return self._base_stylesheet
+
+    def set_theme(self, name: str) -> None:
+        try:
+            declarations = ZONE_STYLES[name]
+        except KeyError as exc:
+            raise ValueError(f"Unknown zone theme: {name}") from exc
+
+        selector = f"#{_escape_object_name(self.objectName())}" if self.objectName() else ""
+        stylesheet = f"{selector} {{ {declarations} }}" if selector else declarations
+        self._theme_name = name
+        self._base_stylesheet = stylesheet
+        if not self._overlay_active:
+            self.setStyleSheet(self._base_stylesheet)
+            refresh_style(self)
 
     def apply_overlays(self, on: bool) -> None:
         active = bool(on) and DEV_OVERLAYS
@@ -145,12 +172,7 @@ class Zone(QWidget):
             self.setStyleSheet(style)
             self._tag_lbl.show()
         else:
-            style = (
-                f"{selector} {{ background: transparent; border: none; }}"
-                if selector
-                else "background: transparent; border: none;"
-            )
-            self.setStyleSheet(style)
+            self.setStyleSheet(self._base_stylesheet)
             self._tag_lbl.hide()
         for lbl in self._labels:
             user_label = lbl.property("userLabel")
