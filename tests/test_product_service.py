@@ -35,6 +35,44 @@ def test_calculate_cost_prefers_total_when_present():
     assert cost == pytest.approx(8.0)
 
 
+def test_calculate_cost_logs_invalid_total_and_uses_fallback(caplog):
+    ingredients = [
+        Ingredient(name="Ing1", quantity=2, unit="kg", ppu=3.0, total="oops"),
+    ]
+
+    with caplog.at_level(logging.WARNING):
+        cost = calculate_cost(ingredients)
+
+    assert cost == pytest.approx(6.0)
+    assert "Ing1" in caplog.text
+
+
+def test_calculate_cost_logs_invalid_unit_cost(caplog):
+    ingredients = [
+        Ingredient(name="Ing2", quantity="two", unit="kg", ppu=2.0),
+    ]
+
+    with caplog.at_level(logging.DEBUG):
+        cost = calculate_cost(ingredients)
+
+    assert cost == pytest.approx(0.0)
+    assert "Ing2" in caplog.text
+
+
+def test_calculate_cost_collects_skipped_entries():
+    ingredients = [
+        Ingredient(name="Ing1", quantity=2, unit="kg", ppu=3.0, total="oops"),
+        Ingredient(name="Ing2", quantity="two", unit="kg", ppu=2.0),
+    ]
+
+    cost, skipped = calculate_cost(ingredients, include_skipped=True)
+
+    assert cost == pytest.approx(6.0)
+    assert len(skipped) == 2
+    assert {entry["stage"] for entry in skipped} == {"total", "ppu"}
+    assert {entry["identifier"] for entry in skipped} == {"Ing1", "Ing2"}
+
+
 def test_calculate_food_cost_basic():
     result = calculate_food_cost(25, 50, 23)
     assert result == pytest.approx(61.5)

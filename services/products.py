@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import sqlite3
 from pathlib import Path
-from typing import Iterable, Iterator
+from typing import Any, Iterable, Iterator
 import unicodedata
 import re
 import time
@@ -389,14 +389,17 @@ class ProductService:
 
     # -- cost calculations ------------------------------------------------
     def calculate_cost(
-        self, product_or_ingredients: Iterable[Ingredient] | Product
-    ) -> float:
+        self,
+        product_or_ingredients: Iterable[Ingredient] | Product,
+        *,
+        include_skipped: bool = False,
+    ) -> float | tuple[float, list[dict[str, Any]]]:
         """Calculate total cost from a Product or iterable of Ingredients."""
         if isinstance(product_or_ingredients, Product):
             ingredients = product_or_ingredients.ingredients
         else:
             ingredients = list(product_or_ingredients)
-        return calculate_cost(ingredients)
+        return calculate_cost(ingredients, include_skipped=include_skipped)
 
     # -- bulk import ------------------------------------------------------
     def import_from_excel(self) -> None:
@@ -438,21 +441,70 @@ def get_product_info(ds: DataStore, codigo: str) -> Product:
     )
 
 
-def calculate_cost(ingredients: Iterable[Ingredient]) -> float:
-    """Return total cost for a list/iterable of ingredients."""
+def calculate_cost(
+    ingredients: Iterable[Ingredient], *, include_skipped: bool = False
+) -> float | tuple[float, list[dict[str, Any]]]:
+    """Return total cost for a list/iterable of ingredients.
+
+    When ``include_skipped`` is ``True`` the function returns a tuple with the
+    total cost and a list describing ingredients that could not be processed
+    because of invalid numeric inputs.
+    """
+
     total = 0.0
+    skipped: list[dict[str, Any]] = []
+
     for ing in ingredients:
+        identifier = ing.name or ing.code or "<unknown>"
         if ing.total is not None:
             try:
                 total += float(ing.total)
                 continue
-            except (TypeError, ValueError):
-                pass
+            except (TypeError, ValueError) as exc:
+                logger.warning(
+                    "[ProductService] Invalid total for %s: %r (%s)",
+                    identifier,
+                    ing.total,
+                    exc,
+                )
+                if include_skipped:
+                    skipped.append(
+                        {
+                            "ingredient": ing,
+                            "identifier": identifier,
+                            "stage": "total",
+                            "fields": {"total": ing.total},
+                            "error": str(exc),
+                        }
+                    )
         if ing.ppu is not None:
             try:
-                total += float(ing.ppu) * float(ing.quantity)
-            except (TypeError, ValueError):
-                pass
+                quantity = float(ing.quantity)
+                total += float(ing.ppu) * quantity
+            except (TypeError, ValueError) as exc:
+                logger.debug(
+                    "[ProductService] Invalid unit cost for %s: ppu=%r quantity=%r (%s)",
+                    identifier,
+                    ing.ppu,
+                    ing.quantity,
+                    exc,
+                )
+                if include_skipped:
+                    skipped.append(
+                        {
+                            "ingredient": ing,
+                            "identifier": identifier,
+                            "stage": "ppu",
+                            "fields": {
+                                "ppu": ing.ppu,
+                                "quantity": ing.quantity,
+                            },
+                            "error": str(exc),
+                        }
+                    )
+
+    if include_skipped:
+        return total, skipped
     return total
 
 
