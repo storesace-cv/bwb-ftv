@@ -32,6 +32,8 @@ DEV_OVERLAYS = (
 
 DEFAULT_ZONE_MARGINS = (3, 5)
 
+STYLE_NAME_THEMES = {"bwb-style-1", "bwb-style-1-center"}
+
 
 # Updated to allow block-prefixed cell identifiers like ``B1.C1``
 _TAG_RE = re.compile(r"^B\d+(?:\.C\d+(?:\.(?:A|B|\d+))*)?$")
@@ -124,12 +126,27 @@ class Zone(QWidget):
             )
         self.ly.setSpacing(spacing)
 
-        self._tag_lbl = QLabel(self.tag, self)
+        self._tag_container = QWidget(self)
+        header_layout = QVBoxLayout(self._tag_container)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.setSpacing(0)
+
+        self._tag_lbl = QLabel(self.tag, self._tag_container)
         self._tag_lbl.setStyleSheet(
             "color:#c00; font-size:10px; background:none; border:none;"
         )
         self._tag_lbl.setFixedHeight(12)
-        self.ly.addWidget(self._tag_lbl, 0, Qt.AlignLeft)
+        header_layout.addWidget(self._tag_lbl, 0, Qt.AlignLeft)
+
+        self._style_lbl = QLabel("", self._tag_container)
+        self._style_lbl.setStyleSheet(
+            "color:#c00; font-size:10px; background:none; border:none;"
+        )
+        self._style_lbl.setFixedHeight(12)
+        self._style_lbl.hide()
+        header_layout.addWidget(self._style_lbl, 0, Qt.AlignLeft)
+
+        self.ly.addWidget(self._tag_container, 0, Qt.AlignLeft)
 
         selector = f"#{_escape_object_name(self.objectName())}" if self.objectName() else ""
         self._base_stylesheet = (
@@ -157,6 +174,26 @@ class Zone(QWidget):
         if not self._overlay_active:
             self.setStyleSheet(self._base_stylesheet)
             refresh_style(self)
+        self._sync_style_label()
+
+    def _style_label_text(self) -> str | None:
+        if self._theme_name in STYLE_NAME_THEMES:
+            return self._theme_name
+        return None
+
+    def _sync_style_label(self) -> None:
+        if self._overlay_active:
+            text = self._style_label_text()
+            if text:
+                self._style_lbl.setText(text)
+                self._style_lbl.show()
+            else:
+                self._style_lbl.clear()
+                self._style_lbl.hide()
+        else:
+            self._style_lbl.clear()
+            self._style_lbl.hide()
+        refresh_style(self._style_lbl)
 
     def apply_overlays(self, on: bool) -> None:
         active = bool(on) and DEV_OVERLAYS
@@ -166,15 +203,18 @@ class Zone(QWidget):
         selector = f"#{_escape_object_name(name)}" if name else ""
         if active:
             style = (
-                f"{selector} {{ background:{bg_for_level(self._level)}; border:1px dashed blue; }}"
+                f"{selector} {{ background:{bg_for_level(self._level)}; border:2px dashed blue; }}"
                 if selector
-                else f"background:{bg_for_level(self._level)}; border:1px dashed blue;"
+                else f"background:{bg_for_level(self._level)}; border:2px dashed blue;"
             )
             self.setStyleSheet(style)
+            self._tag_container.show()
             self._tag_lbl.show()
         else:
             self.setStyleSheet(self._base_stylesheet)
+            self._tag_container.hide()
             self._tag_lbl.hide()
+        self._sync_style_label()
         for lbl in self._labels:
             user_label = lbl.property("userLabel")
             dev_label = lbl.property("devLabel")
