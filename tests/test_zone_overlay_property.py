@@ -182,6 +182,18 @@ def test_zone_set_theme_updates_style_label_when_overlay_active(
     assert zone._style_lbl.text() == "bwb-style-1"
 
 
+def test_zone_init_theme_shows_style_label_when_overlays_active(
+    qapp, overlays_enabled
+):
+    zone = layout.Zone("B1", show_overlays=True, theme_name="bwb-style-1")
+
+    assert zone.property("overlays") == "on"
+    assert zone.base_stylesheet == _theme_stylesheet(zone, "bwb-style-1")
+    assert zone.styleSheet() == _overlay_stylesheet(zone)
+    assert not zone._style_lbl.isHidden()
+    assert zone._style_lbl.text() == "bwb-style-1"
+
+
 def test_zone_add_row_has_no_debug_styles_by_default(qapp):
     zone = layout.Zone("B1")
     value_widget = QLabel("valor")

@@ -78,6 +78,7 @@ class Zone(QWidget):
         spacing=6,
         level: int = 0,
         show_overlays: bool = True,
+        theme_name: str | None = None,
     ):
         if not validate_tag(tag):
             raise ValueError(f"Invalid zone tag: {tag}")
@@ -153,6 +154,9 @@ class Zone(QWidget):
         )
 
         self.apply_overlays(show_overlays)
+
+        if theme_name is not None:
+            self.set_theme(theme_name)
 
     @property
     def base_stylesheet(self) -> str:
@@ -321,6 +325,7 @@ class Zone(QWidget):
                 spacing=self.ly.spacing(),
                 level=self._level + 1,
                 show_overlays=DEV_OVERLAYS,
+                theme_name=self._theme_name,
             )
             h.addWidget(zone, ratio)
             zones.append(zone)
@@ -346,6 +351,7 @@ class Zone(QWidget):
                 spacing=self.ly.spacing(),
                 level=self._level + 1,
                 show_overlays=DEV_OVERLAYS,
+                theme_name=self._theme_name,
             )
             v.addWidget(zone, ratio)
             zones.append(zone)
