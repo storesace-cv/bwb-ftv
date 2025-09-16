@@ -12,3 +12,4 @@ logs/
 reports/
 /databases/*
 !/databases/*/
+!/databases/allergens.example.json

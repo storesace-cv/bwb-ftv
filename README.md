@@ -126,6 +126,90 @@ To populate the `Alergenios` table with the default values, set the
 the seeding step remains disabled so that an allergens JSON file can be
 imported first.
 
+Os ficheiros de importação de alergénios devem conter uma matriz (array) JSON
+de objetos. Cada objeto representa um alergénio com as seguintes chaves:
+
+- `id`: inteiro positivo obrigatório que identifica o registo.
+- `nome`: nome em português, obrigatório e não pode estar vazio.
+- `nome_ingles`: nome em inglês, obrigatório e não pode estar vazio.
+- `descricao`: texto opcional com informação adicional.
+- `exemplos`: valor JSON opcional (tipicamente uma lista ou objeto) com
+  exemplos de ocorrência; é armazenado como texto JSON.
+- `notas`: texto opcional com comentários adicionais.
+
+Em alternativa ao array nu, o ficheiro pode envolver os registos num objeto
+que contenha a chave `alergenios` apontada para essa mesma matriz. Uma
+estrutura válida em formato de array é a seguinte:
+
+```json
+[
+  {
+    "id": 1,
+    "nome": "Glúten",
+    "nome_ingles": "Gluten",
+    "descricao": "Presente em cereais como trigo e cevada.",
+    "exemplos": [
+      "Pão de trigo",
+      {"produto": "Cevada malteada"}
+    ],
+    "notas": "Pode ocorrer contaminação cruzada."
+  },
+  {
+    "id": 2,
+    "nome": "Leite",
+    "nome_ingles": "Milk",
+    "descricao": null,
+    "exemplos": ["Leite de vaca", "Queijo"],
+    "notas": null
+  }
+]
+```
+
+Consulte `databases/allergens.example.json` para um ficheiro de referência que
+pode ser duplicado e adaptado às necessidades do seu projeto.
+
+Allergen import files must contain a JSON array of objects. Each object
+represents an allergen with the following keys:
+
+- `id`: required positive integer that uniquely identifies the record.
+- `nome`: required Portuguese name; it must be a non-empty string.
+- `nome_ingles`: required English name; it must be a non-empty string.
+- `descricao`: optional free-text description.
+- `exemplos`: optional JSON value (typically a list or object) with sample
+  occurrences; it is persisted as JSON text.
+- `notas`: optional free-text notes.
+
+Instead of a bare array the file may also wrap the entries in an object whose
+`alergenios` key points to that array. A valid array-based structure looks as
+follows:
+
+```json
+[
+  {
+    "id": 1,
+    "nome": "Glúten",
+    "nome_ingles": "Gluten",
+    "descricao": "Presente em cereais como trigo e cevada.",
+    "exemplos": [
+      "Pão de trigo",
+      {"produto": "Cevada malteada"}
+    ],
+    "notas": "Pode ocorrer contaminação cruzada."
+  },
+  {
+    "id": 2,
+    "nome": "Leite",
+    "nome_ingles": "Milk",
+    "descricao": null,
+    "exemplos": ["Leite de vaca", "Queijo"],
+    "notas": null
+  }
+]
+```
+
+See `databases/allergens.example.json` for a ready-to-adapt reference file that
+can be duplicated for your project.
+
 ## Execução / Running
 
 Inicie a interface principal com:  
