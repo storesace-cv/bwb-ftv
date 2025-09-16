@@ -43,6 +43,19 @@ def test_zone_apply_overlays_restores_text_and_border(qapp, overlays_enabled):
     assert zone.styleSheet() == "background: transparent; border: none;"
 
 
+def test_zone_overlay_tag_label_preserves_inline_style(qapp, overlays_enabled):
+    zone = layout.Zone("B1", show_overlays=True)
+    expected_style = "color:#c00; font-size:10px; background:none; border:none;"
+
+    assert zone._tag_lbl.styleSheet() == expected_style
+
+    zone.apply_overlays(False)
+    assert zone._tag_lbl.styleSheet() == expected_style
+
+    zone.apply_overlays(True)
+    assert zone._tag_lbl.styleSheet() == expected_style
+
+
 def test_zone_add_row_has_no_debug_styles_by_default(qapp):
     zone = layout.Zone("B1")
     value_widget = QLabel("valor")

@@ -1,3 +1,10 @@
+"""Componentes de layout para a ficha técnica.
+
+Aviso: legendas usadas pelos overlays de desenvolvimento têm estilos inline
+específicos; não utilize ``apply_label_style`` nem folhas de estilo globais
+nesses rótulos.
+"""
+
 import os
 import re
 
@@ -12,6 +19,7 @@ from PyQt5.QtWidgets import (
 )
 
 from .utilities import apply_label_style
+
 
 _ENV_DEV_OVERLAYS = os.getenv("BWB_DEV_OVERLAYS")
 DEV_OVERLAYS = (
@@ -107,7 +115,9 @@ class Zone(QWidget):
         self.ly.setSpacing(spacing)
 
         self._tag_lbl = QLabel(self.tag, self)
-        apply_label_style(self._tag_lbl, "QLabel { color:#c00; font-size:10px; }")
+        self._tag_lbl.setStyleSheet(
+            "color:#c00; font-size:10px; background:none; border:none;"
+        )
         self._tag_lbl.setFixedHeight(12)
         self.ly.addWidget(self._tag_lbl, 0, Qt.AlignLeft)
 
