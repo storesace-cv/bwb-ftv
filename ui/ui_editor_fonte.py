@@ -776,9 +776,9 @@ class FTApp(QWidget):
             label_text = f"PVP #{idx}"
             overlay = f"PrecosTaxas.Preco{idx}"
             lbl = QLabel(overlay if layout.DEV_OVERLAYS else label_text)
+            apply_label_style(lbl)
             lbl.setProperty("userLabel", label_text)
             lbl.setProperty("devLabel", overlay)
-            apply_label_style(lbl)
             match_font(lbl, self.edNome)
             zone.add(lbl, 0)
 
