@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 import sqlite3
 from typing import List
 
 from utils.paths import get_project_root
+
+logger = logging.getLogger(__name__)
 
 BASE_DIR = get_project_root()
 MIGRATIONS_DIR = BASE_DIR / "data" / "migrations"
@@ -310,6 +313,7 @@ def apply_pending_migrations(conn: sqlite3.Connection) -> List[str]:
     Returns a list with the filenames of the migrations that were applied.
     """
     pending = get_pending_migrations(conn)
+    applied: List[str] = []
     for path in pending:
         sql = path.read_text(encoding="utf-8")
         try:
@@ -317,11 +321,17 @@ def apply_pending_migrations(conn: sqlite3.Connection) -> List[str]:
                 conn.executescript(sql)
         except sqlite3.OperationalError as exc:
             msg = str(exc).lower()
+            if "no such table" in msg:
+                logger.warning(
+                    "Migração %s requer uma tabela que ainda não existe; "
+                    "vai permanecer pendente até que a tabela seja criada.",
+                    path.name,
+                )
+                continue
             if not any(
                 err in msg
                 for err in (
                     "another table or index",
-                    "no such table",
                     "duplicate column name",
                 )
             ):
@@ -329,7 +339,8 @@ def apply_pending_migrations(conn: sqlite3.Connection) -> List[str]:
         table = _ensure_schema_table(conn)
         with conn:
             conn.execute(f"INSERT INTO {table}(Filename) VALUES (?)", (path.name,))
-    return [p.name for p in pending]
+        applied.append(path.name)
+    return applied
 
 
 def ensure_core_tables(conn: sqlite3.Connection) -> None:
