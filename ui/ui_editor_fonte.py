@@ -101,6 +101,7 @@ from domain import FichaTecnica
 from utils.formatting import format_pt_number, parse_decimal
 
 from . import layout
+from .bwb_style_1 import APP_STYLESHEET
 from .layout import Zone
 from .utilities import (
     apply_label_style,
@@ -1960,16 +1961,7 @@ class FTApp(QWidget):
 def main():
     app = QApplication(sys.argv)
 
-    glass_theme = (
-        """
-        QWidget {
-            background-color: rgba(255, 255, 255, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
-        }
-        """
-    )
-    app.setStyleSheet(glass_theme)
+    app.setStyleSheet(APP_STYLESHEET)
 
     ds = DataStore()
     svc = ProductService(ds)

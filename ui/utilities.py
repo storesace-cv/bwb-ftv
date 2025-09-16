@@ -8,29 +8,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-
-FIELD_STYLE = (
-    "border:none;"
-    "border-radius:4px;"
-    "background-color: rgba(0, 0, 0, 0.1);"
-)
-
-
-LABEL_STYLE = (
-    "QLabel {\n"
-    "    background-color: rgba(200,200,200,0.5);\n"
-    "    border: 1px solid rgba(0,0,0,0.3);\n"
-    "    border-top-color: rgba(255,255,255,0.8);\n"
-    "    border-left-color: rgba(255,255,255,0.8);\n"
-    "    border-bottom-color: rgba(0,0,0,0.4);\n"
-    "    border-right-color: rgba(0,0,0,0.4);\n"
-    "    border-radius: 6px;\n"
-    "    padding: 4px;\n"
-    "}\n"
-    "QLabel:pressed {\n"
-    "    background-color: rgba(200,200,200,0.8);\n"
-    "}"
-)
+from .bwb_style_1 import FIELD_STYLE, LABEL_STYLE
 
 
 def apply_label_style(label: QLabel, extra: str | None = None) -> None:
