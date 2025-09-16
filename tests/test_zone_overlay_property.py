@@ -26,9 +26,9 @@ def _overlay_stylesheet(zone: layout.Zone) -> str:
     )
     background = layout.bg_for_level(zone._level)
     return (
-        f"{selector} {{ background:{background}; border:1px dashed red; }}"
+        f"{selector} {{ background:{background}; border:1px dashed blue; }}"
         if selector
-        else f"background:{background}; border:1px dashed red;"
+        else f"background:{background}; border:1px dashed blue;"
     )
 
 

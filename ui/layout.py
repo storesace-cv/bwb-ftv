@@ -165,9 +165,9 @@ class Zone(QWidget):
         selector = f"#{_escape_object_name(name)}" if name else ""
         if active:
             style = (
-                f"{selector} {{ background:{bg_for_level(self._level)}; border:1px dashed red; }}"
+                f"{selector} {{ background:{bg_for_level(self._level)}; border:1px dashed blue; }}"
                 if selector
-                else f"background:{bg_for_level(self._level)}; border:1px dashed red;"
+                else f"background:{bg_for_level(self._level)}; border:1px dashed blue;"
             )
             self.setStyleSheet(style)
             self._tag_lbl.show()
