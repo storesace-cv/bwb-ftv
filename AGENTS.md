@@ -40,3 +40,7 @@
 - **Outputs**: Backup copies or a restored database file.
 - **Accessible tools**: `data/backup.py`, `shutil`, `pathlib`.
 - **Interactions**: Invoked by other agents before potentially destructive operations.
+
+## Nomenclatura de widgets
+- `QLabel` = "legenda"/"legendas".
+- `QLineEdit` = "campo"/"campos".
