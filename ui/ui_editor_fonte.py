@@ -818,6 +818,8 @@ class FTApp(QWidget):
         )
         page_ly.addWidget(self._section_box("[B2] - Ingredientes", self.C2), 0)
 
+        C2_ing_zone, C2_totals_zone = self.C2.split_v((1, 0))
+
         self.ingModel = FichasTecnicasModel([])
 
         self.tbIng = QTableView(self)
@@ -832,19 +834,19 @@ class FTApp(QWidget):
         initial_h = header_h + vh.defaultSectionSize() + self.tbIng.frameWidth() * 2
         self.tbIng.setFixedHeight(initial_h)
         self.tbIng.setEditTriggers(QTableView.DoubleClicked | QTableView.EditKeyPressed)
-        self.C2.add(self.tbIng, 1)
+        C2_ing_zone.add(self.tbIng, 1)
         self._setup_ing_columns()
 
         # Zona para custos totais após a tabela de ingredientes
         self.C2Custo = Zone(
-            "B2.C2",
-            self.C2,
+            f"{C2_totals_zone.tag}.A",
+            C2_totals_zone,
             flow="h",
-            level=1,
+            level=C2_totals_zone._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
         )
         self.C2Custo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.C2.add(self.C2Custo, 0)
+        C2_totals_zone.add(self.C2Custo, 0)
         self.C2Custo.ly.addStretch(1)
         custo_total_label = QLabel("Custo Total:")
         apply_label_style(custo_total_label)
