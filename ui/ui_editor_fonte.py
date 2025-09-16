@@ -617,8 +617,10 @@ class FTApp(QWidget):
         self.headerC1.add(self.headerC1A)
         self.headerEdCodigo = QLineEdit()
         make_readonly_lineedit(self.headerEdCodigo, False)
+        self.headerEdCodigo.setStyleSheet("background-color: transparent")
         self.headerEdNome = QLineEdit()
         make_readonly_lineedit(self.headerEdNome, True)
+        self.headerEdNome.setStyleSheet("background-color: transparent")
         self.headerC1A.add_row(
             "Código:",
             self.headerEdCodigo,
@@ -843,6 +845,7 @@ class FTApp(QWidget):
         self.C2Custo.add(custo_total_label, 0)
         self.edCustoTotal = QLineEdit()
         make_readonly_lineedit(self.edCustoTotal, True)
+        self.edCustoTotal.setStyleSheet("background-color: transparent")
         self.edCustoTotal.setFixedWidth(self.edCustoTotal.sizeHint().width() * 2)
         self.C2Custo.add(self.edCustoTotal, 0)
 
