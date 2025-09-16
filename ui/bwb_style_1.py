@@ -3,10 +3,10 @@
 FIELD_STYLE = (
     "QLineEdit {\n"
     "    qproperty-alignment: AlignLeft;\n"
+    "    border: none;\n"
+    "    border-radius: 4px;\n"
+    "    background: transparent;\n"
     "}\n"
-    "border:none;\n"
-    "border-radius:4px;\n"
-    "background-color: rgba(0, 0, 0, 0.1);\n"
 )
 
 LABEL_STYLE = (
