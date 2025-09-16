@@ -35,7 +35,7 @@ FCFILTER_BUTTON_STYLE_TEMPLATE = (
     "    border-right-color: rgba(0,0,0,0.4);\n"
     "    border-radius: 6px;\n"
     "    padding: 4px;\n"
-    "}\n"
+    "}}\n"
     "QPushButton:pressed,\n"
     "QPushButton:checked {{\n"
     "    background-color: rgba({r},{g},{b},{active_alpha});\n"
