@@ -754,7 +754,7 @@ class FTApp(QWidget):
         )
 
         # Base: zona horizontal com cinco colunas PVP1..PVP5 (etiqueta por cima)
-        self.lbPVPs: list[QLabel] = []
+        self.lbPVPs: list[QLineEdit] = []
 
         pvp_label = QLabel("PVP:")
         apply_label_style(pvp_label)
@@ -782,9 +782,10 @@ class FTApp(QWidget):
             match_font(lbl, self.edNome)
             zone.add(lbl, 0)
 
-            val = QLabel("—")
-            apply_label_style(val)
-            match_font(val, self.edNome)
+            val = QLineEdit("—")
+            make_readonly_lineedit(val, False)
+            val.setStyleSheet(FIELD_STYLE)
+            val.setFont(self.edNome.font())
             zone.add(val, 0)
             self.lbPVPs.append(val)
 
