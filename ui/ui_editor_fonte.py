@@ -120,6 +120,7 @@ from .dialogs import (
 )
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
+ZONE_THEME = "bwb-style-1"
 logger = logging.getLogger(__name__)
 
 # ---------------------- Image Preview ----------------------
@@ -605,6 +606,7 @@ class FTApp(QWidget):
             spacing=2,
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
+            theme_name=ZONE_THEME,
         )
         header_ly.addWidget(self.headerC1, 0)
         self.headerC1A = Zone(
@@ -615,6 +617,7 @@ class FTApp(QWidget):
             spacing=2,
             level=1,
             show_overlays=layout.DEV_OVERLAYS,
+            theme_name=ZONE_THEME,
         )
         self.headerC1.add(self.headerC1A)
         self.headerEdCodigo = QLineEdit()
@@ -663,6 +666,7 @@ class FTApp(QWidget):
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
             spacing=2,
+            theme_name=ZONE_THEME,
         )
         page_ly.addWidget(self._section_box("[B1] - Dados Gerais", self.C1), 0)
 
@@ -684,6 +688,7 @@ class FTApp(QWidget):
             spacing=C1A.ly.spacing(),
             level=C1A._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
+            theme_name=ZONE_THEME,
         )
         C1A_cont_ly.addWidget(self.C1A1, 0)
 
@@ -722,6 +727,7 @@ class FTApp(QWidget):
             spacing=C1A.ly.spacing(),
             level=C1A._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
+            theme_name=ZONE_THEME,
         )
         C1A_cont_ly.addWidget(C1A2, 1)
 
@@ -767,6 +773,7 @@ class FTApp(QWidget):
             flow="h",
             level=C1A21_base._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
+            theme_name=ZONE_THEME,
         )
         C1A21_base_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         C1A21_base.add(C1A21_base_zone, 0)
@@ -811,7 +818,12 @@ class FTApp(QWidget):
 
         # ---------------- B2 — Ingredientes (B2.C1) ----------------
         self.C2 = Zone(
-            "B2.C1", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
+            "B2.C1",
+            self,
+            flow="v",
+            level=0,
+            show_overlays=layout.DEV_OVERLAYS,
+            theme_name=ZONE_THEME,
         )
         page_ly.addWidget(self._section_box("[B2] - Ingredientes", self.C2), 0)
 
@@ -841,6 +853,7 @@ class FTApp(QWidget):
             flow="h",
             level=C2_totals_zone._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
+            theme_name=ZONE_THEME,
         )
         self.C2Custo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         C2_totals_zone.add(self.C2Custo, 0)
@@ -856,7 +869,12 @@ class FTApp(QWidget):
 
         # ---------------- B3 — Custos (B3.C1) ----------------
         self.C3 = Zone(
-            "B3.C1", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
+            "B3.C1",
+            self,
+            flow="v",
+            level=0,
+            show_overlays=layout.DEV_OVERLAYS,
+            theme_name=ZONE_THEME,
         )
         page_ly.addWidget(self._section_box("[B3] - Food Cost", self.C3), 0)
 
@@ -866,6 +884,7 @@ class FTApp(QWidget):
             flow="v",
             level=1,
             show_overlays=layout.DEV_OVERLAYS,
+            theme_name=ZONE_THEME,
         )
         self.C3.add(C3A, 1)
         food_cost_label = QLabel("Food Cost:")
@@ -879,6 +898,7 @@ class FTApp(QWidget):
             flow="h",
             level=2,
             show_overlays=layout.DEV_OVERLAYS,
+            theme_name=ZONE_THEME,
         )
         C3AA.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         C3A.add(C3AA, 0)
@@ -904,6 +924,7 @@ class FTApp(QWidget):
             flow="h",
             level=2,
             show_overlays=layout.DEV_OVERLAYS,
+            theme_name=ZONE_THEME,
         )
         C3AB.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         C3A.add(C3AB, 0)
@@ -983,7 +1004,12 @@ class FTApp(QWidget):
 
         # ---------------- B4 — Preparação (B4.C1) ----------------
         self.C4 = Zone(
-            "B4.C1", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
+            "B4.C1",
+            self,
+            flow="v",
+            level=0,
+            show_overlays=layout.DEV_OVERLAYS,
+            theme_name=ZONE_THEME,
         )
         page_ly.addWidget(self._section_box("[B4] - Preparação", self.C4), 1)
 
@@ -1062,7 +1088,12 @@ class FTApp(QWidget):
 
         # ---------------- B5 — Nutrição / Alergénios (B5.C1) ----------------
         self.C5 = Zone(
-            "B5.C1", self, flow="v", level=0, show_overlays=layout.DEV_OVERLAYS
+            "B5.C1",
+            self,
+            flow="v",
+            level=0,
+            show_overlays=layout.DEV_OVERLAYS,
+            theme_name=ZONE_THEME,
         )
         page_ly.addWidget(self._section_box("[B5] - Nutrição / Alergénios", self.C5), 0)
 
