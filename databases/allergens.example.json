@@ -1,0 +1,24 @@
+[
+  {
+    "id": 1,
+    "nome": "Glúten",
+    "nome_ingles": "Gluten",
+    "descricao": "Presente em cereais como trigo e cevada.",
+    "exemplos": [
+      "Pão de trigo",
+      {"produto": "Cevada malteada"}
+    ],
+    "notas": "Pode ocorrer contaminação cruzada."
+  },
+  {
+    "id": 2,
+    "nome": "Leite",
+    "nome_ingles": "Milk",
+    "descricao": null,
+    "exemplos": [
+      "Leite de vaca",
+      "Queijo"
+    ],
+    "notas": null
+  }
+]
