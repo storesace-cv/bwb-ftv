@@ -227,14 +227,14 @@ synchronize the schema with `python tools/cleanup_schema.py`.
 ## Sobreposições de desenvolvimento / Development overlays
 
 Quando a variável de ambiente `BWB_DEV_OVERLAYS` está ativa, as legendas das
-zonas passam para o estilo `bwb-overlays-on`. Esse estilo remove o fundo,
+zonas passam para o estilo `bwb-style-overlays-on`. Esse estilo remove o fundo,
 a borda e o preenchimento dos rótulos para que seja possível comparar o modo
 normal com o modo de sobreposição apenas pela alteração de conteúdo. As
 métricas de fonte e os alinhamentos mantêm-se, garantindo que quaisquer
 diferenças observadas resultam da disposição real do texto.
 
 When the `BWB_DEV_OVERLAYS` environment variable is enabled, zone labels use
-the `bwb-overlays-on` style. The style removes the background, border, and
+the `bwb-style-overlays-on` style. The style removes the background, border, and
 padding so that normal and overlay modes can be compared based solely on the
 content differences. Font metrics and alignments are preserved, ensuring that
 any perceived changes come from the actual text layout.

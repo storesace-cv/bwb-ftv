@@ -4,8 +4,8 @@ from PyQt5.QtWidgets import QLabel
 import pytest
 
 from ui import layout
-from ui.bwb_style_1 import ZONE_STYLES
-from ui.utilities import LABEL_STYLE, OVERLAY_ON_STYLE
+from ui.bwb_style_1 import OVERLAY_ON_CLASS, ZONE_STYLES
+from ui.utilities import LABEL_STYLE
 
 
 def _theme_stylesheet(zone: layout.Zone, theme_name: str) -> str:
@@ -30,6 +30,17 @@ def _overlay_stylesheet(zone: layout.Zone) -> str:
         if selector
         else f"background:{background}; border:2px dashed blue;"
     )
+
+
+def _widget_classes(widget: QLabel) -> list[str]:
+    value = widget.property("class")
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [cls for cls in value.split() if cls]
+    if isinstance(value, (list, tuple)):
+        return [str(cls) for cls in value if str(cls)]
+    return [str(value)]
 
 
 @pytest.fixture
@@ -72,6 +83,7 @@ def test_zone_apply_overlays_restores_text_and_border(qapp, overlays_enabled):
     assert label.text() == "Nome"
     assert zone.styleSheet() == expected_off_style
     assert label.styleSheet() == normal_label_style
+    assert OVERLAY_ON_CLASS not in _widget_classes(label)
     assert value_widget.styleSheet() == original_value_style
     assert label.font().toString() == font_signature
     assert (
@@ -83,7 +95,8 @@ def test_zone_apply_overlays_restores_text_and_border(qapp, overlays_enabled):
     zone.apply_overlays(True)
     assert label.text() == "Overlay"
     assert zone.styleSheet() == expected_on_style
-    assert label.styleSheet() == OVERLAY_ON_STYLE
+    assert label.styleSheet() == ""
+    assert OVERLAY_ON_CLASS in _widget_classes(label)
     assert value_widget.styleSheet() == original_value_style
     assert label.font().toString() == font_signature
     assert (
@@ -96,6 +109,7 @@ def test_zone_apply_overlays_restores_text_and_border(qapp, overlays_enabled):
     assert label.text() == "Nome"
     assert zone.styleSheet() == expected_off_style
     assert label.styleSheet() == normal_label_style
+    assert OVERLAY_ON_CLASS not in _widget_classes(label)
     assert value_widget.styleSheet() == original_value_style
     assert label.font().toString() == font_signature
     assert (
@@ -202,13 +216,15 @@ def test_zone_add_row_allows_opt_in_debug_styles(qapp, overlays_enabled):
     zone.apply_overlays(True)
     assert label.text() == "Overlay"
     assert zone.styleSheet() == expected_on_style
-    assert label.styleSheet() == OVERLAY_ON_STYLE
+    assert label.styleSheet() == ""
+    assert OVERLAY_ON_CLASS in _widget_classes(label)
     assert "background-color" in value_widget.styleSheet()
 
     zone.apply_overlays(False)
     assert label.text() == "Nome"
     assert zone.styleSheet() == expected_off_style
     assert label.styleSheet() == expected_style
+    assert OVERLAY_ON_CLASS not in _widget_classes(label)
     assert "background-color" in value_widget.styleSheet()
 
 
@@ -217,11 +233,13 @@ def test_zone_add_row_uses_overlay_style_when_active(qapp, overlays_enabled):
     value_widget = QLabel("valor", zone)
     label = zone.add_row("Nome", value_widget, overlay_text="Overlay")
 
-    assert label.styleSheet() == OVERLAY_ON_STYLE
+    assert label.styleSheet() == ""
+    assert OVERLAY_ON_CLASS in _widget_classes(label)
     assert label.text() == "Overlay"
 
     zone.apply_overlays(False)
     assert label.styleSheet() == LABEL_STYLE
+    assert OVERLAY_ON_CLASS not in _widget_classes(label)
     assert label.text() == "Nome"
 
 

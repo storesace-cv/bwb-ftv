@@ -1,5 +1,7 @@
 """Centralised stylesheet constants for the BWB style 1 theme."""
 
+OVERLAY_ON_CLASS = "bwb-style-overlays-on"
+
 ZONE_STYLES = {
     "bwb-style-1": (
         "background-color: rgba(255, 255, 255, 0.35);\n"
@@ -35,15 +37,6 @@ LABEL_STYLE = (
     "}"
 )
 
-OVERLAY_ON_STYLE = (
-    "QLabel {\n"
-    "    background: none;\n"
-    "    border: none;\n"
-    "    padding: 0;\n"
-    "    qproperty-alignment: AlignLeft | AlignVCenter;\n"
-    "}"
-)
-
 FCFILTER_BUTTON_STYLE_TEMPLATE = (
     "/* bwb-style-fcfilters-btn */\n"
     "QPushButton {{\n"
@@ -67,14 +60,20 @@ APP_STYLESHEET = (
     "    background-color: rgba(255, 255, 255, 0.25);\n"
     "    border: 1px solid rgba(255, 255, 255, 0.3);\n"
     "    border-radius: 12px;\n"
-    "}"
+    "}\n\n"
+    f"QLabel.{OVERLAY_ON_CLASS} {{\n"
+    "    background: none;\n"
+    "    border: none;\n"
+    "    padding: 0;\n"
+    "    qproperty-alignment: AlignLeft | AlignVCenter;\n"
+    "}}\n"
 )
 
 __all__ = [
     "ZONE_STYLES",
     "FIELD_STYLE",
     "LABEL_STYLE",
-    "OVERLAY_ON_STYLE",
+    "OVERLAY_ON_CLASS",
     "FCFILTER_BUTTON_STYLE_TEMPLATE",
     "APP_STYLESHEET",
 ]
