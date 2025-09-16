@@ -327,6 +327,20 @@ def manage_aux_table(
             tbl.setItem(row, 0, cod_item)
             tbl.setItem(row, 1, desc_item)
 
+        rows = tbl.rowCount()
+        max_rows = min(rows, 10)
+        header_height = tbl.horizontalHeader().height()
+        if rows:
+            row_height = tbl.verticalHeader().sectionSize(0)
+        else:
+            row_height = tbl.verticalHeader().defaultSectionSize()
+        frame = tbl.frameWidth() * 2
+        visible_rows = max_rows or 1
+        tbl.setFixedHeight(header_height + row_height * visible_rows + frame)
+        tbl.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        tbl.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        dlg.adjustSize()
+
     def add_item():
         text, ok = QInputDialog.getText(dlg, "Adicionar", "Descrição:")
         if ok and text.strip():
