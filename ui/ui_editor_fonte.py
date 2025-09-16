@@ -685,8 +685,10 @@ class FTApp(QWidget):
 
         self.edCodigo = QLineEdit()
         make_readonly_lineedit(self.edCodigo, False)
+        self.edCodigo.setStyleSheet("background-color: transparent")
         self.edNome = QLineEdit()
         make_readonly_lineedit(self.edNome, True)
+        self.edNome.setStyleSheet("background-color: transparent")
         self.C1A1.add_row(
             "Código:",
             self.edCodigo,
