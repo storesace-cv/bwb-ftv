@@ -619,14 +619,10 @@ class FTApp(QWidget):
         self.headerC1.add(self.headerC1A)
         self.headerEdCodigo = QLineEdit()
         make_readonly_lineedit(self.headerEdCodigo, False)
-        self.headerEdCodigo.setStyleSheet(
-            f"{FIELD_STYLE}\nbackground-color: transparent;"
-        )
+        self.headerEdCodigo.setStyleSheet(FIELD_STYLE)
         self.headerEdNome = QLineEdit()
         make_readonly_lineedit(self.headerEdNome, True)
-        self.headerEdNome.setStyleSheet(
-            f"{FIELD_STYLE}\nbackground-color: transparent;"
-        )
+        self.headerEdNome.setStyleSheet(FIELD_STYLE)
         self.headerC1A.add_row(
             "Código:",
             self.headerEdCodigo,
@@ -693,14 +689,10 @@ class FTApp(QWidget):
 
         self.edCodigo = QLineEdit()
         make_readonly_lineedit(self.edCodigo, False)
-        self.edCodigo.setStyleSheet(
-            f"{FIELD_STYLE}\nbackground-color: transparent;"
-        )
+        self.edCodigo.setStyleSheet(FIELD_STYLE)
         self.edNome = QLineEdit()
         make_readonly_lineedit(self.edNome, True)
-        self.edNome.setStyleSheet(
-            f"{FIELD_STYLE}\nbackground-color: transparent;"
-        )
+        self.edNome.setStyleSheet(FIELD_STYLE)
         self.C1A1.add_row(
             "Código:",
             self.edCodigo,
@@ -855,9 +847,7 @@ class FTApp(QWidget):
         self.C2Custo.add(custo_total_label, 0)
         self.edCustoTotal = QLineEdit()
         make_readonly_lineedit(self.edCustoTotal, True)
-        self.edCustoTotal.setStyleSheet(
-            f"{FIELD_STYLE}\nbackground-color: transparent;"
-        )
+        self.edCustoTotal.setStyleSheet(FIELD_STYLE)
         self.edCustoTotal.setFixedWidth(self.edCustoTotal.sizeHint().width() * 2)
         self.C2Custo.add(self.edCustoTotal, 0)
 
