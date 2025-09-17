@@ -265,6 +265,26 @@ def test_zone_add_row_has_no_debug_styles_by_default(qapp):
     assert "border-radius" not in value_widget.styleSheet()
 
 
+def test_zone_center_theme_keeps_label_alignment(qapp):
+    default_zone = layout.Zone("B1", show_overlays=False)
+    default_zone.set_theme("bwb-style-1")
+    default_label = default_zone.add_row("Nome", QLabel("valor", default_zone))
+
+    centre_zone = layout.Zone("B2", show_overlays=False)
+    centre_zone.set_theme("bwb-style-1-center")
+    centre_label = centre_zone.add_row("Nome", QLabel("valor", centre_zone))
+
+    assert default_label.styleSheet() == LABEL_STYLE
+    assert centre_label.styleSheet() == LABEL_STYLE
+    assert centre_label.styleSheet() == default_label.styleSheet()
+    assert centre_label.alignment() == default_label.alignment()
+    assert (
+        centre_label.property("labelAlignmentVariant")
+        == default_label.property("labelAlignmentVariant")
+        == AlignmentVariant.DEFAULT.value
+    )
+
+
 def test_zone_add_row_allows_opt_in_debug_styles(qapp, overlays_enabled):
     zone = layout.Zone("B1", show_overlays=False)
     value_widget = QLabel("valor")
