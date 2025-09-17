@@ -7,6 +7,7 @@ nesses rótulos.
 
 import os
 import re
+from typing import Any
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
@@ -77,6 +78,9 @@ def refresh_style(widget: QWidget) -> None:
     widget.update()
 
 
+_KEEP_LABEL = object()
+
+
 class Zone(QWidget):
     """Célula real (com tag e overlay opcional)."""
 
@@ -112,6 +116,8 @@ class Zone(QWidget):
         self._zone_type: str | None = zone_type or None
         self._widget_qt_class: str | None = widget_qt_class or None
         self._style_dev_info: str | None = None
+        self._suspend_base_tracking = False
+        self._next_base_style_label: Any = _KEEP_LABEL
         if flow == "v":
             self.ly = QVBoxLayout(self)
         else:
@@ -173,16 +179,21 @@ class Zone(QWidget):
             self._tag_container_index = 0
 
         selector = f"#{_escape_object_name(self.objectName())}" if self.objectName() else ""
-        self._base_stylesheet = (
+        default_stylesheet = (
             f"{selector} {{ background: transparent; border: none; }}"
             if selector
             else "background: transparent; border: none;"
         )
 
+        initial_label: Any = (
+            self._base_style_label if self._base_style_label is not None else _KEEP_LABEL
+        )
+        self._base_stylesheet = ""
+        self.set_zone_stylesheet(default_stylesheet, label=initial_label)
         self.apply_overlays(show_overlays)
 
         if base_stylesheet is not None:
-            self.set_base_stylesheet(base_stylesheet, label=self._base_style_label)
+            self.set_zone_stylesheet(base_stylesheet, label=initial_label)
         elif base_style_label is not None:
             self._sync_style_label()
 
@@ -229,18 +240,37 @@ class Zone(QWidget):
     def base_stylesheet(self) -> str:
         return self._base_stylesheet
 
-    def set_base_stylesheet(
-        self, stylesheet: str, *, label: str | None = None
+    def set_zone_stylesheet(
+        self,
+        stylesheet: str,
+        *,
+        label: str | None | Any = _KEEP_LABEL,
     ) -> None:
         if not isinstance(stylesheet, str):
             raise TypeError("Stylesheet must be a string")
 
-        self._base_stylesheet = stylesheet
-        self._base_style_label = label or None
-        if not self._overlay_active:
-            self.setStyleSheet(self._base_stylesheet)
-            refresh_style(self)
-        self._sync_style_label()
+        if self._overlay_active:
+            self._base_stylesheet = stylesheet
+            if label is not _KEEP_LABEL:
+                self._base_style_label = label
+            self._sync_style_label()
+            return
+
+        previous_next_label = self._next_base_style_label
+        try:
+            if label is not _KEEP_LABEL:
+                self._next_base_style_label = label
+            self.setStyleSheet(stylesheet)
+        finally:
+            self._next_base_style_label = previous_next_label
+
+    def set_base_stylesheet(
+        self, stylesheet: str, *, label: str | None = None
+    ) -> None:
+        """Backward compatibility wrapper for legacy theme API."""
+
+        effective_label: Any = label if label is not None else None
+        self.set_zone_stylesheet(stylesheet, label=effective_label)
 
     def _style_label_text(self) -> str | None:
         segments = [
@@ -285,7 +315,11 @@ class Zone(QWidget):
                 if selector
                 else f"background:{bg_for_level(self._level)}; border:2px dashed blue;"
             )
-            self.setStyleSheet(style)
+            self._suspend_base_tracking = True
+            try:
+                self.setStyleSheet(style)
+            finally:
+                self._suspend_base_tracking = False
             if not header_present:
                 self.ly.insertWidget(
                     self._tag_container_index,
@@ -296,7 +330,11 @@ class Zone(QWidget):
             self._tag_container.show()
             self._tag_lbl.show()
         else:
-            self.setStyleSheet(self._base_stylesheet)
+            self._suspend_base_tracking = True
+            try:
+                self.setStyleSheet(self._base_stylesheet)
+            finally:
+                self._suspend_base_tracking = False
             if header_present:
                 self.ly.removeWidget(self._tag_container)
             self._tag_container.hide()
@@ -325,6 +363,19 @@ class Zone(QWidget):
         refresh_style(self)
         for ch in self.findChildren(Zone):
             ch.apply_overlays(on)
+
+    def setStyleSheet(self, stylesheet: str) -> None:  # type: ignore[override]
+        QWidget.setStyleSheet(self, stylesheet)
+        if self._suspend_base_tracking:
+            refresh_style(self)
+            return
+
+        self._base_stylesheet = stylesheet
+        if self._next_base_style_label is not _KEEP_LABEL:
+            self._base_style_label = self._next_base_style_label
+        self._next_base_style_label = _KEEP_LABEL
+        self._sync_style_label()
+        refresh_style(self)
 
     def add(self, w: QWidget, stretch: int = 0) -> None:
         self.ly.addWidget(w, stretch)
