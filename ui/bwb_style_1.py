@@ -9,7 +9,11 @@ _ZONE_BASE_DECLARATIONS = (
     "padding: 6px;\n"
 )
 
-_ZONE_CENTER_EXTRA = "text-align: center;\n"
+# ``bwb-style-1-center`` previously used a global ``text-align`` declaration to
+# centre values.  This impacted every legend (``QLabel``) in the zone, which is
+# now handled explicitly via ``AlignmentVariant`` helpers.  Keep the constant in
+# case additional declarations are needed in the future.
+_ZONE_CENTER_EXTRA = ""
 
 ZONE_STYLES = {
     "bwb-style-1": _ZONE_BASE_DECLARATIONS,
