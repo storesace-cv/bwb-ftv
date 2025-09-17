@@ -844,19 +844,24 @@ class FTApp(QWidget):
 
         for idx, zone in enumerate((pvp1, pvp2, pvp3, pvp4, pvp5), start=1):
             zone.set_theme(PVP_ZONE_THEME)
+            label_zone, field_zone = zone.split_v((1, 1))
+
             label_text = f"PVP #{idx}"
             overlay = f"PrecosTaxas.Preco{idx}"
-            lbl = QLabel(overlay if layout.DEV_OVERLAYS else label_text)
+            lbl = QLabel(
+                overlay if layout.DEV_OVERLAYS else label_text,
+                label_zone,
+            )
             apply_label_style(lbl, alignment=AlignmentVariant.CENTER)
             lbl.setProperty("userLabel", label_text)
             lbl.setProperty("devLabel", overlay)
             match_font(lbl, self.edNome)
-            zone.add(lbl, 0)
+            label_zone.add(lbl, 0)
 
-            val = QLineEdit("—")
+            val = QLineEdit("—", field_zone)
             make_readonly_lineedit(val, False, alignment=AlignmentVariant.CENTER)
             val.setFont(self.edNome.font())
-            zone.add(val, 0)
+            field_zone.add(val, 0)
             self.lbPVPs.append(val)
 
         # Combos diretamente em B1.C1.A.2.B (sem .B.2)
