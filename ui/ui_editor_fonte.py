@@ -861,27 +861,27 @@ class FTApp(QWidget):
 
         for idx, zone in enumerate((pvp1, pvp2, pvp3, pvp4, pvp5), start=1):
             zone.set_theme(PVP_ZONE_THEME)
-            label_zone, field_zone = zone.split_v((1, 1))
+            value_zone, legend_zone = zone.split_v((1, 1))
+
+            val = QLabel("—", value_zone)
+            val.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            apply_label_style(val)
+            match_font(val, self.edNome)
+            val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            value_zone.add(val, 0)
+            self.lbPVPs.append(val)
 
             label_text = f"PVP #{idx}"
             overlay = f"PrecosTaxas.Preco{idx}"
             lbl = QLabel(
                 overlay if layout.DEV_OVERLAYS else label_text,
-                label_zone,
+                legend_zone,
             )
             apply_label_style(lbl, alignment=AlignmentVariant.CENTER)
             lbl.setProperty("userLabel", label_text)
             lbl.setProperty("devLabel", overlay)
             match_font(lbl, self.edNome)
-            label_zone.add(lbl, 0)
-
-            val = QLabel("—", field_zone)
-            val.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-            apply_label_style(val)
-            match_font(val, self.edNome)
-            val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            field_zone.add(val, 0)
-            self.lbPVPs.append(val)
+            legend_zone.add(lbl, 0)
 
         # Combos diretamente em B1.C1.A.2.B (sem .B.2)
         w_tipos, self.cbTipos = stack_combo("Tipos Artigos")
@@ -994,21 +994,21 @@ class FTApp(QWidget):
         self.lbFoodCosts: list[QLabel] = []
         for idx, fc in enumerate((fc1, fc2, fc3, fc4, fc5), start=1):
             fc.set_theme(PVP_ZONE_THEME)
-            label_zone, field_zone = fc.split_v((1, 1))
+            value_zone, legend_zone = fc.split_v((1, 1))
 
-            lbl = QLabel(f"Food Cost #{idx}")
-            lbl.setAlignment(Qt.AlignCenter)
-            apply_label_style(lbl, alignment=AlignmentVariant.CENTER)
-            match_font(lbl, self.edNome)
-            label_zone.add(lbl, 0)
-
-            val = QLabel("—")
+            val = QLabel("—", value_zone)
             val.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             apply_label_style(val)
             match_font(val, self.edNome)
             val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            field_zone.add(val, 0)
+            value_zone.add(val, 0)
             self.lbFoodCosts.append(val)
+
+            lbl = QLabel(f"Food Cost #{idx}", legend_zone)
+            lbl.setAlignment(Qt.AlignCenter)
+            apply_label_style(lbl, alignment=AlignmentVariant.CENTER)
+            match_font(lbl, self.edNome)
+            legend_zone.add(lbl, 0)
 
         C3AB = Zone(
             "B3.C1.A.B",
