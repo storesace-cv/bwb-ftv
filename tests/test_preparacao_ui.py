@@ -82,6 +82,8 @@ def test_sanitize_prep_html_removes_disallowed():
     assert "onclick" not in low
     assert "<div" not in low
     assert "color" not in low
+    assert "style=" not in low
+    assert "text-align" not in low
     assert "<strong>" in low and "<em>" in low
 
 
