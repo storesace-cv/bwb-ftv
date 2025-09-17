@@ -762,6 +762,9 @@ class FTApp(QWidget):
         C1A21_top, C1A21_base = C1A21.split_v((1, 2))
         C1A21_top.apply_overlays(True)
         labels_zone, values_zone = C1A21_top.split_h((1, 3))
+        families_row_layout = labels_zone.parentWidget().layout()
+        if families_row_layout is not None:
+            families_row_layout.setSpacing(12)
         values_zone_margins = values_zone.ly.contentsMargins()
         values_zone.ly.setContentsMargins(
             3,
