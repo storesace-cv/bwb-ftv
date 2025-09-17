@@ -106,6 +106,7 @@ from .layout import Zone
 from .utilities import (
     apply_fcfilter_btn_style,
     apply_label_style,
+    apply_overlay_label_style,
     make_readonly_lineedit,
     match_font,
     stack_combo,
@@ -698,20 +699,32 @@ class FTApp(QWidget):
         self.edNome = QLineEdit()
         make_readonly_lineedit(self.edNome, True)
         self.edNome.setStyleSheet(FIELD_STYLE)
-        self.C1A1.add_row(
-            "Código:",
-            self.edCodigo,
-            label_minw=lbl_w,
-            vspacing=0,
-            overlay_text="Produtos.Codigo",
-        )
-        self.C1A1.add_row(
-            "Nome do Artigo:",
-            self.edNome,
-            label_minw=lbl_w,
-            vspacing=1,
-            overlay_text="Produtos.Nome",
-        )
+        label_col, field_col = self.C1A1.split_h((1, 3))
+
+        def _make_ident_label(text: str, overlay: str) -> QLabel:
+            display = overlay if label_col._overlay_active and overlay else text
+            lbl = QLabel(display, label_col)
+            lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            lbl.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Maximum)
+            lbl.setProperty("userLabel", text)
+            lbl.setProperty("devLabel", overlay)
+            if label_col._overlay_active and overlay:
+                apply_overlay_label_style(lbl)
+            else:
+                apply_label_style(lbl)
+            label_col.ly.addWidget(lbl, 0, Qt.AlignRight | Qt.AlignVCenter)
+            label_col._labels.append(lbl)
+            return lbl
+
+        _make_ident_label("Código:", "Produtos.Codigo")
+        _make_ident_label("Nome do Artigo:", "Produtos.Nome")
+        label_col.sync_label_widths()
+
+        for field in (self.edCodigo, self.edNome):
+            field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+        field_col.ly.addWidget(self.edCodigo, 0, Qt.AlignLeft)
+        field_col.ly.addWidget(self.edNome, 0, Qt.AlignLeft)
 
         scroll.verticalScrollBar().valueChanged.connect(
             self._toggle_header_on_scroll
