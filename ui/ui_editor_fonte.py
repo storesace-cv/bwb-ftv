@@ -838,7 +838,7 @@ class FTApp(QWidget):
         )
 
         # Base: zona horizontal com cinco colunas PVP1..PVP5 (etiqueta por cima)
-        self.lbPVPs: list[QLabel] = []
+        self.lbPVPs: list[QLineEdit] = []
 
         pvp_label = QLabel("PREÇOS DE VENDA")
         pvp_label.setAlignment(Qt.AlignCenter)
@@ -861,27 +861,27 @@ class FTApp(QWidget):
 
         for idx, zone in enumerate((pvp1, pvp2, pvp3, pvp4, pvp5), start=1):
             zone.set_theme(PVP_ZONE_THEME)
-            value_zone, legend_zone = zone.split_v((1, 1))
-
-            val = QLabel("—", value_zone)
-            val.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-            apply_label_style(val)
-            match_font(val, self.edNome)
-            val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            value_zone.add(val, 0)
-            self.lbPVPs.append(val)
+            label_zone, field_zone = zone.split_v((1, 1))
 
             label_text = f"PVP #{idx}"
             overlay = f"PrecosTaxas.Preco{idx}"
             lbl = QLabel(
                 overlay if layout.DEV_OVERLAYS else label_text,
-                legend_zone,
+                label_zone,
             )
             apply_label_style(lbl, alignment=AlignmentVariant.CENTER)
             lbl.setProperty("userLabel", label_text)
             lbl.setProperty("devLabel", overlay)
             match_font(lbl, self.edNome)
-            legend_zone.add(lbl, 0)
+            label_zone.add(lbl, 0)
+
+            val = QLineEdit("—", field_zone)
+            val.setFont(self.edNome.font())
+            make_readonly_lineedit(val, False)
+            val.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            field_zone.add(val, 0)
+            self.lbPVPs.append(val)
 
         # Combos diretamente em B1.C1.A.2.B (sem .B.2)
         w_tipos, self.cbTipos = stack_combo("Tipos Artigos")
@@ -991,24 +991,24 @@ class FTApp(QWidget):
         C3A.add(C3AA, 0)
         fc1, fc2, fc3, fc4, fc5 = C3AA.split_h((1, 1, 1, 1, 1))
 
-        self.lbFoodCosts: list[QLabel] = []
+        self.lbFoodCosts: list[QLineEdit] = []
         for idx, fc in enumerate((fc1, fc2, fc3, fc4, fc5), start=1):
             fc.set_theme(PVP_ZONE_THEME)
-            value_zone, legend_zone = fc.split_v((1, 1))
+            label_zone, field_zone = fc.split_v((1, 1))
 
-            val = QLabel("—", value_zone)
-            val.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-            apply_label_style(val)
-            match_font(val, self.edNome)
-            val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            value_zone.add(val, 0)
-            self.lbFoodCosts.append(val)
-
-            lbl = QLabel(f"Food Cost #{idx}", legend_zone)
+            lbl = QLabel(f"Food Cost #{idx}", label_zone)
             lbl.setAlignment(Qt.AlignCenter)
             apply_label_style(lbl, alignment=AlignmentVariant.CENTER)
             match_font(lbl, self.edNome)
-            legend_zone.add(lbl, 0)
+            label_zone.add(lbl, 0)
+
+            val = QLineEdit("—", field_zone)
+            val.setFont(self.edNome.font())
+            make_readonly_lineedit(val, False)
+            val.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            field_zone.add(val, 0)
+            self.lbFoodCosts.append(val)
 
         C3AB = Zone(
             "B3.C1.A.B",
