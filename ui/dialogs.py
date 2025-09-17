@@ -4,6 +4,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox, QToolTip
+from ui.utilities import DEFAULT_TOOLTIP_DURATION_MS
 from utils.paths import get_project_root
 from utils.formatting import format_pt_number
 from data import create_backup, restore_backup
@@ -158,10 +159,10 @@ def edit_fcost_values(parent, repo) -> None:
     )
     tbl.setContextMenuPolicy(Qt.CustomContextMenu)
     if hasattr(tbl, "setToolTipDuration"):
-        tbl.setToolTipDuration(3000)
+        tbl.setToolTipDuration(DEFAULT_TOOLTIP_DURATION_MS)
     viewport = tbl.viewport()
     if viewport is not None and hasattr(viewport, "setToolTipDuration"):
-        viewport.setToolTipDuration(3000)
+        viewport.setToolTipDuration(DEFAULT_TOOLTIP_DURATION_MS)
 
     def _copy_comment_tooltip(pos):
         viewport_pos = tbl.viewport().mapFrom(tbl, pos)
