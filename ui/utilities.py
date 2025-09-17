@@ -214,11 +214,11 @@ def install_tooltip_copy_handler(
 
     if widget is None:
         return
-    if widget.property(_TOOLTIP_COPY_HANDLER_FLAG):
-        return
-
     if hasattr(widget, "setToolTipDuration"):
         widget.setToolTipDuration(3000)
+
+    if widget.property(_TOOLTIP_COPY_HANDLER_FLAG):
+        return
 
     def _copy_from_global(global_pos: QPoint | None) -> None:
         text = widget.toolTip()
