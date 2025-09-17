@@ -104,6 +104,7 @@ from . import layout
 from .bwb_style_1 import APP_STYLESHEET, FIELD_STYLE
 from .layout import Zone
 from .utilities import (
+    AlignmentVariant,
     apply_fcfilter_btn_style,
     apply_label_style,
     apply_overlay_label_style,
@@ -843,15 +844,14 @@ class FTApp(QWidget):
             label_text = f"PVP #{idx}"
             overlay = f"PrecosTaxas.Preco{idx}"
             lbl = QLabel(overlay if layout.DEV_OVERLAYS else label_text)
-            apply_label_style(lbl)
+            apply_label_style(lbl, alignment=AlignmentVariant.CENTER)
             lbl.setProperty("userLabel", label_text)
             lbl.setProperty("devLabel", overlay)
             match_font(lbl, self.edNome)
             zone.add(lbl, 0)
 
             val = QLineEdit("—")
-            make_readonly_lineedit(val, False)
-            val.setStyleSheet(FIELD_STYLE)
+            make_readonly_lineedit(val, False, alignment=AlignmentVariant.CENTER)
             val.setFont(self.edNome.font())
             zone.add(val, 0)
             self.lbPVPs.append(val)

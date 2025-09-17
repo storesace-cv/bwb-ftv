@@ -1,11 +1,19 @@
-from PyQt5.QtCore import qInstallMessageHandler
-from PyQt5.QtWidgets import QLabel
+from PyQt5.QtCore import Qt, qInstallMessageHandler
+from PyQt5.QtWidgets import QLabel, QLineEdit
 
 import pytest
 
 from ui import layout
 from ui.bwb_style_1 import OVERLAY_ON_CLASS, ZONE_STYLES
-from ui.utilities import LABEL_STYLE
+from ui.utilities import (
+    AlignmentVariant,
+    CENTER_FIELD_STYLE,
+    CENTER_LABEL_STYLE,
+    LABEL_STYLE,
+    apply_label_style,
+    apply_overlay_label_style,
+    make_readonly_lineedit,
+)
 
 
 def _theme_stylesheet(zone: layout.Zone, theme_name: str) -> str:
@@ -41,6 +49,53 @@ def _widget_classes(widget: QLabel) -> list[str]:
     if isinstance(value, (list, tuple)):
         return [str(cls) for cls in value if str(cls)]
     return [str(value)]
+
+
+def test_apply_label_style_center_variant_sets_alignment(qapp):
+    label = QLabel("Centro")
+    apply_label_style(label, alignment=AlignmentVariant.CENTER)
+
+    assert label.styleSheet() == CENTER_LABEL_STYLE
+    assert label.alignment() == Qt.AlignHCenter | Qt.AlignVCenter
+    assert label.property("labelAlignmentVariant") == AlignmentVariant.CENTER.value
+
+
+def test_apply_label_style_reuses_stored_alignment(qapp):
+    label = QLabel("Centro")
+    apply_label_style(label, alignment=AlignmentVariant.CENTER)
+
+    apply_label_style(label)
+
+    assert label.styleSheet() == CENTER_LABEL_STYLE
+    assert label.alignment() == Qt.AlignHCenter | Qt.AlignVCenter
+
+
+def test_apply_overlay_label_style_preserves_alignment_variant(qapp):
+    label = QLabel("Centro")
+    apply_label_style(label, alignment=AlignmentVariant.CENTER)
+
+    apply_overlay_label_style(label)
+    assert label.styleSheet() == ""
+
+    apply_label_style(label)
+
+    assert label.styleSheet() == CENTER_LABEL_STYLE
+    assert label.alignment() == Qt.AlignHCenter | Qt.AlignVCenter
+
+
+def test_make_readonly_lineedit_center_variant(qapp):
+    le = QLineEdit("0")
+    make_readonly_lineedit(le, alignment=AlignmentVariant.CENTER)
+
+    assert le.isReadOnly()
+    assert le.styleSheet() == CENTER_FIELD_STYLE
+    assert le.alignment() == Qt.AlignHCenter | Qt.AlignVCenter
+    assert le.property("lineEditAlignmentVariant") == AlignmentVariant.CENTER.value
+
+    make_readonly_lineedit(le)
+
+    assert le.styleSheet() == CENTER_FIELD_STYLE
+    assert le.alignment() == Qt.AlignHCenter | Qt.AlignVCenter
 
 
 @pytest.fixture
