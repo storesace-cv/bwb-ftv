@@ -2,13 +2,18 @@
 
 OVERLAY_ON_CLASS = "bwb-style-overlays-on"
 
+_ZONE_BASE_DECLARATIONS = (
+    "background-color: rgba(255, 255, 255, 0.35);\n"
+    "border: 1px solid rgba(0, 0, 0, 0.08);\n"
+    "border-radius: 12px;\n"
+    "padding: 6px;\n"
+)
+
+_ZONE_CENTER_EXTRA = "text-align: center;\n"
+
 ZONE_STYLES = {
-    "bwb-style-1": (
-        "background-color: rgba(255, 255, 255, 0.35);\n"
-        "border: 1px solid rgba(0, 0, 0, 0.08);\n"
-        "border-radius: 12px;\n"
-        "padding: 6px;\n"
-    ),
+    "bwb-style-1": _ZONE_BASE_DECLARATIONS,
+    "bwb-style-1-center": _ZONE_BASE_DECLARATIONS + _ZONE_CENTER_EXTRA,
 }
 
 FIELD_STYLE = (
