@@ -199,8 +199,29 @@ def test_zone_overlay_tag_label_preserves_inline_style(qapp, overlays_enabled):
     zone.apply_overlays(False)
     assert zone._tag_lbl.styleSheet() == expected_style
 
+
+def test_zone_overlay_label_width_tracks_visible_text(qapp, overlays_enabled):
+    zone = layout.Zone("B1", show_overlays=False)
+    value_widget = QLabel("value", zone)
+    overlay_text = "Identificador extendido"
+    label = zone.add_row("ID", value_widget, overlay_text=overlay_text)
+
+    qapp.processEvents()
+    initial_width = label.minimumWidth()
+    user_text_width = label.fontMetrics().horizontalAdvance("ID")
+    assert initial_width >= user_text_width
+
     zone.apply_overlays(True)
-    assert zone._tag_lbl.styleSheet() == expected_style
+    qapp.processEvents()
+    overlay_width = label.minimumWidth()
+    overlay_text_width = label.fontMetrics().horizontalAdvance(overlay_text)
+    assert overlay_width >= overlay_text_width
+    assert overlay_width > initial_width
+
+    zone.apply_overlays(False)
+    qapp.processEvents()
+    reverted_width = label.minimumWidth()
+    assert reverted_width == initial_width
 
 
 @pytest.mark.parametrize(
