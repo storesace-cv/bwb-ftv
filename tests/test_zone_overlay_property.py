@@ -201,7 +201,12 @@ def test_zone_overlay_shows_style_name_for_any_registered_theme(
     if declarations is not None:
         monkeypatch.setitem(ZONE_STYLES, theme_name, declarations)
 
-    zone = layout.Zone("B1", show_overlays=False)
+    widget_type = "campo"
+    zone = layout.Zone(
+        "B1",
+        show_overlays=False,
+        widget_type=widget_type,
+    )
     zone.set_theme(theme_name)
 
     assert zone._style_lbl.isHidden()
@@ -209,7 +214,7 @@ def test_zone_overlay_shows_style_name_for_any_registered_theme(
     zone.apply_overlays(True)
 
     assert not zone._style_lbl.isHidden()
-    assert zone._style_lbl.text() == theme_name
+    assert zone._style_lbl.text() == f"{widget_type} | {theme_name}"
 
 
 def test_zone_overlay_hides_style_label_when_disabled(qapp, overlays_enabled):
@@ -225,31 +230,59 @@ def test_zone_overlay_hides_style_label_when_disabled(qapp, overlays_enabled):
     assert zone._style_lbl.text() == ""
 
 
+@pytest.mark.parametrize("widget_type", [None, "campo"])
 @pytest.mark.parametrize("theme_name", ["bwb-style-1", "bwb-style-1-center"])
 def test_zone_set_theme_updates_style_label_when_overlay_active(
-    qapp, overlays_enabled, theme_name
+    qapp, overlays_enabled, theme_name, widget_type
 ):
-    zone = layout.Zone("B1", show_overlays=True)
+    zone = layout.Zone("B1", show_overlays=True, widget_type=widget_type)
 
     assert zone._style_lbl.isHidden()
 
     zone.set_theme(theme_name)
 
     assert not zone._style_lbl.isHidden()
-    assert zone._style_lbl.text() == theme_name
+    expected = (
+        theme_name if widget_type is None else f"{widget_type} | {theme_name}"
+    )
+    assert zone._style_lbl.text() == expected
 
 
+@pytest.mark.parametrize("widget_type", [None, "campo"])
 @pytest.mark.parametrize("theme_name", ["bwb-style-1", "bwb-style-1-center"])
 def test_zone_init_theme_shows_style_label_when_overlays_active(
-    qapp, overlays_enabled, theme_name
+    qapp, overlays_enabled, theme_name, widget_type
 ):
-    zone = layout.Zone("B1", show_overlays=True, theme_name=theme_name)
+    zone = layout.Zone(
+        "B1",
+        show_overlays=True,
+        theme_name=theme_name,
+        widget_type=widget_type,
+    )
 
     assert zone.property("overlays") == "on"
     assert zone.base_stylesheet == _theme_stylesheet(zone, theme_name)
     assert zone.styleSheet() == _overlay_stylesheet(zone)
     assert not zone._style_lbl.isHidden()
+    expected = (
+        theme_name if widget_type is None else f"{widget_type} | {theme_name}"
+    )
+    assert zone._style_lbl.text() == expected
+
+
+def test_zone_style_label_without_widget_type_stays_on_theme(qapp, overlays_enabled):
+    theme_name = "bwb-style-1"
+    zone = layout.Zone("B1", show_overlays=True, theme_name=theme_name)
+
     assert zone._style_lbl.text() == theme_name
+
+
+def test_zone_set_widget_type_updates_style_label(qapp, overlays_enabled):
+    zone = layout.Zone("B1", show_overlays=True, theme_name="bwb-style-1")
+
+    zone.set_widget_type("campo")
+
+    assert zone._style_lbl.text() == "campo | bwb-style-1"
 
 
 def test_zone_add_row_has_no_debug_styles_by_default(qapp):

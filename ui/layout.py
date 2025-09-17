@@ -79,6 +79,7 @@ class Zone(QWidget):
         level: int = 0,
         show_overlays: bool = True,
         theme_name: str | None = None,
+        widget_type: str | None = None,
     ):
         if not validate_tag(tag):
             raise ValueError(f"Invalid zone tag: {tag}")
@@ -90,6 +91,7 @@ class Zone(QWidget):
         self._labels: list[QLabel] = []
         self._overlay_active = False
         self._theme_name: str | None = None
+        self._widget_type: str | None = widget_type
         if flow == "v":
             self.ly = QVBoxLayout(self)
         else:
@@ -163,6 +165,14 @@ class Zone(QWidget):
             self.set_theme(theme_name)
 
     @property
+    def widget_type(self) -> str | None:
+        return self._widget_type
+
+    def set_widget_type(self, widget_type: str | None) -> None:
+        self._widget_type = widget_type or None
+        self._sync_style_label()
+
+    @property
     def base_stylesheet(self) -> str:
         return self._base_stylesheet
 
@@ -182,7 +192,11 @@ class Zone(QWidget):
         self._sync_style_label()
 
     def _style_label_text(self) -> str | None:
-        return self._theme_name or None
+        if self._theme_name:
+            if self._widget_type:
+                return f"{self._widget_type} | {self._theme_name}"
+            return self._theme_name
+        return None
 
     def _sync_style_label(self) -> None:
         if self._overlay_active:
