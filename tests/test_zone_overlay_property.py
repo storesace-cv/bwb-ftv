@@ -3,8 +3,10 @@ from PyQt5.QtWidgets import QLabel, QLineEdit
 
 import pytest
 
+from domain import Product
 from ui import layout
 from ui.bwb_style_1 import OVERLAY_ON_CLASS, ZONE_STYLES
+from ui.ui_editor_fonte import FTApp
 from ui.utilities import (
     AlignmentVariant,
     CENTER_FIELD_STYLE,
@@ -507,6 +509,66 @@ def test_zone_add_row_allows_opt_in_debug_styles(qapp, overlays_enabled):
     assert label.styleSheet() == expected_style
     assert OVERLAY_ON_CLASS not in _widget_classes(label)
     assert "background-color" in value_widget.styleSheet()
+
+
+class _OverlayDummyService:
+    def __init__(self):
+        self.ds = None
+        self.conn = None
+
+    def total(self):
+        return 1
+
+    def codigo_at(self, idx):
+        return None
+
+    def list_tipos_artigos(self):
+        return []
+
+    def list_validade(self):
+        return []
+
+    def list_temperaturas(self):
+        return []
+
+    def list_active_allergens(self):
+        return []
+
+    def get_image_path(self, codigo: str) -> None:
+        return None
+
+    def save_product_image(self, codigo: str, src_path: str) -> None:
+        pass
+
+    def delete_product_image(self, codigo: str) -> None:
+        pass
+
+    def get_product_info(self, codigo):
+        return Product(
+            code=codigo,
+            pvps=[123, 246, None, 0, 615],
+            iva=23,
+            ingredients=[],
+        )
+
+    def calculate_cost(self, product):
+        return 100
+
+
+def test_food_cost_overlay_label_tooltip(qapp, overlays_enabled):
+    ft = FTApp(_OverlayDummyService())
+    try:
+        labels = [
+            lbl
+            for lbl in ft.C3.findChildren(QLabel)
+            if lbl.property("userLabel") == "Food Cost #1"
+        ]
+        assert len(labels) == 1
+        food_cost_label = labels[0]
+        assert food_cost_label.text() == "FoodCost.Nivel1"
+        assert food_cost_label.toolTip() == "Food Cost #1 — FoodCost.Nivel1"
+    finally:
+        ft.close()
 
 
 def test_zone_add_row_uses_overlay_style_when_active(qapp, overlays_enabled):
