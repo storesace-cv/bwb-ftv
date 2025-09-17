@@ -778,6 +778,10 @@ class FTApp(QWidget):
         labels_zone.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
         values_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
+        familia_values_zone, subfamilia_values_zone = values_zone.split_v((1, 1))
+        for zone in (familia_values_zone, subfamilia_values_zone):
+            zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
         familia_label_zone, subfamilia_label_zone = labels_zone.split_v((1, 1))
         for zone in (familia_label_zone, subfamilia_label_zone):
             zone.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
@@ -829,8 +833,12 @@ class FTApp(QWidget):
         subfamilia_font.setBold(False)
         self.lbSubFamiliaVal.setFont(subfamilia_font)
 
-        values_zone.ly.addWidget(self.lbFamiliaVal, 0, Qt.AlignLeft | Qt.AlignVCenter)
-        values_zone.ly.addWidget(self.lbSubFamiliaVal, 0, Qt.AlignLeft | Qt.AlignVCenter)
+        familia_values_zone.ly.addWidget(
+            self.lbFamiliaVal, 0, Qt.AlignLeft | Qt.AlignVCenter
+        )
+        subfamilia_values_zone.ly.addWidget(
+            self.lbSubFamiliaVal, 0, Qt.AlignLeft | Qt.AlignVCenter
+        )
 
         # Base: zona horizontal com cinco colunas PVP1..PVP5 (etiqueta por cima)
         self.lbPVPs: list[QLineEdit] = []
