@@ -706,7 +706,7 @@ class FTApp(QWidget):
         field_col.ly.setContentsMargins(
             3,
             field_col_margins.top(),
-            field_col_margins.right(),
+            3,
             field_col_margins.bottom(),
         )
         label_col.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
@@ -769,7 +769,7 @@ class FTApp(QWidget):
         values_zone.ly.setContentsMargins(
             3,
             values_zone_margins.top(),
-            values_zone_margins.right(),
+            3,
             values_zone_margins.bottom(),
         )
         labels_zone.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
