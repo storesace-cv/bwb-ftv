@@ -816,29 +816,23 @@ class FTApp(QWidget):
         label_col.setFixedWidth(ident_label_zone_width)
         label_col.update()
 
-        self.lbFamiliaVal = QLineEdit("")
-        make_readonly_lineedit(self.lbFamiliaVal, False)
-        self.lbFamiliaVal.setStyleSheet(FIELD_STYLE)
-        self.lbFamiliaVal.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.lbFamiliaVal = QLabel("")
+        apply_label_style(self.lbFamiliaVal)
+        self.lbFamiliaVal.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.lbFamiliaVal.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        familia_font = QFont(self.edNome.font())
-        familia_font.setBold(False)
-        self.lbFamiliaVal.setFont(familia_font)
+        match_font(self.lbFamiliaVal, self.edNome)
 
-        self.lbSubFamiliaVal = QLineEdit("")
-        make_readonly_lineedit(self.lbSubFamiliaVal, False)
-        self.lbSubFamiliaVal.setStyleSheet(FIELD_STYLE)
-        self.lbSubFamiliaVal.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.lbSubFamiliaVal = QLabel("")
+        apply_label_style(self.lbSubFamiliaVal)
+        self.lbSubFamiliaVal.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.lbSubFamiliaVal.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        subfamilia_font = QFont(self.edNome.font())
-        subfamilia_font.setBold(False)
-        self.lbSubFamiliaVal.setFont(subfamilia_font)
+        match_font(self.lbSubFamiliaVal, self.edNome)
 
         familia_values_zone.ly.addWidget(
-            self.lbFamiliaVal, 0, Qt.AlignLeft | Qt.AlignVCenter
+            self.lbFamiliaVal, 0, Qt.AlignRight | Qt.AlignVCenter
         )
         subfamilia_values_zone.ly.addWidget(
-            self.lbSubFamiliaVal, 0, Qt.AlignLeft | Qt.AlignVCenter
+            self.lbSubFamiliaVal, 0, Qt.AlignRight | Qt.AlignVCenter
         )
 
         # Base: zona horizontal com cinco colunas PVP1..PVP5 (etiqueta por cima)
