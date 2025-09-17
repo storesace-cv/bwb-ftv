@@ -874,6 +874,7 @@ class FTApp(QWidget):
             lbl.setProperty("devLabel", overlay)
             match_font(lbl, self.edNome)
             label_zone.add(lbl, 0)
+            label_zone._labels.append(lbl)
 
             val = QLineEdit("—", field_zone)
             val.setFont(self.edNome.font())
@@ -1001,6 +1002,7 @@ class FTApp(QWidget):
             apply_label_style(lbl, alignment=AlignmentVariant.CENTER)
             match_font(lbl, self.edNome)
             label_zone.add(lbl, 0)
+            label_zone._labels.append(lbl)
 
             val = QLineEdit("—", field_zone)
             val.setFont(self.edNome.font())
