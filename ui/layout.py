@@ -271,6 +271,15 @@ class Zone(QWidget):
             user_label = lbl.property("userLabel")
             dev_label = lbl.property("devLabel")
             lbl.setText(dev_label if active and dev_label else user_label)
+            if active:
+                tooltip_segments = [
+                    str(segment)
+                    for segment in (user_label, dev_label)
+                    if segment
+                ]
+                lbl.setToolTip(" — ".join(tooltip_segments) if tooltip_segments else "")
+            else:
+                lbl.setToolTip("")
             font = QFont(lbl.font())
             alignment = lbl.alignment()
             if active:
