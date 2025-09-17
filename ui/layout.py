@@ -170,6 +170,17 @@ class Zone(QWidget):
         if theme_name is not None:
             self.set_theme(theme_name)
 
+    @staticmethod
+    def _build_label_tooltip(
+        user_label: str | None, dev_label: str | None
+    ) -> str:
+        segments = [
+            str(segment)
+            for segment in (user_label, dev_label)
+            if segment
+        ]
+        return " — ".join(segments) if segments else ""
+
     @property
     def widget_type(self) -> str | None:
         return self._widget_type
@@ -271,15 +282,9 @@ class Zone(QWidget):
             user_label = lbl.property("userLabel")
             dev_label = lbl.property("devLabel")
             lbl.setText(dev_label if active and dev_label else user_label)
-            if active:
-                tooltip_segments = [
-                    str(segment)
-                    for segment in (user_label, dev_label)
-                    if segment
-                ]
-                lbl.setToolTip(" — ".join(tooltip_segments) if tooltip_segments else "")
-            else:
-                lbl.setToolTip("")
+            lbl.setToolTip(
+                self._build_label_tooltip(user_label, dev_label) if active else ""
+            )
             font = QFont(lbl.font())
             alignment = lbl.alignment()
             if active:
@@ -355,6 +360,10 @@ class Zone(QWidget):
         grid.addWidget(value_widget, 0, 1, alignment=Qt.AlignTop | Qt.AlignLeft)
         self.ly.addWidget(row, 0, Qt.AlignTop)
         self._labels.append(lbl)
+        if self._overlay_active and overlay_text is not None:
+            lbl.setToolTip(self._build_label_tooltip(label_text, overlay_text))
+        else:
+            lbl.setToolTip("")
         self.sync_label_widths()
         return lbl
 
