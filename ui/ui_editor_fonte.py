@@ -778,26 +778,33 @@ class FTApp(QWidget):
         labels_zone.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
         values_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
-        def _make_family_label(text: str, overlay: str) -> QLabel:
-            display = overlay if labels_zone._overlay_active and overlay else text
-            lbl = QLabel(display, labels_zone)
+        familia_label_zone, subfamilia_label_zone = labels_zone.split_v((1, 1))
+        for zone in (familia_label_zone, subfamilia_label_zone):
+            zone.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
+
+        def _make_family_label(zone: Zone, text: str, overlay: str) -> QLabel:
+            display = overlay if zone._overlay_active and overlay else text
+            lbl = QLabel(display, zone)
             lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             lbl.setProperty("userLabel", text)
             lbl.setProperty("devLabel", overlay)
-            if labels_zone._overlay_active and overlay:
+            if zone._overlay_active and overlay:
                 apply_overlay_label_style(lbl)
             else:
                 apply_label_style(lbl)
             lbl.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Maximum)
             lbl.setFixedWidth(lbl_w)
-            labels_zone.ly.addWidget(lbl, 0, Qt.AlignRight | Qt.AlignVCenter)
+            zone.ly.addWidget(lbl, 0, Qt.AlignRight | Qt.AlignVCenter)
+            zone._labels.append(lbl)
             labels_zone._labels.append(lbl)
             return lbl
 
-        _make_family_label("Família:", "Produtos.Familia")
-        _make_family_label("Sub-família:", "Produtos.SubFamilia")
+        _make_family_label(familia_label_zone, "Família:", "Produtos.Familia")
+        _make_family_label(
+            subfamilia_label_zone, "Sub-família:", "Produtos.SubFamilia"
+        )
         labels_zone.sync_label_widths()
-        margins = labels_zone.ly.contentsMargins()
+        margins = familia_label_zone.ly.contentsMargins()
         ident_label_zone_width = lbl_w + margins.left() + margins.right()
         labels_zone.setFixedWidth(ident_label_zone_width)
         labels_zone.update()
