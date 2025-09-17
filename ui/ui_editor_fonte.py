@@ -763,6 +763,7 @@ class FTApp(QWidget):
         )  # B1.C1.A.2.A (famílias/PVPs) + B1.C1.A.2.B (combos)
         # B1.C1.A.2.A → divide verticalmente: topo (famílias) + base (PVP1..PVP5)
         C1A21_top, C1A21_base = C1A21.split_v((1, 2))
+        C1A21_base.set_theme(PVP_ZONE_THEME)
         C1A21_top.apply_overlays(True)
         labels_zone, values_zone = C1A21_top.split_h((1, 3))
         families_row_layout = labels_zone.parentWidget().layout()
@@ -843,8 +844,10 @@ class FTApp(QWidget):
         # Base: zona horizontal com cinco colunas PVP1..PVP5 (etiqueta por cima)
         self.lbPVPs: list[QLineEdit] = []
 
-        pvp_label = QLabel("PVP:")
-        apply_label_style(pvp_label)
+        pvp_label = QLabel("PREÇOS DE VENDA")
+        pvp_label.setAlignment(Qt.AlignCenter)
+        pvp_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        apply_label_style(pvp_label, alignment=AlignmentVariant.CENTER)
         match_font(pvp_label, self.edNome)
         C1A21_base.add(pvp_label, 0)
 
