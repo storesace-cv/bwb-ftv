@@ -85,7 +85,7 @@ def apply_label_style(
     *,
     alignment: AlignmentVariant | str | None = None,
 ) -> None:
-    """Apply the beveled label style to ``label``.
+    """Apply the neutral label style to ``label``.
 
     ``extra`` may contain additional stylesheet rules appended to the base style.
     ``alignment`` selects between the default (left-aligned) and centred variants.
