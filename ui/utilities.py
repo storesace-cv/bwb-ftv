@@ -45,6 +45,7 @@ def _normalize_alignment(value: AlignmentVariant | str | None) -> AlignmentVaria
 
 _LABEL_ALIGNMENT_PROPERTY = "labelAlignmentVariant"
 _LINEEDIT_ALIGNMENT_PROPERTY = "lineEditAlignmentVariant"
+DEFAULT_TOOLTIP_DURATION_MS = 3000
 
 
 def _get_widget_classes(widget: QWidget) -> list[str]:
@@ -197,6 +198,8 @@ def apply_fcfilter_btn_style(
         active_alpha=_format_alpha(active_alpha),
     )
     button.setStyleSheet(stylesheet)
+
+
 _TOOLTIP_COPY_HANDLER_FLAG = "tooltipCopyHandlerInstalled"
 _TOOLTIP_COPY_FILTER_OBJECT = "_tooltipCopyEventFilter"
 
@@ -215,7 +218,7 @@ def install_tooltip_copy_handler(
     if widget is None:
         return
     if hasattr(widget, "setToolTipDuration"):
-        widget.setToolTipDuration(3000)
+        widget.setToolTipDuration(DEFAULT_TOOLTIP_DURATION_MS)
 
     if widget.property(_TOOLTIP_COPY_HANDLER_FLAG):
         return
