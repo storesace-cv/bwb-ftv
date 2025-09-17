@@ -1396,6 +1396,9 @@ class FTApp(QWidget):
             QKeySequence("Ctrl+S"), self, activated=lambda: self._save_prep(force=True)
         )
 
+        for zone in self._iter_layout_children(Zone, include_header=True):
+            _strip_zone_overlay_metadata(zone)
+
     def _toggle_header_on_scroll(self, value: int):
         header = getattr(self, "header", None)
         zone = getattr(self, "C1A1", None)
