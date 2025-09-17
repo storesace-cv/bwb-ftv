@@ -98,6 +98,7 @@ class Zone(QWidget):
         self._widget_type: str | None = widget_type or None
         self._zone_type: str | None = zone_type or None
         self._widget_qt_class: str | None = widget_qt_class or None
+        self._style_dev_info: str | None = None
         if flow == "v":
             self.ly = QVBoxLayout(self)
         else:
@@ -197,6 +198,10 @@ class Zone(QWidget):
         self._zone_type = zone_type or None
         self._sync_style_label()
 
+    def set_style_dev_info(self, info: str | None) -> None:
+        self._style_dev_info = info or None
+        self._sync_style_label()
+
     @property
     def widget_qt_class(self) -> str | None:
         return self._widget_qt_class
@@ -237,15 +242,21 @@ class Zone(QWidget):
     def _sync_style_label(self) -> None:
         if self._overlay_active:
             text = self._style_label_text()
+            tooltip = self._build_label_tooltip(text, self._style_dev_info)
             if text:
                 self._style_lbl.setText(text)
                 self._style_lbl.show()
             else:
                 self._style_lbl.clear()
                 self._style_lbl.hide()
+            if text or self._style_dev_info:
+                self._style_lbl.setToolTip(tooltip)
+            else:
+                self._style_lbl.setToolTip("")
         else:
             self._style_lbl.clear()
             self._style_lbl.hide()
+            self._style_lbl.setToolTip("")
         refresh_style(self._style_lbl)
 
     def apply_overlays(self, on: bool) -> None:
@@ -277,6 +288,7 @@ class Zone(QWidget):
                 self.ly.removeWidget(self._tag_container)
             self._tag_container.hide()
             self._tag_lbl.hide()
+            self._style_lbl.setToolTip("")
         self._sync_style_label()
         for lbl in self._labels:
             user_label = lbl.property("userLabel")

@@ -6,7 +6,7 @@ import pytest
 from domain import Product
 from ui import layout
 from ui.bwb_style_1 import OVERLAY_ON_CLASS, ZONE_STYLES
-from ui.ui_editor_fonte import FTApp
+from ui.ui_editor_fonte import FTApp, _configure_zone
 from ui.utilities import (
     AlignmentVariant,
     CENTER_FIELD_STYLE,
@@ -281,6 +281,45 @@ def test_zone_overlay_label_width_tracks_visible_text(qapp, overlays_enabled):
     qapp.processEvents()
     reverted_width = label.minimumWidth()
     assert reverted_width == initial_width
+
+
+def test_zone_style_label_tooltip_tracks_dev_info(qapp, overlays_enabled):
+    zone = layout.Zone("B1", show_overlays=False)
+    zone.set_zone_type("secao")
+    zone.set_widget_type("campo")
+    zone.set_widget_qt_class("QLineEdits")
+    dev_info = "FichaTecnica.Dev"
+    zone.set_style_dev_info(dev_info)
+
+    zone.apply_overlays(True)
+
+    expected_text = _compose_style_label(zone, None)
+    expected_tooltip = layout.Zone._build_label_tooltip(expected_text, dev_info)
+
+    assert zone._style_lbl.text() == expected_text
+    assert zone._style_lbl.toolTip() == expected_tooltip
+
+    zone.apply_overlays(False)
+
+    assert zone._style_lbl.toolTip() == ""
+
+
+def test_configure_zone_sets_dev_info_tooltip(qapp, overlays_enabled):
+    zone = layout.Zone("B1", show_overlays=True)
+
+    _configure_zone(zone, zone_type="secao", widget_type="campo")
+
+    expected_text = _compose_style_label(zone, None)
+    expected_tooltip = layout.Zone._build_label_tooltip(
+        expected_text, zone.objectName()
+    )
+
+    assert zone._style_lbl.text() == expected_text
+    assert zone._style_lbl.toolTip() == expected_tooltip
+
+    zone.apply_overlays(False)
+
+    assert zone._style_lbl.toolTip() == ""
 
 
 @pytest.mark.parametrize(
