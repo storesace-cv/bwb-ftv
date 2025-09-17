@@ -218,10 +218,6 @@ class Zone(QWidget):
             self._widget_type,
             self._theme_name,
         ]
-        if self._theme_name is None and not any(
-            segment for segment in (self._zone_type, self._widget_qt_class)
-        ):
-            return None
         filtered = [segment for segment in segments if segment]
         return " | ".join(filtered) if filtered else None
 

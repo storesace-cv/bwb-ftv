@@ -234,6 +234,20 @@ def test_zone_overlay_shows_style_name_for_any_registered_theme(
     assert zone._style_lbl.text() == expected
 
 
+def test_zone_overlay_shows_widget_type_when_other_metadata_missing(
+    qapp, overlays_enabled
+):
+    widget_type = "campo"
+    zone = layout.Zone("B1", show_overlays=False, widget_type=widget_type)
+
+    assert zone._style_lbl.isHidden()
+
+    zone.apply_overlays(True)
+
+    assert not zone._style_lbl.isHidden()
+    assert zone._style_lbl.text() == widget_type
+
+
 def test_zone_overlay_hides_style_label_when_disabled(qapp, overlays_enabled):
     zone = layout.Zone("B1", show_overlays=False)
     zone.set_theme("bwb-style-1")
@@ -254,7 +268,11 @@ def test_zone_set_theme_updates_style_label_when_overlay_active(
 ):
     zone = layout.Zone("B1", show_overlays=True, widget_type=widget_type)
 
-    assert zone._style_lbl.isHidden()
+    if widget_type is None:
+        assert zone._style_lbl.isHidden()
+    else:
+        assert not zone._style_lbl.isHidden()
+        assert zone._style_lbl.text() == widget_type
 
     zone.set_theme(theme_name)
 
