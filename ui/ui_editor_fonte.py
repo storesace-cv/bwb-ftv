@@ -699,7 +699,8 @@ class FTApp(QWidget):
         self.edNome = QLineEdit()
         make_readonly_lineedit(self.edNome, True)
         self.edNome.setStyleSheet(FIELD_STYLE)
-        label_col, field_col = self.C1A1.split_h((1, 3))
+        label_col, field_col = self.C1A1.split_h((0, 1))
+        label_col.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
 
         def _make_ident_label(text: str, overlay: str) -> QLabel:
             display = overlay if label_col._overlay_active and overlay else text
