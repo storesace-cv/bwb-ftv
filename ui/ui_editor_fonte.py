@@ -1597,26 +1597,10 @@ class FTApp(QWidget):
 
         allowed_tags = {"p", "br", "strong", "em", "ul", "ol", "li", "span"}
         allowed_attrs: dict[str, set[str]] = {
-            "p": {"style"},
-            "span": {"style"},
-            "li": {"style"},
+            "p": set(),
+            "span": set(),
+            "li": set(),
         }
-        allowed_styles = {"text-align"}
-
-        def _sanitize_style(style: str) -> str:
-            clean_props: list[str] = []
-            for part in style.split(";"):
-                if not part.strip():
-                    continue
-                key, _, value = part.partition(":")
-                key = key.strip().lower()
-                value = value.strip()
-                if key in allowed_styles:
-                    val_low = value.lower()
-                    if any(x in val_low for x in ["javascript:", "expression", "url("]):
-                        continue
-                    clean_props.append(f"{key}: {value}")
-            return "; ".join(clean_props)
 
         class _Sanitizer(html_parser.HTMLParser):
             def __init__(self):
@@ -1643,10 +1627,8 @@ class FTApp(QWidget):
                     if attr_l.startswith("on"):
                         continue
                     if attr_l == "style":
-                        val = _sanitize_style(value or "")
-                        if val:
-                            clean_attrs.append((attr_l, val))
-                    elif attr_l in allowed_attrs.get(tag, set()):
+                        continue
+                    if attr_l in allowed_attrs.get(tag, set()):
                         clean_attrs.append(
                             (attr_l, html_module.escape(value or "", quote=True))
                         )
