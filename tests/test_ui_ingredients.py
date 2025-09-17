@@ -4,6 +4,7 @@ from PyQt5.QtGui import QResizeEvent
 from services.products import ProductService
 from ui.ui_editor_fonte import FTApp, FichasTecnicasModel
 from ui import layout
+from ui.layout import Zone
 from domain import FichaTecnica
 from utils.formatting import format_pt_number
 
@@ -110,6 +111,39 @@ def test_toggle_overlay_updates_headers(qapp):
     ft._toggle_overlays()
     assert model.headerData(0, Qt.Horizontal) == "Ingredientes"
     ft.close()
+
+
+def test_classification_overlay_tags_hidden(qapp):
+    original = layout.DEV_OVERLAYS
+    layout.DEV_OVERLAYS = False
+    ft = None
+    try:
+        ds = StubDataStore()
+        service = ProductService(ds)
+        ft = FTApp(service)
+        ft._load_record(0)
+        ft._toggle_overlays()
+        qapp.processEvents()
+
+        target_tags = [
+            "B1.C1.A.2",
+            "B1.C1.A.2.A",
+            "B1.C1.A.2.A.2.A",
+            *[f"B1.C1.A.2.A.2.A.{idx}" for idx in range(1, 6)],
+            *[f"B1.C1.A.2.B.{idx}" for idx in range(1, 4)],
+        ]
+
+        for tag in target_tags:
+            zone = ft.findChild(Zone, tag)
+            assert zone is not None, f"Zone {tag} not found"
+            assert zone._style_lbl.isHidden()
+            assert zone._style_lbl.text() == ""
+
+        ft._toggle_overlays()
+    finally:
+        if ft is not None:
+            ft.close()
+        layout.DEV_OVERLAYS = original
 
 
 class VarStubDataStore(StubDataStore):

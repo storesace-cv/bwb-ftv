@@ -174,6 +174,16 @@ def _configure_zone(
     zone.set_style_dev_info(info)
     return zone
 
+
+def _strip_zone_overlay_metadata(zone: Zone) -> Zone:
+    """Remove overlay metadata so the style tag row stays empty when active."""
+
+    zone.set_zone_type(None)
+    zone.set_widget_type(None)
+    zone.set_widget_qt_class(None)
+    zone.set_style_dev_info("")
+    return zone
+
 # ---------------------- Image Preview ----------------------
 
 
@@ -822,17 +832,16 @@ class FTApp(QWidget):
             spacing=C1A.ly.spacing(),
             level=C1A._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
-            widget_type="campo",
         )
-        _configure_zone(C1A2, zone_type="secao-classificacoes", widget_type="campo")
+        _strip_zone_overlay_metadata(_configure_zone(C1A2, style_dev_info=""))
         C1A_cont_ly.addWidget(C1A2, 1)
 
         # B1.C1.A.2
         C1A21, C1A22 = C1A2.split_h(
             (3, 1)
         )  # B1.C1.A.2.A (famílias/PVPs) + B1.C1.A.2.B (combos)
-        _configure_zone(C1A21, zone_type="secao-familias", widget_type="campo")
-        _configure_zone(C1A22, zone_type="secao-combos", widget_type="lista")
+        _strip_zone_overlay_metadata(_configure_zone(C1A21, style_dev_info=""))
+        _strip_zone_overlay_metadata(_configure_zone(C1A22, style_dev_info=""))
         # B1.C1.A.2.A → divide verticalmente: topo (famílias) + base (PVP1..PVP5)
         C1A21_top, C1A21_base = C1A21.split_v((1, 2))
         _configure_zone(C1A21_top, zone_type="subsecao-familias", widget_type="campo")
@@ -949,18 +958,20 @@ class FTApp(QWidget):
             flow="h",
             level=C1A21_base._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
-            widget_type="campo",
         )
-        _configure_zone(
-            C1A21_base_zone,
-            zone_type="grade-pvps",
-            widget_type="campo",
+        _strip_zone_overlay_metadata(
+            _configure_zone(
+                C1A21_base_zone,
+                style_dev_info="",
+            )
         )
         C1A21_base_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         C1A21_base.add(C1A21_base_zone, 0)
         pvp1, pvp2, pvp3, pvp4, pvp5 = C1A21_base_zone.split_h((1, 1, 1, 1, 1))
         for idx, zone in enumerate((pvp1, pvp2, pvp3, pvp4, pvp5), start=1):
-            _configure_zone(zone, zone_type="coluna-pvp", widget_type="campo")
+            _strip_zone_overlay_metadata(
+                _configure_zone(zone, style_dev_info="")
+            )
 
             label_text = f"PVP #{idx}"
             overlay = f"PrecosTaxas.Preco{idx}"
@@ -988,7 +999,9 @@ class FTApp(QWidget):
         w_temp, self.cbTemp = stack_combo("Temperaturas")
         C1A22_1, C1A22_2, C1A22_3 = C1A22.split_v((1, 1, 1))
         for zone in (C1A22_1, C1A22_2, C1A22_3):
-            _configure_zone(zone, zone_type="linha-combo", widget_type="lista")
+            _strip_zone_overlay_metadata(
+                _configure_zone(zone, style_dev_info="")
+            )
         C1A22_1.add(w_tipos)
         C1A22_2.add(w_val)
         C1A22_3.add(w_temp)
