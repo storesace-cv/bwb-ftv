@@ -1128,9 +1128,19 @@ class FTApp(QWidget):
                 widget_type="campo",
             )
 
-            lbl = QLabel(f"Food Cost #{idx}", label_zone)
+            user_label = f"Food Cost #{idx}"
+            dev_label = f"FoodCost.Nivel{idx}"
+            display_label = dev_label if label_zone._overlay_active else user_label
+            lbl = QLabel(display_label, label_zone)
             lbl.setAlignment(Qt.AlignCenter)
+            lbl.setProperty("userLabel", user_label)
+            lbl.setProperty("devLabel", dev_label)
             apply_label_style(lbl, alignment=AlignmentVariant.CENTER)
+            if label_zone._overlay_active:
+                apply_overlay_label_style(lbl)
+                lbl.setToolTip(f"{user_label} — {dev_label}")
+            else:
+                lbl.setToolTip("")
             match_font(lbl, self.edNome)
             label_zone.add(lbl, 0)
             label_zone._labels.append(lbl)
