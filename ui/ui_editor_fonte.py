@@ -816,17 +816,19 @@ class FTApp(QWidget):
         label_col.setFixedWidth(ident_label_zone_width)
         label_col.update()
 
-        self.lbFamiliaVal = QLabel("")
-        apply_label_style(self.lbFamiliaVal)
-        self.lbFamiliaVal.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.lbFamiliaVal = QLineEdit("")
+        make_readonly_lineedit(self.lbFamiliaVal, False)
+        self.lbFamiliaVal.setStyleSheet(FIELD_STYLE)
+        self.lbFamiliaVal.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.lbFamiliaVal.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        match_font(self.lbFamiliaVal, self.edNome)
+        self.lbFamiliaVal.setFont(self.edNome.font())
 
-        self.lbSubFamiliaVal = QLabel("")
-        apply_label_style(self.lbSubFamiliaVal)
-        self.lbSubFamiliaVal.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.lbSubFamiliaVal = QLineEdit("")
+        make_readonly_lineedit(self.lbSubFamiliaVal, False)
+        self.lbSubFamiliaVal.setStyleSheet(FIELD_STYLE)
+        self.lbSubFamiliaVal.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.lbSubFamiliaVal.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        match_font(self.lbSubFamiliaVal, self.edNome)
+        self.lbSubFamiliaVal.setFont(self.edNome.font())
 
         familia_values_zone.ly.addWidget(
             self.lbFamiliaVal, 0, Qt.AlignRight | Qt.AlignVCenter
@@ -836,7 +838,7 @@ class FTApp(QWidget):
         )
 
         # Base: zona horizontal com cinco colunas PVP1..PVP5 (etiqueta por cima)
-        self.lbPVPs: list[QLineEdit] = []
+        self.lbPVPs: list[QLabel] = []
 
         pvp_label = QLabel("PREÇOS DE VENDA")
         pvp_label.setAlignment(Qt.AlignCenter)
@@ -873,9 +875,11 @@ class FTApp(QWidget):
             match_font(lbl, self.edNome)
             label_zone.add(lbl, 0)
 
-            val = QLineEdit("—", field_zone)
-            make_readonly_lineedit(val, False, alignment=AlignmentVariant.CENTER)
-            val.setFont(self.edNome.font())
+            val = QLabel("—", field_zone)
+            val.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            apply_label_style(val)
+            match_font(val, self.edNome)
+            val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             field_zone.add(val, 0)
             self.lbPVPs.append(val)
 
@@ -999,9 +1003,10 @@ class FTApp(QWidget):
             label_zone.add(lbl, 0)
 
             val = QLabel("—")
-            val.setAlignment(Qt.AlignCenter)
-            apply_label_style(val, alignment=AlignmentVariant.CENTER)
+            val.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            apply_label_style(val)
             match_font(val, self.edNome)
+            val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             field_zone.add(val, 0)
             self.lbFoodCosts.append(val)
 
