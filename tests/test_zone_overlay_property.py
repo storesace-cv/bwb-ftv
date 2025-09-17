@@ -190,6 +190,33 @@ def test_zone_apply_overlays_restores_text_and_border(qapp, overlays_enabled):
     assert label.alignment() == base_alignment
 
 
+def test_zone_apply_overlays_updates_label_tooltips(qapp, overlays_enabled):
+    zone = layout.Zone("B1", show_overlays=False)
+    value_widget = QLabel("value", zone)
+    label = zone.add_row("Nome", value_widget, overlay_text="Produtos.Nome")
+
+    manual_label = QLabel("Manual", zone)
+    manual_label.setProperty("userLabel", "Manual")
+    manual_label.setProperty("devLabel", "Manual.Dev")
+    zone.ly.addWidget(manual_label)
+    zone._labels.append(manual_label)
+
+    assert label.toolTip() == ""
+    assert manual_label.toolTip() == ""
+
+    zone.apply_overlays(True)
+
+    assert label.toolTip() == "Nome — Produtos.Nome"
+    assert manual_label.toolTip() == "Manual — Manual.Dev"
+    assert manual_label.text() == "Manual.Dev"
+
+    zone.apply_overlays(False)
+
+    assert label.toolTip() == ""
+    assert manual_label.toolTip() == ""
+    assert manual_label.text() == "Manual"
+
+
 def test_zone_overlay_tag_label_preserves_inline_style(qapp, overlays_enabled):
     zone = layout.Zone("B1", show_overlays=True)
     expected_style = "color:#c00; font-size:10px; background:none; border:none;"
