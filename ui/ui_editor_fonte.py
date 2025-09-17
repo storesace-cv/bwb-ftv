@@ -712,6 +712,7 @@ class FTApp(QWidget):
         label_col.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
 
         label_top, label_bottom = label_col.split_v((1, 1))
+        field_top, field_bottom = field_col.split_v((1, 1))
 
         def _make_ident_label(zone: Zone, text: str, overlay: str) -> QLabel:
             display = overlay if zone._overlay_active and overlay else text
@@ -735,8 +736,8 @@ class FTApp(QWidget):
         for field in (self.edCodigo, self.edNome):
             field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
-        field_col.ly.addWidget(self.edCodigo, 0, Qt.AlignLeft)
-        field_col.ly.addWidget(self.edNome, 0, Qt.AlignLeft)
+        field_top.ly.addWidget(self.edCodigo, 0, Qt.AlignLeft)
+        field_bottom.ly.addWidget(self.edNome, 0, Qt.AlignLeft)
 
         scroll.verticalScrollBar().valueChanged.connect(
             self._toggle_header_on_scroll
