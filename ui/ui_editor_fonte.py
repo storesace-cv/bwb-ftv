@@ -752,26 +752,42 @@ class FTApp(QWidget):
         # B1.C1.A.2.A → divide verticalmente: topo (famílias) + base (PVP1..PVP5)
         C1A21_top, C1A21_base = C1A21.split_v((1, 2))
         C1A21_top.apply_overlays(True)
+        labels_zone, values_zone = C1A21_top.split_h((1, 3))
+        labels_zone.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
+        values_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+
+        def _make_family_label(text: str, overlay: str) -> QLabel:
+            display = overlay if labels_zone._overlay_active and overlay else text
+            lbl = QLabel(display, labels_zone)
+            lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            lbl.setProperty("userLabel", text)
+            lbl.setProperty("devLabel", overlay)
+            if labels_zone._overlay_active and overlay:
+                apply_overlay_label_style(lbl)
+            else:
+                apply_label_style(lbl)
+            lbl.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Maximum)
+            lbl.setFixedWidth(lbl_w)
+            labels_zone.ly.addWidget(lbl, 0, Qt.AlignRight | Qt.AlignVCenter)
+            labels_zone._labels.append(lbl)
+            return lbl
+
+        _make_family_label("Família:", "Produtos.Familia")
+        _make_family_label("Sub-família:", "Produtos.SubFamilia")
+        labels_zone.sync_label_widths()
+
         self.lbFamiliaVal = QLabel("")
         apply_label_style(self.lbFamiliaVal)
+        self.lbFamiliaVal.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.lbFamiliaVal.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.lbSubFamiliaVal = QLabel("")
         apply_label_style(self.lbSubFamiliaVal)
+        self.lbSubFamiliaVal.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.lbSubFamiliaVal.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         match_font(self.lbFamiliaVal, self.edNome)
         match_font(self.lbSubFamiliaVal, self.edNome)
-        C1A21_top.add_row(
-            "Família:",
-            self.lbFamiliaVal,
-            label_minw=lbl_w,
-            vspacing=0,
-            overlay_text="Produtos.Familia",
-        )
-        C1A21_top.add_row(
-            "Sub-família:",
-            self.lbSubFamiliaVal,
-            label_minw=lbl_w,
-            vspacing=0,
-            overlay_text="Produtos.SubFamilia",
-        )
+        values_zone.ly.addWidget(self.lbFamiliaVal, 0, Qt.AlignLeft | Qt.AlignVCenter)
+        values_zone.ly.addWidget(self.lbSubFamiliaVal, 0, Qt.AlignLeft | Qt.AlignVCenter)
 
         # Base: zona horizontal com cinco colunas PVP1..PVP5 (etiqueta por cima)
         self.lbPVPs: list[QLineEdit] = []
