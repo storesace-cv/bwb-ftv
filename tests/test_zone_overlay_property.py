@@ -200,6 +200,36 @@ def test_zone_overlay_tag_label_preserves_inline_style(qapp, overlays_enabled):
     assert zone._tag_lbl.styleSheet() == expected_style
 
 
+def test_zone_overlay_resizes_label_width_for_overlay_text(qapp, overlays_enabled):
+    zone = layout.Zone("B1", show_overlays=False)
+    overlay_text = "Legenda de desenvolvimento bastante longa"
+    value_widget = QLabel("valor", zone)
+    label = zone.add_row("ID", value_widget, overlay_text=overlay_text)
+
+    user_metrics = label.fontMetrics().horizontalAdvance(label.text())
+    user_width = label.minimumWidth()
+
+    assert user_width >= user_metrics
+
+    zone.apply_overlays(True)
+    qapp.processEvents()
+
+    overlay_metrics = label.fontMetrics().horizontalAdvance(overlay_text)
+    overlay_width = label.minimumWidth()
+
+    assert overlay_width >= overlay_metrics
+    assert overlay_width > user_width
+
+    zone.apply_overlays(False)
+    qapp.processEvents()
+
+    restored_width = label.minimumWidth()
+    restored_metrics = label.fontMetrics().horizontalAdvance(label.text())
+
+    assert restored_width >= restored_metrics
+    assert restored_width < overlay_width
+
+
 def test_zone_overlay_label_width_tracks_visible_text(qapp, overlays_enabled):
     zone = layout.Zone("B1", show_overlays=False)
     value_widget = QLabel("value", zone)

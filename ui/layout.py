@@ -353,8 +353,11 @@ class Zone(QWidget):
         if not self._labels:
             return
         for label in self._labels:
+            # Release any fixed width constraint so the label's size hint reflects
+            # the currently visible text before we compute the shared width.
             label.setMinimumWidth(0)
             label.setMaximumWidth(_QT_MAX_WIDGET_WIDTH)
+            label.updateGeometry()
         maxw = max(label.sizeHint().width() for label in self._labels)
         for label in self._labels:
             label.setFixedWidth(maxw)
