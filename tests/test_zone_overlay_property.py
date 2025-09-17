@@ -5,7 +5,7 @@ import pytest
 
 from domain import Product
 from ui import layout
-from ui.bwb_style_1 import OVERLAY_ON_CLASS, ZONE_STYLES
+from ui.bwb_style_1 import OVERLAY_ON_CLASS
 from ui.ui_editor_fonte import FTApp, _configure_zone
 from ui.utilities import (
     AlignmentVariant,
@@ -18,13 +18,27 @@ from ui.utilities import (
 )
 
 
-def _theme_stylesheet(zone: layout.Zone, theme_name: str) -> str:
-    selector = (
-        f"#{layout._escape_object_name(zone.objectName())}"
-        if zone.objectName()
-        else ""
-    )
-    declarations = ZONE_STYLES[theme_name]
+BASE_STYLE_DECLARATIONS = (
+    "background: rgba(245, 245, 245, 0.8);\n"
+    "border: 1px solid rgba(0, 0, 0, 0.15);\n"
+    "border-radius: 8px;\n"
+    "padding: 6px;\n"
+)
+
+ALT_STYLE_DECLARATIONS = (
+    "background: #f0f;\n"
+    "border: 1px solid #000;\n"
+    "border-radius: 4px;\n"
+    "padding: 4px;\n"
+)
+
+
+def _base_stylesheet(zone: layout.Zone, declarations: str) -> str:
+    return layout.compose_stylesheet(zone, declarations)
+
+
+def _tag_stylesheet(tag: str, declarations: str) -> str:
+    selector = f"#{layout._escape_object_name(tag)}" if tag else ""
     return f"{selector} {{ {declarations} }}" if selector else declarations
 
 
@@ -55,7 +69,7 @@ def _widget_classes(widget: QLabel) -> list[str]:
 
 def _compose_style_label(
     zone: layout.Zone,
-    theme_name: str | None,
+    style_label: str | None,
 ) -> str:
     return " | ".join(
         segment
@@ -63,7 +77,7 @@ def _compose_style_label(
             zone.zone_type,
             zone.widget_qt_class,
             zone.widget_type,
-            theme_name,
+            style_label,
         )
         if segment
     )
@@ -323,33 +337,29 @@ def test_configure_zone_sets_dev_info_tooltip(qapp, overlays_enabled):
 
 
 @pytest.mark.parametrize(
-    ("theme_name", "declarations"),
+    ("style_label", "declarations"),
     [
-        ("bwb-style-1", None),
-        ("bwb-style-1-center", None),
-        ("bwb-style-1-extra", "background: #f0f; border: 1px solid #000;"),
+        ("estilo-base", BASE_STYLE_DECLARATIONS),
+        ("estilo-alt", ALT_STYLE_DECLARATIONS),
     ],
 )
-def test_zone_overlay_shows_style_name_for_any_registered_theme(
-    qapp, overlays_enabled, monkeypatch, theme_name, declarations
+def test_zone_overlay_shows_style_label_when_base_stylesheet_set(
+    qapp, overlays_enabled, style_label, declarations
 ):
-    if declarations is not None:
-        monkeypatch.setitem(ZONE_STYLES, theme_name, declarations)
-
     widget_type = "campo"
     zone = layout.Zone(
         "B1",
         show_overlays=False,
         widget_type=widget_type,
     )
-    zone.set_theme(theme_name)
+    zone.set_base_stylesheet(_base_stylesheet(zone, declarations), label=style_label)
 
     assert zone._style_lbl.isHidden()
 
     zone.apply_overlays(True)
 
     assert not zone._style_lbl.isHidden()
-    expected = _compose_style_label(zone, theme_name)
+    expected = _compose_style_label(zone, style_label)
     assert zone._style_lbl.text() == expected
 
 
@@ -369,7 +379,7 @@ def test_zone_overlay_shows_widget_type_when_other_metadata_missing(
 
 def test_zone_overlay_hides_style_label_when_disabled(qapp, overlays_enabled):
     zone = layout.Zone("B1", show_overlays=False)
-    zone.set_theme("bwb-style-1")
+    zone.set_base_stylesheet(_base_stylesheet(zone, BASE_STYLE_DECLARATIONS), label="base")
 
     zone.apply_overlays(True)
     assert not zone._style_lbl.isHidden()
@@ -381,9 +391,8 @@ def test_zone_overlay_hides_style_label_when_disabled(qapp, overlays_enabled):
 
 
 @pytest.mark.parametrize("widget_type", [None, "campo"])
-@pytest.mark.parametrize("theme_name", ["bwb-style-1", "bwb-style-1-center"])
-def test_zone_set_theme_updates_style_label_when_overlay_active(
-    qapp, overlays_enabled, theme_name, widget_type
+def test_zone_set_base_stylesheet_updates_style_label_when_overlay_active(
+    qapp, overlays_enabled, widget_type
 ):
     zone = layout.Zone("B1", show_overlays=True, widget_type=widget_type)
 
@@ -393,47 +402,63 @@ def test_zone_set_theme_updates_style_label_when_overlay_active(
         assert not zone._style_lbl.isHidden()
         assert zone._style_lbl.text() == widget_type
 
-    zone.set_theme(theme_name)
+    style_label = "estilo-base"
+    zone.set_base_stylesheet(
+        _base_stylesheet(zone, BASE_STYLE_DECLARATIONS), label=style_label
+    )
 
     assert not zone._style_lbl.isHidden()
-    expected = _compose_style_label(zone, theme_name)
+    expected = _compose_style_label(zone, style_label)
     assert zone._style_lbl.text() == expected
 
 
 @pytest.mark.parametrize("widget_type", [None, "campo"])
-@pytest.mark.parametrize("theme_name", ["bwb-style-1", "bwb-style-1-center"])
-def test_zone_init_theme_shows_style_label_when_overlays_active(
-    qapp, overlays_enabled, theme_name, widget_type
+def test_zone_init_base_stylesheet_shows_style_label_when_overlays_active(
+    qapp, overlays_enabled, widget_type
 ):
+    style_label = "estilo-base"
+    base_stylesheet = _tag_stylesheet("B1", BASE_STYLE_DECLARATIONS)
     zone = layout.Zone(
         "B1",
         show_overlays=True,
-        theme_name=theme_name,
+        base_stylesheet=base_stylesheet,
+        base_style_label=style_label,
         widget_type=widget_type,
     )
 
     assert zone.property("overlays") == "on"
-    assert zone.base_stylesheet == _theme_stylesheet(zone, theme_name)
+    assert zone.base_stylesheet == base_stylesheet
     assert zone.styleSheet() == _overlay_stylesheet(zone)
     assert not zone._style_lbl.isHidden()
-    expected = _compose_style_label(zone, theme_name)
+    expected = _compose_style_label(zone, style_label)
     assert zone._style_lbl.text() == expected
 
 
 def test_zone_style_label_without_widget_type_stays_on_theme(qapp, overlays_enabled):
-    theme_name = "bwb-style-1"
-    zone = layout.Zone("B1", show_overlays=True, theme_name=theme_name)
+    style_label = "estilo-base"
+    zone = layout.Zone(
+        "B1",
+        show_overlays=True,
+        base_stylesheet=_tag_stylesheet("B1", BASE_STYLE_DECLARATIONS),
+        base_style_label=style_label,
+    )
 
-    expected = _compose_style_label(zone, theme_name)
+    expected = _compose_style_label(zone, style_label)
     assert zone._style_lbl.text() == expected
 
 
 def test_zone_set_widget_type_updates_style_label(qapp, overlays_enabled):
-    zone = layout.Zone("B1", show_overlays=True, theme_name="bwb-style-1")
+    style_label = "estilo-base"
+    zone = layout.Zone(
+        "B1",
+        show_overlays=True,
+        base_stylesheet=_tag_stylesheet("B1", BASE_STYLE_DECLARATIONS),
+        base_style_label=style_label,
+    )
 
     zone.set_widget_type("campo")
 
-    expected = _compose_style_label(zone, "bwb-style-1")
+    expected = _compose_style_label(zone, style_label)
     assert zone._style_lbl.text() == expected
 
 
@@ -441,30 +466,37 @@ def test_zone_style_label_includes_all_segments(qapp, overlays_enabled):
     zone = layout.Zone(
         "B1",
         show_overlays=True,
-        theme_name="bwb-style-1",
+        base_stylesheet=_tag_stylesheet("B1", BASE_STYLE_DECLARATIONS),
+        base_style_label="estilo-base",
         widget_type="campo",
     )
 
     zone.set_zone_type("secao-teste")
     zone.set_widget_qt_class("QLineEdits")
 
-    expected = _compose_style_label(zone, "bwb-style-1")
-    assert expected == "secao-teste | QLineEdits | campo | bwb-style-1"
+    expected = _compose_style_label(zone, "estilo-base")
+    assert expected == "secao-teste | QLineEdits | campo | estilo-base"
     assert zone._style_lbl.text() == expected
 
 
 def test_zone_style_label_skips_missing_segments(qapp, overlays_enabled):
-    zone = layout.Zone("B1", show_overlays=True, theme_name="bwb-style-1")
+    style_label = "estilo-base"
+    zone = layout.Zone(
+        "B1",
+        show_overlays=True,
+        base_stylesheet=_tag_stylesheet("B1", BASE_STYLE_DECLARATIONS),
+        base_style_label=style_label,
+    )
 
     zone.set_zone_type("secao-teste")
-    expected = _compose_style_label(zone, "bwb-style-1")
-    assert expected == "secao-teste | bwb-style-1"
+    expected = _compose_style_label(zone, style_label)
+    assert expected == "secao-teste | estilo-base"
     assert zone._style_lbl.text() == expected
 
     zone.set_zone_type(None)
     zone.set_widget_type("campo")
-    expected = _compose_style_label(zone, "bwb-style-1")
-    assert expected == "campo | bwb-style-1"
+    expected = _compose_style_label(zone, style_label)
+    assert expected == "campo | estilo-base"
     assert zone._style_lbl.text() == expected
 
 
@@ -499,11 +531,15 @@ def test_zone_add_row_has_no_debug_styles_by_default(qapp):
 
 def test_zone_center_theme_keeps_label_alignment(qapp):
     default_zone = layout.Zone("B1", show_overlays=False)
-    default_zone.set_theme("bwb-style-1")
+    default_zone.set_base_stylesheet(
+        _base_stylesheet(default_zone, BASE_STYLE_DECLARATIONS)
+    )
     default_label = default_zone.add_row("Nome", QLabel("valor", default_zone))
 
     centre_zone = layout.Zone("B2", show_overlays=False)
-    centre_zone.set_theme("bwb-style-1-center")
+    centre_zone.set_base_stylesheet(
+        _base_stylesheet(centre_zone, ALT_STYLE_DECLARATIONS)
+    )
     centre_label = centre_zone.add_row("Nome", QLabel("valor", centre_zone))
 
     assert default_label.styleSheet() == LABEL_STYLE
@@ -639,8 +675,8 @@ def test_zone_hides_overlays_when_globally_disabled(qapp):
 
 def test_zone_theme_stylesheet_restored_after_overlay_toggle(qapp, overlays_enabled):
     zone = layout.Zone("B1", show_overlays=False)
-    zone.set_theme("bwb-style-1")
-    expected_theme_style = _theme_stylesheet(zone, "bwb-style-1")
+    expected_theme_style = _base_stylesheet(zone, BASE_STYLE_DECLARATIONS)
+    zone.set_base_stylesheet(expected_theme_style)
     assert zone.styleSheet() == expected_theme_style
 
     expected_overlay_style = _overlay_stylesheet(zone)
@@ -652,17 +688,17 @@ def test_zone_theme_stylesheet_restored_after_overlay_toggle(qapp, overlays_enab
     assert zone.styleSheet() == expected_theme_style
 
 
-def test_zone_set_theme_while_overlay_active_keeps_overlay_style(
+def test_zone_set_base_stylesheet_while_overlay_active_keeps_overlay_style(
     qapp, overlays_enabled
 ):
     zone = layout.Zone("B1", show_overlays=True)
     expected_overlay_style = _overlay_stylesheet(zone)
     assert zone.styleSheet() == expected_overlay_style
 
-    zone.set_theme("bwb-style-1")
+    zone.set_base_stylesheet(_base_stylesheet(zone, BASE_STYLE_DECLARATIONS))
     assert zone.styleSheet() == expected_overlay_style
 
-    expected_theme_style = _theme_stylesheet(zone, "bwb-style-1")
+    expected_theme_style = _base_stylesheet(zone, BASE_STYLE_DECLARATIONS)
 
     zone.apply_overlays(False)
     assert zone.styleSheet() == expected_theme_style

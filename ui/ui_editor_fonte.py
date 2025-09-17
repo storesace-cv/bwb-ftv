@@ -102,7 +102,7 @@ from utils.formatting import format_pt_number, parse_decimal
 
 from . import layout
 from .bwb_style_1 import APP_STYLESHEET, FIELD_STYLE
-from .layout import Zone
+from .layout import Zone, compose_stylesheet
 from .utilities import (
     AlignmentVariant,
     apply_fcfilter_btn_style,
@@ -123,8 +123,13 @@ from .dialogs import (
 )
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
-ZONE_THEME = "bwb-style-1"
-PVP_ZONE_THEME = "bwb-style-1-center"
+
+_ZONE_BASE_DECLARATIONS = (
+    "background-color: rgba(255, 255, 255, 0.35);\n"
+    "border: 1px solid rgba(0, 0, 0, 0.08);\n"
+    "border-radius: 12px;\n"
+    "padding: 6px;\n"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -145,7 +150,19 @@ def _configure_zone(
     zone_type: str | None = None,
     widget_type: str | None = None,
     style_dev_info: str | None = None,
+    base_declarations: str | None = None,
+    apply_base_style: bool = True,
+    base_style_label: str | None = None,
 ) -> Zone:
+    if apply_base_style:
+        declarations = (
+            base_declarations if base_declarations is not None else _ZONE_BASE_DECLARATIONS
+        )
+        zone.set_base_stylesheet(
+            compose_stylesheet(zone, declarations), label=base_style_label
+        )
+    elif base_style_label is not None:
+        zone.set_base_stylesheet(zone.base_stylesheet, label=base_style_label)
     if zone_type is not None:
         zone.set_zone_type(zone_type)
     if widget_type is not None:
@@ -640,7 +657,6 @@ class FTApp(QWidget):
             spacing=2,
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
-            theme_name=ZONE_THEME,
             widget_type="campo",
         )
         _configure_zone(self.headerC1, zone_type="secao-cabecalho", widget_type="campo")
@@ -653,7 +669,6 @@ class FTApp(QWidget):
             spacing=2,
             level=1,
             show_overlays=layout.DEV_OVERLAYS,
-            theme_name=ZONE_THEME,
             widget_type="campo",
         )
         _configure_zone(
@@ -708,7 +723,6 @@ class FTApp(QWidget):
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
             spacing=2,
-            theme_name=ZONE_THEME,
             widget_type="campo",
         )
         _configure_zone(self.C1, zone_type="bloco-dados-gerais", widget_type="campo")
@@ -734,7 +748,6 @@ class FTApp(QWidget):
             spacing=C1A.ly.spacing(),
             level=C1A._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
-            theme_name=ZONE_THEME,
             widget_type="campo",
         )
         _configure_zone(
@@ -809,7 +822,6 @@ class FTApp(QWidget):
             spacing=C1A.ly.spacing(),
             level=C1A._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
-            theme_name=ZONE_THEME,
             widget_type="campo",
         )
         _configure_zone(C1A2, zone_type="secao-classificacoes", widget_type="campo")
@@ -825,7 +837,6 @@ class FTApp(QWidget):
         C1A21_top, C1A21_base = C1A21.split_v((1, 2))
         _configure_zone(C1A21_top, zone_type="subsecao-familias", widget_type="campo")
         _configure_zone(C1A21_base, zone_type="subsecao-pvps", widget_type="campo")
-        C1A21_base.set_theme(PVP_ZONE_THEME)
         C1A21_top.apply_overlays(True)
         labels_zone, values_zone = C1A21_top.split_h((1, 3))
         _configure_zone(labels_zone, zone_type="coluna-legendas", widget_type="legenda")
@@ -938,7 +949,6 @@ class FTApp(QWidget):
             flow="h",
             level=C1A21_base._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
-            theme_name=ZONE_THEME,
             widget_type="campo",
         )
         _configure_zone(
@@ -949,45 +959,27 @@ class FTApp(QWidget):
         C1A21_base_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         C1A21_base.add(C1A21_base_zone, 0)
         pvp1, pvp2, pvp3, pvp4, pvp5 = C1A21_base_zone.split_h((1, 1, 1, 1, 1))
-        for zone in (pvp1, pvp2, pvp3, pvp4, pvp5):
-            _configure_zone(zone, zone_type="coluna-pvp", widget_type="campo")
-
         for idx, zone in enumerate((pvp1, pvp2, pvp3, pvp4, pvp5), start=1):
-            zone.set_theme(PVP_ZONE_THEME)
-            label_zone, field_zone = zone.split_v((1, 1))
-            label_zone.set_theme(ZONE_THEME)
-            field_zone.set_theme(PVP_ZONE_THEME)
-            _configure_zone(
-                label_zone,
-                zone_type="linha-legenda",
-                widget_type="legenda",
-            )
-            _configure_zone(
-                field_zone,
-                zone_type="linha-campo",
-                widget_type="campo",
-            )
+            _configure_zone(zone, zone_type="coluna-pvp", widget_type="campo")
 
             label_text = f"PVP #{idx}"
             overlay = f"PrecosTaxas.Preco{idx}"
-            lbl = QLabel(
-                overlay if layout.DEV_OVERLAYS else label_text,
-                label_zone,
-            )
+            display_label = overlay if zone._overlay_active else label_text
+            lbl = QLabel(display_label, zone)
             apply_label_style(lbl, alignment=AlignmentVariant.CENTER)
             lbl.setProperty("userLabel", label_text)
             lbl.setProperty("devLabel", overlay)
             match_font(lbl, self.edNome)
-            label_zone.add(lbl, 0)
-            label_zone._labels.append(lbl)
+            zone.add(lbl, 0)
+            zone._labels.append(lbl)
             install_tooltip_copy_handler(lbl)
 
-            val = QLineEdit("—", field_zone)
+            val = QLineEdit("—", zone)
             val.setFont(self.edNome.font())
             make_readonly_lineedit(val, False)
             val.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            field_zone.add(val, 0)
+            zone.add(val, 0)
             self.lbPVPs.append(val)
 
         # Combos diretamente em B1.C1.A.2.B (sem .B.2)
@@ -1019,7 +1011,6 @@ class FTApp(QWidget):
             flow="v",
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
-            theme_name=ZONE_THEME,
             widget_type="tabela",
         )
         _configure_zone(self.C2, zone_type="bloco-ingredientes", widget_type="tabela")
@@ -1061,7 +1052,6 @@ class FTApp(QWidget):
             flow="h",
             level=C2_totals_zone._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
-            theme_name=ZONE_THEME,
             widget_type="campo",
         )
         _configure_zone(self.C2Custo, zone_type="barra-totais", widget_type="campo")
@@ -1084,7 +1074,6 @@ class FTApp(QWidget):
             flow="v",
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
-            theme_name=ZONE_THEME,
             widget_type="campo",
         )
         _configure_zone(self.C3, zone_type="bloco-food-cost", widget_type="campo")
@@ -1096,7 +1085,6 @@ class FTApp(QWidget):
             flow="v",
             level=1,
             show_overlays=layout.DEV_OVERLAYS,
-            theme_name=ZONE_THEME,
             widget_type="campo",
         )
         _configure_zone(C3A, zone_type="secao-food-cost", widget_type="campo")
@@ -1112,7 +1100,6 @@ class FTApp(QWidget):
             flow="h",
             level=2,
             show_overlays=layout.DEV_OVERLAYS,
-            theme_name=ZONE_THEME,
             widget_type="campo",
         )
         _configure_zone(C3AA, zone_type="grade-food-cost", widget_type="campo")
@@ -1124,7 +1111,6 @@ class FTApp(QWidget):
 
         self.lbFoodCosts: list[QLineEdit] = []
         for idx, fc in enumerate((fc1, fc2, fc3, fc4, fc5), start=1):
-            fc.set_theme(PVP_ZONE_THEME)
             label_zone, field_zone = fc.split_v((1, 1))
             _configure_zone(
                 label_zone,
@@ -1169,7 +1155,6 @@ class FTApp(QWidget):
             flow="h",
             level=2,
             show_overlays=layout.DEV_OVERLAYS,
-            theme_name=ZONE_THEME,
             widget_type="botão",
         )
         _configure_zone(C3AB, zone_type="secao-filtros-food-cost", widget_type="botão")
@@ -1263,7 +1248,6 @@ class FTApp(QWidget):
             flow="v",
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
-            theme_name=ZONE_THEME,
             widget_type="editor",
         )
         _configure_zone(self.C4, zone_type="bloco-preparacao", widget_type="editor")
@@ -1361,7 +1345,6 @@ class FTApp(QWidget):
             flow="v",
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
-            theme_name=ZONE_THEME,
             widget_type="caixa de seleção",
         )
         _configure_zone(
