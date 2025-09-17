@@ -31,6 +31,8 @@ DEV_OVERLAYS = (
 )
 
 DEFAULT_ZONE_MARGINS = (3, 5)
+# Default maximum widget width used by Qt when no explicit constraint is set.
+_QT_MAX_WIDGET_WIDTH = 16777215
 
 # Updated to allow block-prefixed cell identifiers like ``B1.C1``
 _TAG_RE = re.compile(r"^B\d+(?:\.C\d+(?:\.(?:A|B|\d+))*)?$")
@@ -279,6 +281,7 @@ class Zone(QWidget):
             lbl.setFont(font)
             lbl.setAlignment(alignment)
             refresh_style(lbl)
+        self.sync_label_widths()
         refresh_style(self._tag_lbl)
         refresh_style(self)
         for ch in self.findChildren(Zone):
@@ -349,6 +352,9 @@ class Zone(QWidget):
     def sync_label_widths(self) -> None:
         if not self._labels:
             return
+        for label in self._labels:
+            label.setMinimumWidth(0)
+            label.setMaximumWidth(_QT_MAX_WIDGET_WIDTH)
         maxw = max(label.sizeHint().width() for label in self._labels)
         for label in self._labels:
             label.setFixedWidth(maxw)
