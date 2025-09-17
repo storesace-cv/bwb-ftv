@@ -19,7 +19,6 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from .bwb_style_1 import ZONE_STYLES
 from .utilities import (
     apply_label_style,
     apply_overlay_label_style,
@@ -46,6 +45,15 @@ def _escape_object_name(name: str) -> str:
     """Return ``name`` escaped for usage within Qt style sheets."""
 
     return re.sub(r"([^\w-])", r"\\\1", name)
+
+
+def compose_stylesheet(widget: QWidget, declarations: str) -> str:
+    """Return a stylesheet applying ``declarations`` to ``widget``."""
+
+    selector = (
+        f"#{_escape_object_name(widget.objectName())}" if widget.objectName() else ""
+    )
+    return f"{selector} {{ {declarations} }}" if selector else declarations
 
 
 def validate_tag(tag: str) -> bool:
@@ -84,7 +92,8 @@ class Zone(QWidget):
         spacing=6,
         level: int = 0,
         show_overlays: bool = True,
-        theme_name: str | None = None,
+        base_stylesheet: str | None = None,
+        base_style_label: str | None = None,
         widget_type: str | None = None,
         zone_type: str | None = None,
         widget_qt_class: str | None = None,
@@ -98,7 +107,7 @@ class Zone(QWidget):
         self._level = level
         self._labels: list[QLabel] = []
         self._overlay_active = False
-        self._theme_name: str | None = None
+        self._base_style_label: str | None = base_style_label or None
         self._widget_type: str | None = widget_type or None
         self._zone_type: str | None = zone_type or None
         self._widget_qt_class: str | None = widget_qt_class or None
@@ -172,8 +181,10 @@ class Zone(QWidget):
 
         self.apply_overlays(show_overlays)
 
-        if theme_name is not None:
-            self.set_theme(theme_name)
+        if base_stylesheet is not None:
+            self.set_base_stylesheet(base_stylesheet, label=self._base_style_label)
+        elif base_style_label is not None:
+            self._sync_style_label()
 
     @staticmethod
     def _build_label_tooltip(
@@ -218,16 +229,14 @@ class Zone(QWidget):
     def base_stylesheet(self) -> str:
         return self._base_stylesheet
 
-    def set_theme(self, name: str) -> None:
-        try:
-            declarations = ZONE_STYLES[name]
-        except KeyError as exc:
-            raise ValueError(f"Unknown zone theme: {name}") from exc
+    def set_base_stylesheet(
+        self, stylesheet: str, *, label: str | None = None
+    ) -> None:
+        if not isinstance(stylesheet, str):
+            raise TypeError("Stylesheet must be a string")
 
-        selector = f"#{_escape_object_name(self.objectName())}" if self.objectName() else ""
-        stylesheet = f"{selector} {{ {declarations} }}" if selector else declarations
-        self._theme_name = name
         self._base_stylesheet = stylesheet
+        self._base_style_label = label or None
         if not self._overlay_active:
             self.setStyleSheet(self._base_stylesheet)
             refresh_style(self)
@@ -238,7 +247,7 @@ class Zone(QWidget):
             self._zone_type,
             self._widget_qt_class,
             self._widget_type,
-            self._theme_name,
+            self._base_style_label,
         ]
         filtered = [segment for segment in segments if segment]
         return " | ".join(filtered) if filtered else None
@@ -436,7 +445,7 @@ class Zone(QWidget):
                 spacing=self.ly.spacing(),
                 level=self._level + 1,
                 show_overlays=DEV_OVERLAYS,
-                theme_name=self._theme_name,
+                base_style_label=self._base_style_label,
                 widget_type=child_widget_type,
                 zone_type=child_zone_type,
                 widget_qt_class=child_widget_qt_class,
@@ -481,7 +490,7 @@ class Zone(QWidget):
                 spacing=self.ly.spacing(),
                 level=self._level + 1,
                 show_overlays=DEV_OVERLAYS,
-                theme_name=self._theme_name,
+                base_style_label=self._base_style_label,
                 widget_type=child_widget_type,
                 zone_type=child_zone_type,
                 widget_qt_class=child_widget_qt_class,
