@@ -357,7 +357,7 @@ def test_zone_overlay_shows_style_label_when_base_stylesheet_set(
         show_overlays=False,
         widget_type=widget_type,
     )
-    zone.set_base_stylesheet(_base_stylesheet(zone, declarations), label=style_label)
+    zone.set_zone_stylesheet(_base_stylesheet(zone, declarations), label=style_label)
 
     assert zone._style_lbl.isHidden()
 
@@ -384,7 +384,9 @@ def test_zone_overlay_shows_widget_type_when_other_metadata_missing(
 
 def test_zone_overlay_hides_style_label_when_disabled(qapp, overlays_enabled):
     zone = layout.Zone("B1", show_overlays=False)
-    zone.set_base_stylesheet(_base_stylesheet(zone, BASE_STYLE_DECLARATIONS), label="base")
+    zone.set_zone_stylesheet(
+        _base_stylesheet(zone, BASE_STYLE_DECLARATIONS), label="base"
+    )
 
     zone.apply_overlays(True)
     assert not zone._style_lbl.isHidden()
@@ -408,7 +410,7 @@ def test_zone_set_base_stylesheet_updates_style_label_when_overlay_active(
         assert zone._style_lbl.text() == widget_type
 
     style_label = "estilo-base"
-    zone.set_base_stylesheet(
+    zone.set_zone_stylesheet(
         _base_stylesheet(zone, BASE_STYLE_DECLARATIONS), label=style_label
     )
 
@@ -536,13 +538,13 @@ def test_zone_add_row_has_no_debug_styles_by_default(qapp):
 
 def test_zone_center_theme_keeps_label_alignment(qapp):
     default_zone = layout.Zone("B1", show_overlays=False)
-    default_zone.set_base_stylesheet(
+    default_zone.set_zone_stylesheet(
         _base_stylesheet(default_zone, BASE_STYLE_DECLARATIONS)
     )
     default_label = default_zone.add_row("Nome", QLabel("valor", default_zone))
 
     centre_zone = layout.Zone("B2", show_overlays=False)
-    centre_zone.set_base_stylesheet(
+    centre_zone.set_zone_stylesheet(
         _base_stylesheet(centre_zone, ALT_STYLE_DECLARATIONS)
     )
     centre_label = centre_zone.add_row("Nome", QLabel("valor", centre_zone))
@@ -681,7 +683,7 @@ def test_zone_hides_overlays_when_globally_disabled(qapp):
 def test_zone_theme_stylesheet_restored_after_overlay_toggle(qapp, overlays_enabled):
     zone = layout.Zone("B1", show_overlays=False)
     expected_theme_style = _base_stylesheet(zone, BASE_STYLE_DECLARATIONS)
-    zone.set_base_stylesheet(expected_theme_style)
+    zone.set_zone_stylesheet(expected_theme_style)
     assert zone.styleSheet() == expected_theme_style
 
     expected_overlay_style = _overlay_stylesheet(zone)
@@ -700,7 +702,7 @@ def test_zone_set_base_stylesheet_while_overlay_active_keeps_overlay_style(
     expected_overlay_style = _overlay_stylesheet(zone)
     assert zone.styleSheet() == expected_overlay_style
 
-    zone.set_base_stylesheet(_base_stylesheet(zone, BASE_STYLE_DECLARATIONS))
+    zone.set_zone_stylesheet(_base_stylesheet(zone, BASE_STYLE_DECLARATIONS))
     assert zone.styleSheet() == expected_overlay_style
 
     expected_theme_style = _base_stylesheet(zone, BASE_STYLE_DECLARATIONS)

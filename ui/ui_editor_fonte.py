@@ -158,11 +158,11 @@ def _configure_zone(
         declarations = (
             base_declarations if base_declarations is not None else _ZONE_BASE_DECLARATIONS
         )
-        zone.set_base_stylesheet(
+        zone.set_zone_stylesheet(
             compose_stylesheet(zone, declarations), label=base_style_label
         )
     elif base_style_label is not None:
-        zone.set_base_stylesheet(zone.base_stylesheet, label=base_style_label)
+        zone.set_zone_stylesheet(zone.base_stylesheet, label=base_style_label)
     if zone_type is not None:
         zone.set_zone_type(zone_type)
     if widget_type is not None:
