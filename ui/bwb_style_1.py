@@ -16,17 +16,23 @@ ZONE_STYLES = {
     "bwb-style-1-center": _ZONE_BASE_DECLARATIONS + _ZONE_CENTER_EXTRA,
 }
 
-FIELD_STYLE = (
-    "QLineEdit {\n"
-    "    qproperty-alignment: AlignLeft;\n"
+_FIELD_STYLE_TEMPLATE = (
+    "QLineEdit {{\n"
+    "{alignment_line}"
     "    border: none;\n"
     "    border-radius: 4px;\n"
     "    background: transparent;\n"
-    "}\n"
+    "}}\n"
 )
 
-LABEL_STYLE = (
-    "QLabel {\n"
+FIELD_STYLE = _FIELD_STYLE_TEMPLATE.format(alignment_line="")
+
+CENTER_FIELD_STYLE = _FIELD_STYLE_TEMPLATE.format(
+    alignment_line="    qproperty-alignment: AlignHCenter | AlignVCenter;\n",
+)
+
+_LABEL_STYLE_TEMPLATE = (
+    "QLabel {{\n"
     "    background-color: rgba(200,200,200,0.5);\n"
     "    border: 1px solid rgba(0,0,0,0.3);\n"
     "    border-top-color: rgba(255,255,255,0.8);\n"
@@ -35,11 +41,17 @@ LABEL_STYLE = (
     "    border-right-color: rgba(0,0,0,0.4);\n"
     "    border-radius: 6px;\n"
     "    padding: 4px;\n"
-    "    qproperty-alignment: AlignLeft;\n"
-    "}\n"
-    "QLabel:pressed {\n"
+    "{alignment_line}"
+    "}}\n"
+    "QLabel:pressed {{\n"
     "    background-color: rgba(200,200,200,0.8);\n"
-    "}"
+    "}}"
+)
+
+LABEL_STYLE = _LABEL_STYLE_TEMPLATE.format(alignment_line="")
+
+CENTER_LABEL_STYLE = _LABEL_STYLE_TEMPLATE.format(
+    alignment_line="    qproperty-alignment: AlignHCenter | AlignVCenter;\n",
 )
 
 FCFILTER_BUTTON_STYLE_TEMPLATE = (
@@ -78,6 +90,8 @@ __all__ = [
     "ZONE_STYLES",
     "FIELD_STYLE",
     "LABEL_STYLE",
+    "CENTER_FIELD_STYLE",
+    "CENTER_LABEL_STYLE",
     "OVERLAY_ON_CLASS",
     "FCFILTER_BUTTON_STYLE_TEMPLATE",
     "APP_STYLESHEET",

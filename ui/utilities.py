@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Sequence
 
 from PyQt5.QtCore import Qt
@@ -13,11 +14,35 @@ from PyQt5.QtWidgets import (
 )
 
 from .bwb_style_1 import (
+    CENTER_FIELD_STYLE,
+    CENTER_LABEL_STYLE,
     FIELD_STYLE,
     LABEL_STYLE,
     OVERLAY_ON_CLASS,
     FCFILTER_BUTTON_STYLE_TEMPLATE,
 )
+
+
+class AlignmentVariant(str, Enum):
+    """Supported alignment variants for styled labels and fields."""
+
+    DEFAULT = "default"
+    CENTER = "center"
+
+
+def _normalize_alignment(value: AlignmentVariant | str | None) -> AlignmentVariant:
+    if value is None:
+        return AlignmentVariant.DEFAULT
+    if isinstance(value, AlignmentVariant):
+        return value
+    try:
+        return AlignmentVariant(str(value))
+    except ValueError as exc:  # pragma: no cover - defensive path
+        raise ValueError(f"Unsupported alignment variant: {value!r}") from exc
+
+
+_LABEL_ALIGNMENT_PROPERTY = "labelAlignmentVariant"
+_LINEEDIT_ALIGNMENT_PROPERTY = "lineEditAlignmentVariant"
 
 
 def _get_widget_classes(widget: QWidget) -> list[str]:
@@ -51,18 +76,31 @@ def _refresh_widget_style(widget: QWidget) -> None:
     widget.update()
 
 
-def apply_label_style(label: QLabel, extra: str | None = None) -> None:
-    """Apply the default beveled label style to ``label``.
+def apply_label_style(
+    label: QLabel,
+    extra: str | None = None,
+    *,
+    alignment: AlignmentVariant | str | None = None,
+) -> None:
+    """Apply the beveled label style to ``label``.
 
     ``extra`` may contain additional stylesheet rules appended to the base style.
+    ``alignment`` selects between the default (left-aligned) and centred variants.
     """
 
+    variant = _normalize_alignment(
+        alignment if alignment is not None else label.property(_LABEL_ALIGNMENT_PROPERTY)
+    )
+    label.setProperty(_LABEL_ALIGNMENT_PROPERTY, variant.value)
     classes = _get_widget_classes(label)
     if OVERLAY_ON_CLASS in classes:
         classes = [cls for cls in classes if cls != OVERLAY_ON_CLASS]
         _set_widget_classes(label, classes)
-    style = LABEL_STYLE if not extra else f"{LABEL_STYLE}\n{extra}"
+    base_style = CENTER_LABEL_STYLE if variant is AlignmentVariant.CENTER else LABEL_STYLE
+    style = base_style if not extra else f"{base_style}\n{extra}"
     label.setStyleSheet(style)
+    if variant is AlignmentVariant.CENTER:
+        label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
     _refresh_widget_style(label)
 
 
@@ -84,10 +122,23 @@ def apply_overlay_label_style(label: QLabel) -> None:
     label.setAlignment(alignment)
 
 
-def make_readonly_lineedit(le: QLineEdit, bold: bool = False) -> None:
+def make_readonly_lineedit(
+    le: QLineEdit,
+    bold: bool = False,
+    *,
+    alignment: AlignmentVariant | str | None = None,
+) -> None:
     le.setReadOnly(True)
     le.setFrame(False)
-    le.setStyleSheet(FIELD_STYLE)
+    variant = _normalize_alignment(
+        alignment if alignment is not None else le.property(_LINEEDIT_ALIGNMENT_PROPERTY)
+    )
+    le.setProperty(_LINEEDIT_ALIGNMENT_PROPERTY, variant.value)
+    if variant is AlignmentVariant.CENTER:
+        le.setStyleSheet(CENTER_FIELD_STYLE)
+        le.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+    else:
+        le.setStyleSheet(FIELD_STYLE)
     f = le.font()
     f.setBold(bold)
     le.setFont(f)
