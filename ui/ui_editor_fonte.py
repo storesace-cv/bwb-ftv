@@ -143,6 +143,7 @@ def _configure_zone(
     *,
     zone_type: str | None = None,
     widget_type: str | None = None,
+    style_dev_info: str | None = None,
 ) -> Zone:
     if zone_type is not None:
         zone.set_zone_type(zone_type)
@@ -151,6 +152,8 @@ def _configure_zone(
         zone.set_widget_qt_class(WIDGET_QT_CLASS_MAP.get(widget_type))
     elif zone.widget_type is not None:
         zone.set_widget_qt_class(WIDGET_QT_CLASS_MAP.get(zone.widget_type))
+    info = style_dev_info if style_dev_info is not None else zone.objectName()
+    zone.set_style_dev_info(info)
     return zone
 
 # ---------------------- Image Preview ----------------------
