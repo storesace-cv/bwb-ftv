@@ -126,6 +126,33 @@ ZONE_THEME = "bwb-style-1"
 PVP_ZONE_THEME = "bwb-style-1-center"
 logger = logging.getLogger(__name__)
 
+
+WIDGET_QT_CLASS_MAP = {
+    "campo": "QLineEdits",
+    "legenda": "QLabels",
+    "lista": "QComboBoxes",
+    "tabela": "QTableViews",
+    "botão": "QPushButtons",
+    "editor": "QTextEdits",
+    "caixa de seleção": "QCheckBoxes",
+}
+
+
+def _configure_zone(
+    zone: Zone,
+    *,
+    zone_type: str | None = None,
+    widget_type: str | None = None,
+) -> Zone:
+    if zone_type is not None:
+        zone.set_zone_type(zone_type)
+    if widget_type is not None:
+        zone.set_widget_type(widget_type)
+        zone.set_widget_qt_class(WIDGET_QT_CLASS_MAP.get(widget_type))
+    elif zone.widget_type is not None:
+        zone.set_widget_qt_class(WIDGET_QT_CLASS_MAP.get(zone.widget_type))
+    return zone
+
 # ---------------------- Image Preview ----------------------
 
 
@@ -612,6 +639,7 @@ class FTApp(QWidget):
             theme_name=ZONE_THEME,
             widget_type="campo",
         )
+        _configure_zone(self.headerC1, zone_type="secao-cabecalho", widget_type="campo")
         header_ly.addWidget(self.headerC1, 0)
         self.headerC1A = Zone(
             "B0.C1.A",
@@ -622,6 +650,11 @@ class FTApp(QWidget):
             level=1,
             show_overlays=layout.DEV_OVERLAYS,
             theme_name=ZONE_THEME,
+            widget_type="campo",
+        )
+        _configure_zone(
+            self.headerC1A,
+            zone_type="secao-cabecalho-detalhes",
             widget_type="campo",
         )
         self.headerC1.add(self.headerC1A)
@@ -674,11 +707,12 @@ class FTApp(QWidget):
             theme_name=ZONE_THEME,
             widget_type="campo",
         )
+        _configure_zone(self.C1, zone_type="bloco-dados-gerais", widget_type="campo")
         page_ly.addWidget(self._section_box("[B1] - Dados Gerais", self.C1), 0)
 
         C1A, C1B = self.C1.split_h((3, 1))
-        C1A.set_widget_type("campo")
-        C1B.set_widget_type("legenda")
+        _configure_zone(C1A, zone_type="coluna-principal", widget_type="campo")
+        _configure_zone(C1B, zone_type="coluna-imagem", widget_type="legenda")
 
         C1A_cont = QWidget(C1A)
         C1A_cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -699,6 +733,11 @@ class FTApp(QWidget):
             theme_name=ZONE_THEME,
             widget_type="campo",
         )
+        _configure_zone(
+            self.C1A1,
+            zone_type="secao-identificacao",
+            widget_type="campo",
+        )
         C1A_cont_ly.addWidget(self.C1A1, 0)
 
         self.edCodigo = QLineEdit()
@@ -708,8 +747,8 @@ class FTApp(QWidget):
         make_readonly_lineedit(self.edNome, True)
         self.edNome.setStyleSheet(FIELD_STYLE)
         label_col, field_col = self.C1A1.split_h((0, 1))
-        label_col.set_widget_type("legenda")
-        field_col.set_widget_type("campo")
+        _configure_zone(label_col, zone_type="coluna-legendas", widget_type="legenda")
+        _configure_zone(field_col, zone_type="coluna-campos", widget_type="campo")
         field_col_margins = field_col.ly.contentsMargins()
         field_col.ly.setContentsMargins(
             3,
@@ -720,11 +759,11 @@ class FTApp(QWidget):
         label_col.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
 
         label_top, label_bottom = label_col.split_v((1, 1))
-        label_top.set_widget_type("legenda")
-        label_bottom.set_widget_type("legenda")
+        _configure_zone(label_top, zone_type="linha-legenda", widget_type="legenda")
+        _configure_zone(label_bottom, zone_type="linha-legenda", widget_type="legenda")
         field_top, field_bottom = field_col.split_v((1, 1))
-        field_top.set_widget_type("campo")
-        field_bottom.set_widget_type("campo")
+        _configure_zone(field_top, zone_type="linha-campo", widget_type="campo")
+        _configure_zone(field_bottom, zone_type="linha-campo", widget_type="campo")
 
         def _make_ident_label(zone: Zone, text: str, overlay: str) -> QLabel:
             display = overlay if zone._overlay_active and overlay else text
@@ -768,23 +807,24 @@ class FTApp(QWidget):
             theme_name=ZONE_THEME,
             widget_type="campo",
         )
+        _configure_zone(C1A2, zone_type="secao-classificacoes", widget_type="campo")
         C1A_cont_ly.addWidget(C1A2, 1)
 
         # B1.C1.A.2
         C1A21, C1A22 = C1A2.split_h(
             (3, 1)
         )  # B1.C1.A.2.A (famílias/PVPs) + B1.C1.A.2.B (combos)
-        C1A21.set_widget_type("campo")
-        C1A22.set_widget_type("lista")
+        _configure_zone(C1A21, zone_type="secao-familias", widget_type="campo")
+        _configure_zone(C1A22, zone_type="secao-combos", widget_type="lista")
         # B1.C1.A.2.A → divide verticalmente: topo (famílias) + base (PVP1..PVP5)
         C1A21_top, C1A21_base = C1A21.split_v((1, 2))
-        C1A21_top.set_widget_type("campo")
-        C1A21_base.set_widget_type("campo")
+        _configure_zone(C1A21_top, zone_type="subsecao-familias", widget_type="campo")
+        _configure_zone(C1A21_base, zone_type="subsecao-pvps", widget_type="campo")
         C1A21_base.set_theme(PVP_ZONE_THEME)
         C1A21_top.apply_overlays(True)
         labels_zone, values_zone = C1A21_top.split_h((1, 3))
-        labels_zone.set_widget_type("legenda")
-        values_zone.set_widget_type("campo")
+        _configure_zone(labels_zone, zone_type="coluna-legendas", widget_type="legenda")
+        _configure_zone(values_zone, zone_type="coluna-campos", widget_type="campo")
         families_row_layout = labels_zone.parentWidget().layout()
         if families_row_layout is not None:
             families_row_layout.setSpacing(12)
@@ -799,14 +839,30 @@ class FTApp(QWidget):
         values_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
         familia_values_zone, subfamilia_values_zone = values_zone.split_v((1, 1))
-        familia_values_zone.set_widget_type("campo")
-        subfamilia_values_zone.set_widget_type("campo")
+        _configure_zone(
+            familia_values_zone,
+            zone_type="linha-campo",
+            widget_type="campo",
+        )
+        _configure_zone(
+            subfamilia_values_zone,
+            zone_type="linha-campo",
+            widget_type="campo",
+        )
         for zone in (familia_values_zone, subfamilia_values_zone):
             zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         familia_label_zone, subfamilia_label_zone = labels_zone.split_v((1, 1))
-        familia_label_zone.set_widget_type("legenda")
-        subfamilia_label_zone.set_widget_type("legenda")
+        _configure_zone(
+            familia_label_zone,
+            zone_type="linha-legenda",
+            widget_type="legenda",
+        )
+        _configure_zone(
+            subfamilia_label_zone,
+            zone_type="linha-legenda",
+            widget_type="legenda",
+        )
         for zone in (familia_label_zone, subfamilia_label_zone):
             zone.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
 
@@ -879,17 +935,30 @@ class FTApp(QWidget):
             theme_name=ZONE_THEME,
             widget_type="campo",
         )
+        _configure_zone(
+            C1A21_base_zone,
+            zone_type="grade-pvps",
+            widget_type="campo",
+        )
         C1A21_base_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         C1A21_base.add(C1A21_base_zone, 0)
         pvp1, pvp2, pvp3, pvp4, pvp5 = C1A21_base_zone.split_h((1, 1, 1, 1, 1))
         for zone in (pvp1, pvp2, pvp3, pvp4, pvp5):
-            zone.set_widget_type("campo")
+            _configure_zone(zone, zone_type="coluna-pvp", widget_type="campo")
 
         for idx, zone in enumerate((pvp1, pvp2, pvp3, pvp4, pvp5), start=1):
             zone.set_theme(PVP_ZONE_THEME)
             label_zone, field_zone = zone.split_v((1, 1))
-            label_zone.set_widget_type("legenda")
-            field_zone.set_widget_type("campo")
+            _configure_zone(
+                label_zone,
+                zone_type="linha-legenda",
+                widget_type="legenda",
+            )
+            _configure_zone(
+                field_zone,
+                zone_type="linha-campo",
+                widget_type="campo",
+            )
 
             label_text = f"PVP #{idx}"
             overlay = f"PrecosTaxas.Preco{idx}"
@@ -917,9 +986,8 @@ class FTApp(QWidget):
         w_val, self.cbValidade = stack_combo("Validade")
         w_temp, self.cbTemp = stack_combo("Temperaturas")
         C1A22_1, C1A22_2, C1A22_3 = C1A22.split_v((1, 1, 1))
-        C1A22_1.set_widget_type("lista")
-        C1A22_2.set_widget_type("lista")
-        C1A22_3.set_widget_type("lista")
+        for zone in (C1A22_1, C1A22_2, C1A22_3):
+            _configure_zone(zone, zone_type="linha-combo", widget_type="lista")
         C1A22_1.add(w_tipos)
         C1A22_2.add(w_val)
         C1A22_3.add(w_temp)
@@ -945,11 +1013,20 @@ class FTApp(QWidget):
             theme_name=ZONE_THEME,
             widget_type="tabela",
         )
+        _configure_zone(self.C2, zone_type="bloco-ingredientes", widget_type="tabela")
         page_ly.addWidget(self._section_box("[B2] - Ingredientes", self.C2), 0)
 
         C2_ing_zone, C2_totals_zone = self.C2.split_v((1, 0))
-        C2_ing_zone.set_widget_type("tabela")
-        C2_totals_zone.set_widget_type("campo")
+        _configure_zone(
+            C2_ing_zone,
+            zone_type="secao-tabela-ingredientes",
+            widget_type="tabela",
+        )
+        _configure_zone(
+            C2_totals_zone,
+            zone_type="secao-totais",
+            widget_type="campo",
+        )
 
         self.ingModel = FichasTecnicasModel([])
 
@@ -978,6 +1055,7 @@ class FTApp(QWidget):
             theme_name=ZONE_THEME,
             widget_type="campo",
         )
+        _configure_zone(self.C2Custo, zone_type="barra-totais", widget_type="campo")
         self.C2Custo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         C2_totals_zone.add(self.C2Custo, 0)
         self.C2Custo.ly.addStretch(1)
@@ -1000,6 +1078,7 @@ class FTApp(QWidget):
             theme_name=ZONE_THEME,
             widget_type="campo",
         )
+        _configure_zone(self.C3, zone_type="bloco-food-cost", widget_type="campo")
         page_ly.addWidget(self._section_box("[B3] - Food Cost", self.C3), 0)
 
         C3A = Zone(
@@ -1011,6 +1090,7 @@ class FTApp(QWidget):
             theme_name=ZONE_THEME,
             widget_type="campo",
         )
+        _configure_zone(C3A, zone_type="secao-food-cost", widget_type="campo")
         self.C3.add(C3A, 1)
         food_cost_label = QLabel("Food Cost:")
         apply_label_style(food_cost_label)
@@ -1026,18 +1106,27 @@ class FTApp(QWidget):
             theme_name=ZONE_THEME,
             widget_type="campo",
         )
+        _configure_zone(C3AA, zone_type="grade-food-cost", widget_type="campo")
         C3AA.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         C3A.add(C3AA, 0)
         fc1, fc2, fc3, fc4, fc5 = C3AA.split_h((1, 1, 1, 1, 1))
         for zone in (fc1, fc2, fc3, fc4, fc5):
-            zone.set_widget_type("campo")
+            _configure_zone(zone, zone_type="coluna-food-cost", widget_type="campo")
 
         self.lbFoodCosts: list[QLineEdit] = []
         for idx, fc in enumerate((fc1, fc2, fc3, fc4, fc5), start=1):
             fc.set_theme(PVP_ZONE_THEME)
             label_zone, field_zone = fc.split_v((1, 1))
-            label_zone.set_widget_type("legenda")
-            field_zone.set_widget_type("campo")
+            _configure_zone(
+                label_zone,
+                zone_type="linha-legenda",
+                widget_type="legenda",
+            )
+            _configure_zone(
+                field_zone,
+                zone_type="linha-campo",
+                widget_type="campo",
+            )
 
             lbl = QLabel(f"Food Cost #{idx}", label_zone)
             lbl.setAlignment(Qt.AlignCenter)
@@ -1063,11 +1152,12 @@ class FTApp(QWidget):
             theme_name=ZONE_THEME,
             widget_type="botão",
         )
+        _configure_zone(C3AB, zone_type="secao-filtros-food-cost", widget_type="botão")
         C3AB.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         C3A.add(C3AB, 0)
         fcB1, fcB2, fcB3, fcB4, fcB5 = C3AB.split_h((1, 1, 1, 1, 1))
         for zone in (fcB1, fcB2, fcB3, fcB4, fcB5):
-            zone.set_widget_type("botão")
+            _configure_zone(zone, zone_type="coluna-botoes", widget_type="botão")
 
         level_comments: dict[str, str] = {}
         repo = getattr(self.ds, "fcost", None)
@@ -1151,16 +1241,25 @@ class FTApp(QWidget):
             theme_name=ZONE_THEME,
             widget_type="editor",
         )
+        _configure_zone(self.C4, zone_type="bloco-preparacao", widget_type="editor")
         page_ly.addWidget(self._section_box("[B4] - Preparação", self.C4), 1)
 
         C4_text, C4_gallery = self.C4.split_v((3, 2))
-        C4_text.set_widget_type("editor")
-        C4_gallery.set_widget_type("legenda")
+        _configure_zone(
+            C4_text,
+            zone_type="secao-texto-preparacao",
+            widget_type="editor",
+        )
+        _configure_zone(
+            C4_gallery,
+            zone_type="galeria-preparacao",
+            widget_type="legenda",
+        )
 
         self.prep_previews: list[PrepImagePreview] = []
         gallery_slots = C4_gallery.split_h((1, 1, 1, 1))
         for slot in gallery_slots:
-            slot.set_widget_type("legenda")
+            _configure_zone(slot, zone_type="slot-preparacao", widget_type="legenda")
         for idx, slot in enumerate(gallery_slots, start=1):
             preview = PrepImagePreview(idx, self.service)
             slot.add(preview, 1)
@@ -1238,6 +1337,11 @@ class FTApp(QWidget):
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
             theme_name=ZONE_THEME,
+            widget_type="caixa de seleção",
+        )
+        _configure_zone(
+            self.C5,
+            zone_type="bloco-alergenios",
             widget_type="caixa de seleção",
         )
         page_ly.addWidget(self._section_box("[B5] - Nutrição / Alergénios", self.C5), 0)

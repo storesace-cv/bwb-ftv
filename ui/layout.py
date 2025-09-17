@@ -80,6 +80,8 @@ class Zone(QWidget):
         show_overlays: bool = True,
         theme_name: str | None = None,
         widget_type: str | None = None,
+        zone_type: str | None = None,
+        widget_qt_class: str | None = None,
     ):
         if not validate_tag(tag):
             raise ValueError(f"Invalid zone tag: {tag}")
@@ -91,7 +93,9 @@ class Zone(QWidget):
         self._labels: list[QLabel] = []
         self._overlay_active = False
         self._theme_name: str | None = None
-        self._widget_type: str | None = widget_type
+        self._widget_type: str | None = widget_type or None
+        self._zone_type: str | None = zone_type or None
+        self._widget_qt_class: str | None = widget_qt_class or None
         if flow == "v":
             self.ly = QVBoxLayout(self)
         else:
@@ -173,6 +177,22 @@ class Zone(QWidget):
         self._sync_style_label()
 
     @property
+    def zone_type(self) -> str | None:
+        return self._zone_type
+
+    def set_zone_type(self, zone_type: str | None) -> None:
+        self._zone_type = zone_type or None
+        self._sync_style_label()
+
+    @property
+    def widget_qt_class(self) -> str | None:
+        return self._widget_qt_class
+
+    def set_widget_qt_class(self, widget_qt_class: str | None) -> None:
+        self._widget_qt_class = widget_qt_class or None
+        self._sync_style_label()
+
+    @property
     def base_stylesheet(self) -> str:
         return self._base_stylesheet
 
@@ -192,11 +212,18 @@ class Zone(QWidget):
         self._sync_style_label()
 
     def _style_label_text(self) -> str | None:
-        if self._theme_name:
-            if self._widget_type:
-                return f"{self._widget_type} | {self._theme_name}"
-            return self._theme_name
-        return None
+        segments = [
+            self._zone_type,
+            self._widget_qt_class,
+            self._widget_type,
+            self._theme_name,
+        ]
+        if self._theme_name is None and not any(
+            segment for segment in (self._zone_type, self._widget_qt_class)
+        ):
+            return None
+        filtered = [segment for segment in segments if segment]
+        return " | ".join(filtered) if filtered else None
 
     def _sync_style_label(self) -> None:
         if self._overlay_active:
@@ -330,7 +357,14 @@ class Zone(QWidget):
         for label in self._labels:
             label.setFixedWidth(maxw)
 
-    def split_h(self, ratios=(1, 1)):
+    def split_h(
+        self,
+        ratios=(1, 1),
+        *,
+        zone_type: str | None = None,
+        widget_type: str | None = None,
+        widget_qt_class: str | None = None,
+    ):
         cont = QWidget(self)
         cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         h = QHBoxLayout(cont)
@@ -345,6 +379,15 @@ class Zone(QWidget):
             tag = f"{self.tag}.{tag_suf}"
             if not validate_tag(tag):
                 raise ValueError(f"Invalid zone tag: {tag}")
+            child_zone_type = self._zone_type if zone_type is None else zone_type
+            child_widget_type = (
+                self._widget_type if widget_type is None else widget_type
+            )
+            child_widget_qt_class = (
+                self._widget_qt_class
+                if widget_qt_class is None
+                else widget_qt_class
+            )
             zone = Zone(
                 tag,
                 cont,
@@ -354,13 +397,23 @@ class Zone(QWidget):
                 level=self._level + 1,
                 show_overlays=DEV_OVERLAYS,
                 theme_name=self._theme_name,
+                widget_type=child_widget_type,
+                zone_type=child_zone_type,
+                widget_qt_class=child_widget_qt_class,
             )
             h.addWidget(zone, ratio)
             zones.append(zone)
         self.ly.addWidget(cont, 1)
         return tuple(zones)
 
-    def split_v(self, ratios=(1, 1)):
+    def split_v(
+        self,
+        ratios=(1, 1),
+        *,
+        zone_type: str | None = None,
+        widget_type: str | None = None,
+        widget_qt_class: str | None = None,
+    ):
         cont = QWidget(self)
         cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         v = QVBoxLayout(cont)
@@ -371,6 +424,15 @@ class Zone(QWidget):
             tag = f"{self.tag}.{idx}"
             if not validate_tag(tag):
                 raise ValueError(f"Invalid zone tag: {tag}")
+            child_zone_type = self._zone_type if zone_type is None else zone_type
+            child_widget_type = (
+                self._widget_type if widget_type is None else widget_type
+            )
+            child_widget_qt_class = (
+                self._widget_qt_class
+                if widget_qt_class is None
+                else widget_qt_class
+            )
             zone = Zone(
                 tag,
                 cont,
@@ -380,6 +442,9 @@ class Zone(QWidget):
                 level=self._level + 1,
                 show_overlays=DEV_OVERLAYS,
                 theme_name=self._theme_name,
+                widget_type=child_widget_type,
+                zone_type=child_zone_type,
+                widget_qt_class=child_widget_qt_class,
             )
             v.addWidget(zone, ratio)
             zones.append(zone)
