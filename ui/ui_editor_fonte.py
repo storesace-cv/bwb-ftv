@@ -122,6 +122,7 @@ from .dialogs import (
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
 ZONE_THEME = "bwb-style-1"
+PVP_ZONE_THEME = "bwb-style-1-center"
 logger = logging.getLogger(__name__)
 
 # ---------------------- Image Preview ----------------------
@@ -838,6 +839,7 @@ class FTApp(QWidget):
         pvp1, pvp2, pvp3, pvp4, pvp5 = C1A21_base_zone.split_h((1, 1, 1, 1, 1))
 
         for idx, zone in enumerate((pvp1, pvp2, pvp3, pvp4, pvp5), start=1):
+            zone.set_theme(PVP_ZONE_THEME)
             label_text = f"PVP #{idx}"
             overlay = f"PrecosTaxas.Preco{idx}"
             lbl = QLabel(overlay if layout.DEV_OVERLAYS else label_text)
