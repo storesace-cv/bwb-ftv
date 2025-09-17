@@ -202,6 +202,132 @@ def apply_fcfilter_btn_style(
 
 _TOOLTIP_COPY_HANDLER_FLAG = "tooltipCopyHandlerInstalled"
 _TOOLTIP_COPY_FILTER_OBJECT = "_tooltipCopyEventFilter"
+_TOOLTIP_COPY_FEEDBACK_PROPERTY = "_tooltipCopyFeedbackText"
+_GLOBAL_TOOLTIP_FILTER: QObject | None = None
+
+
+def _layout_overlays_enabled() -> bool:
+    try:  # pragma: no cover - defensive import path
+        from . import layout  # type: ignore circular import
+    except Exception:  # pragma: no cover - defensive path
+        return False
+    return bool(getattr(layout, "DEV_OVERLAYS", False))
+
+
+def _overlay_context(widget: QWidget | None) -> bool:
+    current = widget
+    while isinstance(current, QWidget):
+        value = current.property("overlays")
+        if value is not None:
+            if isinstance(value, str):
+                return value.strip().lower() == "on"
+            return bool(value)
+        parent = current.parentWidget
+        if callable(parent):
+            current = parent()
+        else:  # pragma: no cover - unexpected Qt object
+            break
+    return _layout_overlays_enabled()
+
+
+def _event_global_position(event: QEvent, widget: QWidget | None) -> QPoint | None:
+    global_pos = getattr(event, "globalPos", None)
+    if callable(global_pos):
+        global_pos = global_pos()
+    if global_pos is not None:
+        return global_pos
+    if widget is not None:
+        local_pos = getattr(event, "pos", None)
+        if callable(local_pos):
+            local_pos = local_pos()
+        if isinstance(local_pos, QPoint):
+            return widget.mapToGlobal(local_pos)
+    return None
+
+
+def _copy_visible_tooltip(
+    feedback: str | None,
+    global_pos: QPoint | None,
+    widget: QWidget | None,
+) -> bool:
+    if not QToolTip.isVisible():
+        return False
+    if not _overlay_context(widget):
+        return False
+    text = QToolTip.text()
+    if not text:
+        return False
+    QApplication.clipboard().setText(text)
+    if feedback and global_pos is not None:
+        display = f"{text}\n\n{feedback}" if text else feedback
+        anchor = widget if isinstance(widget, QWidget) else None
+        QToolTip.showText(global_pos, display, anchor)
+    return True
+
+
+def _copy_widget_tooltip(
+    widget: QWidget,
+    feedback: str | None,
+    global_pos: QPoint | None,
+) -> None:
+    text = widget.toolTip()
+    if not text:
+        return
+    QApplication.clipboard().setText(text)
+    if feedback and global_pos is not None:
+        QToolTip.showText(global_pos, feedback, widget)
+
+
+class _TooltipCopyGlobalFilter(QObject):
+    def __init__(
+        self,
+        default_feedback: str | None = None,
+        parent: QObject | None = None,
+    ) -> None:
+        super().__init__(parent)
+        self.default_feedback = default_feedback
+
+    def _feedback_for(self, widget: QWidget | None) -> str | None:
+        current = widget
+        while isinstance(current, QWidget):
+            value = current.property(_TOOLTIP_COPY_FEEDBACK_PROPERTY)
+            if isinstance(value, tuple) and len(value) == 2 and value[0] is True:
+                return value[1]
+            if isinstance(value, str):
+                return value or None
+            if value:
+                return str(value)
+            parent = current.parentWidget
+            if callable(parent):
+                current = parent()
+            else:  # pragma: no cover - unexpected Qt object
+                break
+        return self.default_feedback
+
+    def eventFilter(self, obj: QObject, event: QEvent) -> bool:  # pragma: no cover - Qt glue
+        if event.type() == QEvent.MouseButtonPress:
+            button_getter = getattr(event, "button", None)
+            button = button_getter() if callable(button_getter) else button_getter
+            if button == Qt.RightButton:
+                widget = obj if isinstance(obj, QWidget) else None
+                global_pos = _event_global_position(event, widget)
+                feedback = self._feedback_for(widget)
+                _copy_visible_tooltip(feedback, global_pos, widget)
+        return False
+
+
+def _ensure_global_tooltip_filter(feedback: str | None) -> None:
+    global _GLOBAL_TOOLTIP_FILTER
+    app = QApplication.instance()
+    if app is None:
+        return
+    if isinstance(_GLOBAL_TOOLTIP_FILTER, _TooltipCopyGlobalFilter):
+        if feedback and not _GLOBAL_TOOLTIP_FILTER.default_feedback:
+            _GLOBAL_TOOLTIP_FILTER.default_feedback = feedback
+        return
+    global_filter = _TooltipCopyGlobalFilter(feedback, parent=app)
+    app.installEventFilter(global_filter)
+    _GLOBAL_TOOLTIP_FILTER = global_filter
 
 
 def install_tooltip_copy_handler(
@@ -221,18 +347,17 @@ def install_tooltip_copy_handler(
         widget.setToolTipDuration(DEFAULT_TOOLTIP_DURATION_MS)
 
     if widget.property(_TOOLTIP_COPY_HANDLER_FLAG):
+        widget.setProperty(_TOOLTIP_COPY_FEEDBACK_PROPERTY, (True, feedback))
+        _ensure_global_tooltip_filter(feedback)
         return
 
-    def _copy_from_global(global_pos: QPoint | None) -> None:
-        text = widget.toolTip()
-        if not text:
-            return
-        QApplication.clipboard().setText(text)
-        if feedback and global_pos is not None:
-            QToolTip.showText(global_pos, feedback, widget)
+    widget.setProperty(_TOOLTIP_COPY_FEEDBACK_PROPERTY, (True, feedback))
+    _ensure_global_tooltip_filter(feedback)
 
     def _copy_tooltip(pos: QPoint) -> None:
-        _copy_from_global(widget.mapToGlobal(pos))
+        if QToolTip.isVisible() and _overlay_context(widget):
+            return
+        _copy_widget_tooltip(widget, feedback, widget.mapToGlobal(pos))
 
     class _TooltipCopyFilter(QObject):
         def __init__(self, parent: QObject | None = None) -> None:
@@ -241,10 +366,10 @@ def install_tooltip_copy_handler(
         def eventFilter(self, obj: QObject, event: QEvent) -> bool:  # pragma: no cover - Qt glue
             if obj is widget and event.type() == QEvent.MouseButtonPress:
                 if getattr(event, "button", None) and event.button() == Qt.RightButton:
-                    global_pos = getattr(event, "globalPos", None)
-                    if callable(global_pos):
-                        global_pos = global_pos()
-                    _copy_from_global(global_pos)
+                    if QToolTip.isVisible() and _overlay_context(widget):
+                        return False
+                    global_pos = _event_global_position(event, widget)
+                    _copy_widget_tooltip(widget, feedback, global_pos)
             return False
 
     widget.setContextMenuPolicy(Qt.CustomContextMenu)
