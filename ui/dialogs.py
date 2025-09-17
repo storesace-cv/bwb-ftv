@@ -157,6 +157,11 @@ def edit_fcost_values(parent, repo) -> None:
         "QTableWidget::item:hover { background: #00008b; color: #fff; }"
     )
     tbl.setContextMenuPolicy(Qt.CustomContextMenu)
+    if hasattr(tbl, "setToolTipDuration"):
+        tbl.setToolTipDuration(3000)
+    viewport = tbl.viewport()
+    if viewport is not None and hasattr(viewport, "setToolTipDuration"):
+        viewport.setToolTipDuration(3000)
 
     def _copy_comment_tooltip(pos):
         viewport_pos = tbl.viewport().mapFrom(tbl, pos)
