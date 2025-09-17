@@ -1,7 +1,9 @@
 import pytest
 
-# Skip when the PyQt5/libGL runtime is unavailable on the test machine.
+# Skip when PyQt5 or its libGL-backed QtCore/QtWidgets modules are unavailable.
 pytest.importorskip("PyQt5", reason="PyQt5 requires libGL.so.1")
+pytest.importorskip("PyQt5.QtCore", reason="PyQt5.QtCore requires libGL.so.1")
+pytest.importorskip("PyQt5.QtWidgets", reason="PyQt5.QtWidgets requires libGL.so.1")
 
 from PyQt5.QtCore import Qt, qInstallMessageHandler
 from PyQt5.QtWidgets import QLabel, QLineEdit
