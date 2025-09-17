@@ -144,7 +144,11 @@ class Zone(QWidget):
         self._style_lbl.hide()
         header_layout.addWidget(self._style_lbl, 0, Qt.AlignLeft)
 
-        self.ly.addWidget(self._tag_container, 0, Qt.AlignLeft)
+        self._tag_container_alignment = Qt.AlignLeft
+        self.ly.addWidget(self._tag_container, 0, self._tag_container_alignment)
+        self._tag_container_index = self.ly.indexOf(self._tag_container)
+        if self._tag_container_index < 0:
+            self._tag_container_index = 0
 
         selector = f"#{_escape_object_name(self.objectName())}" if self.objectName() else ""
         self._base_stylesheet = (
@@ -200,6 +204,7 @@ class Zone(QWidget):
         self.setProperty("overlays", "on" if active else "off")
         name = self.objectName()
         selector = f"#{_escape_object_name(name)}" if name else ""
+        header_present = self.ly.indexOf(self._tag_container) != -1
         if active:
             style = (
                 f"{selector} {{ background:{bg_for_level(self._level)}; border:2px dashed blue; }}"
@@ -207,10 +212,19 @@ class Zone(QWidget):
                 else f"background:{bg_for_level(self._level)}; border:2px dashed blue;"
             )
             self.setStyleSheet(style)
+            if not header_present:
+                self.ly.insertWidget(
+                    self._tag_container_index,
+                    self._tag_container,
+                    0,
+                    self._tag_container_alignment,
+                )
             self._tag_container.show()
             self._tag_lbl.show()
         else:
             self.setStyleSheet(self._base_stylesheet)
+            if header_present:
+                self.ly.removeWidget(self._tag_container)
             self._tag_container.hide()
             self._tag_lbl.hide()
         self._sync_style_label()
