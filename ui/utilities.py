@@ -1,14 +1,16 @@
 from enum import Enum
 from typing import Sequence
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QPoint, QObject, QEvent
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
+    QApplication,
     QComboBox,
     QLabel,
     QLineEdit,
     QPushButton,
     QSizePolicy,
+    QToolTip,
     QVBoxLayout,
     QWidget,
 )
@@ -195,3 +197,55 @@ def apply_fcfilter_btn_style(
         active_alpha=_format_alpha(active_alpha),
     )
     button.setStyleSheet(stylesheet)
+_TOOLTIP_COPY_HANDLER_FLAG = "tooltipCopyHandlerInstalled"
+_TOOLTIP_COPY_FILTER_OBJECT = "_tooltipCopyEventFilter"
+
+
+def install_tooltip_copy_handler(
+    widget: QWidget,
+    *,
+    feedback: str | None = "Copiado para a área de transferência",
+) -> None:
+    """Allow ``widget`` to copy its tooltip text on right-click.
+
+    The handler is idempotent and can be invoked multiple times on the same widget.
+    When the tooltip is empty no clipboard update occurs.
+    """
+
+    if widget is None:
+        return
+    if widget.property(_TOOLTIP_COPY_HANDLER_FLAG):
+        return
+
+    def _copy_from_global(global_pos: QPoint | None) -> None:
+        text = widget.toolTip()
+        if not text:
+            return
+        QApplication.clipboard().setText(text)
+        if feedback and global_pos is not None:
+            QToolTip.showText(global_pos, feedback, widget)
+
+    def _copy_tooltip(pos: QPoint) -> None:
+        _copy_from_global(widget.mapToGlobal(pos))
+
+    class _TooltipCopyFilter(QObject):
+        def __init__(self, parent: QObject | None = None) -> None:
+            super().__init__(parent)
+
+        def eventFilter(self, obj: QObject, event: QEvent) -> bool:  # pragma: no cover - Qt glue
+            if obj is widget and event.type() == QEvent.MouseButtonPress:
+                if getattr(event, "button", None) and event.button() == Qt.RightButton:
+                    global_pos = getattr(event, "globalPos", None)
+                    if callable(global_pos):
+                        global_pos = global_pos()
+                    _copy_from_global(global_pos)
+            return False
+
+    widget.setContextMenuPolicy(Qt.CustomContextMenu)
+    widget.customContextMenuRequested.connect(_copy_tooltip)
+    widget.setProperty(_TOOLTIP_COPY_HANDLER_FLAG, True)
+    if widget.property(_TOOLTIP_COPY_FILTER_OBJECT) is None:
+        filter_obj = _TooltipCopyFilter(widget)
+        widget.installEventFilter(filter_obj)
+        widget.setProperty(_TOOLTIP_COPY_FILTER_OBJECT, filter_obj)
+
