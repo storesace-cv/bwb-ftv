@@ -775,6 +775,12 @@ class FTApp(QWidget):
         _make_family_label("Família:", "Produtos.Familia")
         _make_family_label("Sub-família:", "Produtos.SubFamilia")
         labels_zone.sync_label_widths()
+        margins = labels_zone.ly.contentsMargins()
+        ident_label_zone_width = lbl_w + margins.left() + margins.right()
+        labels_zone.setFixedWidth(ident_label_zone_width)
+        labels_zone.update()
+        label_col.setFixedWidth(ident_label_zone_width)
+        label_col.update()
 
         self.lbFamiliaVal = QLineEdit("")
         make_readonly_lineedit(self.lbFamiliaVal, False)
