@@ -711,23 +711,25 @@ class FTApp(QWidget):
         )
         label_col.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
 
-        def _make_ident_label(text: str, overlay: str) -> QLabel:
-            display = overlay if label_col._overlay_active and overlay else text
-            lbl = QLabel(display, label_col)
+        label_top, label_bottom = label_col.split_v((1, 1))
+
+        def _make_ident_label(zone: Zone, text: str, overlay: str) -> QLabel:
+            display = overlay if zone._overlay_active and overlay else text
+            lbl = QLabel(display, zone)
             lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             lbl.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Maximum)
             lbl.setProperty("userLabel", text)
             lbl.setProperty("devLabel", overlay)
-            if label_col._overlay_active and overlay:
+            if zone._overlay_active and overlay:
                 apply_overlay_label_style(lbl)
             else:
                 apply_label_style(lbl)
-            label_col.ly.addWidget(lbl, 0, Qt.AlignRight | Qt.AlignVCenter)
+            zone.ly.addWidget(lbl, 0, Qt.AlignRight | Qt.AlignVCenter)
             label_col._labels.append(lbl)
             return lbl
 
-        _make_ident_label("Código:", "Produtos.Codigo")
-        _make_ident_label("Nome do Artigo:", "Produtos.Nome")
+        _make_ident_label(label_top, "Código:", "Produtos.Codigo")
+        _make_ident_label(label_bottom, "Nome do Artigo:", "Produtos.Nome")
         label_col.sync_label_widths()
 
         for field in (self.edCodigo, self.edNome):
