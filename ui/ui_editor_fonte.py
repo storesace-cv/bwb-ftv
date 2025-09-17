@@ -700,6 +700,13 @@ class FTApp(QWidget):
         make_readonly_lineedit(self.edNome, True)
         self.edNome.setStyleSheet(FIELD_STYLE)
         label_col, field_col = self.C1A1.split_h((0, 1))
+        field_col_margins = field_col.ly.contentsMargins()
+        field_col.ly.setContentsMargins(
+            3,
+            field_col_margins.top(),
+            field_col_margins.right(),
+            field_col_margins.bottom(),
+        )
         label_col.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
 
         def _make_ident_label(text: str, overlay: str) -> QLabel:
@@ -753,6 +760,13 @@ class FTApp(QWidget):
         C1A21_top, C1A21_base = C1A21.split_v((1, 2))
         C1A21_top.apply_overlays(True)
         labels_zone, values_zone = C1A21_top.split_h((1, 3))
+        values_zone_margins = values_zone.ly.contentsMargins()
+        values_zone.ly.setContentsMargins(
+            3,
+            values_zone_margins.top(),
+            values_zone_margins.right(),
+            values_zone_margins.bottom(),
+        )
         labels_zone.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
         values_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
