@@ -51,6 +51,22 @@ def _widget_classes(widget: QLabel) -> list[str]:
     return [str(value)]
 
 
+def _compose_style_label(
+    zone: layout.Zone,
+    theme_name: str | None,
+) -> str:
+    return " | ".join(
+        segment
+        for segment in (
+            zone.zone_type,
+            zone.widget_qt_class,
+            zone.widget_type,
+            theme_name,
+        )
+        if segment
+    )
+
+
 def test_apply_label_style_center_variant_sets_alignment(qapp):
     label = QLabel("Centro")
     apply_label_style(label, alignment=AlignmentVariant.CENTER)
@@ -214,7 +230,8 @@ def test_zone_overlay_shows_style_name_for_any_registered_theme(
     zone.apply_overlays(True)
 
     assert not zone._style_lbl.isHidden()
-    assert zone._style_lbl.text() == f"{widget_type} | {theme_name}"
+    expected = _compose_style_label(zone, theme_name)
+    assert zone._style_lbl.text() == expected
 
 
 def test_zone_overlay_hides_style_label_when_disabled(qapp, overlays_enabled):
@@ -242,9 +259,7 @@ def test_zone_set_theme_updates_style_label_when_overlay_active(
     zone.set_theme(theme_name)
 
     assert not zone._style_lbl.isHidden()
-    expected = (
-        theme_name if widget_type is None else f"{widget_type} | {theme_name}"
-    )
+    expected = _compose_style_label(zone, theme_name)
     assert zone._style_lbl.text() == expected
 
 
@@ -264,9 +279,7 @@ def test_zone_init_theme_shows_style_label_when_overlays_active(
     assert zone.base_stylesheet == _theme_stylesheet(zone, theme_name)
     assert zone.styleSheet() == _overlay_stylesheet(zone)
     assert not zone._style_lbl.isHidden()
-    expected = (
-        theme_name if widget_type is None else f"{widget_type} | {theme_name}"
-    )
+    expected = _compose_style_label(zone, theme_name)
     assert zone._style_lbl.text() == expected
 
 
@@ -274,7 +287,8 @@ def test_zone_style_label_without_widget_type_stays_on_theme(qapp, overlays_enab
     theme_name = "bwb-style-1"
     zone = layout.Zone("B1", show_overlays=True, theme_name=theme_name)
 
-    assert zone._style_lbl.text() == theme_name
+    expected = _compose_style_label(zone, theme_name)
+    assert zone._style_lbl.text() == expected
 
 
 def test_zone_set_widget_type_updates_style_label(qapp, overlays_enabled):
@@ -282,8 +296,56 @@ def test_zone_set_widget_type_updates_style_label(qapp, overlays_enabled):
 
     zone.set_widget_type("campo")
 
-    assert zone._style_lbl.text() == "campo | bwb-style-1"
+    expected = _compose_style_label(zone, "bwb-style-1")
+    assert zone._style_lbl.text() == expected
 
+
+def test_zone_style_label_includes_all_segments(qapp, overlays_enabled):
+    zone = layout.Zone(
+        "B1",
+        show_overlays=True,
+        theme_name="bwb-style-1",
+        widget_type="campo",
+    )
+
+    zone.set_zone_type("secao-teste")
+    zone.set_widget_qt_class("QLineEdits")
+
+    expected = _compose_style_label(zone, "bwb-style-1")
+    assert expected == "secao-teste | QLineEdits | campo | bwb-style-1"
+    assert zone._style_lbl.text() == expected
+
+
+def test_zone_style_label_skips_missing_segments(qapp, overlays_enabled):
+    zone = layout.Zone("B1", show_overlays=True, theme_name="bwb-style-1")
+
+    zone.set_zone_type("secao-teste")
+    expected = _compose_style_label(zone, "bwb-style-1")
+    assert expected == "secao-teste | bwb-style-1"
+    assert zone._style_lbl.text() == expected
+
+    zone.set_zone_type(None)
+    zone.set_widget_type("campo")
+    expected = _compose_style_label(zone, "bwb-style-1")
+    assert expected == "campo | bwb-style-1"
+    assert zone._style_lbl.text() == expected
+
+
+def test_zone_split_propagates_metadata(qapp):
+    zone = layout.Zone(
+        "B1.C1",
+        show_overlays=False,
+        widget_type="campo",
+        zone_type="secao-teste",
+        widget_qt_class="QLineEdits",
+    )
+
+    left, right = zone.split_h((1, 1))
+
+    for child in (left, right):
+        assert child.zone_type == "secao-teste"
+        assert child.widget_type == "campo"
+        assert child.widget_qt_class == "QLineEdits"
 
 def test_zone_add_row_has_no_debug_styles_by_default(qapp):
     zone = layout.Zone("B1")
