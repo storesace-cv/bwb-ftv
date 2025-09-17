@@ -975,17 +975,19 @@ class FTApp(QWidget):
         self.lbFoodCosts: list[QLabel] = []
         for idx, fc in enumerate((fc1, fc2, fc3, fc4, fc5), start=1):
             fc.set_theme(PVP_ZONE_THEME)
+            label_zone, field_zone = fc.split_v((1, 1))
 
             lbl = QLabel(f"Food Cost #{idx}")
             lbl.setAlignment(Qt.AlignCenter)
             apply_label_style(lbl, alignment=AlignmentVariant.CENTER)
             match_font(lbl, self.edNome)
-            fc.add(lbl, 0)
+            label_zone.add(lbl, 0)
+
             val = QLabel("—")
             val.setAlignment(Qt.AlignCenter)
             apply_label_style(val, alignment=AlignmentVariant.CENTER)
             match_font(val, self.edNome)
-            fc.add(val, 0)
+            field_zone.add(val, 0)
             self.lbFoodCosts.append(val)
 
         C3AB = Zone(
