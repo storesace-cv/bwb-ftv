@@ -20,7 +20,11 @@ from PyQt5.QtWidgets import (
 )
 
 from .bwb_style_1 import ZONE_STYLES
-from .utilities import apply_label_style, apply_overlay_label_style
+from .utilities import (
+    apply_label_style,
+    apply_overlay_label_style,
+    install_tooltip_copy_handler,
+)
 
 
 _ENV_DEV_OVERLAYS = os.getenv("BWB_DEV_OVERLAYS")
@@ -372,6 +376,7 @@ class Zone(QWidget):
         grid.addWidget(value_widget, 0, 1, alignment=Qt.AlignTop | Qt.AlignLeft)
         self.ly.addWidget(row, 0, Qt.AlignTop)
         self._labels.append(lbl)
+        install_tooltip_copy_handler(lbl)
         if self._overlay_active and overlay_text is not None:
             lbl.setToolTip(self._build_label_tooltip(label_text, overlay_text))
         else:

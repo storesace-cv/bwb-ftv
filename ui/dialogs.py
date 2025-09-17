@@ -3,7 +3,7 @@ import sqlite3
 from collections.abc import Callable
 from pathlib import Path
 
-from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox, QToolTip
 from utils.paths import get_project_root
 from utils.formatting import format_pt_number
 from data import create_backup, restore_backup
@@ -156,6 +156,21 @@ def edit_fcost_values(parent, repo) -> None:
     tbl.setStyleSheet(
         "QTableWidget::item:hover { background: #00008b; color: #fff; }"
     )
+    tbl.setContextMenuPolicy(Qt.CustomContextMenu)
+
+    def _copy_comment_tooltip(pos):
+        viewport_pos = tbl.viewport().mapFrom(tbl, pos)
+        item = tbl.itemAt(viewport_pos)
+        if item is None:
+            return
+        text = item.toolTip()
+        if not text:
+            return
+        QApplication.clipboard().setText(text)
+        global_pos = tbl.viewport().mapToGlobal(viewport_pos)
+        QToolTip.showText(global_pos, "Copiado para a área de transferência", tbl)
+
+    tbl.customContextMenuRequested.connect(_copy_comment_tooltip)
     vbox.addWidget(tbl)
 
     hbox = QHBoxLayout()
