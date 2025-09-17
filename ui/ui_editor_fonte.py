@@ -955,6 +955,8 @@ class FTApp(QWidget):
         for idx, zone in enumerate((pvp1, pvp2, pvp3, pvp4, pvp5), start=1):
             zone.set_theme(PVP_ZONE_THEME)
             label_zone, field_zone = zone.split_v((1, 1))
+            label_zone.set_theme(ZONE_THEME)
+            field_zone.set_theme(PVP_ZONE_THEME)
             _configure_zone(
                 label_zone,
                 zone_type="linha-legenda",
