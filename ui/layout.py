@@ -708,7 +708,7 @@ def apply_bwb_etiqueta_normal(zone: Zone) -> None:
         "border-radius: 5px; "
         "color: rgba(255, 255, 255, 1); "
         "padding: 4px 6px; "
-        "margin: 0px; "
+        "margin: 4px; "
         "box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.5); "
         "text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2); "
         "transition: all 0.2s ease; "

@@ -370,19 +370,27 @@ def test_apply_bwb_etiqueta_normal_registers_stylesheet_and_alignment(qapp):
 
     escaped = layout._escape_object_name(zone.objectName())
     expected_selector = f"#{escaped}[overlays=\"off\"]"
-    expected_stylesheet = (
-        f"{expected_selector} {{ font-size: 14pt; font-weight: 700; "
-        "background-color: rgba(44, 54, 57, 0.80); "
-        "border: 1px solid rgba(0, 0, 0, 1); "
-        "border-radius: 5px; "
-        "color: rgba(255, 255, 255, 1); "
-        "padding: 4px 6px; margin: 0px; }}"
-    )
+    style = zone.base_stylesheet
 
-    assert zone.base_stylesheet == expected_stylesheet
+    assert zone.styleSheet() == style
+    assert style.startswith(f"{expected_selector} {{ ")
+    assert "font-size: 14pt;" in style
+    assert "font-weight: 700;" in style
+    assert "background: linear-gradient(" in style
+    assert "border: 1px solid rgba(0, 0, 0, 0.8);" in style
+    assert "border-top-color: rgba(255, 255, 255, 0.5);" in style
+    assert "border-left-color: rgba(255, 255, 255, 0.5);" in style
+    assert "border-radius: 5px;" in style
+    assert "color: rgba(255, 255, 255, 1);" in style
+    assert "padding: 4px 6px;" in style
+    assert "margin: 4px;" in style
+    assert "box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.5);" in style
+    assert "text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);" in style
+    assert "transition: all 0.2s ease;" in style
+
     assert zone._base_style_label == "bwb-etiqueta-normal"
-    assert "border: 1px solid" in zone.base_stylesheet
-    assert "border-radius: 5px" in zone.base_stylesheet
+    assert "border: 1px solid" in style
+    assert "border-radius: 5px" in style
 
     value_widget = QLabel("valor", zone)
     label = zone.add_row("Etiqueta", value_widget)
