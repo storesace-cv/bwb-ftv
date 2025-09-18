@@ -133,6 +133,8 @@ def make_readonly_lineedit(
     *,
     alignment: AlignmentVariant | str | None = None,
 ) -> None:
+    """Configure ``le`` as a neutral read-only field with normal font weight."""
+
     le.setReadOnly(True)
     le.setFrame(False)
     variant = _normalize_alignment(
@@ -144,10 +146,11 @@ def make_readonly_lineedit(
         le.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
     else:
         le.setStyleSheet(FIELD_STYLE)
-    f = QFont(le.font())
-    f.setBold(False)
-    f.setWeight(QFont.Normal)
-    le.setFont(f)
+    font = QFont(le.font())
+    if font.bold() or font.weight() != QFont.Normal:
+        font.setBold(False)
+        font.setWeight(QFont.Normal)
+    le.setFont(font)
     le.setFixedHeight(le.sizeHint().height())
 
 
