@@ -7,6 +7,7 @@ nesses rótulos.
 
 import os
 import re
+from dataclasses import dataclass
 from typing import Any, Sequence
 
 from PyQt5.QtCore import Qt
@@ -107,6 +108,34 @@ def _clear_overlay_class(label: QLabel) -> None:
         label.setProperty("class", " ".join(filtered))
     else:
         label.setProperty("class", None)
+
+
+@dataclass(slots=True)
+class ZoneMetadata:
+    """Serializable snapshot of a :class:`Zone` for Qt Quick bindings."""
+
+    tag: str
+    level: int = 0
+    zone_type: str | None = None
+    widget_type: str | None = None
+    widget_qt_class: str | None = None
+    base_style_label: str | None = None
+    margin_h: int | None = None
+    margin_v: int | None = None
+    overlays_active: bool = False
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "tag": self.tag,
+            "level": self.level,
+            "zoneType": self.zone_type,
+            "widgetType": self.widget_type,
+            "widgetQtClass": self.widget_qt_class,
+            "baseStyleLabel": self.base_style_label,
+            "marginH": self.margin_h,
+            "marginV": self.margin_v,
+            "overlaysActive": self.overlays_active,
+        }
 
 
 class Zone(QWidget):
@@ -256,6 +285,26 @@ class Zone(QWidget):
         self._sync_style_label()
 
     @property
+    def base_style_label(self) -> str | None:
+        return self._base_style_label
+
+    @property
+    def level(self) -> int:
+        return self._level
+
+    @property
+    def margin_h(self) -> int:
+        return self._margin_h
+
+    @property
+    def margin_v(self) -> int:
+        return self._margin_v
+
+    @property
+    def overlays_active(self) -> bool:
+        return bool(self._overlay_active)
+
+    @property
     def zone_type(self) -> str | None:
         return self._zone_type
 
@@ -329,6 +378,21 @@ class Zone(QWidget):
         info = style_dev_info if style_dev_info is not None else self.objectName()
         self.set_style_dev_info(info)
         return self
+
+    def to_metadata(self) -> ZoneMetadata:
+        """Return a :class:`ZoneMetadata` snapshot of the current zone."""
+
+        return ZoneMetadata(
+            tag=self.tag,
+            level=self.level,
+            zone_type=self.zone_type,
+            widget_type=self.widget_type,
+            widget_qt_class=self.widget_qt_class,
+            base_style_label=self.base_style_label,
+            margin_h=self.margin_h,
+            margin_v=self.margin_v,
+            overlays_active=self.overlays_active,
+        )
 
     @property
     def base_stylesheet(self) -> str:
