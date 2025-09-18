@@ -1086,6 +1086,8 @@ class FTApp(QWidget):
                 (
                     "QTableView {",
                     "    border: none;",
+                    "    background-color: transparent;",
+                    "    alternate-background-color: transparent;",
                     "}",
                     "QTableView::item {",
                     "    margin: 0;",
