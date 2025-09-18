@@ -41,19 +41,20 @@ def test_checkbox_right_click_copies_tooltip(qapp, qtbot):
     ft = FTApp.__new__(FTApp)
     ft.service = _DummyAllergenService()
     ft._allergen_checkboxes = {}
-    ft.C7 = Zone(
+    ft.B7_C1 = Zone(
         zone_tag("allergens_root"),
         show_overlays=False,
         theme_name="bwb-style-1",
         widget_type="caixa de seleção",
     )
-    qtbot.addWidget(ft.C7)
+    ft.C7 = ft.B7_C1
+    qtbot.addWidget(ft.B7_C1)
     ft._build_allergens_grid()
     checkbox = ft._allergen_checkboxes[1]
     tooltip_text = checkbox.toolTip()
     assert tooltip_text
-    ft.C7.show()
-    qtbot.waitUntil(ft.C7.isVisible)
+    ft.B7_C1.show()
+    qtbot.waitUntil(ft.B7_C1.isVisible)
     qapp.clipboard().clear()
     qtbot.mouseClick(checkbox, Qt.RightButton, pos=checkbox.rect().center(), delay=10)
     qtbot.waitUntil(lambda: qapp.clipboard().text() == tooltip_text)

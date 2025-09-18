@@ -1375,7 +1375,7 @@ class FTApp(QWidget):
         C6_text.add(self.edPrep, 1)
 
         # ---------------- B7 — Nutrição / Alergénios (B7.C1) ----------------
-        self.C7 = Zone(
+        self.B7_C1 = Zone(
             "B7.C1",
             self,
             flow="v",
@@ -1383,11 +1383,17 @@ class FTApp(QWidget):
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="caixa de seleção",
         )
-        self.C7.apply_metadata(
+        # ``self.C7`` is kept for backward compatibility with legacy code.
+        self.C7 = self.B7_C1
+
+        self.B7_C1.apply_metadata(
             zone_type="bloco-alergenios",
             widget_type="caixa de seleção",
         )
-        page_ly.addWidget(self._section_box("[B7] - Nutrição / Alergénios", self.C7), 0)
+        page_ly.addWidget(
+            self._section_box("[B7] - Nutrição / Alergénios", self.B7_C1),
+            0,
+        )
 
         self._build_allergens_grid()
 
@@ -1515,7 +1521,12 @@ class FTApp(QWidget):
             )
             grid.addWidget(cb, r, c, alignment=Qt.AlignLeft)
             checkboxes[key] = cb
-        self.C7.add(gridw, 0)
+        zone = getattr(self, "B7_C1", None)
+        if zone is None:
+            zone = getattr(self, "C7", None)
+        if zone is None:  # pragma: no cover - defensive guard
+            return
+        zone.add(gridw, 0)
         self._allergen_checkboxes = checkboxes
 
     # ---------- Ingredientes: colunas ----------
