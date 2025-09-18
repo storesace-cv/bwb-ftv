@@ -99,11 +99,14 @@ def apply_label_style(
     if OVERLAY_ON_CLASS in classes:
         classes = [cls for cls in classes if cls != OVERLAY_ON_CLASS]
         _set_widget_classes(label, classes)
-    base_style = CENTER_LABEL_STYLE if variant is AlignmentVariant.CENTER else LABEL_STYLE
+    if variant is AlignmentVariant.CENTER:
+        base_style = CENTER_LABEL_STYLE
+        label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+    else:
+        base_style = LABEL_STYLE
+        label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
     style = base_style if not extra else f"{base_style}\n{extra}"
     label.setStyleSheet(style)
-    if variant is AlignmentVariant.CENTER:
-        label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
     _refresh_widget_style(label)
 
 

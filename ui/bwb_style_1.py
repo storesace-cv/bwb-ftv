@@ -17,20 +17,23 @@ CENTER_FIELD_STYLE = _FIELD_STYLE_TEMPLATE.format(
     alignment_line="    qproperty-alignment: AlignHCenter | AlignVCenter;\n",
 )
 
-_LABEL_STYLE_TEMPLATE = (
+_BASE_LABEL_STYLE = (
     "QLabel {{\n"
-    "    background: none;\n"
+    "    background-color: transparent;\n"
     "    border: none;\n"
+    "    color: palette(windowText);\n"
     "    padding: 0;\n"
-    "{alignment_line}"
+    "    margin: 0;\n"
     "}}\n"
 )
 
-LABEL_STYLE = _LABEL_STYLE_TEMPLATE.format(alignment_line="")
+LABEL_STYLE = _BASE_LABEL_STYLE
 
-CENTER_LABEL_STYLE = _LABEL_STYLE_TEMPLATE.format(
-    alignment_line="    qproperty-alignment: AlignHCenter | AlignVCenter;\n",
-)
+# ``CENTER_LABEL_STYLE`` is kept for backwards compatibility even though it
+# currently matches ``LABEL_STYLE``.  Alignment is controlled directly in
+# ``apply_label_style`` within ``ui.utilities`` so the stylesheet remains flat
+# and neutral.
+CENTER_LABEL_STYLE = _BASE_LABEL_STYLE
 
 FCFILTER_BUTTON_STYLE_TEMPLATE = (
     "/* bwb-style-fcfilters-btn */\n"
