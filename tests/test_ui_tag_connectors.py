@@ -149,6 +149,6 @@ def test_load_record_populates_new_tag_widgets(qapp, tag_service):
         checkboxes = ft._allergen_checkboxes
         assert 10 in checkboxes and 11 in checkboxes
         assert checkboxes[10].isChecked()
-        assert isinstance(ft.C7.findChild(QCheckBox), QCheckBox)
+        assert isinstance(ft.B7_C1.findChild(QCheckBox), QCheckBox)
     finally:
         ft.close()
