@@ -7,7 +7,7 @@ nesses rótulos.
 
 import os
 import re
-from typing import Any
+from typing import Any, Sequence
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
@@ -38,6 +38,12 @@ DEV_OVERLAYS = (
 DEFAULT_ZONE_MARGINS = (3, 5)
 # Default maximum widget width used by Qt when no explicit constraint is set.
 _QT_MAX_WIDGET_WIDTH = 16777215
+
+_DEFAULT_ZONE_BASE_DECLARATIONS = (
+    "border: 1px solid rgba(0, 0, 0, 0.08);\n",
+    "border-radius: 12px;\n",
+    "padding: 6px;\n",
+)
 
 # Updated to allow block-prefixed cell identifiers like ``B1.C1``
 _TAG_RE = re.compile(r"^B\d+(?:\.C\d+(?:\.(?:A|B|\d+))*)?$")
@@ -104,6 +110,16 @@ def _clear_overlay_class(label: QLabel) -> None:
 
 class Zone(QWidget):
     """Célula real (com tag e overlay opcional)."""
+
+    _WIDGET_QT_CLASS_MAP = {
+        "campo": "QLineEdits",
+        "legenda": "QLabels",
+        "lista": "QComboBoxes",
+        "tabela": "QTableViews",
+        "botão": "QPushButtons",
+        "editor": "QTextEdits",
+        "caixa de seleção": "QCheckBoxes",
+    }
 
     def __init__(
         self,
@@ -256,6 +272,61 @@ class Zone(QWidget):
     def set_widget_qt_class(self, widget_qt_class: str | None) -> None:
         self._widget_qt_class = widget_qt_class or None
         self._sync_style_label()
+
+    @classmethod
+    def _resolve_widget_qt_class(cls, widget_type: str | None) -> str | None:
+        if widget_type is None:
+            return None
+        return cls._WIDGET_QT_CLASS_MAP.get(widget_type)
+
+    @staticmethod
+    def _normalize_declarations(
+        declarations: str | Sequence[str] | None,
+    ) -> str:
+        if declarations is None:
+            declarations = _DEFAULT_ZONE_BASE_DECLARATIONS
+        if isinstance(declarations, (list, tuple)):
+            return "".join(str(part) for part in declarations)
+        return str(declarations)
+
+    def apply_metadata(
+        self,
+        *,
+        zone_type: str | None = None,
+        widget_type: str | None = None,
+        style_dev_info: str | None = None,
+        base_declarations: str | Sequence[str] | None = None,
+        apply_base_style: bool = True,
+        base_style_label: str | None = None,
+    ) -> "Zone":
+        if apply_base_style:
+            declarations_text = self._normalize_declarations(base_declarations)
+            self.set_zone_stylesheet(
+                compose_stylesheet(self, declarations_text),
+                label=base_style_label,
+            )
+        elif base_style_label is not None:
+            self.set_zone_stylesheet(
+                self.base_stylesheet,
+                label=base_style_label,
+            )
+
+        if zone_type is not None:
+            self.set_zone_type(zone_type)
+
+        effective_widget_type = widget_type
+        if widget_type is not None:
+            self.set_widget_type(widget_type)
+        elif self.widget_type is not None:
+            effective_widget_type = self.widget_type
+
+        if effective_widget_type is not None:
+            self.set_widget_qt_class(
+                self._resolve_widget_qt_class(effective_widget_type)
+            )
+        info = style_dev_info if style_dev_info is not None else self.objectName()
+        self.set_style_dev_info(info)
+        return self
 
     @property
     def base_stylesheet(self) -> str:
