@@ -1092,7 +1092,6 @@ class FTApp(QWidget):
         self.C3.add(C3A, 1)
         food_cost_label = QLabel("Food Cost:")
         apply_label_style(food_cost_label)
-        match_font(food_cost_label, self.edNome)
         C3A.add(food_cost_label, 0)
 
         C3AA = Zone(
@@ -1139,13 +1138,11 @@ class FTApp(QWidget):
                 lbl.setToolTip(f"{user_label} — {dev_label}")
             else:
                 lbl.setToolTip("")
-            match_font(lbl, self.edNome)
             label_zone.add(lbl, 0)
             label_zone._labels.append(lbl)
             install_tooltip_copy_handler(lbl)
 
             val = QLineEdit("—", field_zone)
-            val.setFont(self.edNome.font())
             make_readonly_lineedit(val)
             val.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
