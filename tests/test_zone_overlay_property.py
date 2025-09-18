@@ -377,8 +377,14 @@ def test_apply_bwb_etiqueta_normal_aligns_without_theming(qapp):
     assert margins.bottom() == 0
     assert zone._label_alignment is AlignmentVariant.RIGHT
 
-    assert zone.base_stylesheet == original_stylesheet
-    assert zone.styleSheet() == original_stylesheet
+    updated_stylesheet = zone.base_stylesheet
+    assert zone.styleSheet() == updated_stylesheet
+    assert "margin: 0" in updated_stylesheet
+    assert "padding: 0" in updated_stylesheet
+    assert "padding: 6" not in updated_stylesheet
+    assert "margin: 6" not in updated_stylesheet
+    for declaration in ("background: transparent", "border: none"):
+        assert declaration in updated_stylesheet
     assert "linear-gradient" not in zone.base_stylesheet
     assert zone._base_style_label is None
 
