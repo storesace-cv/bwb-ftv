@@ -101,10 +101,9 @@ def apply_label_style(
         _set_widget_classes(label, classes)
     if variant is AlignmentVariant.CENTER:
         base_style = CENTER_LABEL_STYLE
-        label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
     else:
         base_style = LABEL_STYLE
-        label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+    label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
     style = base_style if not extra else f"{base_style}\n{extra}"
     label.setStyleSheet(style)
     _refresh_widget_style(label)
@@ -143,9 +142,9 @@ def make_readonly_lineedit(
     le.setProperty(_LINEEDIT_ALIGNMENT_PROPERTY, variant.value)
     if variant is AlignmentVariant.CENTER:
         le.setStyleSheet(CENTER_FIELD_STYLE)
-        le.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
     else:
         le.setStyleSheet(FIELD_STYLE)
+    le.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
     font = QFont(le.font())
     if font.bold() or font.weight() != QFont.Normal:
         font.setBold(False)

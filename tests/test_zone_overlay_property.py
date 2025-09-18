@@ -88,12 +88,12 @@ def _compose_style_label(
     )
 
 
-def test_apply_label_style_center_variant_sets_alignment(qapp):
+def test_apply_label_style_center_variant_uses_left_alignment(qapp):
     label = QLabel("Centro")
     apply_label_style(label, alignment=AlignmentVariant.CENTER)
 
     assert label.styleSheet() == CENTER_LABEL_STYLE
-    assert label.alignment() == Qt.AlignHCenter | Qt.AlignVCenter
+    assert label.alignment() == Qt.AlignLeft | Qt.AlignVCenter
     assert label.property("labelAlignmentVariant") == AlignmentVariant.CENTER.value
 
 
@@ -104,7 +104,7 @@ def test_apply_label_style_reuses_stored_alignment(qapp):
     apply_label_style(label)
 
     assert label.styleSheet() == CENTER_LABEL_STYLE
-    assert label.alignment() == Qt.AlignHCenter | Qt.AlignVCenter
+    assert label.alignment() == Qt.AlignLeft | Qt.AlignVCenter
 
 
 def test_apply_overlay_label_style_preserves_alignment_variant(qapp):
@@ -117,22 +117,22 @@ def test_apply_overlay_label_style_preserves_alignment_variant(qapp):
     apply_label_style(label)
 
     assert label.styleSheet() == CENTER_LABEL_STYLE
-    assert label.alignment() == Qt.AlignHCenter | Qt.AlignVCenter
+    assert label.alignment() == Qt.AlignLeft | Qt.AlignVCenter
 
 
-def test_make_readonly_lineedit_center_variant(qapp):
+def test_make_readonly_lineedit_center_variant_uses_left_alignment(qapp):
     le = QLineEdit("0")
     make_readonly_lineedit(le, alignment=AlignmentVariant.CENTER)
 
     assert le.isReadOnly()
     assert le.styleSheet() == CENTER_FIELD_STYLE
-    assert le.alignment() == Qt.AlignHCenter | Qt.AlignVCenter
+    assert le.alignment() == Qt.AlignLeft | Qt.AlignVCenter
     assert le.property("lineEditAlignmentVariant") == AlignmentVariant.CENTER.value
 
     make_readonly_lineedit(le)
 
     assert le.styleSheet() == CENTER_FIELD_STYLE
-    assert le.alignment() == Qt.AlignHCenter | Qt.AlignVCenter
+    assert le.alignment() == Qt.AlignLeft | Qt.AlignVCenter
 
 
 @pytest.fixture
