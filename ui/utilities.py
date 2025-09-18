@@ -127,7 +127,6 @@ def apply_overlay_label_style(label: QLabel) -> None:
 
 def make_readonly_lineedit(
     le: QLineEdit,
-    bold: bool = False,
     *,
     alignment: AlignmentVariant | str | None = None,
 ) -> None:
@@ -143,7 +142,7 @@ def make_readonly_lineedit(
     else:
         le.setStyleSheet(FIELD_STYLE)
     f = le.font()
-    f.setBold(bold)
+    f.setBold(False)
     le.setFont(f)
     le.setFixedHeight(le.sizeHint().height())
 
