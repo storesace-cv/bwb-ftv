@@ -23,6 +23,13 @@ _ZONE_TAGS: Mapping[str, str] = {
     "general_ident_label_codigo": "B1.C1.A.1.A.1",
     "general_ident_label_nome": "B1.C1.A.1.A.2",
 
+    # --- Simplified viewer aliases ---------------------------------------
+    "viewer_identification_code": "B1.C1",
+    "viewer_identification_name": "B1.C2",
+    "viewer_technical_state": "B4.C1",
+    "viewer_technical_validity": "B4.C2",
+    "viewer_notes_observations": "B5.C1",
+
     # --- Família & Combos -------------------------------------------------
     "family_root": "B2.C1",
     "family_section": "B2.C1.A",
