@@ -3,8 +3,9 @@
 # Regras Aprovadas (manter sempre no topo e cumprir em TODO o código)
 # -------------------------------------------------------------------
 # 1) Nomenclatura de Blocos e Células
-#    - Blocos: [B1] Dados Gerais, [B2] Ingredientes,
-#      [B3] Custos, [B4] Preparação, [B5] Nutrição / Alergénios.
+#    - Blocos: [B1] Dados Gerais, [B2] Família & Combos,
+#      [B3] PVPs, [B4] Ingredientes, [B5] Food Cost,
+#      [B6] Preparação, [B7] Nutrição / Alergénios.
 #    - Célula raiz do bloco: Bn.C1 (ex.: B1.C1, B2.C1, B3.C1, B4.C1, B5.C1).
 #    - Divisão horizontal: sufixos .A (esq.) e .B (dir.).
 #    - Divisão vertical: sufixos .1 (topo) e .2 (base).
@@ -664,6 +665,7 @@ class FTApp(QWidget):
             widget_type="campo",
         )
         C1A_cont_ly.addWidget(self.C1A1, 0)
+        C1A_cont_ly.addStretch(1)
 
         self.edCodigo = QLineEdit()
         make_readonly_lineedit(self.edCodigo)
@@ -723,6 +725,7 @@ class FTApp(QWidget):
         _make_ident_label(label_bottom, "Nome do Artigo:", "Produtos.Nome")
         label_col.set_label_alignment(AlignmentVariant.RIGHT)
         label_col.sync_label_widths()
+        self._ident_label_zone = label_col
 
         for field in (self.edCodigo, self.edNome):
             field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -736,63 +739,89 @@ class FTApp(QWidget):
         self.edCodigo.textChanged.connect(self.headerEdCodigo.setText)
         self.edNome.textChanged.connect(self.headerEdNome.setText)
 
-        C1A2 = Zone(
-            "B1.C1.A.2",
-            C1A_cont,
-            flow="v",
-            margins=4,
-            spacing=C1A_section_spacing,
-            level=C1A._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-        )
-        C1A2.apply_metadata(style_dev_info="")
-        C1A2.set_zone_type(None)
-        C1A2.set_widget_type(None)
-        C1A2.set_widget_qt_class(None)
-        C1A2.set_style_dev_info("")
-        C1A_cont_ly.addWidget(C1A2, 1)
+        # B1.C1.B — preview de imagem
+        try:
+            init_code = self.service.codigo_at(self.cur_index)
+        except Exception:
+            init_code = None
+        self.image_preview = ImagePreview(init_code, self.service)
+        C1B.add(self.image_preview, 1)
 
-        # B1.C1.A.2
-        C1A21, C1A22 = C1A2.split_h(
-            (3, 1)
-        )  # B1.C1.A.2.A (famílias/PVPs) + B1.C1.A.2.B (combos)
-        C1A21.apply_metadata(style_dev_info="")
-        C1A21.set_zone_type(None)
-        C1A21.set_widget_type(None)
-        C1A21.set_widget_qt_class(None)
-        C1A21.set_style_dev_info("")
-        C1A22.apply_metadata(style_dev_info="")
-        C1A22.set_zone_type(None)
-        C1A22.set_widget_type(None)
-        C1A22.set_widget_qt_class(None)
-        C1A22.set_style_dev_info("")
-        # B1.C1.A.2.A → divide verticalmente: topo (famílias) + base (PVP1..PVP5)
-        C1A21_top, C1A21_base = C1A21.split_v((1, 2))
-        C1A21_top.apply_metadata(zone_type="subsecao-familias", widget_type="campo")
-        C1A21_base.apply_metadata(zone_type="subsecao-pvps", widget_type="campo")
-        C1A21_top.apply_overlays(True)
-        labels_zone, values_zone = C1A21_top.split_h((1, 3))
-        labels_zone.apply_metadata(zone_type="coluna-legendas", widget_type="legenda")
-        values_zone.apply_metadata(zone_type="coluna-campos", widget_type="campo")
-        families_row_layout = labels_zone.parentWidget().layout()
-        if families_row_layout is not None:
+        # ---------------- B2 — Família & Combos (B2.C1) ----------------
+        self.C2 = Zone(
+            "B2.C1",
+            self,
+            flow="v",
+            level=0,
+            show_overlays=layout.DEV_OVERLAYS,
+            spacing=2,
+            widget_type="campo",
+        )
+        self.C2.apply_metadata(
+            zone_type="bloco-familias-combos",
+            widget_type="campo",
+        )
+        page_ly.addWidget(self._section_box("[B2] - Família & Combos", self.C2), 0)
+
+        C2_familias, C2_combos = self.C2.split_h((3, 1))
+        C2_familias.apply_metadata(
+            zone_type="secao-familias",
+            widget_type="campo",
+        )
+        C2_combos.apply_metadata(
+            zone_type="secao-combos",
+            widget_type="campo",
+        )
+
+        C2_familias_top = Zone(
+            "B2.C1.A",
+            C2_familias,
+            flow="h",
+            margins=4,
+            spacing=2,
+            level=C2_familias._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+            widget_type="campo",
+        )
+        C2_familias_top.apply_metadata(
+            zone_type="linha-familias",
+            widget_type="campo",
+        )
+        C2_familias_top.apply_overlays(True)
+        C2_familias.add(C2_familias_top, 0)
+
+        family_labels_zone, family_values_zone = C2_familias_top.split_h((1, 3))
+        family_labels_zone.apply_metadata(
+            zone_type="coluna-legendas",
+            widget_type="legenda",
+        )
+        family_values_zone.apply_metadata(
+            zone_type="coluna-campos",
+            widget_type="campo",
+        )
+        family_row_layout = family_labels_zone.parentWidget().layout()
+        if family_row_layout is not None:
             reference_spacing = self.C1A1.ly.spacing()
             if reference_spacing >= 0:
-                families_row_layout.setSpacing(reference_spacing)
-            families_row_layout.setStretch(0, 0)
-            families_row_layout.setStretch(1, 1)
-            families_row_layout.setAlignment(labels_zone, Qt.AlignLeft)
-        values_zone_margins = values_zone.ly.contentsMargins()
-        values_zone.ly.setContentsMargins(
+                family_row_layout.setSpacing(reference_spacing)
+            family_row_layout.setStretch(0, 0)
+            family_row_layout.setStretch(1, 1)
+            family_row_layout.setAlignment(family_labels_zone, Qt.AlignLeft)
+        family_values_margins = family_values_zone.ly.contentsMargins()
+        family_values_zone.ly.setContentsMargins(
             3,
-            values_zone_margins.top(),
+            family_values_margins.top(),
             3,
-            values_zone_margins.bottom(),
+            family_values_margins.bottom(),
         )
-        labels_zone.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-        values_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        family_labels_zone.setSizePolicy(
+            QSizePolicy.Preferred, QSizePolicy.Preferred
+        )
+        family_values_zone.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Preferred
+        )
 
-        familia_values_zone, subfamilia_values_zone = values_zone.split_v((1, 1))
+        familia_values_zone, subfamilia_values_zone = family_values_zone.split_v((1, 1))
         familia_values_zone.apply_metadata(
             zone_type="linha-campo",
             widget_type="campo",
@@ -806,7 +835,7 @@ class FTApp(QWidget):
         for zone in (familia_values_zone, subfamilia_values_zone):
             zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
-        familia_label_zone, subfamilia_label_zone = labels_zone.split_v((1, 1))
+        familia_label_zone, subfamilia_label_zone = family_labels_zone.split_v((1, 1))
         familia_label_zone.apply_metadata(
             zone_type="linha-legenda",
             widget_type="legenda",
@@ -837,7 +866,7 @@ class FTApp(QWidget):
             lbl.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Maximum)
             zone.ly.addWidget(lbl, 0, Qt.AlignLeft | Qt.AlignVCenter)
             zone._labels.append(lbl)
-            labels_zone._labels.append(lbl)
+            family_labels_zone._labels.append(lbl)
             install_tooltip_copy_handler(lbl)
             return lbl
 
@@ -845,12 +874,8 @@ class FTApp(QWidget):
         _make_family_label(
             subfamilia_label_zone, "Sub-família:", "Produtos.SubFamilia"
         )
-        labels_zone.set_label_alignment(AlignmentVariant.RIGHT)
-        labels_zone.sync_label_widths()
-
-        self._ident_label_zone = label_col
-        self._family_label_zone = labels_zone
-        self._refresh_family_label_column_widths()
+        family_labels_zone.set_label_alignment(AlignmentVariant.RIGHT)
+        family_labels_zone.sync_label_widths()
 
         self.lbFamiliaVal = QLineEdit("")
         make_readonly_lineedit(self.lbFamiliaVal)
@@ -866,14 +891,46 @@ class FTApp(QWidget):
         self.lbSubFamiliaVal.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.lbSubFamiliaVal.setFont(self.edNome.font())
 
-        familia_values_zone.ly.addWidget(
-            self.lbFamiliaVal, 0, Qt.AlignVCenter
-        )
+        familia_values_zone.ly.addWidget(self.lbFamiliaVal, 0, Qt.AlignVCenter)
         subfamilia_values_zone.ly.addWidget(
             self.lbSubFamiliaVal, 0, Qt.AlignVCenter
         )
 
-        # Base: zona horizontal com cinco colunas PVP1..PVP5 (etiqueta por cima)
+        self._family_label_zone = family_labels_zone
+        self._refresh_family_label_column_widths()
+
+        w_tipos, self.cbTipos = stack_combo("Tipos Artigos")
+        w_val, self.cbValidade = stack_combo("Validade")
+        w_temp, self.cbTemp = stack_combo("Temperaturas")
+        C2_combo_tipo, C2_combo_val, C2_combo_temp = C2_combos.split_v((1, 1, 1))
+        for zone in (C2_combo_tipo, C2_combo_val, C2_combo_temp):
+            zone.apply_metadata(
+                zone_type="linha-combo",
+                widget_type="campo",
+            )
+        C2_combo_tipo.add(w_tipos)
+        C2_combo_val.add(w_val)
+        C2_combo_temp.add(w_temp)
+        self.cbTipos.currentIndexChanged.connect(self._on_tipo_artigo_changed)
+        self.cbValidade.currentIndexChanged.connect(self._on_validade_changed)
+        self.cbTemp.currentIndexChanged.connect(self._on_temperatura_changed)
+
+        # ---------------- B3 — PVPs (B3.C1) ----------------
+        self.C3 = Zone(
+            "B3.C1",
+            self,
+            flow="v",
+            level=0,
+            show_overlays=layout.DEV_OVERLAYS,
+            spacing=2,
+            widget_type="campo",
+        )
+        self.C3.apply_metadata(
+            zone_type="bloco-pvps",
+            widget_type="campo",
+        )
+        page_ly.addWidget(self._section_box("[B3] - PVPs", self.C3), 0)
+
         self.lbPVPs: list[QLineEdit] = []
 
         pvp_label = QLabel("PREÇOS DE VENDA")
@@ -881,23 +938,20 @@ class FTApp(QWidget):
         pvp_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         pvp_label.setStyleSheet("")
         match_font(pvp_label, self.edNome)
-        C1A21_base.add(pvp_label, 0)
+        self.C3.add(pvp_label, 0)
 
-        C1A21_base_zone = Zone(
-            f"{C1A21_base.tag}.A",
-            C1A21_base,
+        C3_grid = Zone(
+            "B3.C1.A",
+            self.C3,
             flow="h",
-            level=C1A21_base._level + 1,
+            level=self.C3._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
+            widget_type="campo",
         )
-        C1A21_base_zone.apply_metadata(style_dev_info="")
-        C1A21_base_zone.set_zone_type(None)
-        C1A21_base_zone.set_widget_type(None)
-        C1A21_base_zone.set_widget_qt_class(None)
-        C1A21_base_zone.set_style_dev_info("")
-        C1A21_base_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        C1A21_base.add(C1A21_base_zone, 0)
-        pvp1, pvp2, pvp3, pvp4, pvp5 = C1A21_base_zone.split_h((1, 1, 1, 1, 1))
+        C3_grid.apply_metadata(zone_type="grade-pvps", widget_type="campo")
+        C3_grid.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.C3.add(C3_grid, 0)
+        pvp1, pvp2, pvp3, pvp4, pvp5 = C3_grid.split_h((1, 1, 1, 1, 1))
         for idx, zone in enumerate((pvp1, pvp2, pvp3, pvp4, pvp5), start=1):
             zone.apply_metadata(style_dev_info="")
             zone.set_zone_type(None)
@@ -926,53 +980,27 @@ class FTApp(QWidget):
             zone.add(val, 0)
             self.lbPVPs.append(val)
 
-        # Combos diretamente em B1.C1.A.2.B (sem .B.2)
-        w_tipos, self.cbTipos = stack_combo("Tipos Artigos")
-        w_val, self.cbValidade = stack_combo("Validade")
-        w_temp, self.cbTemp = stack_combo("Temperaturas")
-        C1A22_1, C1A22_2, C1A22_3 = C1A22.split_v((1, 1, 1))
-        for zone in (C1A22_1, C1A22_2, C1A22_3):
-            zone.apply_metadata(style_dev_info="")
-            zone.set_zone_type(None)
-            zone.set_widget_type(None)
-            zone.set_widget_qt_class(None)
-            zone.set_style_dev_info("")
-        C1A22_1.add(w_tipos)
-        C1A22_2.add(w_val)
-        C1A22_3.add(w_temp)
-        self.cbTipos.currentIndexChanged.connect(self._on_tipo_artigo_changed)
-        self.cbValidade.currentIndexChanged.connect(self._on_validade_changed)
-        self.cbTemp.currentIndexChanged.connect(self._on_temperatura_changed)
-
-        # B1.C1.B — preview de imagem
-        try:
-            init_code = self.service.codigo_at(self.cur_index)
-        except Exception:
-            init_code = None
-        self.image_preview = ImagePreview(init_code, self.service)
-        C1B.add(self.image_preview, 1)
-
-        # ---------------- B2 — Ingredientes (B2.C1) ----------------
-        self.C2 = Zone(
-            "B2.C1",
+        # ---------------- B4 — Ingredientes (B4.C1) ----------------
+        self.C4 = Zone(
+            "B4.C1",
             self,
             flow="v",
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="tabela",
         )
-        self.C2.apply_metadata(
+        self.C4.apply_metadata(
             zone_type="bloco-ingredientes",
             widget_type="tabela",
         )
-        page_ly.addWidget(self._section_box("[B2] - Ingredientes", self.C2), 0)
+        page_ly.addWidget(self._section_box("[B4] - Ingredientes", self.C4), 0)
 
-        C2_ing_zone, C2_totals_zone = self.C2.split_v((1, 0))
-        C2_ing_zone.apply_metadata(
+        C4_ing_zone, C4_totals_zone = self.C4.split_v((1, 0))
+        C4_ing_zone.apply_metadata(
             zone_type="secao-tabela-ingredientes",
             widget_type="tabela",
         )
-        C2_totals_zone.apply_metadata(
+        C4_totals_zone.apply_metadata(
             zone_type="secao-totais",
             widget_type="campo",
         )
@@ -1014,7 +1042,7 @@ class FTApp(QWidget):
         initial_h = header_h + vh.defaultSectionSize() + self.tbIng.frameWidth() * 2
         self.tbIng.setFixedHeight(initial_h)
         self.tbIng.setEditTriggers(QTableView.DoubleClicked | QTableView.EditKeyPressed)
-        C2_ing_zone.add(self.tbIng, 1)
+        C4_ing_zone.add(self.tbIng, 1)
         nome_font = QFont(self.edNome.font())
         nome_point_size_f = nome_font.pointSizeF()
         if nome_point_size_f > 0:
@@ -1042,71 +1070,71 @@ class FTApp(QWidget):
         self._setup_ing_columns()
 
         # Zona para custos totais após a tabela de ingredientes
-        self.C2Custo = Zone(
-            f"{C2_totals_zone.tag}.A",
-            C2_totals_zone,
+        self.C4Custo = Zone(
+            f"{C4_totals_zone.tag}.A",
+            C4_totals_zone,
             flow="h",
-            level=C2_totals_zone._level + 1,
+            level=C4_totals_zone._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
         )
-        self.C2Custo.apply_metadata(
+        self.C4Custo.apply_metadata(
             zone_type="barra-totais",
             widget_type="campo",
         )
-        self.C2Custo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        C2_totals_zone.add(self.C2Custo, 0)
-        self.C2Custo.ly.addStretch(1)
+        self.C4Custo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        C4_totals_zone.add(self.C4Custo, 0)
+        self.C4Custo.ly.addStretch(1)
         custo_total_label = QLabel("Custo Total:")
         apply_label_style(custo_total_label)
-        self.C2Custo.add(custo_total_label, 0)
+        self.C4Custo.add(custo_total_label, 0)
         self.edCustoTotal = QLineEdit()
         make_readonly_lineedit(self.edCustoTotal)
         self.edCustoTotal.setStyleSheet(FIELD_STYLE)
         self.edCustoTotal.setFixedWidth(self.edCustoTotal.sizeHint().width() * 2)
-        self.C2Custo.add(self.edCustoTotal, 0)
+        self.C4Custo.add(self.edCustoTotal, 0)
 
-        # ---------------- B3 — Custos (B3.C1) ----------------
-        self.C3 = Zone(
-            "B3.C1",
+        # ---------------- B5 — Food Cost (B5.C1) ----------------
+        self.C5 = Zone(
+            "B5.C1",
             self,
             flow="v",
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
         )
-        self.C3.apply_metadata(
+        self.C5.apply_metadata(
             zone_type="bloco-food-cost",
             widget_type="campo",
         )
-        page_ly.addWidget(self._section_box("[B3] - Food Cost", self.C3), 0)
+        page_ly.addWidget(self._section_box("[B5] - Food Cost", self.C5), 0)
 
-        C3A = Zone(
-            "B3.C1.A",
-            self.C3,
+        C5A = Zone(
+            "B5.C1.A",
+            self.C5,
             flow="v",
             level=1,
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
         )
-        C3A.apply_metadata(zone_type="secao-food-cost", widget_type="campo")
-        self.C3.add(C3A, 1)
+        C5A.apply_metadata(zone_type="secao-food-cost", widget_type="campo")
+        self.C5.add(C5A, 1)
         food_cost_label = QLabel("Food Cost:")
         apply_label_style(food_cost_label)
-        C3A.add(food_cost_label, 0)
+        C5A.add(food_cost_label, 0)
 
-        C3AA = Zone(
-            "B3.C1.A.A",
-            C3A,
+        C5AA = Zone(
+            "B5.C1.A.A",
+            C5A,
             flow="h",
             level=2,
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
         )
-        C3AA.apply_metadata(zone_type="grade-food-cost", widget_type="campo")
-        C3AA.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        C3A.add(C3AA, 0)
-        fc1, fc2, fc3, fc4, fc5 = C3AA.split_h((1, 1, 1, 1, 1))
+        C5AA.apply_metadata(zone_type="grade-food-cost", widget_type="campo")
+        C5AA.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        C5A.add(C5AA, 0)
+        fc1, fc2, fc3, fc4, fc5 = C5AA.split_h((1, 1, 1, 1, 1))
         for zone in (fc1, fc2, fc3, fc4, fc5):
             zone.apply_metadata(zone_type="coluna-food-cost", widget_type="campo")
 
@@ -1150,21 +1178,21 @@ class FTApp(QWidget):
             field_zone.ly.addWidget(val, 0, Qt.AlignLeft | Qt.AlignVCenter)
             self.lbFoodCosts.append(val)
 
-        C3AB = Zone(
-            "B3.C1.A.B",
-            C3A,
+        C5AB = Zone(
+            "B5.C1.A.B",
+            C5A,
             flow="h",
             level=2,
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="botão",
         )
-        C3AB.apply_metadata(
+        C5AB.apply_metadata(
             zone_type="secao-filtros-food-cost",
             widget_type="botão",
         )
-        C3AB.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        C3A.add(C3AB, 0)
-        fcB1, fcB2, fcB3, fcB4, fcB5 = C3AB.split_h((1, 1, 1, 1, 1))
+        C5AB.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        C5A.add(C5AB, 0)
+        fcB1, fcB2, fcB3, fcB4, fcB5 = C5AB.split_h((1, 1, 1, 1, 1))
         for zone in (fcB1, fcB2, fcB3, fcB4, fcB5):
             zone.apply_metadata(zone_type="coluna-botoes", widget_type="botão")
 
@@ -1245,33 +1273,33 @@ class FTApp(QWidget):
         )
         self.btFcostReset.clicked.connect(self._on_fcost_filter_reset)
 
-        # ---------------- B4 — Preparação (B4.C1) ----------------
-        self.C4 = Zone(
-            "B4.C1",
+        # ---------------- B6 — Preparação (B6.C1) ----------------
+        self.C6 = Zone(
+            "B6.C1",
             self,
             flow="v",
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="editor",
         )
-        self.C4.apply_metadata(
+        self.C6.apply_metadata(
             zone_type="bloco-preparacao",
             widget_type="editor",
         )
-        page_ly.addWidget(self._section_box("[B4] - Preparação", self.C4), 1)
+        page_ly.addWidget(self._section_box("[B6] - Preparação", self.C6), 1)
 
-        C4_text, C4_gallery = self.C4.split_v((3, 2))
-        C4_text.apply_metadata(
+        C6_text, C6_gallery = self.C6.split_v((3, 2))
+        C6_text.apply_metadata(
             zone_type="secao-texto-preparacao",
             widget_type="editor",
         )
-        C4_gallery.apply_metadata(
+        C6_gallery.apply_metadata(
             zone_type="galeria-preparacao",
             widget_type="legenda",
         )
 
         self.prep_previews: list[PrepImagePreview] = []
-        gallery_slots = C4_gallery.split_h((1, 1, 1, 1))
+        gallery_slots = C6_gallery.split_h((1, 1, 1, 1))
         for slot in gallery_slots:
             slot.apply_metadata(zone_type="slot-preparacao", widget_type="legenda")
         for idx, slot in enumerate(gallery_slots, start=1):
@@ -1330,7 +1358,7 @@ class FTApp(QWidget):
                 button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
                 button.setMinimumWidth(button.sizeHint().width())
 
-        C4_text.add(toolbar, 0)
+        C6_text.add(toolbar, 0)
 
         self.edPrep = QTextEdit()
         self.edPrep.setAcceptRichText(True)
@@ -1341,22 +1369,22 @@ class FTApp(QWidget):
         self.edPrep.document().setDefaultStyleSheet("img { max-width:100%; }")
         self.edPrep.setPlaceholderText("— Texto de preparação —")
         self.edPrep.textChanged.connect(self._on_prep_changed)
-        C4_text.add(self.edPrep, 1)
+        C6_text.add(self.edPrep, 1)
 
-        # ---------------- B5 — Nutrição / Alergénios (B5.C1) ----------------
-        self.C5 = Zone(
-            "B5.C1",
+        # ---------------- B7 — Nutrição / Alergénios (B7.C1) ----------------
+        self.C7 = Zone(
+            "B7.C1",
             self,
             flow="v",
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="caixa de seleção",
         )
-        self.C5.apply_metadata(
+        self.C7.apply_metadata(
             zone_type="bloco-alergenios",
             widget_type="caixa de seleção",
         )
-        page_ly.addWidget(self._section_box("[B5] - Nutrição / Alergénios", self.C5), 0)
+        page_ly.addWidget(self._section_box("[B7] - Nutrição / Alergénios", self.C7), 0)
 
         self._build_allergens_grid()
 
@@ -1484,7 +1512,7 @@ class FTApp(QWidget):
             )
             grid.addWidget(cb, r, c, alignment=Qt.AlignLeft)
             checkboxes[key] = cb
-        self.C5.add(gridw, 0)
+        self.C7.add(gridw, 0)
         self._allergen_checkboxes = checkboxes
 
     # ---------- Ingredientes: colunas ----------
