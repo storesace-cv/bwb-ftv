@@ -1192,7 +1192,11 @@ class FTApp(QWidget):
             lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             lbl.setProperty("userLabel", user_label)
             lbl.setProperty("devLabel", dev_label)
-            apply_label_style(lbl)
+            # Food Cost level labels revert to the plain Qt appearance when
+            # overlays are hidden.  Mark them so ``Zone.apply_overlays`` can
+            # skip the themed helper during normal mode and simply clear the
+            # stylesheet back to default.
+            lbl.setProperty("prefersQtDefaultLabelStyle", True)
             if label_zone._overlay_active:
                 apply_overlay_label_style(lbl)
                 lbl.setToolTip(f"{user_label} — {dev_label}")
