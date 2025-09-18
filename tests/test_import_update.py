@@ -3,7 +3,7 @@ import pytest
 from openpyxl import Workbook
 
 from data.datastore import DataStore
-from services.products import ProductService, _update_from_excel
+from services.products import ProductService, _update_from_excel, _import_single_excel
 from utils.paths import get_project_root
 
 
@@ -200,6 +200,30 @@ def test_update_from_excel_uses_produto_codigo(ds, imports_dir):
     pvps = ds.get_pvps("P1")
     assert pvps["pvps"][0] == 3.0
     assert len(pvps["pvps"]) == 5
+
+
+def test_import_single_excel_accepts_canonical_headers(ds, tmp_path):
+    wb = Workbook()
+    ws = wb.active
+    ws.append(["Codigo", "Produto", "Preco1G", "Preco2G", "Iva"])
+    ws.append(["P1", "Produto 1", 10.5, None, 23])
+    ws.append(["P2", "Produto 2", 5.75, 7.25, None])
+    path = tmp_path / "produtos.xlsx"
+    wb.save(path)
+
+    _import_single_excel(path, ds)
+
+    rows = [
+        tuple(row)
+        for row in ds.conn.execute(
+            "SELECT Codigo, Produto, Preco1G, Preco2G, Iva FROM Produtos ORDER BY Codigo"
+        ).fetchall()
+    ]
+
+    assert rows == [
+        ("P1", "Produto 1", 10.5, None, 23),
+        ("P2", "Produto 2", 5.75, 7.25, None),
+    ]
 
 
 def test_import_from_excel_reads_all_prices(ds, imports_dir):

@@ -958,31 +958,31 @@ def _import_single_excel(path: Path, ds: DataStore | None) -> None:
     except StopIteration:
         wb.close()
         return
-    if "codigo" not in headers:
+    if "Codigo" not in headers:
         wb.close()
         raise ValueError(
-            "Spreadsheet missing 'codigo' column; found: " + ", ".join(headers)
+            "Spreadsheet missing 'Codigo' column; found: " + ", ".join(headers)
         )
-    code_idx = headers.index("codigo")
+    code_idx = headers.index("Codigo")
     cur = conn.cursor()
     cur.execute(f"PRAGMA table_info({quote_ident('Produtos')})")
     db_cols = [r[1].lower() for r in cur.fetchall()]
     name_idx = (
-        headers.index("produto")
-        if "produto" in headers and "produto" in db_cols
+        headers.index("Produto")
+        if "Produto" in headers and "produto" in db_cols
         else None
     )
     p1_idx = (
-        headers.index("preco1_g")
-        if "preco1_g" in headers and "preco1_g" in db_cols
+        headers.index("Preco1G")
+        if "Preco1G" in headers and "preco1g" in db_cols
         else None
     )
     p2_idx = (
-        headers.index("preco2_g")
-        if "preco2_g" in headers and "preco2_g" in db_cols
+        headers.index("Preco2G")
+        if "Preco2G" in headers and "preco2g" in db_cols
         else None
     )
-    iva_idx = headers.index("iva") if "iva" in headers and "iva" in db_cols else None
+    iva_idx = headers.index("Iva") if "Iva" in headers and "iva" in db_cols else None
 
     cur.execute(f"DELETE FROM {quote_ident('Produtos')}")
     cols = ["Codigo"]
