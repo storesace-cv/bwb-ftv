@@ -21,7 +21,9 @@ from PyQt5.QtWidgets import (
 )
 
 from .utilities import (
+    AlignmentVariant,
     OVERLAY_ON_CLASS,
+    _normalize_alignment,
     apply_label_style,
     apply_overlay_label_style,
     install_tooltip_copy_handler,
@@ -148,6 +150,7 @@ class Zone(QWidget):
         self._level = level
         self._labels: list[QLabel] = []
         self._overlay_active = False
+        self._label_alignment = AlignmentVariant.DEFAULT
         self._base_style_label: str | None = base_style_label or None
         self._widget_type: str | None = widget_type or None
         self._zone_type: str | None = zone_type or None
@@ -394,6 +397,39 @@ class Zone(QWidget):
             self._style_lbl.setToolTip("")
         refresh_style(self._style_lbl)
 
+    def _label_alignment_flag(self) -> Qt.Alignment:
+        if self._label_alignment is AlignmentVariant.RIGHT:
+            return Qt.AlignRight | Qt.AlignVCenter
+        return Qt.AlignLeft | Qt.AlignVCenter
+
+    def set_label_alignment(
+        self, alignment: AlignmentVariant | str | None
+    ) -> None:
+        variant = _normalize_alignment(alignment)
+        self._label_alignment = variant
+        alignment_flag = self._label_alignment_flag()
+        for lbl in self._labels:
+            lbl.setProperty("labelAlignmentVariant", variant.value)
+            if self._overlay_active:
+                lbl.setAlignment(alignment_flag)
+                refresh_style(lbl)
+                continue
+            if lbl.property("prefersQtDefaultLabelStyle"):
+                _clear_overlay_class(lbl)
+                lbl.setStyleSheet("")
+                lbl.setAlignment(alignment_flag)
+                refresh_style(lbl)
+                continue
+            extra = lbl.property("labelExtraStyle")
+            apply_label_style(
+                lbl,
+                extra if extra else None,
+                alignment=variant,
+            )
+            refresh_style(lbl)
+        if not self._overlay_active:
+            self.sync_label_widths()
+
     def apply_overlays(self, on: bool) -> None:
         active = bool(on) and DEV_OVERLAYS
         self._overlay_active = active
@@ -441,18 +477,26 @@ class Zone(QWidget):
                 self._build_label_tooltip(user_label, dev_label) if active else ""
             )
             font = QFont(lbl.font())
-            alignment = lbl.alignment()
+            previous_alignment = lbl.alignment()
+            alignment_flag = self._label_alignment_flag()
+            lbl.setProperty("labelAlignmentVariant", self._label_alignment.value)
             if active:
                 apply_overlay_label_style(lbl)
+                lbl.setAlignment(previous_alignment)
             else:
                 extra = lbl.property("labelExtraStyle")
                 if lbl.property("prefersQtDefaultLabelStyle"):
                     _clear_overlay_class(lbl)
                     lbl.setStyleSheet("")
+                    lbl.setAlignment(alignment_flag)
                 else:
-                    apply_label_style(lbl, extra if extra else None)
+                    apply_label_style(
+                        lbl,
+                        extra if extra else None,
+                        alignment=self._label_alignment,
+                    )
+                    lbl.setAlignment(alignment_flag)
             lbl.setFont(font)
-            lbl.setAlignment(alignment)
             refresh_style(lbl)
         self.sync_label_widths()
         refresh_style(self._tag_lbl)
@@ -511,11 +555,12 @@ class Zone(QWidget):
         lbl.setProperty("labelExtraStyle", debug_extra)
         if self._overlay_active:
             apply_overlay_label_style(lbl)
+            lbl.setAlignment(self._label_alignment_flag())
+            lbl.setProperty("labelAlignmentVariant", self._label_alignment.value)
         else:
-            apply_label_style(lbl, debug_extra)
+            apply_label_style(lbl, debug_extra, alignment=self._label_alignment)
         lbl.setProperty("userLabel", label_text)
         lbl.setProperty("devLabel", overlay_text)
-        lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         if label_minw is not None:
             lbl.setFixedWidth(label_minw)
         value_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -528,7 +573,7 @@ class Zone(QWidget):
                 )
             except Exception:
                 pass
-        grid.addWidget(lbl, 0, 0, alignment=Qt.AlignLeft | Qt.AlignVCenter)
+        grid.addWidget(lbl, 0, 0, alignment=self._label_alignment_flag())
         grid.addWidget(value_widget, 0, 1, alignment=Qt.AlignLeft | Qt.AlignVCenter)
         self.ly.addWidget(row, 0)
         self._labels.append(lbl)
@@ -646,3 +691,17 @@ class Zone(QWidget):
             zones.append(zone)
         self.ly.addWidget(cont, 1)
         return tuple(zones)
+
+
+def apply_bwb_etiqueta_normal(zone: Zone) -> None:
+    zone.set_label_alignment(AlignmentVariant.RIGHT)
+    name = zone.objectName()
+    selector = (
+        f"#{_escape_object_name(name)}[overlays=\"off\"]" if name else ""
+    )
+    declarations = (
+        "font-size: 14pt; font-weight: 700; background-color: rgba(255, 255, 255, 0.95); "
+        "border: 1px solid rgba(0, 0, 0, 0.15); padding: 4px 6px; margin: 0px;"
+    )
+    stylesheet = f"{selector} {{ {declarations} }}" if selector else declarations
+    zone.set_zone_stylesheet(stylesheet, label="bwb-etiqueta-normal")

@@ -13,6 +13,7 @@ from ui import layout
 from ui.ui_editor_fonte import FTApp, _configure_zone
 from ui.utilities import (
     AlignmentVariant,
+    FIELD_STYLE,
     CENTER_FIELD_STYLE,
     CENTER_LABEL_STYLE,
     OVERLAY_ON_CLASS,
@@ -107,6 +108,19 @@ def test_apply_label_style_reuses_stored_alignment(qapp):
     assert label.alignment() == Qt.AlignLeft | Qt.AlignVCenter
 
 
+def test_apply_label_style_right_variant_uses_right_alignment(qapp):
+    label = QLabel("Direita")
+    apply_label_style(label, alignment=AlignmentVariant.RIGHT)
+
+    assert label.styleSheet() == LABEL_STYLE
+    assert label.alignment() == Qt.AlignRight | Qt.AlignVCenter
+    assert label.property("labelAlignmentVariant") == AlignmentVariant.RIGHT.value
+
+    apply_label_style(label)
+
+    assert label.alignment() == Qt.AlignRight | Qt.AlignVCenter
+
+
 def test_apply_overlay_label_style_preserves_alignment_variant(qapp):
     label = QLabel("Centro")
     apply_label_style(label, alignment=AlignmentVariant.CENTER)
@@ -133,6 +147,20 @@ def test_make_readonly_lineedit_center_variant_uses_left_alignment(qapp):
 
     assert le.styleSheet() == CENTER_FIELD_STYLE
     assert le.alignment() == Qt.AlignLeft | Qt.AlignVCenter
+
+
+def test_make_readonly_lineedit_right_variant_uses_right_alignment(qapp):
+    le = QLineEdit("0")
+    make_readonly_lineedit(le, alignment=AlignmentVariant.RIGHT)
+
+    assert le.isReadOnly()
+    assert le.styleSheet() == FIELD_STYLE
+    assert le.alignment() == Qt.AlignRight | Qt.AlignVCenter
+    assert le.property("lineEditAlignmentVariant") == AlignmentVariant.RIGHT.value
+
+    make_readonly_lineedit(le)
+
+    assert le.alignment() == Qt.AlignRight | Qt.AlignVCenter
 
 
 @pytest.fixture
@@ -238,6 +266,27 @@ def test_zone_apply_overlays_updates_label_tooltips(qapp, overlays_enabled):
     assert manual_label.text() == "Manual"
 
 
+def test_zone_right_alignment_persists_through_overlays(qapp, overlays_enabled):
+    zone = layout.Zone("B1", show_overlays=False)
+    value_widget = QLabel("value", zone)
+    label = zone.add_row("Nome", value_widget, overlay_text="Overlay")
+
+    zone.set_label_alignment(AlignmentVariant.RIGHT)
+
+    assert label.property("labelAlignmentVariant") == AlignmentVariant.RIGHT.value
+    assert label.alignment() == Qt.AlignRight | Qt.AlignVCenter
+
+    zone.apply_overlays(True)
+
+    assert label.alignment() == Qt.AlignRight | Qt.AlignVCenter
+    assert label.property("labelAlignmentVariant") == AlignmentVariant.RIGHT.value
+
+    zone.apply_overlays(False)
+
+    assert label.alignment() == Qt.AlignRight | Qt.AlignVCenter
+    assert label.property("labelAlignmentVariant") == AlignmentVariant.RIGHT.value
+
+
 def test_zone_overlay_tag_label_preserves_inline_style(qapp, overlays_enabled):
     zone = layout.Zone("B1", show_overlays=True)
     expected_style = "color:#c00; font-size:10px; background:none; border:none;"
@@ -300,6 +349,31 @@ def test_zone_overlay_label_width_tracks_visible_text(qapp, overlays_enabled):
     qapp.processEvents()
     reverted_width = label.minimumWidth()
     assert reverted_width == initial_width
+
+
+def test_apply_bwb_etiqueta_normal_registers_stylesheet_and_alignment(qapp):
+    zone = layout.Zone("B7.C1", show_overlays=False)
+    other_zone = layout.Zone("B7.C2", show_overlays=False)
+
+    layout.apply_bwb_etiqueta_normal(zone)
+
+    escaped = layout._escape_object_name(zone.objectName())
+    expected_selector = f"#{escaped}[overlays=\"off\"]"
+    expected_stylesheet = (
+        f"{expected_selector} {{ font-size: 14pt; font-weight: 700; background-color: rgba(255, 255, 255, 0.95); "
+        "border: 1px solid rgba(0, 0, 0, 0.15); padding: 4px 6px; margin: 0px; }}"
+    )
+
+    assert zone.base_stylesheet == expected_stylesheet
+    assert zone._base_style_label == "bwb-etiqueta-normal"
+
+    value_widget = QLabel("valor", zone)
+    label = zone.add_row("Etiqueta", value_widget)
+
+    assert label.alignment() == Qt.AlignRight | Qt.AlignVCenter
+    assert label.property("labelAlignmentVariant") == AlignmentVariant.RIGHT.value
+
+    assert "bwb-etiqueta-normal" not in other_zone.base_stylesheet
 
 
 def test_zone_style_label_tooltip_tracks_dev_info(qapp, overlays_enabled):
