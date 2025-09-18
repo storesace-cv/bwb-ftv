@@ -644,7 +644,8 @@ class FTApp(QWidget):
         C1A_cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         C1A_cont_ly = QVBoxLayout(C1A_cont)
         C1A_cont_ly.setContentsMargins(0, 0, 0, 0)
-        C1A_cont_ly.setSpacing(C1A.ly.spacing())
+        C1A_section_spacing = 3
+        C1A_cont_ly.setSpacing(C1A_section_spacing)
         C1A.ly.addWidget(C1A_cont, 1)
 
         # --- Identificação do produto (B1.C1.A.1) ---
@@ -653,7 +654,7 @@ class FTApp(QWidget):
             C1A_cont,
             flow="v",
             margins=4,
-            spacing=C1A.ly.spacing(),
+            spacing=C1A_section_spacing,
             level=C1A._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
@@ -740,7 +741,7 @@ class FTApp(QWidget):
             C1A_cont,
             flow="v",
             margins=4,
-            spacing=C1A.ly.spacing(),
+            spacing=C1A_section_spacing,
             level=C1A._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
         )
