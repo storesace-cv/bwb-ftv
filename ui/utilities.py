@@ -96,6 +96,7 @@ class AlignmentVariant(str, Enum):
 
     DEFAULT = "default"
     CENTER = "center"
+    RIGHT = "right"
 
 
 def _normalize_alignment(value: AlignmentVariant | str | None) -> AlignmentVariant:
@@ -167,9 +168,14 @@ def apply_label_style(
         _set_widget_classes(label, classes)
     if variant is AlignmentVariant.CENTER:
         base_style = CENTER_LABEL_STYLE
+        alignment_flag = Qt.AlignLeft | Qt.AlignVCenter
+    elif variant is AlignmentVariant.RIGHT:
+        base_style = LABEL_STYLE
+        alignment_flag = Qt.AlignRight | Qt.AlignVCenter
     else:
         base_style = LABEL_STYLE
-    label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        alignment_flag = Qt.AlignLeft | Qt.AlignVCenter
+    label.setAlignment(alignment_flag)
     style = base_style if not extra else f"{base_style}\n{extra}"
     label.setStyleSheet(style)
     _refresh_widget_style(label)
@@ -208,9 +214,15 @@ def make_readonly_lineedit(
     le.setProperty(_LINEEDIT_ALIGNMENT_PROPERTY, variant.value)
     if variant is AlignmentVariant.CENTER:
         le.setStyleSheet(CENTER_FIELD_STYLE)
+        alignment_flag = Qt.AlignLeft | Qt.AlignVCenter
     else:
         le.setStyleSheet(FIELD_STYLE)
-    le.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        alignment_flag = (
+            Qt.AlignRight | Qt.AlignVCenter
+            if variant is AlignmentVariant.RIGHT
+            else Qt.AlignLeft | Qt.AlignVCenter
+        )
+    le.setAlignment(alignment_flag)
     font = QFont(le.font())
     if font.bold() or font.weight() != QFont.Normal:
         font.setBold(False)

@@ -105,13 +105,14 @@ from domain import FichaTecnica
 from utils.formatting import format_pt_number, parse_decimal
 
 from . import layout
-from .layout import Zone
+from .layout import Zone, apply_bwb_etiqueta_normal
 from .models import (
     apply_fichas_tecnicas_headers,
     build_fichas_tecnicas_model,
     update_fichas_tecnicas_model,
 )
 from .utilities import (
+    AlignmentVariant,
     FIELD_STYLE,
     apply_fcfilter_btn_style,
     apply_label_style,
@@ -665,6 +666,7 @@ class FTApp(QWidget):
         self.edNome.setStyleSheet(FIELD_STYLE)
         label_col, field_col = self.C1A1.split_h((0, 1))
         label_col.apply_metadata(zone_type="coluna-legendas", widget_type="legenda")
+        apply_bwb_etiqueta_normal(label_col)
         field_col.apply_metadata(zone_type="coluna-campos", widget_type="campo")
         field_col_margins = field_col.ly.contentsMargins()
         field_col.ly.setContentsMargins(
@@ -700,6 +702,7 @@ class FTApp(QWidget):
 
         _make_ident_label(label_top, "Código:", "Produtos.Codigo")
         _make_ident_label(label_bottom, "Nome do Artigo:", "Produtos.Nome")
+        label_col.set_label_alignment(AlignmentVariant.RIGHT)
         label_col.sync_label_widths()
 
         for field in (self.edCodigo, self.edNome):
@@ -751,6 +754,7 @@ class FTApp(QWidget):
         C1A21_top.apply_overlays(True)
         labels_zone, values_zone = C1A21_top.split_h((1, 3))
         labels_zone.apply_metadata(zone_type="coluna-legendas", widget_type="legenda")
+        apply_bwb_etiqueta_normal(labels_zone)
         values_zone.apply_metadata(zone_type="coluna-campos", widget_type="campo")
         families_row_layout = labels_zone.parentWidget().layout()
         if families_row_layout is not None:
@@ -811,6 +815,7 @@ class FTApp(QWidget):
         _make_family_label(
             subfamilia_label_zone, "Sub-família:", "Produtos.SubFamilia"
         )
+        labels_zone.set_label_alignment(AlignmentVariant.RIGHT)
         labels_zone.sync_label_widths()
         margins = familia_label_zone.ly.contentsMargins()
         ident_label_zone_width = lbl_w + margins.left() + margins.right()
