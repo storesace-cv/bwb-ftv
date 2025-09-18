@@ -139,6 +139,7 @@ def edit_fcost_values(parent, repo) -> None:
     from PyQt5.QtWidgets import (
         QDialog,
         QHBoxLayout,
+        QFrame,
         QTableWidget,
         QTableWidgetItem,
         QPushButton,
@@ -150,12 +151,19 @@ def edit_fcost_values(parent, repo) -> None:
     vbox = QVBoxLayout(dlg)
 
     tbl = QTableWidget(0, 5)
+    tbl.setFrameShape(QFrame.NoFrame)
+    tbl.setShowGrid(False)
     tbl.setHorizontalHeaderLabels(
         ["Nivel", "Nome", "ValorMin", "ValorMax", "Comentário"]
     )
     tbl.horizontalHeader().setStretchLastSection(True)
     tbl.setStyleSheet(
-        "QTableWidget::item:hover { background: #00008b; color: #fff; }"
+        """
+        QTableWidget { border: none; }
+        QTableWidget::item { margin: 0; padding: 0; border: none; }
+        QTableWidget::item:hover { background: #00008b; color: #fff; }
+        QHeaderView::section { border: none; }
+        """
     )
     tbl.setContextMenuPolicy(Qt.CustomContextMenu)
     if hasattr(tbl, "setToolTipDuration"):
@@ -292,6 +300,7 @@ def manage_aux_table(
         QDialog,
         QHBoxLayout,
         QInputDialog,
+        QFrame,
         QTableWidget,
         QTableWidgetItem,
         QPushButton,
@@ -303,9 +312,18 @@ def manage_aux_table(
     dlg.setWindowTitle(title)
     vbox = QVBoxLayout(dlg)
     tbl = QTableWidget(0, 2)
+    tbl.setFrameShape(QFrame.NoFrame)
+    tbl.setShowGrid(False)
     tbl.setHorizontalHeaderLabels(["Código", "Descrição"])
     tbl.horizontalHeader().setStretchLastSection(True)
-    tbl.setStyleSheet("QTableWidget::item:hover { background: #00008b; color: #fff; }")
+    tbl.setStyleSheet(
+        """
+        QTableWidget { border: none; }
+        QTableWidget::item { margin: 0; padding: 0; border: none; }
+        QTableWidget::item:hover { background: #00008b; color: #fff; }
+        QHeaderView::section { border: none; }
+        """
+    )
     vbox.addWidget(tbl)
 
     hbox = QHBoxLayout()
