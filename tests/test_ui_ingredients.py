@@ -146,11 +146,17 @@ def test_classification_overlay_tags_hidden(qapp):
         qapp.processEvents()
 
         target_tags = [
-            "B1.C1.A.2",
-            "B1.C1.A.2.A",
-            "B1.C1.A.2.A.2.A",
-            *[f"B1.C1.A.2.A.2.A.{idx}" for idx in range(1, 6)],
-            *[f"B1.C1.A.2.B.{idx}" for idx in range(1, 4)],
+            "B2.C1",
+            "B2.C1.A",
+            "B2.C1.A.1",
+            "B2.C1.A.1.A",
+            "B2.C1.A.1.A.1",
+            "B2.C1.A.1.A.2",
+            "B2.C1.A.1.B",
+            "B2.C1.A.1.B.1",
+            "B2.C1.A.1.B.2",
+            "B2.C1.B",
+            *[f"B2.C1.B.{idx}" for idx in range(1, 4)],
         ]
 
         for tag in target_tags:
@@ -159,7 +165,7 @@ def test_classification_overlay_tags_hidden(qapp):
             assert zone._style_lbl.isHidden()
             assert zone._style_lbl.text() == ""
 
-        for tag in ("B1.C1.A.2.A.1.A.1", "B1.C1.A.2.A.1.A.2"):
+        for tag in ("B2.C1.A.1.A.1", "B2.C1.A.1.A.2"):
             zone = ft.findChild(Zone, tag)
             assert zone is not None, f"Zone {tag} not found"
             margins = zone.ly.contentsMargins()
@@ -185,7 +191,7 @@ def test_identification_and_family_label_columns_expand_with_long_text(qapp):
         qapp.processEvents()
 
         ident_zone = ft.findChild(Zone, "B1.C1.A.1.A")
-        family_zone = ft.findChild(Zone, "B1.C1.A.2.A.1.A")
+        family_zone = ft.findChild(Zone, "B2.C1.A.1.A")
 
         assert ident_zone is not None
         assert family_zone is not None
