@@ -111,7 +111,7 @@ from domain import FichaTecnica
 from utils.formatting import format_pt_number, parse_decimal
 
 from . import layout
-from .layout import Zone, apply_bwb_etiqueta_normal
+from .layout import Zone
 from .models import (
     apply_fichas_tecnicas_headers,
     build_fichas_tecnicas_model,
@@ -693,8 +693,9 @@ class FTApp(QWidget):
             widget_type="legenda",
             apply_base_style=False,
         )
-        apply_bwb_etiqueta_normal(label_top)
-        apply_bwb_etiqueta_normal(label_bottom)
+        for zone in (label_top, label_bottom):
+            zone.set_label_alignment(AlignmentVariant.RIGHT)
+            zone.ly.setContentsMargins(0, 0, 0, 0)
         field_top, field_bottom = field_col.split_v((1, 1))
         field_top.apply_metadata(zone_type="linha-campo", widget_type="campo")
         field_bottom.apply_metadata(zone_type="linha-campo", widget_type="campo")
@@ -804,13 +805,15 @@ class FTApp(QWidget):
             widget_type="legenda",
             apply_base_style=False,
         )
-        apply_bwb_etiqueta_normal(familia_label_zone)
+        familia_label_zone.set_label_alignment(AlignmentVariant.RIGHT)
+        familia_label_zone.ly.setContentsMargins(0, 0, 0, 0)
         subfamilia_label_zone.apply_metadata(
             zone_type="linha-legenda",
             widget_type="legenda",
             apply_base_style=False,
         )
-        apply_bwb_etiqueta_normal(subfamilia_label_zone)
+        subfamilia_label_zone.set_label_alignment(AlignmentVariant.RIGHT)
+        subfamilia_label_zone.ly.setContentsMargins(0, 0, 0, 0)
         for zone in (familia_label_zone, subfamilia_label_zone):
             zone.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
 

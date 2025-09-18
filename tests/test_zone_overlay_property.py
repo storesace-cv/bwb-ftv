@@ -362,35 +362,25 @@ def test_apply_metadata_default_base_stylesheet_is_borderless(qapp):
     assert "border-radius" in zone.base_stylesheet
 
 
-def test_apply_bwb_etiqueta_normal_registers_stylesheet_and_alignment(qapp):
+def test_apply_bwb_etiqueta_normal_aligns_without_theming(qapp):
     zone = layout.Zone("B7.C1", show_overlays=False)
     other_zone = layout.Zone("B7.C2", show_overlays=False)
 
+    original_stylesheet = zone.base_stylesheet
+
     layout.apply_bwb_etiqueta_normal(zone)
 
-    escaped = layout._escape_object_name(zone.objectName())
-    expected_selector = f"#{escaped}[overlays=\"off\"]"
-    style = zone.base_stylesheet
+    margins = zone.ly.contentsMargins()
+    assert margins.left() == 0
+    assert margins.right() == 0
+    assert margins.top() == 0
+    assert margins.bottom() == 0
+    assert zone._label_alignment is AlignmentVariant.RIGHT
 
-    assert zone.styleSheet() == style
-    assert style.startswith(f"{expected_selector} {{ ")
-    assert "font-size: 14pt;" in style
-    assert "font-weight: 700;" in style
-    assert "background: linear-gradient(" in style
-    assert "border: 1px solid rgba(0, 0, 0, 0.8);" in style
-    assert "border-top-color: rgba(255, 255, 255, 0.5);" in style
-    assert "border-left-color: rgba(255, 255, 255, 0.5);" in style
-    assert "border-radius: 5px;" in style
-    assert "color: rgba(255, 255, 255, 1);" in style
-    assert "padding: 4px 6px;" in style
-    assert "margin: 4px;" in style
-    assert "box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.5);" in style
-    assert "text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);" in style
-    assert "transition: all 0.2s ease;" in style
-
-    assert zone._base_style_label == "bwb-etiqueta-normal"
-    assert "border: 1px solid" in style
-    assert "border-radius: 5px" in style
+    assert zone.base_stylesheet == original_stylesheet
+    assert zone.styleSheet() == original_stylesheet
+    assert "linear-gradient" not in zone.base_stylesheet
+    assert zone._base_style_label is None
 
     value_widget = QLabel("valor", zone)
     label = zone.add_row("Etiqueta", value_widget)
@@ -398,7 +388,7 @@ def test_apply_bwb_etiqueta_normal_registers_stylesheet_and_alignment(qapp):
     assert label.alignment() == Qt.AlignRight | Qt.AlignVCenter
     assert label.property("labelAlignmentVariant") == AlignmentVariant.RIGHT.value
 
-    assert "bwb-etiqueta-normal" not in other_zone.base_stylesheet
+    assert other_zone.base_stylesheet == other_zone.styleSheet()
 
 
 def test_zone_style_label_tooltip_tracks_dev_info(qapp, overlays_enabled):

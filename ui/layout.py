@@ -693,38 +693,7 @@ class Zone(QWidget):
 
 
 def apply_bwb_etiqueta_normal(zone: Zone) -> None:
+    """Align legacy etiqueta zones without injecting themed CSS."""
+
     zone.set_label_alignment(AlignmentVariant.RIGHT)
     zone.ly.setContentsMargins(0, 0, 0, 0)
-    name = zone.objectName()
-    selector = (
-        f"#{_escape_object_name(name)}[overlays=\"off\"]" if name else ""
-    )
-    declarations = (
-        "font-size: 14pt; "
-        "font-weight: 700; "
-        "background: linear-gradient(to bottom, rgba(223, 217, 215, 0.50), rgba(200, 190, 190, 0.75)); "
-        "border: 1px solid rgba(0, 0, 0, 0.8); "
-        "border-top-color: rgba(255, 255, 255, 0.5); "
-        "border-left-color: rgba(255, 255, 255, 0.5); "
-        "border-radius: 5px; "
-        "color: rgba(255, 255, 255, 1); "
-        "padding: 8px; "
-        "margin: 4px; "
-        "min-height: 40px; "
-        "qproperty-alignment: 'AlignRight | AlignVCenter'; "
-        "box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.45); "
-        "text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2); "
-        "transition: all 0.2s ease; "
-    )
-    hover_declarations = (
-        "background: linear-gradient(to bottom, rgba(223, 217, 215, 0.50), rgba(200, 190, 190, 0.75)); "
-        "box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.45); "
-    )
-    if selector:
-        stylesheet = (
-            f"{selector} {{ {declarations} }}\n"
-            f"{selector}:hover {{ {hover_declarations} }}"
-        )
-    else:
-        stylesheet = f"{declarations}\n:hover {{ {hover_declarations} }}"
-    zone.set_zone_stylesheet(stylesheet, label="bwb-etiqueta-normal")

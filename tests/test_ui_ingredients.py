@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QFrame
 from services.products import ProductService
 from ui import layout
 from ui.layout import Zone
+from ui.utilities import AlignmentVariant
 from ui.models import build_fichas_tecnicas_model
 from ui.ui_editor_fonte import FTApp
 from domain import FichaTecnica
@@ -161,7 +162,12 @@ def test_classification_overlay_tags_hidden(qapp):
         for tag in ("B1.C1.A.2.A.1.A.1", "B1.C1.A.2.A.1.A.2"):
             zone = ft.findChild(Zone, tag)
             assert zone is not None, f"Zone {tag} not found"
-            assert zone._base_style_label == "bwb-etiqueta-normal"
+            margins = zone.ly.contentsMargins()
+            assert margins.left() == 0
+            assert margins.right() == 0
+            assert zone._label_alignment is AlignmentVariant.RIGHT
+            assert zone._base_style_label is None
+            assert "linear-gradient" not in zone.base_stylesheet
 
         ft._toggle_overlays()
     finally:
