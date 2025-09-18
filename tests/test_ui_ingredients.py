@@ -1,5 +1,5 @@
 import pytest
-from PyQt5.QtCore import QSize, Qt
+from PyQt5.QtCore import QSize, Qt, QPoint
 from PyQt5.QtGui import QResizeEvent
 from PyQt5.QtWidgets import QFrame
 from services.products import ProductService
@@ -175,6 +175,9 @@ def test_identification_and_family_label_columns_share_width(qapp):
     service = ProductService(ds)
     ft = FTApp(service)
     try:
+        ft.show()
+        qapp.processEvents()
+
         ident_zone = ft.findChild(Zone, "B1.C1.A.1.A")
         family_zone = ft.findChild(Zone, "B1.C1.A.2.A.1.A")
 
@@ -184,6 +187,12 @@ def test_identification_and_family_label_columns_share_width(qapp):
         assert ident_zone.minimumWidth() == ident_zone.maximumWidth()
         assert family_zone.minimumWidth() == family_zone.maximumWidth()
         assert ident_zone.minimumWidth() == family_zone.minimumWidth()
+
+        origin = QPoint(0, 0)
+        ident_x = ident_zone.mapToGlobal(origin).x()
+        family_x = family_zone.mapToGlobal(origin).x()
+
+        assert ident_x == family_x
     finally:
         ft.close()
 
