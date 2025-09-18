@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QCheckBox
 
 from services.products import ProductService
 from ui.layout import Zone
+from ui.tagging import zone_tag
 from ui.ui_editor_fonte import FTApp
 from utils.formatting import format_pt_number
 
@@ -118,17 +119,17 @@ def test_iter_layout_children_covers_block_roots(qapp, tag_service):
     ft = FTApp(tag_service)
     try:
         block_tags = {
-            "B1.C1",
-            "B2.C1",
-            "B3.C1",
-            "B4.C1",
-            "B5.C1",
-            "B6.C1",
-            "B7.C1",
+            zone_tag("general_root"),
+            zone_tag("family_root"),
+            zone_tag("pvps_root"),
+            zone_tag("ingredients_root"),
+            zone_tag("food_cost_root"),
+            zone_tag("preparation_root"),
+            zone_tag("allergens_root"),
         }
         assert block_tags.issubset(_collect_zone_tags(ft))
         header_tags = _collect_zone_tags(ft, include_header=True)
-        assert "B0.C1" in header_tags
+        assert zone_tag("header_root") in header_tags
         for tag in block_tags:
             assert ft.findChild(Zone, tag) is not None
     finally:

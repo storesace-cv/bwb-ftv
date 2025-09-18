@@ -9,6 +9,7 @@ pytest.importorskip("PyQt5.QtQuick")
 from PyQt5.QtCore import QObject
 
 from ui.qquick_app import build_sample_product, create_engine
+from ui.tagging import zone_tag
 
 
 class DummyService:
@@ -16,7 +17,8 @@ class DummyService:
         self.ds = object()
 
 
-def _find_zone(root: QObject, tag: str) -> QObject | None:
+def _find_zone(root: QObject, tag_key: str) -> QObject | None:
+    tag = zone_tag(tag_key)
     object_name = f"zone_{tag.replace('.', '_')}"
     return root.findChild(QObject, object_name)
 
@@ -34,7 +36,7 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         root = root_objects[0]
         assert root.property("showDevOverlays") is True
 
-        codigo_zone = _find_zone(root, "B1.C1")
+        codigo_zone = _find_zone(root, "general_root")
         assert codigo_zone is not None
         assert codigo_zone.property("displayValue") == "FT-42"
         assert codigo_zone.property("overlayActive") is True
@@ -51,12 +53,13 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         context = engine.rootContext()
         zones_metadata = context.contextProperty("zonesMetadata")
         assert isinstance(zones_metadata, dict)
-        legend_meta = zones_metadata.get("B1.C1.A.1.A.1")
+        legend_tag = zone_tag("general_ident_label_codigo")
+        legend_meta = zones_metadata.get(legend_tag)
         assert legend_meta is not None
         assert legend_meta.get("zoneType") == "linha-legenda"
         assert legend_meta.get("widgetQtClass") == "QLabels"
 
-        legend_zone = _find_zone(root, "B1.C1.A.1.A.1")
+        legend_zone = _find_zone(root, "general_ident_label_codigo")
         assert legend_zone is not None
         assert legend_zone.property("overlayActive") is True
         assert legend_zone.property("zoneType") == "linha-legenda"

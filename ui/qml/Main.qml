@@ -217,7 +217,7 @@ ApplicationWindow {
             showOverlays: root.showDevOverlays
 
             Zone {
-                tag: "B1.C1"
+                tag: zoneTagMap["general_root"]
                 title: qsTr("Código")
                 zoneType: "bloco-dados-gerais"
                 widgetType: "campo"
@@ -228,7 +228,7 @@ ApplicationWindow {
             }
 
             Zone {
-                tag: "B1.C2"
+                tag: zoneTagMap["general_name_zone"]
                 title: qsTr("Designação")
                 zoneType: "bloco-dados-gerais"
                 widgetType: "campo"
@@ -248,7 +248,7 @@ ApplicationWindow {
             showOverlays: root.showDevOverlays
 
             Zone {
-                tag: "B4.C1"
+                tag: zoneTagMap["ingredients_root"]
                 title: qsTr("Estado")
                 zoneType: "bloco-ingredientes"
                 widgetType: "tabela"
@@ -259,7 +259,7 @@ ApplicationWindow {
             }
 
             Zone {
-                tag: "B4.C2"
+                tag: zoneTagMap["ingredients_secondary"]
                 title: qsTr("Validade")
                 zoneType: "bloco-ingredientes"
                 widgetType: "tabela"
@@ -279,7 +279,7 @@ ApplicationWindow {
             showOverlays: root.showDevOverlays
 
             Zone {
-                tag: "B5.C1"
+                tag: zoneTagMap["food_cost_root"]
                 title: qsTr("Observações")
                 zoneType: "bloco-food-cost"
                 widgetType: "campo"
