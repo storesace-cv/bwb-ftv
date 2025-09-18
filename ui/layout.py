@@ -700,8 +700,9 @@ def apply_bwb_etiqueta_normal(zone: Zone) -> None:
         f"#{_escape_object_name(name)}[overlays=\"off\"]" if name else ""
     )
     declarations = (
-        "font-size: 14pt; font-weight: 700; background-color: rgba(44, 54, 57, 0.50); "
-        "border: 1px solid rgba(0, 0, 0, 0.50); padding: 4px 6px; margin: 0px;"
+        "font-size: 14pt; font-weight: 700; background-color: rgba(44, 54, 57, 0.80); "
+        "border: 1px solid rgba(0, 0, 0, 1); color: rgba(255, 255, 255, 0.80); "
+        "padding: 4px 6px; margin: 0px;"
     )
     stylesheet = f"{selector} {{ {declarations} }}" if selector else declarations
     zone.set_zone_stylesheet(stylesheet, label="bwb-etiqueta-normal")
