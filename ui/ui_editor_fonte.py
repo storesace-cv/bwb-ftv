@@ -1017,11 +1017,11 @@ class FTApp(QWidget):
         nome_font = QFont(self.edNome.font())
         nome_point_size_f = nome_font.pointSizeF()
         if nome_point_size_f > 0:
-            nome_font.setPointSizeF(nome_point_size_f * 4)
+            nome_font.setPointSizeF(nome_point_size_f * 2)
         else:
             nome_point_size = nome_font.pointSize()
             if nome_point_size > 0:
-                nome_font.setPointSize(nome_point_size * 4)
+                nome_font.setPointSize(nome_point_size * 2)
         self.edNome.setFont(nome_font)
         self.edNome.setFixedHeight(self.edNome.sizeHint().height())
         self.edNome.updateGeometry()
@@ -1029,11 +1029,11 @@ class FTApp(QWidget):
         header_nome_font = QFont(self.headerEdNome.font())
         header_point_size_f = header_nome_font.pointSizeF()
         if header_point_size_f > 0:
-            header_nome_font.setPointSizeF(header_point_size_f * 4)
+            header_nome_font.setPointSizeF(header_point_size_f * 2)
         else:
             header_point_size = header_nome_font.pointSize()
             if header_point_size > 0:
-                header_nome_font.setPointSize(header_point_size * 4)
+                header_nome_font.setPointSize(header_point_size * 2)
         self.headerEdNome.setFont(header_nome_font)
         self.headerEdNome.setFixedHeight(self.headerEdNome.sizeHint().height())
         self.headerEdNome.updateGeometry()
