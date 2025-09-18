@@ -67,7 +67,12 @@ def _qt_message_handler(mode, context, message):
 def _apply_global_theme(app):
     try:
         root = get_project_root()
-        font_path = root / "ui" / "fonts" / "Roboto-Regular.ttf"
+        font_path = (
+            root
+            / "ui"
+            / "fonts"
+            / "Roboto-Italic-VariableFont_wdth,wght.ttf"
+        )
         font_family = "Roboto"
         font_id = -1
 
@@ -75,17 +80,22 @@ def _apply_global_theme(app):
             font_id = QFontDatabase.addApplicationFont(str(font_path))
             if font_id == -1:
                 logger.warning(
-                    "[THEME] Falha a carregar fonte Roboto a partir de %s", font_path
+                    "[THEME] Falha a carregar fonte variável Roboto-Italic a partir de %s",
+                    font_path,
                 )
             else:
                 families = QFontDatabase.applicationFontFamilies(font_id)
                 if families:
                     font_family = families[0]
         else:
-            logger.warning("[THEME] Fonte Roboto não encontrada em %s", font_path)
+            logger.warning(
+                "[THEME] Fonte variável Roboto-Italic não encontrada em %s", font_path
+            )
 
         if font_id == -1 and font_family not in QFontDatabase().families():
-            logger.warning("[THEME] Fonte Roboto indisponível; a usar tipografia padrão")
+            logger.warning(
+                "[THEME] Fonte variável Roboto-Italic indisponível; a usar tipografia padrão"
+            )
             font_family = app.font().family()
 
         f = QFont(font_family, 12)  # tamanho global 12pt
