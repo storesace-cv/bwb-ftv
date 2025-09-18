@@ -419,7 +419,7 @@ class Zone(QWidget):
             apply_label_style(lbl, debug_extra)
         lbl.setProperty("userLabel", label_text)
         lbl.setProperty("devLabel", overlay_text)
-        lbl.setAlignment(Qt.AlignTop | Qt.AlignRight)
+        lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         if label_minw is not None:
             lbl.setFixedWidth(label_minw)
         value_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -432,9 +432,9 @@ class Zone(QWidget):
                 )
             except Exception:
                 pass
-        grid.addWidget(lbl, 0, 0, alignment=Qt.AlignTop | Qt.AlignRight)
-        grid.addWidget(value_widget, 0, 1, alignment=Qt.AlignTop | Qt.AlignLeft)
-        self.ly.addWidget(row, 0, Qt.AlignTop)
+        grid.addWidget(lbl, 0, 0, alignment=Qt.AlignLeft | Qt.AlignVCenter)
+        grid.addWidget(value_widget, 0, 1, alignment=Qt.AlignLeft | Qt.AlignVCenter)
+        self.ly.addWidget(row, 0)
         self._labels.append(lbl)
         install_tooltip_copy_handler(lbl)
         if self._overlay_active and overlay_text is not None:
