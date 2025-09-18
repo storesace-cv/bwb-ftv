@@ -798,7 +798,7 @@ class FTApp(QWidget):
             if zone._overlay_active and overlay:
                 apply_overlay_label_style(lbl)
             else:
-                apply_label_style(lbl)
+                lbl.setStyleSheet("")
             zone.ly.addWidget(lbl, 0, Qt.AlignRight | Qt.AlignVCenter)
             label_col._labels.append(lbl)
             install_tooltip_copy_handler(lbl)
@@ -896,7 +896,7 @@ class FTApp(QWidget):
             if zone._overlay_active and overlay:
                 apply_overlay_label_style(lbl)
             else:
-                apply_label_style(lbl)
+                lbl.setStyleSheet("")
             lbl.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Maximum)
             lbl.setFixedWidth(lbl_w)
             zone.ly.addWidget(lbl, 0, Qt.AlignRight | Qt.AlignVCenter)
@@ -944,7 +944,7 @@ class FTApp(QWidget):
         pvp_label = QLabel("PREÇOS DE VENDA")
         pvp_label.setAlignment(Qt.AlignCenter)
         pvp_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        apply_label_style(pvp_label, alignment=AlignmentVariant.CENTER)
+        pvp_label.setStyleSheet("")
         match_font(pvp_label, self.edNome)
         C1A21_base.add(pvp_label, 0)
 
@@ -973,7 +973,8 @@ class FTApp(QWidget):
             overlay = f"PrecosTaxas.Preco{idx}"
             display_label = overlay if zone._overlay_active else label_text
             lbl = QLabel(display_label, zone)
-            apply_label_style(lbl, alignment=AlignmentVariant.CENTER)
+            lbl.setAlignment(Qt.AlignCenter)
+            lbl.setStyleSheet("")
             lbl.setProperty("userLabel", label_text)
             lbl.setProperty("devLabel", overlay)
             match_font(lbl, self.edNome)
