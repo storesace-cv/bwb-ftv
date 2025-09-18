@@ -10,14 +10,23 @@ Item {
     implicitHeight: 160
 
     property string tag: ""
-    property int level: 0
+    property var metadataMap: (typeof zonesMetadata !== "undefined") ? zonesMetadata : null
+    property var metadata: metadataMap && tag.length > 0 && metadataMap[tag] !== undefined ? metadataMap[tag] : null
+    property int level: metadata && metadata.level !== undefined ? metadata.level : 0
     property string title: ""
-    property string zoneType: ""
-    property string widgetType: ""
-    property string widgetQtClass: ""
-    property string baseStyleLabel: ""
+    property string zoneType: metadata && metadata.zoneType ? metadata.zoneType : ""
+    property string widgetType: metadata && metadata.widgetType ? metadata.widgetType : ""
+    property string widgetQtClass: metadata && metadata.widgetQtClass ? metadata.widgetQtClass : ""
+    property string baseStyleLabel: metadata && metadata.baseStyleLabel ? metadata.baseStyleLabel : ""
     property bool showOverlays: false
     property string metadataKey: ""
+    property string overlayMetadata: {
+        var values = [zoneType, widgetQtClass, widgetType, baseStyleLabel]
+                .filter(function(value) {
+                    return value && value.length > 0;
+                });
+        return values.join(" | ");
+    }
     property var product: ({})
     property string displayValue: {
         if (!metadataKey || !product) {
@@ -81,21 +90,43 @@ Item {
         }
     }
 
-    Label {
-        id: overlayTag
-        text: root.tag
-        visible: overlayActive && text.length > 0
+    Rectangle {
+        id: overlayBadge
+        visible: overlayActive && root.tag.length > 0
         anchors.top: parent.top
         anchors.right: parent.right
         anchors.margins: 6
-        font.pixelSize: 12
-        color: "#1f4a8a"
-        background: Rectangle {
-            radius: 4
-            border.width: 1
-            border.color: "#4a6fa5"
-            color: "#ffffff"
+        radius: 4
+        border.width: 1
+        border.color: "#4a6fa5"
+        color: "#ffffff"
+        width: overlayContent.implicitWidth + 8
+        height: overlayContent.implicitHeight + 8
+
+        Column {
+            id: overlayContent
+            anchors.fill: parent
+            anchors.margins: 4
+            spacing: root.overlayMetadata.length > 0 ? 2 : 0
+
+            Label {
+                id: overlayTag
+                text: root.tag
+                font.pixelSize: 12
+                color: "#1f4a8a"
+                wrapMode: Text.NoWrap
+                verticalAlignment: Text.AlignVCenter
+            }
+
+            Label {
+                id: overlayMetadataLabel
+                text: root.overlayMetadata
+                visible: text.length > 0
+                font.pixelSize: 11
+                color: "#1f4a8a"
+                wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                verticalAlignment: Text.AlignVCenter
+            }
         }
-        padding: 4
     }
 }

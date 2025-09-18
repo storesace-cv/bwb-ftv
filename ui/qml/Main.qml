@@ -36,7 +36,6 @@ ApplicationWindow {
                 title: qsTr("Código")
                 metadataKey: "code"
                 product: identificationBlock.product
-                level: 0
                 showOverlays: identificationBlock.showOverlays
             }
 
@@ -45,7 +44,6 @@ ApplicationWindow {
                 title: qsTr("Designação")
                 metadataKey: "name"
                 product: identificationBlock.product
-                level: 0
                 showOverlays: identificationBlock.showOverlays
             }
         }
@@ -63,7 +61,6 @@ ApplicationWindow {
                 title: qsTr("Estado")
                 metadataKey: "estado"
                 product: technicalBlock.product
-                level: 1
                 showOverlays: technicalBlock.showOverlays
             }
 
@@ -72,7 +69,6 @@ ApplicationWindow {
                 title: qsTr("Validade")
                 metadataKey: "validade"
                 product: technicalBlock.product
-                level: 1
                 showOverlays: technicalBlock.showOverlays
             }
         }
@@ -90,7 +86,6 @@ ApplicationWindow {
                 title: qsTr("Observações")
                 metadataKey: "observacoes"
                 product: overlayBlock.product
-                level: 2
                 showOverlays: overlayBlock.showOverlays
             }
         }

@@ -2,16 +2,160 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
 from PyQt5.QtCore import QObject, QUrl, pyqtProperty, pyqtSignal
-from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtQml import QQmlApplicationEngine
+from PyQt5.QtWidgets import QApplication
 
 from domain import Product
+
+from . import layout
+
+logger = logging.getLogger(__name__)
+
+
+class _AuxiliaryDataStub:
+    """Provide minimal aux-table hooks required by :mod:`ui.ui_editor_fonte`."""
+
+    def __getattr__(self, name: str):  # pragma: no cover - trivial stub
+        def _method(*_args: Any, **_kwargs: Any) -> Any:
+            return [] if name.startswith("list") else None
+
+        return _method
+
+
+class _MetadataDataStoreStub:
+    """Emulate the subset of ``DataStore`` touched during metadata snapshots."""
+
+    def __init__(self) -> None:
+        self.aux = _AuxiliaryDataStub()
+        self.fcost = object()
+        self._prep_html: dict[str, str] = {}
+        self._fcost_level: Any = None
+
+    def get_preparacao_html(self, codigo: str) -> str:
+        return self._prep_html.get(codigo, "")
+
+    def save_preparacao_html(self, codigo: str, html: str) -> None:
+        self._prep_html[codigo] = html or ""
+
+    def set_fcost_level(self, level: Any) -> None:
+        self._fcost_level = level
+
+
+class _MetadataServiceStub:
+    """Lightweight service exposing the API expected by :class:`FTApp`."""
+
+    def __init__(self) -> None:
+        self.ds = _MetadataDataStoreStub()
+        self._product = Product(code="FT-METADATA", name="Metadata Stub")
+
+    # --- Product navigation -------------------------------------------------
+    def codigo_at(self, _idx: int) -> str:
+        return self._product.code
+
+    def total(self) -> int:
+        return 1
+
+    # --- Product payload ----------------------------------------------------
+    def get_product_info(self, _codigo: str) -> Product:
+        return self._product
+
+    def list_fichas_tecnicas(self, _codigo: str) -> list[Any]:
+        return []
+
+    def calculate_cost(self, _product: Product) -> float:
+        return 0.0
+
+    # --- Auxiliary lookups --------------------------------------------------
+    def list_tipos_artigos(self) -> list[Any]:
+        return []
+
+    def list_validade(self) -> list[Any]:
+        return []
+
+    def list_temperaturas(self) -> list[Any]:
+        return []
+
+    # --- Mutators / no-ops --------------------------------------------------
+    def set_product_allergens(self, *_args: Any, **_kwargs: Any) -> None:
+        return None
+
+    def set_tipo_artigo(self, *_args: Any, **_kwargs: Any) -> None:
+        return None
+
+    def set_validade(self, *_args: Any, **_kwargs: Any) -> None:
+        return None
+
+    def set_temperatura(self, *_args: Any, **_kwargs: Any) -> None:
+        return None
+
+    def save_product_image(self, *_args: Any, **_kwargs: Any) -> None:
+        return None
+
+    def delete_product_image(self, *_args: Any, **_kwargs: Any) -> None:
+        return None
+
+    def save_preparacao_image(self, *_args: Any, **_kwargs: Any) -> None:
+        return None
+
+    def delete_preparacao_image(self, *_args: Any, **_kwargs: Any) -> None:
+        return None
+
+    # --- Lookups returning empty payloads ----------------------------------
+    def get_image_path(self, *_args: Any, **_kwargs: Any) -> str:
+        return ""
+
+    def get_preparacao_image_path(self, *_args: Any, **_kwargs: Any) -> str:
+        return ""
+
+    def list_active_allergens(self) -> list[Any]:
+        return []
+
+    def get_allergen_details(self, *_args: Any, **_kwargs: Any) -> Any:
+        return None
+
+    def get_product_allergens(self, *_args: Any, **_kwargs: Any) -> list[Any]:
+        return []
+
+
+_ZONE_METADATA_CACHE: dict[str, Any] | None = None
+
+
+def _collect_zone_metadata_snapshot() -> dict[str, Any]:
+    """Materialise ``ZoneMetadata`` for every widget zone once."""
+
+    global _ZONE_METADATA_CACHE
+    if _ZONE_METADATA_CACHE is not None:
+        return _ZONE_METADATA_CACHE
+
+    try:
+        from .ui_editor_fonte import FTApp
+    except Exception:  # pragma: no cover - guard for stripped builds
+        logger.exception("Failed to import widget editor for metadata snapshot")
+        _ZONE_METADATA_CACHE = {}
+        return _ZONE_METADATA_CACHE
+
+    widget = FTApp(_MetadataServiceStub())
+    widget.hide()
+    try:
+        snapshot: dict[str, Any] = {}
+        for zone in widget.findChildren(layout.Zone):
+            data = zone.to_metadata().as_dict()
+            snapshot[data["tag"]] = data
+        _ZONE_METADATA_CACHE = snapshot
+        return snapshot
+    except Exception:  # pragma: no cover - defensive logging
+        logger.exception("Failed to build zone metadata snapshot")
+        _ZONE_METADATA_CACHE = {}
+        return _ZONE_METADATA_CACHE
+    finally:
+        widget.deleteLater()
 
 
 class OverlayController(QObject):
@@ -84,9 +228,11 @@ def create_engine(
 ) -> tuple[QQmlApplicationEngine, OverlayController]:
     """Return a ``QQmlApplicationEngine`` configured for the ficha técnica UI."""
 
-    app = QGuiApplication.instance()
+    app = QApplication.instance()
     if app is None:
-        QGuiApplication([])
+        app = QApplication([])
+
+    zones_metadata = dict(_collect_zone_metadata_snapshot())
 
     engine = QQmlApplicationEngine()
     context = engine.rootContext()
@@ -106,6 +252,7 @@ def create_engine(
     if not product_data:
         product_data = dict(build_sample_product())
     context.setContextProperty("productModel", product_data)
+    context.setContextProperty("zonesMetadata", zones_metadata)
 
     qml_path = _resolve_qml_path(main_qml)
     engine.load(QUrl.fromLocalFile(str(qml_path)))
@@ -133,12 +280,12 @@ def load_qquick_app(
     product: Any | None = None,
     show_overlays: bool | None = None,
     main_qml: str | Path | None = None,
-) -> tuple[QGuiApplication, QQmlApplicationEngine, OverlayController]:
+) -> tuple[QApplication, QQmlApplicationEngine, OverlayController]:
     """Create an application/engine triple ready to ``exec_``."""
 
-    app = QGuiApplication.instance()
+    app = QApplication.instance()
     if app is None:
-        app = QGuiApplication([])
+        app = QApplication([])
 
     engine, overlay_controller = create_engine(
         service,
