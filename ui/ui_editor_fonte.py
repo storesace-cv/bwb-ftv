@@ -104,9 +104,9 @@ from domain import FichaTecnica
 from utils.formatting import format_pt_number, parse_decimal
 
 from . import layout
-from .bwb_style_1 import APP_STYLESHEET, FIELD_STYLE
 from .layout import Zone, compose_stylesheet
 from .utilities import (
+    FIELD_STYLE,
     apply_fcfilter_btn_style,
     apply_label_style,
     apply_overlay_label_style,
@@ -125,6 +125,26 @@ from .dialogs import (
 )
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
+
+APP_STYLESHEET = (
+    "QWidget {\n"
+    "    font-family: 'Inter', 'Segoe UI', sans-serif;\n"
+    "    font-size: 12px;\n"
+    "    color: #1d1f23;\n"
+    "}\n"
+    "QMainWindow {\n"
+    "    background-color: #f6f7fb;\n"
+    "}\n"
+    "QToolTip {\n"
+    "    color: #1d1f23;\n"
+    "    background-color: rgba(255, 255, 255, 0.95);\n"
+    "    border: 1px solid rgba(0, 0, 0, 0.15);\n"
+    "    padding: 4px 6px;\n"
+    "}\n"
+    "QLabel[class~='overlay-active'] {\n"
+    "    color: #0b63ce;\n"
+    "}"
+)
 
 _ZONE_BASE_DECLARATIONS = (
     "background-color: rgba(255, 255, 255, 0.35);\n"

@@ -15,13 +15,83 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from .bwb_style_1 import (
-    CENTER_FIELD_STYLE,
-    CENTER_LABEL_STYLE,
-    FIELD_STYLE,
-    LABEL_STYLE,
-    OVERLAY_ON_CLASS,
-    FCFILTER_BUTTON_STYLE_TEMPLATE,
+# --- Shared UI style constants -------------------------------------------------
+
+# Labels use a light, neutral palette that matches the mock-ups from the
+# functional specification.  The centre variants keep the same palette but allow
+# per-widget alignment overrides (the helpers later force the desired Qt
+# alignment, so the selector keeps the text-decoration consistent).
+LABEL_STYLE = (
+    "QLabel {\n"
+    "    color: #1d1f23;\n"
+    "    font-size: 13px;\n"
+    "    font-weight: 500;\n"
+    "    background: transparent;\n"
+    "    border: none;\n"
+    "    padding: 0;\n"
+    "}"
+)
+
+CENTER_LABEL_STYLE = (
+    "QLabel {\n"
+    "    color: #1d1f23;\n"
+    "    font-size: 13px;\n"
+    "    font-weight: 500;\n"
+    "    background: transparent;\n"
+    "    border: none;\n"
+    "    padding: 0;\n"
+    "    text-align: center;\n"
+    "}"
+)
+
+# Read-only fields keep the muted glassmorphism look: translucent background,
+# subtle border and rounded corners.  The centred variant only differs by the
+# alignment declaration so that it can be reused wherever visual centring is
+# preferred.
+FIELD_STYLE = (
+    "QLineEdit {\n"
+    "    background: rgba(255, 255, 255, 0.85);\n"
+    "    border: 1px solid rgba(0, 0, 0, 0.18);\n"
+    "    border-radius: 8px;\n"
+    "    padding: 4px 6px;\n"
+    "    selection-background-color: rgba(0, 110, 255, 0.45);\n"
+    "}"
+)
+
+CENTER_FIELD_STYLE = (
+    "QLineEdit {\n"
+    "    background: rgba(255, 255, 255, 0.85);\n"
+    "    border: 1px solid rgba(0, 0, 0, 0.18);\n"
+    "    border-radius: 8px;\n"
+    "    padding: 4px 6px;\n"
+    "    selection-background-color: rgba(0, 110, 255, 0.45);\n"
+    "    qproperty-alignment: 'AlignHCenter | AlignVCenter';\n"
+    "}"
+)
+
+# Overlay mode tags rely on a class property so they can be styled globally via
+# a single selector.
+OVERLAY_ON_CLASS = "overlay-active"
+
+# Base template used by the Food Cost filter buttons.  RGB components are filled
+# dynamically, maintaining the same hover/checked contrast the designers
+# specified while keeping the neutral typography.
+FCFILTER_BUTTON_STYLE_TEMPLATE = (
+    "QPushButton {{\n"
+    "    background-color: rgba({r}, {g}, {b}, {normal_alpha});\n"
+    "    border: 1px solid rgba({r}, {g}, {b}, 0.4);\n"
+    "    border-radius: 12px;\n"
+    "    padding: 6px 12px;\n"
+    "    font-weight: 600;\n"
+    "    color: #1d1f23;\n"
+    "}}\n"
+    "QPushButton:hover {{\n"
+    "    background-color: rgba({r}, {g}, {b}, {active_alpha});\n"
+    "}}\n"
+    "QPushButton:checked {{\n"
+    "    background-color: rgba({r}, {g}, {b}, {active_alpha});\n"
+    "    border-color: rgba({r}, {g}, {b}, 0.6);\n"
+    "}}"
 )
 
 

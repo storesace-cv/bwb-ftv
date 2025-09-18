@@ -10,12 +10,12 @@ from PyQt5.QtWidgets import QLabel, QLineEdit
 
 from domain import Product
 from ui import layout
-from ui.bwb_style_1 import OVERLAY_ON_CLASS
 from ui.ui_editor_fonte import FTApp, _configure_zone
 from ui.utilities import (
     AlignmentVariant,
     CENTER_FIELD_STYLE,
     CENTER_LABEL_STYLE,
+    OVERLAY_ON_CLASS,
     LABEL_STYLE,
     apply_label_style,
     apply_overlay_label_style,
