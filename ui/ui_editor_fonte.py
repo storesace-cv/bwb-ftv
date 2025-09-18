@@ -75,7 +75,12 @@ import html.parser as html_parser
 import itertools
 import re
 from pathlib import Path
-from PyQt5.QtCore import Qt, QTimer, QPoint, QWIDGETSIZE_MAX
+try:  # PyQt 5.15.10 wheels omit QWIDGETSIZE_MAX on some platforms
+    from PyQt5.QtCore import Qt, QTimer, QPoint, QWIDGETSIZE_MAX
+except ImportError:  # pragma: no cover - fallback for stripped builds
+    from PyQt5.QtCore import Qt, QTimer, QPoint
+
+    QWIDGETSIZE_MAX = 16777215
 from PyQt5.QtGui import QFont, QKeySequence, QTextOption, QPixmap
 from PyQt5.QtWidgets import (
     QApplication,
