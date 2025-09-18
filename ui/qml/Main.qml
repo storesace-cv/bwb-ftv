@@ -34,6 +34,9 @@ ApplicationWindow {
             Zone {
                 tag: "B1.C1"
                 title: qsTr("Código")
+                zoneType: "bloco-dados-gerais"
+                widgetType: "campo"
+                widgetQtClass: "QLineEdits"
                 metadataKey: "code"
                 product: identificationBlock.product
                 level: 0
@@ -43,6 +46,9 @@ ApplicationWindow {
             Zone {
                 tag: "B1.C2"
                 title: qsTr("Designação")
+                zoneType: "bloco-dados-gerais"
+                widgetType: "campo"
+                widgetQtClass: "QLineEdits"
                 metadataKey: "name"
                 product: identificationBlock.product
                 level: 0
@@ -61,6 +67,9 @@ ApplicationWindow {
             Zone {
                 tag: "B2.C1"
                 title: qsTr("Estado")
+                zoneType: "bloco-ingredientes"
+                widgetType: "tabela"
+                widgetQtClass: "QTableViews"
                 metadataKey: "estado"
                 product: technicalBlock.product
                 level: 1
@@ -70,6 +79,9 @@ ApplicationWindow {
             Zone {
                 tag: "B2.C2"
                 title: qsTr("Validade")
+                zoneType: "bloco-ingredientes"
+                widgetType: "tabela"
+                widgetQtClass: "QTableViews"
                 metadataKey: "validade"
                 product: technicalBlock.product
                 level: 1
@@ -88,6 +100,9 @@ ApplicationWindow {
             Zone {
                 tag: "B3.C1"
                 title: qsTr("Observações")
+                zoneType: "bloco-food-cost"
+                widgetType: "campo"
+                widgetQtClass: "QLineEdits"
                 metadataKey: "observacoes"
                 product: overlayBlock.product
                 level: 2
