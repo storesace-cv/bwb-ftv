@@ -351,6 +351,17 @@ def test_zone_overlay_label_width_tracks_visible_text(qapp, overlays_enabled):
     assert reverted_width == initial_width
 
 
+def test_apply_metadata_default_base_stylesheet_is_borderless(qapp):
+    zone = layout.Zone("B2.C1", show_overlays=False)
+
+    zone.apply_metadata()
+
+    assert zone.property("overlays") == "off"
+    assert zone.styleSheet() == zone.base_stylesheet
+    assert "border:" not in zone.base_stylesheet
+    assert "border-radius" in zone.base_stylesheet
+
+
 def test_apply_bwb_etiqueta_normal_registers_stylesheet_and_alignment(qapp):
     zone = layout.Zone("B7.C1", show_overlays=False)
     other_zone = layout.Zone("B7.C2", show_overlays=False)
@@ -369,6 +380,7 @@ def test_apply_bwb_etiqueta_normal_registers_stylesheet_and_alignment(qapp):
 
     assert zone.base_stylesheet == expected_stylesheet
     assert zone._base_style_label == "bwb-etiqueta-normal"
+    assert "border: 1px solid" in zone.base_stylesheet
 
     value_widget = QLabel("valor", zone)
     label = zone.add_row("Etiqueta", value_widget)

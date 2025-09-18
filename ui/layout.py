@@ -42,7 +42,6 @@ DEFAULT_ZONE_MARGINS = (3, 5)
 _QT_MAX_WIDGET_WIDTH = 16777215
 
 _DEFAULT_ZONE_BASE_DECLARATIONS = (
-    "border: 1px solid rgba(0, 0, 0, 0.08);\n",
     "border-radius: 12px;\n",
     "padding: 6px;\n",
 )
