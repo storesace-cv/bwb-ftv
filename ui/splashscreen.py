@@ -40,7 +40,7 @@ class SplashScreen(QDialog):
             self._message.setAlignment(Qt.AlignCenter)
             apply_label_style(
                 self._message,
-                "QLabel { color: white; font-weight: bold; }",
+                "QLabel { color: white; }",
             )
             self._message.setGeometry(0, 260, 800, 40)
         self._message.setText(text)
