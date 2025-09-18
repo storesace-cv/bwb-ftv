@@ -775,7 +775,9 @@ class FTApp(QWidget):
         values_zone.apply_metadata(zone_type="coluna-campos", widget_type="campo")
         families_row_layout = labels_zone.parentWidget().layout()
         if families_row_layout is not None:
-            families_row_layout.setSpacing(12)
+            reference_spacing = self.C1A1.ly.spacing()
+            if reference_spacing >= 0:
+                families_row_layout.setSpacing(reference_spacing)
             families_row_layout.setStretch(0, 0)
             families_row_layout.setStretch(1, 1)
             families_row_layout.setAlignment(labels_zone, Qt.AlignLeft)
@@ -798,6 +800,8 @@ class FTApp(QWidget):
             zone_type="linha-campo",
             widget_type="campo",
         )
+        familia_values_zone.ly.setContentsMargins(0, 0, 0, 0)
+        subfamilia_values_zone.ly.setContentsMargins(0, 0, 0, 0)
         for zone in (familia_values_zone, subfamilia_values_zone):
             zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
@@ -862,10 +866,10 @@ class FTApp(QWidget):
         self.lbSubFamiliaVal.setFont(self.edNome.font())
 
         familia_values_zone.ly.addWidget(
-            self.lbFamiliaVal, 0, Qt.AlignLeft | Qt.AlignVCenter
+            self.lbFamiliaVal, 0, Qt.AlignVCenter
         )
         subfamilia_values_zone.ly.addWidget(
-            self.lbSubFamiliaVal, 0, Qt.AlignLeft | Qt.AlignVCenter
+            self.lbSubFamiliaVal, 0, Qt.AlignVCenter
         )
 
         # Base: zona horizontal com cinco colunas PVP1..PVP5 (etiqueta por cima)
