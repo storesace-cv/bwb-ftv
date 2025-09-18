@@ -761,3 +761,32 @@ def apply_bwb_etiqueta_normal(zone: Zone) -> None:
 
     zone.set_label_alignment(AlignmentVariant.RIGHT)
     zone.ly.setContentsMargins(0, 0, 0, 0)
+    stylesheet = zone.base_stylesheet
+    selector = (
+        f"#{_escape_object_name(zone.objectName())}" if zone.objectName() else ""
+    )
+    declarations_text = ""
+    if stylesheet:
+        stripped = stylesheet.strip()
+        if selector and stripped.startswith(selector):
+            open_brace = stripped.find("{")
+            close_brace = stripped.rfind("}")
+            if 0 <= open_brace < close_brace:
+                declarations_text = stripped[open_brace + 1 : close_brace].strip()
+        else:
+            declarations_text = stripped
+    parts: list[str] = []
+    if declarations_text:
+        raw_parts = [
+            segment.strip()
+            for segment in declarations_text.split(";")
+            if segment.strip()
+        ]
+        parts.extend(
+            segment
+            for segment in raw_parts
+            if not segment.lower().startswith(("margin", "padding"))
+        )
+    parts.extend(["margin: 0", "padding: 0"])
+    declarations = "; ".join(parts) + ";"
+    zone.set_zone_stylesheet(compose_stylesheet(zone, declarations))
