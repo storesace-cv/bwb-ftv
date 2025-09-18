@@ -666,7 +666,6 @@ class FTApp(QWidget):
         self.edNome.setStyleSheet(FIELD_STYLE)
         label_col, field_col = self.C1A1.split_h((0, 1))
         label_col.apply_metadata(zone_type="coluna-legendas", widget_type="legenda")
-        apply_bwb_etiqueta_normal(label_col)
         field_col.apply_metadata(zone_type="coluna-campos", widget_type="campo")
         field_col_margins = field_col.ly.contentsMargins()
         field_col.ly.setContentsMargins(
@@ -756,7 +755,6 @@ class FTApp(QWidget):
         C1A21_top.apply_overlays(True)
         labels_zone, values_zone = C1A21_top.split_h((1, 3))
         labels_zone.apply_metadata(zone_type="coluna-legendas", widget_type="legenda")
-        apply_bwb_etiqueta_normal(labels_zone)
         values_zone.apply_metadata(zone_type="coluna-campos", widget_type="campo")
         families_row_layout = labels_zone.parentWidget().layout()
         if families_row_layout is not None:
