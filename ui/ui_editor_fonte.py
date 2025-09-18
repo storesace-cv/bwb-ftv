@@ -697,6 +697,8 @@ class FTApp(QWidget):
             zone.set_label_alignment(AlignmentVariant.RIGHT)
             zone.ly.setContentsMargins(0, 0, 0, 0)
         field_top, field_bottom = field_col.split_v((1, 1))
+        field_top.ly.setContentsMargins(0, 0, 0, 0)
+        field_bottom.ly.setContentsMargins(0, 0, 0, 0)
         field_top.apply_metadata(zone_type="linha-campo", widget_type="campo")
         field_bottom.apply_metadata(zone_type="linha-campo", widget_type="campo")
 
