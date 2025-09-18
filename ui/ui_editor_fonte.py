@@ -678,6 +678,8 @@ class FTApp(QWidget):
         label_col.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
 
         label_top, label_bottom = label_col.split_v((1, 1))
+        apply_bwb_etiqueta_normal(label_top)
+        apply_bwb_etiqueta_normal(label_bottom)
         label_top.apply_metadata(zone_type="linha-legenda", widget_type="legenda")
         label_bottom.apply_metadata(zone_type="linha-legenda", widget_type="legenda")
         field_top, field_bottom = field_col.split_v((1, 1))
@@ -782,6 +784,8 @@ class FTApp(QWidget):
             zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         familia_label_zone, subfamilia_label_zone = labels_zone.split_v((1, 1))
+        apply_bwb_etiqueta_normal(familia_label_zone)
+        apply_bwb_etiqueta_normal(subfamilia_label_zone)
         familia_label_zone.apply_metadata(
             zone_type="linha-legenda",
             widget_type="legenda",
