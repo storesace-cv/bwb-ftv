@@ -148,7 +148,6 @@ APP_STYLESHEET = (
 )
 
 _ZONE_BASE_DECLARATIONS = (
-    "background-color: rgba(255, 255, 255, 0.35);\n"
     "border: 1px solid rgba(0, 0, 0, 0.08);\n"
     "border-radius: 12px;\n"
     "padding: 6px;\n"
@@ -178,9 +177,7 @@ def _configure_zone(
     base_style_label: str | None = None,
 ) -> Zone:
     if apply_base_style:
-        declarations = (
-            base_declarations if base_declarations is not None else _ZONE_BASE_DECLARATIONS
-        )
+        declarations = base_declarations if base_declarations is not None else _ZONE_BASE_DECLARATIONS
         zone.set_zone_stylesheet(
             compose_stylesheet(zone, declarations), label=base_style_label
         )
