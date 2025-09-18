@@ -727,7 +727,7 @@ class FTApp(QWidget):
             field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         field_top.ly.addWidget(self.edCodigo, 0, Qt.AlignLeft)
-        field_bottom.ly.addWidget(self.edNome, 0, Qt.AlignLeft)
+        field_bottom.ly.addWidget(self.edNome, 0)
 
         scroll.verticalScrollBar().valueChanged.connect(
             self._toggle_header_on_scroll
@@ -1014,6 +1014,30 @@ class FTApp(QWidget):
         self.tbIng.setFixedHeight(initial_h)
         self.tbIng.setEditTriggers(QTableView.DoubleClicked | QTableView.EditKeyPressed)
         C2_ing_zone.add(self.tbIng, 1)
+        nome_font = QFont(self.edNome.font())
+        nome_point_size_f = nome_font.pointSizeF()
+        if nome_point_size_f > 0:
+            nome_font.setPointSizeF(nome_point_size_f * 4)
+        else:
+            nome_point_size = nome_font.pointSize()
+            if nome_point_size > 0:
+                nome_font.setPointSize(nome_point_size * 4)
+        self.edNome.setFont(nome_font)
+        self.edNome.setFixedHeight(self.edNome.sizeHint().height())
+        self.edNome.updateGeometry()
+
+        header_nome_font = QFont(self.headerEdNome.font())
+        header_point_size_f = header_nome_font.pointSizeF()
+        if header_point_size_f > 0:
+            header_nome_font.setPointSizeF(header_point_size_f * 4)
+        else:
+            header_point_size = header_nome_font.pointSize()
+            if header_point_size > 0:
+                header_nome_font.setPointSize(header_point_size * 4)
+        self.headerEdNome.setFont(header_nome_font)
+        self.headerEdNome.setFixedHeight(self.headerEdNome.sizeHint().height())
+        self.headerEdNome.updateGeometry()
+
         self._setup_ing_columns()
 
         # Zona para custos totais após a tabela de ingredientes
