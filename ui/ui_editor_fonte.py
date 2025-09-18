@@ -1570,11 +1570,19 @@ class FTApp(QWidget):
 
         shared_label_width = max((lbl.sizeHint().width() for lbl in all_labels), default=0)
 
-        label_col_margins = label_col.ly.contentsMargins()
-        family_col_margins = family_col.ly.contentsMargins()
-        padding_label_col = label_col_margins.left() + label_col_margins.right()
-        padding_family_col = family_col_margins.left() + family_col_margins.right()
-        shared_zone_width = shared_label_width + max(padding_label_col, padding_family_col)
+        overhead_by_zone: dict[Zone, int] = {}
+        for lbl in all_labels:
+            parent_zone = lbl.parentWidget()
+            if isinstance(parent_zone, Zone):
+                overhead = max(
+                    0, parent_zone.sizeHint().width() - lbl.sizeHint().width()
+                )
+                overhead_by_zone[parent_zone] = max(
+                    overhead_by_zone.get(parent_zone, 0), overhead
+                )
+
+        max_overhead = max(overhead_by_zone.values(), default=0)
+        shared_zone_width = shared_label_width + max_overhead
 
         for lbl in all_labels:
             lbl.setMinimumWidth(shared_label_width)

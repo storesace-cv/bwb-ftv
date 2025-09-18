@@ -694,6 +694,7 @@ class Zone(QWidget):
 
 def apply_bwb_etiqueta_normal(zone: Zone) -> None:
     zone.set_label_alignment(AlignmentVariant.RIGHT)
+    zone.ly.setContentsMargins(0, 0, 0, 0)
     name = zone.objectName()
     selector = (
         f"#{_escape_object_name(name)}[overlays=\"off\"]" if name else ""
@@ -707,7 +708,7 @@ def apply_bwb_etiqueta_normal(zone: Zone) -> None:
         "border-left-color: rgba(255, 255, 255, 0.5); "
         "border-radius: 5px; "
         "color: rgba(255, 255, 255, 1); "
-        "padding: 4px 6px; "
+        "padding: 3px; "
         "margin: 4px; "
         "box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.5); "
         "text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2); "

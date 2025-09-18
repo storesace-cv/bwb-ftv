@@ -208,6 +208,30 @@ def test_identification_and_family_label_columns_expand_with_long_text(qapp):
         ft.close()
 
 
+def test_family_caption_zone_keeps_padding_gap(qapp):
+    ds = StubDataStore()
+    service = ProductService(ds)
+    ft = FTApp(service)
+    try:
+        ft.show()
+        qapp.processEvents()
+
+        ft._refresh_family_label_column_widths()
+        qapp.processEvents()
+
+        caption_zone = ft.findChild(Zone, "B1.C1.A.1.A.1")
+        assert caption_zone is not None
+        assert caption_zone._labels, "expected caption label in zone"
+
+        caption_label = caption_zone._labels[0]
+        zone_width = caption_zone.geometry().width()
+        label_width = caption_label.geometry().width()
+
+        assert zone_width - label_width == 6
+    finally:
+        ft.close()
+
+
 class VarStubDataStore(StubDataStore):
     def __init__(self, n):
         self.n = n
