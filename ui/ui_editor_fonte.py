@@ -63,6 +63,9 @@
 # 2025-09-15 15:40 — v3.97 — Filtro Food Cost (Bom/Aceitável/Mau) com botões exclusivos.
 # 2025-09-15 17:15 — v3.98 — Código/Nome fixos fora do scroll;
 #    B1.C1 inicia após cabeçalho.
+# 2025-09-18 01:41 — v3.99 — Títulos das secções regressam ao peso
+#    normal e alinhamentos ajustados para legibilidade sem sobrescritas
+#    agressivas de estilo.
 
 import sys
 import json
@@ -510,6 +513,16 @@ class FTApp(QWidget):
         box.setProperty("devTitle", title)
         box.setProperty("userTitle", user_title)
         box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        font = QFont(box.font())
+        if font.bold() or font.weight() != QFont.Normal:
+            font.setBold(False)
+            font.setWeight(QFont.Normal)
+        box.setFont(font)
+        box.setStyleSheet(
+            "QGroupBox::title {\n"
+            "    padding: 2px 6px;\n"
+            "}\n"
+        )
         ly = QVBoxLayout(box)
         ly.setContentsMargins(3, 5, 3, 5)
         ly.setSpacing(5)
