@@ -21,6 +21,7 @@ from PyQt5.QtWidgets import (
 )
 
 from .utilities import (
+    OVERLAY_ON_CLASS,
     apply_label_style,
     apply_overlay_label_style,
     install_tooltip_copy_handler,
@@ -79,6 +80,26 @@ def refresh_style(widget: QWidget) -> None:
 
 
 _KEEP_LABEL = object()
+
+
+def _clear_overlay_class(label: QLabel) -> None:
+    """Remove the overlay marker class from ``label`` if present."""
+
+    value = label.property("class")
+    if value is None:
+        return
+    if isinstance(value, str):
+        classes = value.split()
+    elif isinstance(value, (list, tuple)):
+        classes = [str(cls) for cls in value if str(cls)]
+    else:
+        text = str(value).strip()
+        classes = [text] if text else []
+    filtered = [cls for cls in classes if cls != OVERLAY_ON_CLASS]
+    if filtered:
+        label.setProperty("class", " ".join(filtered))
+    else:
+        label.setProperty("class", None)
 
 
 class Zone(QWidget):
@@ -354,7 +375,11 @@ class Zone(QWidget):
                 apply_overlay_label_style(lbl)
             else:
                 extra = lbl.property("labelExtraStyle")
-                apply_label_style(lbl, extra if extra else None)
+                if lbl.property("prefersQtDefaultLabelStyle"):
+                    _clear_overlay_class(lbl)
+                    lbl.setStyleSheet("")
+                else:
+                    apply_label_style(lbl, extra if extra else None)
             lbl.setFont(font)
             lbl.setAlignment(alignment)
             refresh_style(lbl)
