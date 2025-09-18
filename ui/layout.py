@@ -186,6 +186,13 @@ class Zone(QWidget):
         self._style_dev_info: str | None = None
         self._suspend_base_tracking = False
         self._next_base_style_label: Any = _KEEP_LABEL
+        self._metadata_snapshot: dict[str, str] = {}
+        self._update_metadata_snapshot(
+            zone_type=self._zone_type,
+            widget_type=self._widget_type,
+            widget_qt_class=self._widget_qt_class,
+            base_style_label=self._base_style_label,
+        )
         if flow == "v":
             self.ly = QVBoxLayout(self)
         else:
@@ -282,6 +289,8 @@ class Zone(QWidget):
 
     def set_widget_type(self, widget_type: str | None) -> None:
         self._widget_type = widget_type or None
+        if self._widget_type:
+            self._update_metadata_snapshot(widget_type=self._widget_type)
         self._sync_style_label()
 
     @property
@@ -310,6 +319,8 @@ class Zone(QWidget):
 
     def set_zone_type(self, zone_type: str | None) -> None:
         self._zone_type = zone_type or None
+        if self._zone_type:
+            self._update_metadata_snapshot(zone_type=self._zone_type)
         self._sync_style_label()
 
     def set_style_dev_info(self, info: str | None) -> None:
@@ -322,6 +333,8 @@ class Zone(QWidget):
 
     def set_widget_qt_class(self, widget_qt_class: str | None) -> None:
         self._widget_qt_class = widget_qt_class or None
+        if self._widget_qt_class:
+            self._update_metadata_snapshot(widget_qt_class=self._widget_qt_class)
         self._sync_style_label()
 
     @classmethod
@@ -382,13 +395,16 @@ class Zone(QWidget):
     def to_metadata(self) -> ZoneMetadata:
         """Return a :class:`ZoneMetadata` snapshot of the current zone."""
 
+        snapshot = self._metadata_snapshot
         return ZoneMetadata(
             tag=self.tag,
             level=self.level,
-            zone_type=self.zone_type,
-            widget_type=self.widget_type,
-            widget_qt_class=self.widget_qt_class,
-            base_style_label=self.base_style_label,
+            zone_type=self.zone_type or snapshot.get("zone_type"),
+            widget_type=self.widget_type or snapshot.get("widget_type"),
+            widget_qt_class=self.widget_qt_class
+            or snapshot.get("widget_qt_class"),
+            base_style_label=self.base_style_label
+            or snapshot.get("base_style_label"),
             margin_h=self.margin_h,
             margin_v=self.margin_v,
             overlays_active=self.overlays_active,
@@ -411,6 +427,10 @@ class Zone(QWidget):
             self._base_stylesheet = stylesheet
             if label is not _KEEP_LABEL:
                 self._base_style_label = label
+                if self._base_style_label:
+                    self._update_metadata_snapshot(
+                        base_style_label=self._base_style_label
+                    )
             self._sync_style_label()
             return
 
@@ -439,6 +459,23 @@ class Zone(QWidget):
         ]
         filtered = [segment for segment in segments if segment]
         return " | ".join(filtered) if filtered else None
+
+    def _update_metadata_snapshot(
+        self,
+        *,
+        zone_type: str | None = None,
+        widget_type: str | None = None,
+        widget_qt_class: str | None = None,
+        base_style_label: str | None = None,
+    ) -> None:
+        if zone_type:
+            self._metadata_snapshot["zone_type"] = zone_type
+        if widget_type:
+            self._metadata_snapshot["widget_type"] = widget_type
+        if widget_qt_class:
+            self._metadata_snapshot["widget_qt_class"] = widget_qt_class
+        if base_style_label:
+            self._metadata_snapshot["base_style_label"] = base_style_label
 
     def _sync_style_label(self) -> None:
         if self._overlay_active:
@@ -577,6 +614,10 @@ class Zone(QWidget):
         if self._next_base_style_label is not _KEEP_LABEL:
             self._base_style_label = self._next_base_style_label
         self._next_base_style_label = _KEEP_LABEL
+        if self._base_style_label:
+            self._update_metadata_snapshot(
+                base_style_label=self._base_style_label
+            )
         self._sync_style_label()
         refresh_style(self)
 

@@ -55,6 +55,14 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         assert legend_meta is not None
         assert legend_meta.get("zoneType") == "linha-legenda"
         assert legend_meta.get("widgetQtClass") == "QLabels"
+
+        legend_zone = _find_zone(root, "B1.C1.A.1.A.1")
+        assert legend_zone is not None
+        assert legend_zone.property("overlayActive") is True
+        assert legend_zone.property("zoneType") == "linha-legenda"
+        assert legend_zone.property("widgetQtClass") == "QLabels"
+        overlay_metadata = legend_zone.property("overlayMetadata")
+        assert overlay_metadata == "linha-legenda | QLabels | legenda"
     finally:
         engine.deleteLater()
 
