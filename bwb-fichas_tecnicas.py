@@ -7,7 +7,7 @@ import logging
 import os
 from PyQt5.QtCore import QtMsgType, qInstallMessageHandler
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QFontDatabase
 
 from data.datastore import DataStore  # noqa: E402
 from data.migration import ALERGENIOS_SEED_FLAG  # noqa: E402
@@ -66,8 +66,29 @@ def _qt_message_handler(mode, context, message):
 
 def _apply_global_theme(app):
     try:
-        f = QFont()
-        f.setPointSize(12)  # tamanho global 12pt
+        root = get_project_root()
+        font_path = root / "ui" / "fonts" / "Roboto-Regular.ttf"
+        font_family = "Roboto"
+        font_id = -1
+
+        if font_path.exists():
+            font_id = QFontDatabase.addApplicationFont(str(font_path))
+            if font_id == -1:
+                logger.warning(
+                    "[THEME] Falha a carregar fonte Roboto a partir de %s", font_path
+                )
+            else:
+                families = QFontDatabase.applicationFontFamilies(font_id)
+                if families:
+                    font_family = families[0]
+        else:
+            logger.warning("[THEME] Fonte Roboto não encontrada em %s", font_path)
+
+        if font_id == -1 and font_family not in QFontDatabase().families():
+            logger.warning("[THEME] Fonte Roboto indisponível; a usar tipografia padrão")
+            font_family = app.font().family()
+
+        f = QFont(font_family, 12)  # tamanho global 12pt
         app.setFont(f)
         # pode-se adicionar QSS leve aqui se precisares
     except Exception as e:
