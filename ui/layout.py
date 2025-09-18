@@ -703,7 +703,7 @@ def apply_bwb_etiqueta_normal(zone: Zone) -> None:
         "background-color: rgba(182, 168, 164, 0.95); "
         "border: 1px solid rgba(0, 0, 0, 1); "
         "border-radius: 5px; "
-        "color: rgba(255, 255, 255, 1); "
+        "color: rgb (255, 255, 255); "
         "padding: 4px 6px; margin: 0px;"
     )
     stylesheet = f"{selector} {{ {declarations} }}" if selector else declarations
