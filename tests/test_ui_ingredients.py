@@ -170,7 +170,7 @@ def test_classification_overlay_tags_hidden(qapp):
         layout.DEV_OVERLAYS = original
 
 
-def test_identification_and_family_label_columns_share_width(qapp):
+def test_identification_and_family_label_columns_expand_with_long_text(qapp):
     ds = StubDataStore()
     service = ProductService(ds)
     ft = FTApp(service)
@@ -184,15 +184,26 @@ def test_identification_and_family_label_columns_share_width(qapp):
         assert ident_zone is not None
         assert family_zone is not None
 
-        assert ident_zone.minimumWidth() == ident_zone.maximumWidth()
-        assert family_zone.minimumWidth() == family_zone.maximumWidth()
-        assert ident_zone.minimumWidth() == family_zone.minimumWidth()
+        initial_width = ident_zone.width()
+        assert ident_zone.width() == family_zone.width()
 
         origin = QPoint(0, 0)
         ident_x = ident_zone.mapToGlobal(origin).x()
         family_x = family_zone.mapToGlobal(origin).x()
 
         assert ident_x == family_x
+
+        long_text = (
+            "Família / Categoria com descrição muitíssimo longa para validar largura"
+        )
+        assert family_zone._labels, "expected labels in family zone"
+        family_zone._labels[0].setText(long_text)
+
+        ft._refresh_family_label_column_widths()
+        qapp.processEvents()
+
+        assert ident_zone.width() == family_zone.width()
+        assert ident_zone.width() > initial_width
     finally:
         ft.close()
 

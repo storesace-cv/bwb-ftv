@@ -75,7 +75,7 @@ import html.parser as html_parser
 import itertools
 import re
 from pathlib import Path
-from PyQt5.QtCore import Qt, QTimer, QPoint
+from PyQt5.QtCore import Qt, QTimer, QPoint, QWIDGETSIZE_MAX
 from PyQt5.QtGui import QFont, QKeySequence, QTextOption, QPixmap
 from PyQt5.QtWidgets import (
     QApplication,
@@ -675,7 +675,7 @@ class FTApp(QWidget):
             3,
             field_col_margins.bottom(),
         )
-        label_col.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
+        label_col.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
 
         label_top, label_bottom = label_col.split_v((1, 1))
         label_top.apply_metadata(
@@ -778,7 +778,7 @@ class FTApp(QWidget):
             3,
             values_zone_margins.bottom(),
         )
-        labels_zone.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
+        labels_zone.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         values_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
         familia_values_zone, subfamilia_values_zone = values_zone.split_v((1, 1))
@@ -832,25 +832,10 @@ class FTApp(QWidget):
         )
         labels_zone.set_label_alignment(AlignmentVariant.RIGHT)
         labels_zone.sync_label_widths()
-        all_labels = list(itertools.chain(label_col._labels, labels_zone._labels))
-        for lbl in all_labels:
-            lbl.setMinimumWidth(0)
-            lbl.setMaximumWidth(16777215)
 
-        shared_label_width = max((lbl.sizeHint().width() for lbl in all_labels), default=0)
-
-        for lbl in all_labels:
-            lbl.setFixedWidth(shared_label_width)
-
-        label_col_margins = label_col.ly.contentsMargins()
-        labels_zone_margins = labels_zone.ly.contentsMargins()
-        padding_label_col = label_col_margins.left() + label_col_margins.right()
-        padding_labels_zone = labels_zone_margins.left() + labels_zone_margins.right()
-        shared_zone_width = shared_label_width + max(padding_label_col, padding_labels_zone)
-
-        for zone in (label_col, labels_zone):
-            zone.setFixedWidth(shared_zone_width)
-            zone.update()
+        self._ident_label_zone = label_col
+        self._family_label_zone = labels_zone
+        self._refresh_family_label_column_widths()
 
         self.lbFamiliaVal = QLineEdit("")
         make_readonly_lineedit(self.lbFamiliaVal)
@@ -1553,6 +1538,53 @@ class FTApp(QWidget):
         if hasattr(self, "scroll") and hasattr(self, "page"):
             self.page.setMinimumWidth(self.scroll.viewport().width())
 
+    def _refresh_family_label_column_widths(self) -> None:
+        """Keep identification/family label columns aligned and resizable."""
+
+        label_col = getattr(self, "_ident_label_zone", None)
+        family_col = getattr(self, "_family_label_zone", None)
+        if label_col is None or family_col is None:
+            return
+
+        zones = (label_col, family_col)
+        all_labels = list(
+            itertools.chain.from_iterable(zone._labels for zone in zones)  # type: ignore[attr-defined]
+        )
+        if not all_labels:
+            return
+
+        for zone in zones:
+            zone.setMinimumWidth(0)
+            zone.setMaximumWidth(QWIDGETSIZE_MAX)
+            zone.updateGeometry()
+
+        for lbl in all_labels:
+            lbl.setMinimumWidth(0)
+            lbl.setMaximumWidth(QWIDGETSIZE_MAX)
+            lbl.updateGeometry()
+
+        shared_label_width = max((lbl.sizeHint().width() for lbl in all_labels), default=0)
+
+        label_col_margins = label_col.ly.contentsMargins()
+        family_col_margins = family_col.ly.contentsMargins()
+        padding_label_col = label_col_margins.left() + label_col_margins.right()
+        padding_family_col = family_col_margins.left() + family_col_margins.right()
+        shared_zone_width = shared_label_width + max(padding_label_col, padding_family_col)
+
+        for lbl in all_labels:
+            lbl.setMinimumWidth(shared_label_width)
+            lbl.setMaximumWidth(QWIDGETSIZE_MAX)
+            lbl.updateGeometry()
+
+        for zone in zones:
+            zone.setMinimumWidth(shared_zone_width)
+            zone.setMaximumWidth(QWIDGETSIZE_MAX)
+            zone.updateGeometry()
+
+        layout_root = self.layout()
+        if layout_root is not None:
+            layout_root.activate()
+
     def _on_prep_changed(self):
         self._prep_dirty = True
         self._apply_prep_autofit_or_scroll()
@@ -1997,6 +2029,7 @@ class FTApp(QWidget):
         apply_fichas_tecnicas_headers(
             self.ingModel, overlays=layout.DEV_OVERLAYS
         )
+        self._refresh_family_label_column_widths()
 
     def _toggle_overlays_btn(self):
         self._toggle_overlays()
