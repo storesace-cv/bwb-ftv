@@ -105,7 +105,7 @@ from domain import FichaTecnica
 from utils.formatting import format_pt_number, parse_decimal
 
 from . import layout
-from .layout import Zone, compose_stylesheet
+from .layout import Zone
 from .utilities import (
     FIELD_STYLE,
     apply_fcfilter_btn_style,
@@ -147,62 +147,7 @@ APP_STYLESHEET = (
     "}"
 )
 
-_ZONE_BASE_DECLARATIONS = (
-    "border: 1px solid rgba(0, 0, 0, 0.08);\n"
-    "border-radius: 12px;\n"
-    "padding: 6px;\n"
-)
 logger = logging.getLogger(__name__)
-
-
-WIDGET_QT_CLASS_MAP = {
-    "campo": "QLineEdits",
-    "legenda": "QLabels",
-    "lista": "QComboBoxes",
-    "tabela": "QTableViews",
-    "botão": "QPushButtons",
-    "editor": "QTextEdits",
-    "caixa de seleção": "QCheckBoxes",
-}
-
-
-def _configure_zone(
-    zone: Zone,
-    *,
-    zone_type: str | None = None,
-    widget_type: str | None = None,
-    style_dev_info: str | None = None,
-    base_declarations: str | None = None,
-    apply_base_style: bool = True,
-    base_style_label: str | None = None,
-) -> Zone:
-    if apply_base_style:
-        declarations = base_declarations if base_declarations is not None else _ZONE_BASE_DECLARATIONS
-        zone.set_zone_stylesheet(
-            compose_stylesheet(zone, declarations), label=base_style_label
-        )
-    elif base_style_label is not None:
-        zone.set_zone_stylesheet(zone.base_stylesheet, label=base_style_label)
-    if zone_type is not None:
-        zone.set_zone_type(zone_type)
-    if widget_type is not None:
-        zone.set_widget_type(widget_type)
-        zone.set_widget_qt_class(WIDGET_QT_CLASS_MAP.get(widget_type))
-    elif zone.widget_type is not None:
-        zone.set_widget_qt_class(WIDGET_QT_CLASS_MAP.get(zone.widget_type))
-    info = style_dev_info if style_dev_info is not None else zone.objectName()
-    zone.set_style_dev_info(info)
-    return zone
-
-
-def _strip_zone_overlay_metadata(zone: Zone) -> Zone:
-    """Remove overlay metadata so the style tag row stays empty when active."""
-
-    zone.set_zone_type(None)
-    zone.set_widget_type(None)
-    zone.set_widget_qt_class(None)
-    zone.set_style_dev_info("")
-    return zone
 
 # ---------------------- Image Preview ----------------------
 
@@ -695,7 +640,10 @@ class FTApp(QWidget):
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
         )
-        _configure_zone(self.headerC1, zone_type="secao-cabecalho", widget_type="campo")
+        self.headerC1.apply_metadata(
+            zone_type="secao-cabecalho",
+            widget_type="campo",
+        )
         header_ly.addWidget(self.headerC1, 0)
         self.headerC1A = Zone(
             "B0.C1.A",
@@ -707,8 +655,7 @@ class FTApp(QWidget):
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
         )
-        _configure_zone(
-            self.headerC1A,
+        self.headerC1A.apply_metadata(
             zone_type="secao-cabecalho-detalhes",
             widget_type="campo",
         )
@@ -761,12 +708,15 @@ class FTApp(QWidget):
             spacing=2,
             widget_type="campo",
         )
-        _configure_zone(self.C1, zone_type="bloco-dados-gerais", widget_type="campo")
+        self.C1.apply_metadata(
+            zone_type="bloco-dados-gerais",
+            widget_type="campo",
+        )
         page_ly.addWidget(self._section_box("[B1] - Dados Gerais", self.C1), 0)
 
         C1A, C1B = self.C1.split_h((3, 1))
-        _configure_zone(C1A, zone_type="coluna-principal", widget_type="campo")
-        _configure_zone(C1B, zone_type="coluna-imagem", widget_type="legenda")
+        C1A.apply_metadata(zone_type="coluna-principal", widget_type="campo")
+        C1B.apply_metadata(zone_type="coluna-imagem", widget_type="legenda")
 
         C1A_cont = QWidget(C1A)
         C1A_cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -786,8 +736,7 @@ class FTApp(QWidget):
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
         )
-        _configure_zone(
-            self.C1A1,
+        self.C1A1.apply_metadata(
             zone_type="secao-identificacao",
             widget_type="campo",
         )
@@ -800,8 +749,8 @@ class FTApp(QWidget):
         make_readonly_lineedit(self.edNome)
         self.edNome.setStyleSheet(FIELD_STYLE)
         label_col, field_col = self.C1A1.split_h((0, 1))
-        _configure_zone(label_col, zone_type="coluna-legendas", widget_type="legenda")
-        _configure_zone(field_col, zone_type="coluna-campos", widget_type="campo")
+        label_col.apply_metadata(zone_type="coluna-legendas", widget_type="legenda")
+        field_col.apply_metadata(zone_type="coluna-campos", widget_type="campo")
         field_col_margins = field_col.ly.contentsMargins()
         field_col.ly.setContentsMargins(
             3,
@@ -812,11 +761,11 @@ class FTApp(QWidget):
         label_col.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
 
         label_top, label_bottom = label_col.split_v((1, 1))
-        _configure_zone(label_top, zone_type="linha-legenda", widget_type="legenda")
-        _configure_zone(label_bottom, zone_type="linha-legenda", widget_type="legenda")
+        label_top.apply_metadata(zone_type="linha-legenda", widget_type="legenda")
+        label_bottom.apply_metadata(zone_type="linha-legenda", widget_type="legenda")
         field_top, field_bottom = field_col.split_v((1, 1))
-        _configure_zone(field_top, zone_type="linha-campo", widget_type="campo")
-        _configure_zone(field_bottom, zone_type="linha-campo", widget_type="campo")
+        field_top.apply_metadata(zone_type="linha-campo", widget_type="campo")
+        field_bottom.apply_metadata(zone_type="linha-campo", widget_type="campo")
 
         def _make_ident_label(zone: Zone, text: str, overlay: str) -> QLabel:
             display = overlay if zone._overlay_active and overlay else text
@@ -859,23 +808,35 @@ class FTApp(QWidget):
             level=C1A._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
         )
-        _strip_zone_overlay_metadata(_configure_zone(C1A2, style_dev_info=""))
+        C1A2.apply_metadata(style_dev_info="")
+        C1A2.set_zone_type(None)
+        C1A2.set_widget_type(None)
+        C1A2.set_widget_qt_class(None)
+        C1A2.set_style_dev_info("")
         C1A_cont_ly.addWidget(C1A2, 1)
 
         # B1.C1.A.2
         C1A21, C1A22 = C1A2.split_h(
             (3, 1)
         )  # B1.C1.A.2.A (famílias/PVPs) + B1.C1.A.2.B (combos)
-        _strip_zone_overlay_metadata(_configure_zone(C1A21, style_dev_info=""))
-        _strip_zone_overlay_metadata(_configure_zone(C1A22, style_dev_info=""))
+        C1A21.apply_metadata(style_dev_info="")
+        C1A21.set_zone_type(None)
+        C1A21.set_widget_type(None)
+        C1A21.set_widget_qt_class(None)
+        C1A21.set_style_dev_info("")
+        C1A22.apply_metadata(style_dev_info="")
+        C1A22.set_zone_type(None)
+        C1A22.set_widget_type(None)
+        C1A22.set_widget_qt_class(None)
+        C1A22.set_style_dev_info("")
         # B1.C1.A.2.A → divide verticalmente: topo (famílias) + base (PVP1..PVP5)
         C1A21_top, C1A21_base = C1A21.split_v((1, 2))
-        _configure_zone(C1A21_top, zone_type="subsecao-familias", widget_type="campo")
-        _configure_zone(C1A21_base, zone_type="subsecao-pvps", widget_type="campo")
+        C1A21_top.apply_metadata(zone_type="subsecao-familias", widget_type="campo")
+        C1A21_base.apply_metadata(zone_type="subsecao-pvps", widget_type="campo")
         C1A21_top.apply_overlays(True)
         labels_zone, values_zone = C1A21_top.split_h((1, 3))
-        _configure_zone(labels_zone, zone_type="coluna-legendas", widget_type="legenda")
-        _configure_zone(values_zone, zone_type="coluna-campos", widget_type="campo")
+        labels_zone.apply_metadata(zone_type="coluna-legendas", widget_type="legenda")
+        values_zone.apply_metadata(zone_type="coluna-campos", widget_type="campo")
         families_row_layout = labels_zone.parentWidget().layout()
         if families_row_layout is not None:
             families_row_layout.setSpacing(12)
@@ -890,13 +851,11 @@ class FTApp(QWidget):
         values_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
         familia_values_zone, subfamilia_values_zone = values_zone.split_v((1, 1))
-        _configure_zone(
-            familia_values_zone,
+        familia_values_zone.apply_metadata(
             zone_type="linha-campo",
             widget_type="campo",
         )
-        _configure_zone(
-            subfamilia_values_zone,
+        subfamilia_values_zone.apply_metadata(
             zone_type="linha-campo",
             widget_type="campo",
         )
@@ -904,13 +863,11 @@ class FTApp(QWidget):
             zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         familia_label_zone, subfamilia_label_zone = labels_zone.split_v((1, 1))
-        _configure_zone(
-            familia_label_zone,
+        familia_label_zone.apply_metadata(
             zone_type="linha-legenda",
             widget_type="legenda",
         )
-        _configure_zone(
-            subfamilia_label_zone,
+        subfamilia_label_zone.apply_metadata(
             zone_type="linha-legenda",
             widget_type="legenda",
         )
@@ -985,19 +942,20 @@ class FTApp(QWidget):
             level=C1A21_base._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
         )
-        _strip_zone_overlay_metadata(
-            _configure_zone(
-                C1A21_base_zone,
-                style_dev_info="",
-            )
-        )
+        C1A21_base_zone.apply_metadata(style_dev_info="")
+        C1A21_base_zone.set_zone_type(None)
+        C1A21_base_zone.set_widget_type(None)
+        C1A21_base_zone.set_widget_qt_class(None)
+        C1A21_base_zone.set_style_dev_info("")
         C1A21_base_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         C1A21_base.add(C1A21_base_zone, 0)
         pvp1, pvp2, pvp3, pvp4, pvp5 = C1A21_base_zone.split_h((1, 1, 1, 1, 1))
         for idx, zone in enumerate((pvp1, pvp2, pvp3, pvp4, pvp5), start=1):
-            _strip_zone_overlay_metadata(
-                _configure_zone(zone, style_dev_info="")
-            )
+            zone.apply_metadata(style_dev_info="")
+            zone.set_zone_type(None)
+            zone.set_widget_type(None)
+            zone.set_widget_qt_class(None)
+            zone.set_style_dev_info("")
 
             label_text = f"PVP #{idx}"
             overlay = f"PrecosTaxas.Preco{idx}"
@@ -1026,9 +984,11 @@ class FTApp(QWidget):
         w_temp, self.cbTemp = stack_combo("Temperaturas")
         C1A22_1, C1A22_2, C1A22_3 = C1A22.split_v((1, 1, 1))
         for zone in (C1A22_1, C1A22_2, C1A22_3):
-            _strip_zone_overlay_metadata(
-                _configure_zone(zone, style_dev_info="")
-            )
+            zone.apply_metadata(style_dev_info="")
+            zone.set_zone_type(None)
+            zone.set_widget_type(None)
+            zone.set_widget_qt_class(None)
+            zone.set_style_dev_info("")
         C1A22_1.add(w_tipos)
         C1A22_2.add(w_val)
         C1A22_3.add(w_temp)
@@ -1053,17 +1013,18 @@ class FTApp(QWidget):
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="tabela",
         )
-        _configure_zone(self.C2, zone_type="bloco-ingredientes", widget_type="tabela")
+        self.C2.apply_metadata(
+            zone_type="bloco-ingredientes",
+            widget_type="tabela",
+        )
         page_ly.addWidget(self._section_box("[B2] - Ingredientes", self.C2), 0)
 
         C2_ing_zone, C2_totals_zone = self.C2.split_v((1, 0))
-        _configure_zone(
-            C2_ing_zone,
+        C2_ing_zone.apply_metadata(
             zone_type="secao-tabela-ingredientes",
             widget_type="tabela",
         )
-        _configure_zone(
-            C2_totals_zone,
+        C2_totals_zone.apply_metadata(
             zone_type="secao-totais",
             widget_type="campo",
         )
@@ -1115,7 +1076,10 @@ class FTApp(QWidget):
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
         )
-        _configure_zone(self.C2Custo, zone_type="barra-totais", widget_type="campo")
+        self.C2Custo.apply_metadata(
+            zone_type="barra-totais",
+            widget_type="campo",
+        )
         self.C2Custo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         C2_totals_zone.add(self.C2Custo, 0)
         self.C2Custo.ly.addStretch(1)
@@ -1137,7 +1101,10 @@ class FTApp(QWidget):
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
         )
-        _configure_zone(self.C3, zone_type="bloco-food-cost", widget_type="campo")
+        self.C3.apply_metadata(
+            zone_type="bloco-food-cost",
+            widget_type="campo",
+        )
         page_ly.addWidget(self._section_box("[B3] - Food Cost", self.C3), 0)
 
         C3A = Zone(
@@ -1148,7 +1115,7 @@ class FTApp(QWidget):
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
         )
-        _configure_zone(C3A, zone_type="secao-food-cost", widget_type="campo")
+        C3A.apply_metadata(zone_type="secao-food-cost", widget_type="campo")
         self.C3.add(C3A, 1)
         food_cost_label = QLabel("Food Cost:")
         apply_label_style(food_cost_label)
@@ -1163,23 +1130,21 @@ class FTApp(QWidget):
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
         )
-        _configure_zone(C3AA, zone_type="grade-food-cost", widget_type="campo")
+        C3AA.apply_metadata(zone_type="grade-food-cost", widget_type="campo")
         C3AA.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         C3A.add(C3AA, 0)
         fc1, fc2, fc3, fc4, fc5 = C3AA.split_h((1, 1, 1, 1, 1))
         for zone in (fc1, fc2, fc3, fc4, fc5):
-            _configure_zone(zone, zone_type="coluna-food-cost", widget_type="campo")
+            zone.apply_metadata(zone_type="coluna-food-cost", widget_type="campo")
 
         self.lbFoodCosts: list[QLineEdit] = []
         for idx, fc in enumerate((fc1, fc2, fc3, fc4, fc5), start=1):
             label_zone, field_zone = fc.split_v((1, 1))
-            _configure_zone(
-                label_zone,
+            label_zone.apply_metadata(
                 zone_type="linha-legenda",
                 widget_type="legenda",
             )
-            _configure_zone(
-                field_zone,
+            field_zone.apply_metadata(
                 zone_type="linha-campo",
                 widget_type="campo",
             )
@@ -1222,12 +1187,15 @@ class FTApp(QWidget):
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="botão",
         )
-        _configure_zone(C3AB, zone_type="secao-filtros-food-cost", widget_type="botão")
+        C3AB.apply_metadata(
+            zone_type="secao-filtros-food-cost",
+            widget_type="botão",
+        )
         C3AB.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         C3A.add(C3AB, 0)
         fcB1, fcB2, fcB3, fcB4, fcB5 = C3AB.split_h((1, 1, 1, 1, 1))
         for zone in (fcB1, fcB2, fcB3, fcB4, fcB5):
-            _configure_zone(zone, zone_type="coluna-botoes", widget_type="botão")
+            zone.apply_metadata(zone_type="coluna-botoes", widget_type="botão")
 
         level_comments: dict[str, str] = {}
         repo = getattr(self.ds, "fcost", None)
@@ -1315,17 +1283,18 @@ class FTApp(QWidget):
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="editor",
         )
-        _configure_zone(self.C4, zone_type="bloco-preparacao", widget_type="editor")
+        self.C4.apply_metadata(
+            zone_type="bloco-preparacao",
+            widget_type="editor",
+        )
         page_ly.addWidget(self._section_box("[B4] - Preparação", self.C4), 1)
 
         C4_text, C4_gallery = self.C4.split_v((3, 2))
-        _configure_zone(
-            C4_text,
+        C4_text.apply_metadata(
             zone_type="secao-texto-preparacao",
             widget_type="editor",
         )
-        _configure_zone(
-            C4_gallery,
+        C4_gallery.apply_metadata(
             zone_type="galeria-preparacao",
             widget_type="legenda",
         )
@@ -1333,7 +1302,7 @@ class FTApp(QWidget):
         self.prep_previews: list[PrepImagePreview] = []
         gallery_slots = C4_gallery.split_h((1, 1, 1, 1))
         for slot in gallery_slots:
-            _configure_zone(slot, zone_type="slot-preparacao", widget_type="legenda")
+            slot.apply_metadata(zone_type="slot-preparacao", widget_type="legenda")
         for idx, slot in enumerate(gallery_slots, start=1):
             preview = PrepImagePreview(idx, self.service)
             slot.add(preview, 1)
@@ -1412,8 +1381,7 @@ class FTApp(QWidget):
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="caixa de seleção",
         )
-        _configure_zone(
-            self.C5,
+        self.C5.apply_metadata(
             zone_type="bloco-alergenios",
             widget_type="caixa de seleção",
         )
@@ -1449,7 +1417,10 @@ class FTApp(QWidget):
         )
 
         for zone in self._iter_layout_children(Zone, include_header=True):
-            _strip_zone_overlay_metadata(zone)
+            zone.set_zone_type(None)
+            zone.set_widget_type(None)
+            zone.set_widget_qt_class(None)
+            zone.set_style_dev_info("")
 
     def _toggle_header_on_scroll(self, value: int):
         header = getattr(self, "header", None)
