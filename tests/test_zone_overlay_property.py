@@ -374,6 +374,7 @@ def test_apply_bwb_etiqueta_normal_registers_stylesheet_and_alignment(qapp):
         f"{expected_selector} {{ font-size: 14pt; font-weight: 700; "
         "background-color: rgba(44, 54, 57, 0.80); "
         "border: 1px solid rgba(0, 0, 0, 1); "
+        "border-radius: 5px; "
         "color: rgba(255, 255, 255, 0.80); "
         "padding: 4px 6px; margin: 0px; }}"
     )
@@ -381,6 +382,7 @@ def test_apply_bwb_etiqueta_normal_registers_stylesheet_and_alignment(qapp):
     assert zone.base_stylesheet == expected_stylesheet
     assert zone._base_style_label == "bwb-etiqueta-normal"
     assert "border: 1px solid" in zone.base_stylesheet
+    assert "border-radius: 5px" in zone.base_stylesheet
 
     value_widget = QLabel("valor", zone)
     label = zone.add_row("Etiqueta", value_widget)
