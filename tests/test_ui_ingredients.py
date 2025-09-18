@@ -158,6 +158,11 @@ def test_classification_overlay_tags_hidden(qapp):
             assert zone._style_lbl.isHidden()
             assert zone._style_lbl.text() == ""
 
+        for tag in ("B1.C1.A.2.A.1.A.1", "B1.C1.A.2.A.1.A.2"):
+            zone = ft.findChild(Zone, tag)
+            assert zone is not None, f"Zone {tag} not found"
+            assert zone._base_style_label == "bwb-etiqueta-normal"
+
         ft._toggle_overlays()
     finally:
         if ft is not None:
