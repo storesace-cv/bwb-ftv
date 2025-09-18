@@ -50,9 +50,7 @@ CENTER_LABEL_STYLE = (
 # preferred.
 FIELD_STYLE = (
     "QLineEdit {\n"
-    "    background: rgba(255, 255, 255, 0.85);\n"
-    "    border: 1px solid rgba(0, 0, 0, 0.18);\n"
-    "    border-radius: 8px;\n"
+    "    background: transparent;\n"
     "    padding: 4px 6px;\n"
     "    selection-background-color: rgba(0, 110, 255, 0.45);\n"
     "}"
@@ -60,9 +58,7 @@ FIELD_STYLE = (
 
 CENTER_FIELD_STYLE = (
     "QLineEdit {\n"
-    "    background: rgba(255, 255, 255, 0.85);\n"
-    "    border: 1px solid rgba(0, 0, 0, 0.18);\n"
-    "    border-radius: 8px;\n"
+    "    background: transparent;\n"
     "    padding: 4px 6px;\n"
     "    selection-background-color: rgba(0, 110, 255, 0.45);\n"
     "    qproperty-alignment: 'AlignHCenter | AlignVCenter';\n"
