@@ -15,6 +15,7 @@ from PyQt5.QtWidgets import QApplication
 from domain import Product
 
 from . import layout
+from .tagging import zone_tag_map
 
 logger = logging.getLogger(__name__)
 
@@ -253,6 +254,7 @@ def create_engine(
         product_data = dict(build_sample_product())
     context.setContextProperty("productModel", product_data)
     context.setContextProperty("zonesMetadata", zones_metadata)
+    context.setContextProperty("zoneTagMap", dict(zone_tag_map()))
 
     qml_path = _resolve_qml_path(main_qml)
     engine.load(QUrl.fromLocalFile(str(qml_path)))

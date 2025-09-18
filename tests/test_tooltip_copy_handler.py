@@ -4,12 +4,13 @@ from PyQt5.QtWidgets import QLineEdit, QToolTip
 
 from ui.layout import Zone
 import ui.layout as layout
+from ui.tagging import zone_tag
 from ui.ui_editor_fonte import FTApp
 
 
 def test_zone_label_right_click_copies_tooltip(qapp, qtbot):
     zone = Zone(
-        "B9.C1",
+        zone_tag("general_root"),
         show_overlays=False,
         theme_name="bwb-style-1",
         widget_type="legenda",
@@ -41,7 +42,7 @@ def test_checkbox_right_click_copies_tooltip(qapp, qtbot):
     ft.service = _DummyAllergenService()
     ft._allergen_checkboxes = {}
     ft.C7 = Zone(
-        "B7.C1",
+        zone_tag("allergens_root"),
         show_overlays=False,
         theme_name="bwb-style-1",
         widget_type="caixa de seleção",
@@ -63,7 +64,7 @@ def test_overlay_tooltip_copies_from_global_filter(qapp, qtbot):
     layout.DEV_OVERLAYS = True
     try:
         zone = Zone(
-            "B1.C1",
+            zone_tag("general_root"),
             show_overlays=True,
             theme_name="bwb-style-1",
             widget_type="legenda",

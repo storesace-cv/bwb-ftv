@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import QLabel, QLineEdit
 
 from domain import Product
 from ui import layout
+from ui.tagging import zone_tag
 from ui.ui_editor_fonte import FTApp, _configure_zone
 from ui.utilities import (
     AlignmentVariant,
@@ -37,6 +38,13 @@ ALT_STYLE_DECLARATIONS = (
     "border-radius: 4px;\n"
     "padding: 4px;\n"
 )
+
+
+def _block_prefix(key: str) -> str:
+    """Return the top-level block identifier for ``key``."""
+
+    tag = zone_tag(key)
+    return tag.split(".", 1)[0]
 
 
 def _base_stylesheet(zone: layout.Zone, declarations: str) -> str:
@@ -174,7 +182,7 @@ def overlays_enabled():
 
 
 def test_zone_overlay_property_updates(qapp, overlays_enabled):
-    zone = layout.Zone("B1", show_overlays=True)
+    zone = layout.Zone(_block_prefix("general_root"), show_overlays=True)
     assert zone.property("overlays") == "on"
     zone.apply_overlays(False)
     assert zone.property("overlays") == "off"
@@ -183,7 +191,7 @@ def test_zone_overlay_property_updates(qapp, overlays_enabled):
 
 
 def test_zone_apply_overlays_restores_text_and_border(qapp, overlays_enabled):
-    zone = layout.Zone("B1", show_overlays=False)
+    zone = layout.Zone(_block_prefix("general_root"), show_overlays=False)
     value_widget = QLabel("value", zone)
     label = zone.add_row("Nome", value_widget, overlay_text="Overlay")
     expected_off_style = zone.styleSheet()
@@ -240,7 +248,7 @@ def test_zone_apply_overlays_restores_text_and_border(qapp, overlays_enabled):
 
 
 def test_zone_apply_overlays_updates_label_tooltips(qapp, overlays_enabled):
-    zone = layout.Zone("B1", show_overlays=False)
+    zone = layout.Zone(_block_prefix("general_root"), show_overlays=False)
     value_widget = QLabel("value", zone)
     label = zone.add_row("Nome", value_widget, overlay_text="Produtos.Nome")
 
@@ -267,7 +275,7 @@ def test_zone_apply_overlays_updates_label_tooltips(qapp, overlays_enabled):
 
 
 def test_zone_right_alignment_persists_through_overlays(qapp, overlays_enabled):
-    zone = layout.Zone("B1", show_overlays=False)
+    zone = layout.Zone(_block_prefix("general_root"), show_overlays=False)
     value_widget = QLabel("value", zone)
     label = zone.add_row("Nome", value_widget, overlay_text="Overlay")
 
@@ -288,7 +296,7 @@ def test_zone_right_alignment_persists_through_overlays(qapp, overlays_enabled):
 
 
 def test_zone_overlay_tag_label_preserves_inline_style(qapp, overlays_enabled):
-    zone = layout.Zone("B1", show_overlays=True)
+    zone = layout.Zone(_block_prefix("general_root"), show_overlays=True)
     expected_style = "color:#c00; font-size:10px; background:none; border:none;"
 
     assert zone._tag_lbl.styleSheet() == expected_style
@@ -298,7 +306,7 @@ def test_zone_overlay_tag_label_preserves_inline_style(qapp, overlays_enabled):
 
 
 def test_zone_overlay_resizes_label_width_for_overlay_text(qapp, overlays_enabled):
-    zone = layout.Zone("B1", show_overlays=False)
+    zone = layout.Zone(_block_prefix("general_root"), show_overlays=False)
     overlay_text = "Legenda de desenvolvimento bastante longa"
     value_widget = QLabel("valor", zone)
     label = zone.add_row("ID", value_widget, overlay_text=overlay_text)
@@ -328,7 +336,7 @@ def test_zone_overlay_resizes_label_width_for_overlay_text(qapp, overlays_enable
 
 
 def test_zone_overlay_label_width_tracks_visible_text(qapp, overlays_enabled):
-    zone = layout.Zone("B1", show_overlays=False)
+    zone = layout.Zone(_block_prefix("general_root"), show_overlays=False)
     value_widget = QLabel("value", zone)
     overlay_text = "Identificador extendido"
     label = zone.add_row("ID", value_widget, overlay_text=overlay_text)
@@ -352,7 +360,7 @@ def test_zone_overlay_label_width_tracks_visible_text(qapp, overlays_enabled):
 
 
 def test_apply_metadata_default_base_stylesheet_is_borderless(qapp):
-    zone = layout.Zone("B2.C1", show_overlays=False)
+    zone = layout.Zone(zone_tag("family_root"), show_overlays=False)
 
     zone.apply_metadata()
 
@@ -363,8 +371,8 @@ def test_apply_metadata_default_base_stylesheet_is_borderless(qapp):
 
 
 def test_apply_bwb_etiqueta_normal_aligns_without_theming(qapp):
-    zone = layout.Zone("B7.C1", show_overlays=False)
-    other_zone = layout.Zone("B7.C2", show_overlays=False)
+    zone = layout.Zone(zone_tag("allergens_root"), show_overlays=False)
+    other_zone = layout.Zone(zone_tag("allergens_secondary"), show_overlays=False)
 
     original_stylesheet = zone.base_stylesheet
 
@@ -398,7 +406,7 @@ def test_apply_bwb_etiqueta_normal_aligns_without_theming(qapp):
 
 
 def test_zone_style_label_tooltip_tracks_dev_info(qapp, overlays_enabled):
-    zone = layout.Zone("B1", show_overlays=False)
+    zone = layout.Zone(_block_prefix("general_root"), show_overlays=False)
     zone.set_zone_type("secao")
     zone.set_widget_type("campo")
     zone.set_widget_qt_class("QLineEdits")
@@ -419,7 +427,7 @@ def test_zone_style_label_tooltip_tracks_dev_info(qapp, overlays_enabled):
 
 
 def test_configure_zone_sets_dev_info_tooltip(qapp, overlays_enabled):
-    zone = layout.Zone("B1", show_overlays=True)
+    zone = layout.Zone(_block_prefix("general_root"), show_overlays=True)
 
     _configure_zone(zone, zone_type="secao", widget_type="campo")
 
@@ -448,7 +456,7 @@ def test_zone_overlay_shows_style_label_when_base_stylesheet_set(
 ):
     widget_type = "campo"
     zone = layout.Zone(
-        "B1",
+        _block_prefix("general_root"),
         show_overlays=False,
         widget_type=widget_type,
     )
@@ -467,7 +475,9 @@ def test_zone_overlay_shows_widget_type_when_other_metadata_missing(
     qapp, overlays_enabled
 ):
     widget_type = "campo"
-    zone = layout.Zone("B1", show_overlays=False, widget_type=widget_type)
+    zone = layout.Zone(
+        _block_prefix("general_root"), show_overlays=False, widget_type=widget_type
+    )
 
     assert zone._style_lbl.isHidden()
 
@@ -478,7 +488,7 @@ def test_zone_overlay_shows_widget_type_when_other_metadata_missing(
 
 
 def test_zone_overlay_hides_style_label_when_disabled(qapp, overlays_enabled):
-    zone = layout.Zone("B1", show_overlays=False)
+    zone = layout.Zone(_block_prefix("general_root"), show_overlays=False)
     zone.set_zone_stylesheet(
         _base_stylesheet(zone, BASE_STYLE_DECLARATIONS), label="base"
     )
@@ -496,7 +506,11 @@ def test_zone_overlay_hides_style_label_when_disabled(qapp, overlays_enabled):
 def test_zone_set_base_stylesheet_updates_style_label_when_overlay_active(
     qapp, overlays_enabled, widget_type
 ):
-    zone = layout.Zone("B1", show_overlays=True, widget_type=widget_type)
+    zone = layout.Zone(
+        _block_prefix("general_root"),
+        show_overlays=True,
+        widget_type=widget_type,
+    )
 
     if widget_type is None:
         assert zone._style_lbl.isHidden()
@@ -519,9 +533,11 @@ def test_zone_init_base_stylesheet_shows_style_label_when_overlays_active(
     qapp, overlays_enabled, widget_type
 ):
     style_label = "estilo-base"
-    base_stylesheet = _tag_stylesheet("B1", BASE_STYLE_DECLARATIONS)
+    base_stylesheet = _tag_stylesheet(
+        _block_prefix("general_root"), BASE_STYLE_DECLARATIONS
+    )
     zone = layout.Zone(
-        "B1",
+        _block_prefix("general_root"),
         show_overlays=True,
         base_stylesheet=base_stylesheet,
         base_style_label=style_label,
@@ -539,9 +555,11 @@ def test_zone_init_base_stylesheet_shows_style_label_when_overlays_active(
 def test_zone_style_label_without_widget_type_stays_on_theme(qapp, overlays_enabled):
     style_label = "estilo-base"
     zone = layout.Zone(
-        "B1",
+        _block_prefix("general_root"),
         show_overlays=True,
-        base_stylesheet=_tag_stylesheet("B1", BASE_STYLE_DECLARATIONS),
+        base_stylesheet=_tag_stylesheet(
+            _block_prefix("general_root"), BASE_STYLE_DECLARATIONS
+        ),
         base_style_label=style_label,
     )
 
@@ -552,9 +570,11 @@ def test_zone_style_label_without_widget_type_stays_on_theme(qapp, overlays_enab
 def test_zone_set_widget_type_updates_style_label(qapp, overlays_enabled):
     style_label = "estilo-base"
     zone = layout.Zone(
-        "B1",
+        _block_prefix("general_root"),
         show_overlays=True,
-        base_stylesheet=_tag_stylesheet("B1", BASE_STYLE_DECLARATIONS),
+        base_stylesheet=_tag_stylesheet(
+            _block_prefix("general_root"), BASE_STYLE_DECLARATIONS
+        ),
         base_style_label=style_label,
     )
 
@@ -566,9 +586,11 @@ def test_zone_set_widget_type_updates_style_label(qapp, overlays_enabled):
 
 def test_zone_style_label_includes_all_segments(qapp, overlays_enabled):
     zone = layout.Zone(
-        "B1",
+        _block_prefix("general_root"),
         show_overlays=True,
-        base_stylesheet=_tag_stylesheet("B1", BASE_STYLE_DECLARATIONS),
+        base_stylesheet=_tag_stylesheet(
+            _block_prefix("general_root"), BASE_STYLE_DECLARATIONS
+        ),
         base_style_label="estilo-base",
         widget_type="campo",
     )
@@ -584,9 +606,11 @@ def test_zone_style_label_includes_all_segments(qapp, overlays_enabled):
 def test_zone_style_label_skips_missing_segments(qapp, overlays_enabled):
     style_label = "estilo-base"
     zone = layout.Zone(
-        "B1",
+        _block_prefix("general_root"),
         show_overlays=True,
-        base_stylesheet=_tag_stylesheet("B1", BASE_STYLE_DECLARATIONS),
+        base_stylesheet=_tag_stylesheet(
+            _block_prefix("general_root"), BASE_STYLE_DECLARATIONS
+        ),
         base_style_label=style_label,
     )
 
@@ -604,7 +628,7 @@ def test_zone_style_label_skips_missing_segments(qapp, overlays_enabled):
 
 def test_zone_split_propagates_metadata(qapp):
     zone = layout.Zone(
-        "B1.C1",
+        zone_tag("general_root"),
         show_overlays=False,
         widget_type="campo",
         zone_type="secao-teste",
@@ -619,7 +643,7 @@ def test_zone_split_propagates_metadata(qapp):
         assert child.widget_qt_class == "QLineEdits"
 
 def test_zone_add_row_has_no_debug_styles_by_default(qapp):
-    zone = layout.Zone("B1")
+    zone = layout.Zone(_block_prefix("general_root"))
     value_widget = QLabel("valor")
     label = zone.add_row("Nome", value_widget)
 
@@ -632,13 +656,15 @@ def test_zone_add_row_has_no_debug_styles_by_default(qapp):
 
 
 def test_zone_center_theme_keeps_label_alignment(qapp):
-    default_zone = layout.Zone("B1", show_overlays=False)
+    default_zone = layout.Zone(
+        _block_prefix("general_root"), show_overlays=False
+    )
     default_zone.set_zone_stylesheet(
         _base_stylesheet(default_zone, BASE_STYLE_DECLARATIONS)
     )
     default_label = default_zone.add_row("Nome", QLabel("valor", default_zone))
 
-    centre_zone = layout.Zone("B2", show_overlays=False)
+    centre_zone = layout.Zone(_block_prefix("family_root"), show_overlays=False)
     centre_zone.set_zone_stylesheet(
         _base_stylesheet(centre_zone, ALT_STYLE_DECLARATIONS)
     )
@@ -656,7 +682,7 @@ def test_zone_center_theme_keeps_label_alignment(qapp):
 
 
 def test_zone_add_row_allows_opt_in_debug_styles(qapp, overlays_enabled):
-    zone = layout.Zone("B1", show_overlays=False)
+    zone = layout.Zone(_block_prefix("general_root"), show_overlays=False)
     value_widget = QLabel("valor")
     label = zone.add_row("Nome", value_widget, overlay_text="Overlay", debug_styles=True)
 
@@ -749,7 +775,7 @@ def test_food_cost_overlay_label_tooltip(qapp, overlays_enabled):
 
 
 def test_zone_add_row_uses_overlay_style_when_active(qapp, overlays_enabled):
-    zone = layout.Zone("B1", show_overlays=True)
+    zone = layout.Zone(_block_prefix("general_root"), show_overlays=True)
     value_widget = QLabel("valor", zone)
     label = zone.add_row("Nome", value_widget, overlay_text="Overlay")
 
@@ -767,7 +793,7 @@ def test_zone_hides_overlays_when_globally_disabled(qapp):
     original = layout.DEV_OVERLAYS
     layout.DEV_OVERLAYS = False
     try:
-        zone = layout.Zone("B1", show_overlays=True)
+        zone = layout.Zone(_block_prefix("general_root"), show_overlays=True)
         assert zone.property("overlays") == "off"
         expected_off_style = zone.styleSheet()
         assert zone.styleSheet() == expected_off_style
@@ -776,7 +802,7 @@ def test_zone_hides_overlays_when_globally_disabled(qapp):
 
 
 def test_zone_theme_stylesheet_restored_after_overlay_toggle(qapp, overlays_enabled):
-    zone = layout.Zone("B1", show_overlays=False)
+    zone = layout.Zone(_block_prefix("general_root"), show_overlays=False)
     expected_theme_style = _base_stylesheet(zone, BASE_STYLE_DECLARATIONS)
     zone.set_zone_stylesheet(expected_theme_style)
     assert zone.styleSheet() == expected_theme_style
@@ -793,7 +819,7 @@ def test_zone_theme_stylesheet_restored_after_overlay_toggle(qapp, overlays_enab
 def test_zone_set_base_stylesheet_while_overlay_active_keeps_overlay_style(
     qapp, overlays_enabled
 ):
-    zone = layout.Zone("B1", show_overlays=True)
+    zone = layout.Zone(_block_prefix("general_root"), show_overlays=True)
     expected_overlay_style = _overlay_stylesheet(zone)
     assert zone.styleSheet() == expected_overlay_style
 
@@ -812,7 +838,7 @@ def test_zone_set_base_stylesheet_while_overlay_active_keeps_overlay_style(
 def test_zone_apply_overlays_with_dotted_tag_has_no_stylesheet_warning(
     qapp, overlays_enabled
 ):
-    zone = layout.Zone("B1.C1", show_overlays=False)
+    zone = layout.Zone(zone_tag("general_root"), show_overlays=False)
     captured_messages: list[str] = []
 
     def handler(msg_type, context, message):
