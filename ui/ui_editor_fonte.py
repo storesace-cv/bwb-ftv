@@ -800,8 +800,6 @@ class FTApp(QWidget):
             widget_type="legenda",
             apply_base_style=False,
         )
-        apply_bwb_etiqueta_normal(familia_label_zone)
-        apply_bwb_etiqueta_normal(subfamilia_label_zone)
         for zone in (familia_label_zone, subfamilia_label_zone):
             zone.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
 
