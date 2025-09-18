@@ -66,6 +66,19 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         assert legend_zone.property("widgetQtClass") == "QLabels"
         overlay_metadata = legend_zone.property("overlayMetadata")
         assert overlay_metadata == "linha-legenda | QLabels | legenda"
+
+        expected_zone_types = {
+            zone_tag("family_root"): "bloco-familias-combos",
+            zone_tag("pvps_root"): "bloco-pvps",
+            zone_tag("ingredients_root"): "bloco-ingredientes",
+            zone_tag("food_cost_root"): "bloco-food-cost",
+            zone_tag("preparation_root"): "bloco-preparacao",
+            zone_tag("allergens_root"): "bloco-alergenios",
+        }
+        for tag, expected_type in expected_zone_types.items():
+            tag_meta = zones_metadata.get(tag)
+            assert tag_meta is not None, f"metadata missing for {tag}"
+            assert tag_meta.get("zoneType") == expected_type
     finally:
         engine.deleteLater()
 
