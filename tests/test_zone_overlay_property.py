@@ -360,8 +360,8 @@ def test_apply_bwb_etiqueta_normal_registers_stylesheet_and_alignment(qapp):
     escaped = layout._escape_object_name(zone.objectName())
     expected_selector = f"#{escaped}[overlays=\"off\"]"
     expected_stylesheet = (
-        f"{expected_selector} {{ font-size: 14pt; font-weight: 700; background-color: rgba(255, 255, 255, 0.95); "
-        "border: 1px solid rgba(0, 0, 0, 0.15); padding: 4px 6px; margin: 0px; }}"
+        f"{expected_selector} {{ font-size: 14pt; font-weight: 700; background-color: rgba(44, 54, 57, 0.50); "
+        "border: 1px solid rgba(0, 0, 0, 0.50); padding: 4px 6px; margin: 0px; }}"
     )
 
     assert zone.base_stylesheet == expected_stylesheet
