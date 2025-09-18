@@ -141,8 +141,9 @@ def make_readonly_lineedit(
         le.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
     else:
         le.setStyleSheet(FIELD_STYLE)
-    f = le.font()
+    f = QFont(le.font())
     f.setBold(False)
+    f.setWeight(QFont.Normal)
     le.setFont(f)
     le.setFixedHeight(le.sizeHint().height())
 

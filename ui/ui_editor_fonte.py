@@ -509,7 +509,6 @@ class FTApp(QWidget):
         box = QGroupBox(title if layout.DEV_OVERLAYS else user_title)
         box.setProperty("devTitle", title)
         box.setProperty("userTitle", user_title)
-        box.setStyleSheet("QGroupBox::title { font-weight: normal; text-transform: none; }")
         box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         ly = QVBoxLayout(box)
         ly.setContentsMargins(3, 5, 3, 5)
