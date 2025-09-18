@@ -222,16 +222,16 @@ def test_alignment_roles(qapp):
     model = ft.tbIng.model()
     aligns = [
         Qt.AlignLeft | Qt.AlignVCenter,
-        Qt.AlignCenter | Qt.AlignVCenter,
-        Qt.AlignRight | Qt.AlignVCenter,
-        Qt.AlignRight | Qt.AlignVCenter,
-        Qt.AlignRight | Qt.AlignVCenter,
+        Qt.AlignLeft | Qt.AlignVCenter,
+        Qt.AlignLeft | Qt.AlignVCenter,
+        Qt.AlignLeft | Qt.AlignVCenter,
+        Qt.AlignLeft | Qt.AlignVCenter,
     ]
     for col, expected in enumerate(aligns):
         assert model.data(model.index(0, col), Qt.TextAlignmentRole) == expected
         assert (
             model.headerData(col, Qt.Horizontal, Qt.TextAlignmentRole)
-            == Qt.AlignCenter | Qt.AlignVCenter
+            == Qt.AlignLeft | Qt.AlignVCenter
         )
     ft.close()
 

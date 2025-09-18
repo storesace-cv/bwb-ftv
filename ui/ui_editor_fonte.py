@@ -438,10 +438,10 @@ class FichasTecnicasModel(QAbstractTableModel):
         if role == Qt.TextAlignmentRole:
             aligns = [
                 Qt.AlignLeft | Qt.AlignVCenter,
-                Qt.AlignCenter | Qt.AlignVCenter,
-                Qt.AlignRight | Qt.AlignVCenter,
-                Qt.AlignRight | Qt.AlignVCenter,
-                Qt.AlignRight | Qt.AlignVCenter,
+                Qt.AlignLeft | Qt.AlignVCenter,
+                Qt.AlignLeft | Qt.AlignVCenter,
+                Qt.AlignLeft | Qt.AlignVCenter,
+                Qt.AlignLeft | Qt.AlignVCenter,
             ]
             return aligns[index.column()]
         return None
@@ -479,7 +479,7 @@ class FichasTecnicasModel(QAbstractTableModel):
                 headers = self.dev_headers if layout.DEV_OVERLAYS else self.headers
                 return headers[section]
             if role == Qt.TextAlignmentRole:
-                return Qt.AlignCenter | Qt.AlignVCenter
+                return Qt.AlignLeft | Qt.AlignVCenter
         return None
 
     def update_data(self, rows: list[FichaTecnica]):
@@ -1549,7 +1549,9 @@ class FTApp(QWidget):
         self.tbIng.setColumnWidth(2, int(w * 0.125))
         self.tbIng.setColumnWidth(3, int(w * 0.15))
         self.tbIng.setColumnWidth(4, int(w * 0.125))
-        self.tbIng.horizontalHeader().setDefaultAlignment(Qt.AlignCenter)
+        self.tbIng.horizontalHeader().setDefaultAlignment(
+            Qt.AlignLeft | Qt.AlignVCenter
+        )
 
     def _apply_ingredient_widths(self):
         self._setup_ing_columns()
