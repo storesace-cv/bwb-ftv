@@ -10,12 +10,14 @@ Item {
     implicitHeight: 160
 
     property string tag: ""
-    property int level: 0
+    property var metadataMap: (typeof zonesMetadata !== "undefined") ? zonesMetadata : null
+    property var metadata: metadataMap && tag.length > 0 && metadataMap[tag] !== undefined ? metadataMap[tag] : null
+    property int level: metadata && metadata.level !== undefined ? metadata.level : 0
     property string title: ""
-    property string zoneType: ""
-    property string widgetType: ""
-    property string widgetQtClass: ""
-    property string baseStyleLabel: ""
+    property string zoneType: metadata && metadata.zoneType ? metadata.zoneType : ""
+    property string widgetType: metadata && metadata.widgetType ? metadata.widgetType : ""
+    property string widgetQtClass: metadata && metadata.widgetQtClass ? metadata.widgetQtClass : ""
+    property string baseStyleLabel: metadata && metadata.baseStyleLabel ? metadata.baseStyleLabel : ""
     property bool showOverlays: false
     property string metadataKey: ""
     property string overlayMetadata: {

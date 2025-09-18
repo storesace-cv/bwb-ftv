@@ -38,6 +38,7 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         assert codigo_zone is not None
         assert codigo_zone.property("displayValue") == "FT-42"
         assert codigo_zone.property("overlayActive") is True
+        assert codigo_zone.property("zoneType") == "bloco-dados-gerais"
 
         overlay.showOverlays = False
         qapp.processEvents()
@@ -46,6 +47,14 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         overlay.showOverlays = True
         qapp.processEvents()
         assert codigo_zone.property("overlayActive") is True
+
+        context = engine.rootContext()
+        zones_metadata = context.contextProperty("zonesMetadata")
+        assert isinstance(zones_metadata, dict)
+        legend_meta = zones_metadata.get("B1.C1.A.1.A.1")
+        assert legend_meta is not None
+        assert legend_meta.get("zoneType") == "linha-legenda"
+        assert legend_meta.get("widgetQtClass") == "QLabels"
     finally:
         engine.deleteLater()
 

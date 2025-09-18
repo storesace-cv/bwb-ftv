@@ -39,7 +39,6 @@ ApplicationWindow {
                 widgetQtClass: "QLineEdits"
                 metadataKey: "code"
                 product: identificationBlock.product
-                level: 0
                 showOverlays: identificationBlock.showOverlays
             }
 
@@ -51,7 +50,6 @@ ApplicationWindow {
                 widgetQtClass: "QLineEdits"
                 metadataKey: "name"
                 product: identificationBlock.product
-                level: 0
                 showOverlays: identificationBlock.showOverlays
             }
         }
@@ -72,7 +70,6 @@ ApplicationWindow {
                 widgetQtClass: "QTableViews"
                 metadataKey: "estado"
                 product: technicalBlock.product
-                level: 1
                 showOverlays: technicalBlock.showOverlays
             }
 
@@ -84,7 +81,6 @@ ApplicationWindow {
                 widgetQtClass: "QTableViews"
                 metadataKey: "validade"
                 product: technicalBlock.product
-                level: 1
                 showOverlays: technicalBlock.showOverlays
             }
         }
@@ -105,7 +101,6 @@ ApplicationWindow {
                 widgetQtClass: "QLineEdits"
                 metadataKey: "observacoes"
                 product: overlayBlock.product
-                level: 2
                 showOverlays: overlayBlock.showOverlays
             }
         }
