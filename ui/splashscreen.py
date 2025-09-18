@@ -37,7 +37,7 @@ class SplashScreen(QDialog):
         """Overlay ``text`` on the splash image."""
         if self._message is None:
             self._message = QLabel(self)
-            self._message.setAlignment(Qt.AlignCenter)
+            self._message.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             apply_label_style(
                 self._message,
                 "QLabel { color: white; }",
