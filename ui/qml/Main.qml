@@ -248,7 +248,7 @@ ApplicationWindow {
             showOverlays: root.showDevOverlays
 
             Zone {
-                tag: "B2.C1"
+                tag: "B4.C1"
                 title: qsTr("Estado")
                 zoneType: "bloco-ingredientes"
                 widgetType: "tabela"
@@ -259,7 +259,7 @@ ApplicationWindow {
             }
 
             Zone {
-                tag: "B2.C2"
+                tag: "B4.C2"
                 title: qsTr("Validade")
                 zoneType: "bloco-ingredientes"
                 widgetType: "tabela"
@@ -279,7 +279,7 @@ ApplicationWindow {
             showOverlays: root.showDevOverlays
 
             Zone {
-                tag: "B3.C1"
+                tag: "B5.C1"
                 title: qsTr("Observações")
                 zoneType: "bloco-food-cost"
                 widgetType: "campo"
