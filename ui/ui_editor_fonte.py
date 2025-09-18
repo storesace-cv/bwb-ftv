@@ -768,6 +768,9 @@ class FTApp(QWidget):
         families_row_layout = labels_zone.parentWidget().layout()
         if families_row_layout is not None:
             families_row_layout.setSpacing(12)
+            families_row_layout.setStretch(0, 0)
+            families_row_layout.setStretch(1, 1)
+            families_row_layout.setAlignment(labels_zone, Qt.AlignLeft)
         values_zone_margins = values_zone.ly.contentsMargins()
         values_zone.ly.setContentsMargins(
             3,
