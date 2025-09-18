@@ -97,6 +97,7 @@ from PyQt5.QtWidgets import (
     QToolBar,
     QAction,
     QFileDialog,
+    QFrame,
 )
 from data.datastore import DataStore
 from services.products import ProductService, calculate_food_cost
@@ -1078,6 +1079,25 @@ class FTApp(QWidget):
         self.tbIng.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.tbIng.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.tbIng.setViewportMargins(0, 0, 0, 4)
+        self.tbIng.setFrameShape(QFrame.NoFrame)
+        self.tbIng.setShowGrid(False)
+        self.tbIng.setStyleSheet(
+            "\n".join(
+                (
+                    "QTableView {",
+                    "    border: none;",
+                    "}",
+                    "QTableView::item {",
+                    "    margin: 0;",
+                    "    padding: 0;",
+                    "    border: none;",
+                    "}",
+                    "QTableView::item:hover {",
+                    "    background-color: rgba(11, 99, 206, 0.08);",
+                    "}",
+                )
+            )
+        )
         hh = self.tbIng.horizontalHeader()
         vh = self.tbIng.verticalHeader()
         header_h = hh.height() or hh.minimumSectionSize()

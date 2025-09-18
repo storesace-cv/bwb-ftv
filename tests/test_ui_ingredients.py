@@ -1,6 +1,7 @@
 import pytest
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import QResizeEvent
+from PyQt5.QtWidgets import QFrame
 from services.products import ProductService
 from ui.ui_editor_fonte import FTApp, FichasTecnicasModel
 from ui import layout
@@ -81,6 +82,23 @@ def test_load_record_populates_ingredients(qapp):
     assert model.columnCount() == 5
     assert not ft.tbIng.verticalHeader().isVisible()
     ft.close()
+
+
+def test_ingredient_table_has_no_frame_or_padding(qapp):
+    ds = StubDataStore()
+    service = ProductService(ds)
+    ft = FTApp(service)
+    try:
+        assert ft.tbIng.frameShape() == QFrame.NoFrame
+        assert not ft.tbIng.showGrid()
+        style = ft.tbIng.styleSheet()
+        assert "QTableView {" in style
+        assert "border: none" in style
+        assert "QTableView::item" in style
+        assert "margin: 0" in style
+        assert "padding: 0" in style
+    finally:
+        ft.close()
 
 
 def test_load_record_uses_componente_nome_when_only_key(qapp):
