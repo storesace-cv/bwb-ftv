@@ -74,7 +74,7 @@ import html as html_module
 import html.parser as html_parser
 import re
 from pathlib import Path
-from PyQt5.QtCore import Qt, QAbstractTableModel, QTimer, QPoint
+from PyQt5.QtCore import Qt, QTimer, QPoint
 from PyQt5.QtGui import QFont, QKeySequence, QTextOption, QPixmap
 from PyQt5.QtWidgets import (
     QApplication,
@@ -106,6 +106,11 @@ from utils.formatting import format_pt_number, parse_decimal
 
 from . import layout
 from .layout import Zone
+from .models import (
+    apply_fichas_tecnicas_headers,
+    build_fichas_tecnicas_model,
+    update_fichas_tecnicas_model,
+)
 from .utilities import (
     FIELD_STYLE,
     apply_fcfilter_btn_style,
@@ -359,96 +364,6 @@ class PrepImagePreview(ImagePreview):
                 self.delete_image()
 
 # ------------------------ Main App ------------------------
-
-
-class FichasTecnicasModel(QAbstractTableModel):
-    """Table model for displaying ``FichasTecnicas`` records."""
-    headers = ["Ingredientes", "QTD", "U.M.", "PPU", "Total"]
-    dev_headers = [
-        "FichasTecnicas.ComponenteNome",
-        "FichasTecnicas.Qtd",
-        "FichasTecnicas.Unidade",
-        "FichasTecnicas.Ppu",
-        "FichasTecnicas.Preco",
-    ]
-
-    def __init__(self, rows: list[FichaTecnica] | None = None):
-        super().__init__()
-        self._rows: list[FichaTecnica] = rows or []
-
-    def rowCount(self, parent=None):  # pragma: no cover - trivial
-        return len(self._rows)
-
-    def columnCount(self, parent=None):  # pragma: no cover - trivial
-        return len(self.headers)
-
-    def data(self, index, role=Qt.DisplayRole):
-        if not index.isValid():
-            return None
-        ficha = self._rows[index.row()]
-        if role == Qt.DisplayRole:
-            if not ficha.ingredient or not ficha.ingredient.strip():
-                return "—" if index.column() == 0 else None
-            mapping = [
-                ficha.ingredient,
-                format_pt_number(ficha.quantity),
-                ficha.unit,
-                format_pt_number(ficha.ppu),
-                format_pt_number(ficha.total),
-            ]
-            val = mapping[index.column()]
-            return val if val is not None else ""
-        if role == Qt.TextAlignmentRole:
-            aligns = [
-                Qt.AlignLeft | Qt.AlignVCenter,
-                Qt.AlignLeft | Qt.AlignVCenter,
-                Qt.AlignLeft | Qt.AlignVCenter,
-                Qt.AlignLeft | Qt.AlignVCenter,
-                Qt.AlignLeft | Qt.AlignVCenter,
-            ]
-            return aligns[index.column()]
-        return None
-
-    def setData(self, index, value, role=Qt.EditRole):  # pragma: no cover - GUI
-        if not index.isValid() or role != Qt.EditRole:
-            return False
-        ficha = self._rows[index.row()]
-        col = index.column()
-        try:
-            if col == 1:
-                ficha.quantity = float(value)
-            elif col == 3:
-                ficha.ppu = float(value)
-            elif col == 4:
-                ficha.total = float(value)
-            else:
-                return False
-        except (TypeError, ValueError):
-            return False
-        self.dataChanged.emit(index, index, [Qt.DisplayRole])
-        return True
-
-    def flags(self, index):  # pragma: no cover - trivial
-        if not index.isValid():
-            return Qt.NoItemFlags
-        base = Qt.ItemIsSelectable | Qt.ItemIsEnabled
-        if index.column() in (1, 3, 4):
-            return base | Qt.ItemIsEditable
-        return base
-
-    def headerData(self, section, orientation, role=Qt.DisplayRole):  # pragma: no cover
-        if orientation == Qt.Horizontal:
-            if role == Qt.DisplayRole:
-                headers = self.dev_headers if layout.DEV_OVERLAYS else self.headers
-                return headers[section]
-            if role == Qt.TextAlignmentRole:
-                return Qt.AlignLeft | Qt.AlignVCenter
-        return None
-
-    def update_data(self, rows: list[FichaTecnica]):
-        self.beginResetModel()
-        self._rows = rows
-        self.endResetModel()
 
 
 class FTApp(QWidget):
@@ -1029,7 +944,9 @@ class FTApp(QWidget):
             widget_type="campo",
         )
 
-        self.ingModel = FichasTecnicasModel([])
+        self.ingModel = build_fichas_tecnicas_model(
+            [], overlays=layout.DEV_OVERLAYS
+        )
 
         self.tbIng = QTableView(self)
         self.tbIng.setModel(self.ingModel)
@@ -1798,7 +1715,9 @@ class FTApp(QWidget):
                     )
                     for ing in product.ingredients
                 ]
-            self.ingModel.update_data(fichas)
+            update_fichas_tecnicas_model(
+                self.ingModel, fichas, overlays=layout.DEV_OVERLAYS
+            )
             self._apply_ing_autofit_or_scroll()
 
             self.edCustoTotal.setText(
@@ -2042,8 +1961,8 @@ class FTApp(QWidget):
             if user_title is not None and dev_title is not None:
                 box.setTitle(dev_title if layout.DEV_OVERLAYS else user_title)
                 layout.refresh_style(box)
-        self.ingModel.headerDataChanged.emit(
-            Qt.Horizontal, 0, self.ingModel.columnCount() - 1
+        apply_fichas_tecnicas_headers(
+            self.ingModel, overlays=layout.DEV_OVERLAYS
         )
 
     def _toggle_overlays_btn(self):
