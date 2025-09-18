@@ -3,9 +3,10 @@ from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import QResizeEvent
 from PyQt5.QtWidgets import QFrame
 from services.products import ProductService
-from ui.ui_editor_fonte import FTApp, FichasTecnicasModel
 from ui import layout
 from ui.layout import Zone
+from ui.models import build_fichas_tecnicas_model
+from ui.ui_editor_fonte import FTApp
 from domain import FichaTecnica
 from utils.formatting import format_pt_number
 
@@ -255,6 +256,8 @@ def test_alignment_roles(qapp):
 
 
 def test_model_returns_dash_for_empty_ingredient(qapp):
-    model = FichasTecnicasModel([FichaTecnica("", 0, "", None, None, None)])
+    model = build_fichas_tecnicas_model(
+        [FichaTecnica("", 0, "", None, None, None)], overlays=False
+    )
     assert model.data(model.index(0, 0)) == "—"
-    assert model.data(model.index(0, 1)) is None
+    assert model.data(model.index(0, 1)) == ""
