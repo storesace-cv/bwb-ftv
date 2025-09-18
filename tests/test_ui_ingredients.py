@@ -170,6 +170,24 @@ def test_classification_overlay_tags_hidden(qapp):
         layout.DEV_OVERLAYS = original
 
 
+def test_identification_and_family_label_columns_share_width(qapp):
+    ds = StubDataStore()
+    service = ProductService(ds)
+    ft = FTApp(service)
+    try:
+        ident_zone = ft.findChild(Zone, "B1.C1.A.1.A")
+        family_zone = ft.findChild(Zone, "B1.C1.A.2.A.1.A")
+
+        assert ident_zone is not None
+        assert family_zone is not None
+
+        assert ident_zone.minimumWidth() == ident_zone.maximumWidth()
+        assert family_zone.minimumWidth() == family_zone.maximumWidth()
+        assert ident_zone.minimumWidth() == family_zone.minimumWidth()
+    finally:
+        ft.close()
+
+
 class VarStubDataStore(StubDataStore):
     def __init__(self, n):
         self.n = n

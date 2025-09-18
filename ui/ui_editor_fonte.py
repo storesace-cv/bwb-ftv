@@ -72,6 +72,7 @@ import json
 import logging
 import html as html_module
 import html.parser as html_parser
+import itertools
 import re
 from pathlib import Path
 from PyQt5.QtCore import Qt, QTimer, QPoint
@@ -816,7 +817,6 @@ class FTApp(QWidget):
             else:
                 lbl.setStyleSheet("")
             lbl.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Maximum)
-            lbl.setFixedWidth(lbl_w)
             zone.ly.addWidget(lbl, 0, Qt.AlignLeft | Qt.AlignVCenter)
             zone._labels.append(lbl)
             labels_zone._labels.append(lbl)
@@ -829,12 +829,25 @@ class FTApp(QWidget):
         )
         labels_zone.set_label_alignment(AlignmentVariant.RIGHT)
         labels_zone.sync_label_widths()
-        margins = familia_label_zone.ly.contentsMargins()
-        ident_label_zone_width = lbl_w + margins.left() + margins.right()
-        labels_zone.setFixedWidth(ident_label_zone_width)
-        labels_zone.update()
-        label_col.setFixedWidth(ident_label_zone_width)
-        label_col.update()
+        all_labels = list(itertools.chain(label_col._labels, labels_zone._labels))
+        for lbl in all_labels:
+            lbl.setMinimumWidth(0)
+            lbl.setMaximumWidth(16777215)
+
+        shared_label_width = max((lbl.sizeHint().width() for lbl in all_labels), default=0)
+
+        for lbl in all_labels:
+            lbl.setFixedWidth(shared_label_width)
+
+        label_col_margins = label_col.ly.contentsMargins()
+        labels_zone_margins = labels_zone.ly.contentsMargins()
+        padding_label_col = label_col_margins.left() + label_col_margins.right()
+        padding_labels_zone = labels_zone_margins.left() + labels_zone_margins.right()
+        shared_zone_width = shared_label_width + max(padding_label_col, padding_labels_zone)
+
+        for zone in (label_col, labels_zone):
+            zone.setFixedWidth(shared_zone_width)
+            zone.update()
 
         self.lbFamiliaVal = QLineEdit("")
         make_readonly_lineedit(self.lbFamiliaVal)
