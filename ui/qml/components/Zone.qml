@@ -1,13 +1,14 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
 
 Item {
     id: root
     objectName: tag.length > 0 ? "zone_" + tag.replace(/\./g, "_") : "zone"
-    width: 320
-    height: 160
-    implicitWidth: 320
-    implicitHeight: 160
+    implicitWidth: Math.max(zoneBody.implicitWidth + 24, overlayBadge.visible ? overlayBadge.width + 12 : 0)
+    implicitHeight: Math.max(zoneBody.implicitHeight + 24, overlayBadge.visible ? overlayBadge.height + 12 : 0)
+    Layout.fillWidth: true
+    Layout.preferredHeight: implicitHeight
 
     property string tag: ""
     property var metadataMap: (typeof zonesMetadata !== "undefined") ? zonesMetadata : null
@@ -58,11 +59,13 @@ Item {
         color: overlayActive ? overlayPalette[level % overlayPalette.length] : "#ffffff"
     }
 
-    Column {
+    ColumnLayout {
         id: zoneBody
         anchors.fill: parent
         anchors.margins: 12
         spacing: 8
+        implicitWidth: contentWidth
+        implicitHeight: contentHeight
 
         Label {
             id: titleLabel
@@ -71,6 +74,7 @@ Item {
             font.pixelSize: 16
             color: "#253858"
             visible: text.length > 0
+            Layout.fillWidth: true
         }
 
         Label {
@@ -80,13 +84,14 @@ Item {
             color: "#42526e"
             wrapMode: Text.WordWrap
             visible: text.length > 0
+            Layout.fillWidth: true
         }
 
         Item {
             id: contentSlot
-            anchors.left: parent.left
-            anchors.right: parent.right
-            height: childrenRect.height
+            implicitWidth: childrenRect.width
+            implicitHeight: childrenRect.height
+            Layout.fillWidth: true
         }
     }
 
