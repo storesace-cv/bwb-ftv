@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Fase 3 — Teste de fumo para Bloco [B4] Preparação
+Fase 3 — Teste de fumo para Bloco [B6] Preparação
 Uso (executar como módulo):
   python -m tools.test_prep_cli --codigo ABC123 --html "<p>Teste</p>"
   python -m tools.test_prep_cli --codigo ABC123 --file ./exemplo.html
