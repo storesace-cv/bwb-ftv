@@ -107,7 +107,6 @@ from . import layout
 from .bwb_style_1 import APP_STYLESHEET, FIELD_STYLE
 from .layout import Zone, compose_stylesheet
 from .utilities import (
-    AlignmentVariant,
     apply_fcfilter_btn_style,
     apply_label_style,
     apply_overlay_label_style,
@@ -804,7 +803,7 @@ class FTApp(QWidget):
         def _make_ident_label(zone: Zone, text: str, overlay: str) -> QLabel:
             display = overlay if zone._overlay_active and overlay else text
             lbl = QLabel(display, zone)
-            lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             lbl.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Maximum)
             lbl.setProperty("userLabel", text)
             lbl.setProperty("devLabel", overlay)
@@ -812,7 +811,7 @@ class FTApp(QWidget):
                 apply_overlay_label_style(lbl)
             else:
                 lbl.setStyleSheet("")
-            zone.ly.addWidget(lbl, 0, Qt.AlignRight | Qt.AlignVCenter)
+            zone.ly.addWidget(lbl, 0, Qt.AlignLeft | Qt.AlignVCenter)
             label_col._labels.append(lbl)
             install_tooltip_copy_handler(lbl)
             return lbl
@@ -903,7 +902,7 @@ class FTApp(QWidget):
         def _make_family_label(zone: Zone, text: str, overlay: str) -> QLabel:
             display = overlay if zone._overlay_active and overlay else text
             lbl = QLabel(display, zone)
-            lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             lbl.setProperty("userLabel", text)
             lbl.setProperty("devLabel", overlay)
             if zone._overlay_active and overlay:
@@ -912,7 +911,7 @@ class FTApp(QWidget):
                 lbl.setStyleSheet("")
             lbl.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Maximum)
             lbl.setFixedWidth(lbl_w)
-            zone.ly.addWidget(lbl, 0, Qt.AlignRight | Qt.AlignVCenter)
+            zone.ly.addWidget(lbl, 0, Qt.AlignLeft | Qt.AlignVCenter)
             zone._labels.append(lbl)
             labels_zone._labels.append(lbl)
             install_tooltip_copy_handler(lbl)
@@ -945,17 +944,17 @@ class FTApp(QWidget):
         self.lbSubFamiliaVal.setFont(self.edNome.font())
 
         familia_values_zone.ly.addWidget(
-            self.lbFamiliaVal, 0, Qt.AlignRight | Qt.AlignVCenter
+            self.lbFamiliaVal, 0, Qt.AlignLeft | Qt.AlignVCenter
         )
         subfamilia_values_zone.ly.addWidget(
-            self.lbSubFamiliaVal, 0, Qt.AlignRight | Qt.AlignVCenter
+            self.lbSubFamiliaVal, 0, Qt.AlignLeft | Qt.AlignVCenter
         )
 
         # Base: zona horizontal com cinco colunas PVP1..PVP5 (etiqueta por cima)
         self.lbPVPs: list[QLineEdit] = []
 
         pvp_label = QLabel("PREÇOS DE VENDA")
-        pvp_label.setAlignment(Qt.AlignCenter)
+        pvp_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         pvp_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         pvp_label.setStyleSheet("")
         match_font(pvp_label, self.edNome)
@@ -986,7 +985,7 @@ class FTApp(QWidget):
             overlay = f"PrecosTaxas.Preco{idx}"
             display_label = overlay if zone._overlay_active else label_text
             lbl = QLabel(display_label, zone)
-            lbl.setAlignment(Qt.AlignCenter)
+            lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             lbl.setStyleSheet("")
             lbl.setProperty("userLabel", label_text)
             lbl.setProperty("devLabel", overlay)
@@ -998,7 +997,7 @@ class FTApp(QWidget):
             val = QLineEdit("—", zone)
             val.setFont(self.edNome.font())
             make_readonly_lineedit(val)
-            val.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            val.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             zone.add(val, 0)
             self.lbPVPs.append(val)
@@ -1150,10 +1149,10 @@ class FTApp(QWidget):
             dev_label = f"FoodCost.Nivel{idx}"
             display_label = dev_label if label_zone._overlay_active else user_label
             lbl = QLabel(display_label, label_zone)
-            lbl.setAlignment(Qt.AlignCenter)
+            lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             lbl.setProperty("userLabel", user_label)
             lbl.setProperty("devLabel", dev_label)
-            apply_label_style(lbl, alignment=AlignmentVariant.CENTER)
+            apply_label_style(lbl)
             if label_zone._overlay_active:
                 apply_overlay_label_style(lbl)
                 lbl.setToolTip(f"{user_label} — {dev_label}")
@@ -1167,9 +1166,9 @@ class FTApp(QWidget):
             val = QLineEdit("—", field_zone)
             val.setFont(self.edNome.font())
             make_readonly_lineedit(val)
-            val.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            val.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            field_zone.add(val, 0)
+            field_zone.ly.addWidget(val, 0, Qt.AlignLeft | Qt.AlignVCenter)
             self.lbFoodCosts.append(val)
 
         C3AB = Zone(
