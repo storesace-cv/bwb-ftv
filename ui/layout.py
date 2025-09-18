@@ -700,7 +700,7 @@ def apply_bwb_etiqueta_normal(zone: Zone) -> None:
     )
     declarations = (
         "font-size: 14pt; font-weight: 700; "
-        "background-color: rgba(44, 54, 57, 0.80); "
+        "background-color: rgba(220, 215, 201, 0.80); "
         "border: 1px solid rgba(0, 0, 0, 1); "
         "border-radius: 5px; "
         "color: rgba(255, 255, 255, 1); "
