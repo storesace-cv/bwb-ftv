@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import QtQuick.Window 2.15
 import "components"
 
 ApplicationWindow {
@@ -12,9 +13,193 @@ ApplicationWindow {
 
     property var product: productModel ? productModel : ({})
     property bool showDevOverlays: overlayController ? overlayController.showOverlays : false
+    property int productTotal: 0
+    property int currentIndex: -1
+    property bool hasPrevious: currentIndex > 0
+    property bool hasNext: currentIndex >= 0 && currentIndex < productTotal - 1
+
+    function refreshProductTotal() {
+        if (productService && productService.total) {
+            var totalValue = Number(productService.total())
+            if (isNaN(totalValue)) {
+                totalValue = 0
+            }
+            if (productTotal !== totalValue) {
+                productTotal = totalValue
+            }
+            return totalValue
+        }
+        return productTotal
+    }
+
+    function loadProduct(index) {
+        if (!productService) {
+            return
+        }
+
+        var totalValue = refreshProductTotal()
+        if (totalValue <= 0) {
+            currentIndex = -1
+            return
+        }
+
+        if (index < 0 || index >= totalValue) {
+            return
+        }
+
+        var codigo = productService.codigo_at(index)
+        if (!codigo) {
+            return
+        }
+
+        var info = productService.get_product_info(codigo)
+        if (info) {
+            root.product = info
+            currentIndex = index
+        }
+    }
+
+    function loadPrevious() {
+        if (hasPrevious) {
+            loadProduct(currentIndex - 1)
+        }
+    }
+
+    function loadNext() {
+        if (hasNext) {
+            loadProduct(currentIndex + 1)
+        }
+    }
+
+    Component.onCompleted: {
+        if (!productService) {
+            productTotal = product ? 1 : 0
+            currentIndex = productTotal > 0 ? 0 : -1
+            return
+        }
+
+        var totalValue = refreshProductTotal()
+        if (totalValue > 0) {
+            loadProduct(0)
+        }
+    }
 
     background: Rectangle {
         color: "#f3f6fb"
+    }
+
+    Window {
+        id: aboutWindow
+        modality: Qt.WindowModal
+        flags: Qt.Dialog
+        width: 360
+        height: 220
+        title: qsTr("Sobre a aplicação")
+        visible: false
+
+        Rectangle {
+            anchors.fill: parent
+            color: "white"
+            radius: 8
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 24
+                spacing: 16
+
+                Label {
+                    text: qsTr("Ficha Técnica Viewer")
+                    font.bold: true
+                    Layout.fillWidth: true
+                }
+
+                Label {
+                    text: qsTr("Visualização experimental das fichas técnicas.")
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                }
+
+                Item {
+                    Layout.fillHeight: true
+                }
+
+                Button {
+                    text: qsTr("Fechar")
+                    Layout.alignment: Qt.AlignRight
+                    onClicked: aboutWindow.close()
+                }
+            }
+        }
+    }
+
+    menuBar: MenuBar {
+        Menu {
+            title: qsTr("Ficheiro")
+
+            MenuItem {
+                text: qsTr("Sobre…")
+                onTriggered: aboutWindow.open()
+            }
+
+            MenuItem {
+                text: qsTr("Fechar Sobre")
+                enabled: aboutWindow.visible
+                onTriggered: aboutWindow.close()
+            }
+
+            MenuSeparator {}
+
+            MenuItem {
+                text: qsTr("Sair")
+                onTriggered: Qt.quit()
+            }
+        }
+
+        Menu {
+            title: qsTr("Navegação")
+
+            MenuItem {
+                text: qsTr("Anterior")
+                enabled: root.hasPrevious
+                onTriggered: root.loadPrevious()
+            }
+
+            MenuItem {
+                text: qsTr("Seguinte")
+                enabled: root.hasNext
+                onTriggered: root.loadNext()
+            }
+        }
+    }
+
+    header: ToolBar {
+        RowLayout {
+            anchors.fill: parent
+            anchors.margins: 8
+            spacing: 12
+
+            ToolButton {
+                text: "\u25C0"
+                enabled: root.hasPrevious
+                onClicked: root.loadPrevious()
+                ToolTip.visible: hovered
+                ToolTip.text: qsTr("Anterior")
+            }
+
+            Label {
+                Layout.fillWidth: true
+                text: root.product && root.product.code ? root.product.code + " — " + root.product.name : qsTr("Sem produto selecionado")
+                elide: Text.ElideRight
+            }
+
+            ToolButton {
+                text: "\u25B6"
+                enabled: root.hasNext
+                onClicked: root.loadNext()
+                ToolTip.visible: hovered
+                ToolTip.text: qsTr("Seguinte")
+            }
+        }
     }
 
     ColumnLayout {
