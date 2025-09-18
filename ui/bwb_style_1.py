@@ -13,9 +13,10 @@ _FIELD_STYLE_TEMPLATE = (
 
 FIELD_STYLE = _FIELD_STYLE_TEMPLATE.format(alignment_line="")
 
-CENTER_FIELD_STYLE = _FIELD_STYLE_TEMPLATE.format(
-    alignment_line="    qproperty-alignment: AlignHCenter | AlignVCenter;\n",
-)
+# ``CENTER_FIELD_STYLE`` previously added a centred alignment declaration.  The
+# widgets themselves now control alignment directly, so the stylesheet matches
+# the neutral field style while keeping the compatibility constant available.
+CENTER_FIELD_STYLE = FIELD_STYLE
 
 _BASE_LABEL_STYLE = (
     "QLabel {{\n"
