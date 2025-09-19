@@ -852,12 +852,14 @@ class FTApp(QWidget):
             widget_type="campo",
         )
 
+        C1A2_familias_row_margin_value = 4
+        C1A2_familias_row_spacing_value = 2
         C1A2_familias_row = Zone(
             "B1.C1.A.2.A.1",
             C1A2_familias,
             flow="h",
-            margins=4,
-            spacing=2,
+            margins=C1A2_familias_row_margin_value,
+            spacing=C1A2_familias_row_spacing_value,
             level=C1A2_familias._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
@@ -879,7 +881,26 @@ class FTApp(QWidget):
             C1A2_familias_row_margins.bottom(),
         )
         C1A2_familias_row.apply_overlays(True)
-        C1A2_familias.add(C1A2_familias_row, 0)
+        C1A2_familias.add(C1A2_familias_row, 1)
+
+        C1A2_familias_spacer = Zone(
+            "B1.C1.A.2.A.2",
+            C1A2_familias,
+            flow="v",
+            margins=C1A2_familias_row_margin_value,
+            spacing=C1A2_familias_row_spacing_value,
+            level=C1A2_familias_row._level,
+            show_overlays=layout.DEV_OVERLAYS,
+            widget_type="campo",
+        )
+        C1A2_familias_spacer.apply_metadata(
+            zone_type="secao-familias",
+            widget_type="campo",
+            apply_base_style=False,
+        )
+        C1A2_familias_spacer.ly.setContentsMargins(0, 0, 0, 0)
+        C1A2_familias_spacer.apply_overlays(layout.DEV_OVERLAYS)
+        C1A2_familias.add(C1A2_familias_spacer, 2)
 
         family_labels_zone, family_values_zone = C1A2_familias_row.split_h((1, 3))
         family_labels_zone.apply_metadata(
