@@ -958,7 +958,6 @@ class FTApp(QWidget):
             QSizePolicy.Expanding, QSizePolicy.Fixed
         )
         C1A2_familias_spacer.add(C1A2_combos_row, 1)
-        C1A2_familias_spacer.ly.addStretch(1)
 
         family_labels_zone, family_values_zone = C1A2_familias_row.split_h((1, 3))
         family_labels_zone.apply_metadata(
