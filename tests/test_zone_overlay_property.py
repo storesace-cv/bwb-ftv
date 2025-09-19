@@ -717,6 +717,19 @@ def test_zone_add_row_allows_opt_in_debug_styles(qapp, overlays_enabled):
     assert "background-color" in value_widget.styleSheet()
 
 
+def test_zone_label_minimum_width_is_preserved(qapp):
+    zone = layout.Zone("B1")
+    value_widget = QLabel("valor", zone)
+    min_width = 120
+
+    label = zone.add_row("Nome", value_widget, label_minw=min_width)
+    zone.sync_label_widths()
+    qapp.processEvents()
+
+    assert label.property("labelMinimumWidth") == min_width
+    assert label.width() >= min_width
+
+
 class _OverlayDummyService:
     def __init__(self):
         self.ds = None
