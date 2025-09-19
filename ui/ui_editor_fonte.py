@@ -1510,6 +1510,27 @@ class FTApp(QWidget):
             )
         )
         hh = self.tbIng.horizontalHeader()
+        hh.setStyleSheet(
+            """
+            QHeaderView {
+                background-color: transparent;
+            }
+            QHeaderView::section {
+                background-color: rgba(200, 200, 200, 0.5);
+                border: 1px solid rgba(0, 0, 0, 0.3);
+                border-top-color: rgba(255, 255, 255, 0.8);
+                border-left-color: rgba(255, 255, 255, 0.8);
+                border-bottom-color: rgba(0, 0, 0, 0.4);
+                border-right-color: rgba(0, 0, 0, 0.4);
+                border-radius: 6px;
+                padding: 4px;
+            }
+            QHeaderView::section:pressed {
+                background-color: rgba(200, 200, 200, 0.8);
+            }
+            """
+        )
+        hh.setDefaultAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         vh = self.tbIng.verticalHeader()
         header_h = hh.height() or hh.minimumSectionSize()
         initial_h = header_h + vh.defaultSectionSize() + self.tbIng.frameWidth() * 2
