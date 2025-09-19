@@ -128,9 +128,18 @@ def test_iter_layout_children_covers_block_roots(qapp, tag_service):
             zone_tag("allergens_root"),
         }
         assert block_tags.issubset(_collect_zone_tags(ft))
+        pvps_column_tags = {
+            zone_tag("pvps_grid"),
+            zone_tag("pvps_col_1"),
+            zone_tag("pvps_col_2"),
+            zone_tag("pvps_col_3"),
+            zone_tag("pvps_col_4"),
+            zone_tag("pvps_col_5"),
+        }
+        assert pvps_column_tags.issubset(_collect_zone_tags(ft))
         header_tags = _collect_zone_tags(ft, include_header=True)
         assert zone_tag("header_root") in header_tags
-        for tag in block_tags:
+        for tag in block_tags | pvps_column_tags:
             assert ft.findChild(Zone, tag) is not None
     finally:
         ft.close()

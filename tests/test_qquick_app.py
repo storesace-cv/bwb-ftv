@@ -69,7 +69,8 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
 
         expected_zone_types = {
             zone_tag("family_root"): "bloco-familias-combos",
-            zone_tag("pvps_root"): "bloco-pvps",
+            zone_tag("pvps_root"): "secao-pvps",
+            zone_tag("pvps_grid"): "grade-pvps",
             zone_tag("ingredients_root"): "bloco-ingredientes",
             zone_tag("food_cost_root"): "bloco-food-cost",
             zone_tag("preparation_root"): "bloco-preparacao",
