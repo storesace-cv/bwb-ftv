@@ -13,3 +13,6 @@ reports/
 /databases/*
 !/databases/*/
 !/databases/allergens.example.json
+
+# Local captures / screenshots
+artifacts/
