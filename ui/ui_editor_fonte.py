@@ -406,7 +406,7 @@ class FTApp(QWidget):
         box.setProperty("devTitle", title)
         box.setProperty("userTitle", user_title)
         box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        box.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        box.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         font = QFont(box.font())
         font.setPointSize(18)
         font.setBold(True)
@@ -415,7 +415,7 @@ class FTApp(QWidget):
         box.setStyleSheet(
             "QGroupBox::title {\n"
             "    subcontrol-origin: margin;\n"
-            "    subcontrol-position: top center;\n"
+            "    subcontrol-position: top left;\n"
             "    padding: 4px 10px;\n"
             "    background-color: rgba(200, 200, 200, 0.5);\n"
             "    border: 1px solid rgba(0, 0, 0, 0.3);\n"
