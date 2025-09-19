@@ -121,6 +121,7 @@ from .models import (
     build_fichas_tecnicas_model,
     update_fichas_tecnicas_model,
 )
+from .qt_compat import exec_app, exec_modal
 from .utilities import (
     AlignmentVariant,
     FIELD_STYLE,
@@ -263,7 +264,7 @@ class ImagePreview(QLabel):
             btn_sub = msg.addButton("Substituir", QMessageBox.AcceptRole)
             btn_del = msg.addButton("Apagar", QMessageBox.DestructiveRole)
             msg.addButton("Cancelar", QMessageBox.RejectRole)
-            msg.exec_()
+            exec_modal(msg)
             clicked = msg.clickedButton()
             if clicked == btn_sub:
                 fname, _ = QFileDialog.getOpenFileName(
@@ -360,7 +361,7 @@ class PrepImagePreview(ImagePreview):
             btn_sub = msg.addButton("Substituir", QMessageBox.AcceptRole)
             btn_del = msg.addButton("Apagar", QMessageBox.DestructiveRole)
             msg.addButton("Cancelar", QMessageBox.RejectRole)
-            msg.exec_()
+            exec_modal(msg)
             clicked = msg.clickedButton()
             if clicked == btn_sub:
                 fname, _ = QFileDialog.getOpenFileName(
@@ -2288,7 +2289,7 @@ def main():
     svc = ProductService(ds)
     w = FTApp(svc)
     w.show()
-    sys.exit(app.exec_())
+    sys.exit(exec_app(app))
 
 
 if __name__ == "__main__":

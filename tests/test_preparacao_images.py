@@ -100,13 +100,11 @@ def test_prep_image_preview_click_flow(qtbot, tmp_path, monkeypatch):
                 return self.btn_del
             return object()
 
-        def exec_(self):
-            pass
-
         def clickedButton(self):
             return self.btn_del
 
     monkeypatch.setattr("ui.ui_editor_fonte.QMessageBox", DummyMsg)
+    monkeypatch.setattr("ui.ui_editor_fonte.exec_modal", lambda dlg: 0)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *a, **k: ("", ""))
 
     qtbot.mouseClick(preview, Qt.LeftButton)

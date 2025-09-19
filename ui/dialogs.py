@@ -8,6 +8,7 @@ from ui.utilities import DEFAULT_TOOLTIP_DURATION_MS
 from utils.paths import get_project_root
 from utils.formatting import format_pt_number
 from data import create_backup, restore_backup
+from .qt_compat import exec_modal
 
 logger = logging.getLogger(__name__)
 
@@ -265,7 +266,7 @@ def edit_fcost_values(parent, repo) -> None:
     bt_close.clicked.connect(dlg.reject)
 
     refresh()
-    dlg.exec_()
+    exec_modal(dlg)
 
 
 def manage_aux_table(
@@ -436,4 +437,4 @@ def manage_aux_table(
     tbl.itemDoubleClicked.connect(rename_item)
 
     refresh()
-    dlg.exec_()
+    exec_modal(dlg)
