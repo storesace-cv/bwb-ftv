@@ -1218,10 +1218,6 @@ class FTApp(QWidget):
         )
         C5A.apply_metadata(zone_type="secao-food-cost", widget_type="campo")
         self.C5.add(C5A, 1)
-        food_cost_label = QLabel("Food Cost:")
-        apply_label_style(food_cost_label)
-        C5A.add(food_cost_label, 0)
-
         C5AA = Zone(
             "B5.C1.A.A",
             C5A,
