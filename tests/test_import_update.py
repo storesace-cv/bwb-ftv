@@ -78,6 +78,58 @@ def _write_base_files(
     prec_wb.save(base_dir / "PreçosTaxas_base.xlsx")
 
 
+def _write_sparse_codigo_files(base_dir, products):
+    prod_wb = Workbook()
+    ws = prod_wb.active
+    ws.append(["Codigo", "Produto", "tipo_venda"])
+    for code, name, _ in products:
+        ws.append([code, name, 1])
+    prod_wb.save(base_dir / "Produtos_Base.xlsx")
+
+    ft_wb = Workbook()
+    ws = ft_wb.active
+    ws.append(
+        [
+            "familia_subfamilia",
+            "produto_codigo",
+            "produto_nome",
+            "componente_codigo",
+            "componente_nome",
+            "Qtd",
+            "Unidade",
+            "Ppu",
+            "Preco",
+            "Peso",
+            "Ordem",
+        ]
+    )
+    for code, name, components in products:
+        for ordem, (comp_code, comp_name) in enumerate(components, start=1):
+            ws.append(
+                [
+                    None,
+                    code if ordem == 1 else None,
+                    name if ordem == 1 else None,
+                    comp_code,
+                    comp_name,
+                    ordem,
+                    "Un",
+                    None,
+                    None,
+                    None,
+                    ordem,
+                ]
+            )
+    ft_wb.save(base_dir / "FichasTecnicas_base.xlsx")
+
+    prec_wb = Workbook()
+    ws = prec_wb.active
+    ws.append(["Codigo", "Preco1", "Preco2", "Preco3", "Preco4", "Preco5"])
+    for code, _, _ in products:
+        ws.append([code, 1, None, None, None, None])
+    prec_wb.save(base_dir / "PreçosTaxas_base.xlsx")
+
+
 def test_import_from_excel_replaces_database(ds, imports_dir):
     ds.conn.execute("INSERT INTO Produtos (Codigo, Produto) VALUES ('OLD', 'Old')")
     ds.reload_ids()
@@ -267,6 +319,51 @@ def test_update_from_excel_skips_rows_without_codigo(ds, imports_dir):
         "WHERE ProdutoCodigo IS NULL OR ProdutoCodigo = ''"
     ).fetchall()
     assert ft_invalid == []
+
+
+def test_import_from_excel_propagates_blank_produto_codigo(ds, imports_dir):
+    products = [
+        ("P1", "Produto 1", [("I1", "Ingrediente 1"), ("I2", "Ingrediente 2")]),
+        ("P2", "Produto 2", [("I3", "Ingrediente 3"), ("I4", "Ingrediente 4")]),
+    ]
+    _write_sparse_codigo_files(imports_dir, products)
+
+    svc = ProductService(ds)
+    svc.import_from_excel()
+    ds.reload_ids()
+
+    for code, _, components in products:
+        ingredientes = ds.get_ingredientes(code)
+        assert [i["ComponenteNome"] for i in ingredientes] == [
+            comp_name for _, comp_name in components
+        ]
+
+
+def test_update_from_excel_propagates_blank_produto_codigo(ds, imports_dir):
+    ds.conn.execute(
+        "INSERT INTO Produtos (Codigo, Produto, TipoVenda) VALUES ('P1', 'Antigo', 1)"
+    )
+    ds.conn.execute(
+        "INSERT INTO FichasTecnicas (ProdutoCodigo, ComponenteNome, Ordem) "
+        "VALUES ('P1', 'Velho', 1)"
+    )
+    ds.reload_ids()
+
+    products = [
+        ("P1", "Produto 1", [("I1", "Ingrediente 1"), ("I2", "Ingrediente 2")]),
+        ("P2", "Produto 2", [("I3", "Ingrediente 3"), ("I4", "Ingrediente 4")]),
+    ]
+    _write_sparse_codigo_files(imports_dir, products)
+
+    svc = ProductService(ds)
+    svc.update_from_excel()
+    ds.reload_ids()
+
+    for code, _, components in products:
+        ingredientes = ds.get_ingredientes(code)
+        nomes = [i["ComponenteNome"] for i in ingredientes]
+        assert nomes == [comp_name for _, comp_name in components]
+        assert "Velho" not in nomes
 
 def test_import_single_excel_accepts_canonical_headers(ds, tmp_path):
     wb = Workbook()

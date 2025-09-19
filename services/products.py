@@ -716,6 +716,7 @@ def import_from_excel(ds: DataStore | None = None) -> None:
                 id_col = "ProdutoCodigo"
             elif table == "Produtos":
                 id_col = "Codigo"
+            last_identifier = None
             for row in rows:
                 row_map = {}
                 for i in range(min(len(headers), len(row))):
@@ -729,10 +730,18 @@ def import_from_excel(ds: DataStore | None = None) -> None:
                     if isinstance(identifier, str):
                         stripped = identifier.strip()
                         if not stripped:
-                            continue
-                        row_map[id_col] = stripped
+                            if last_identifier is None:
+                                continue
+                            identifier = last_identifier
+                        else:
+                            identifier = stripped
+                        row_map[id_col] = identifier
                     elif _is_blank(identifier):
-                        continue
+                        if last_identifier is None:
+                            continue
+                        identifier = last_identifier
+                        row_map[id_col] = identifier
+                    last_identifier = identifier
                 data.append(tuple(row_map.get(c) for c in cols))
             if data:
                 conn.executemany(sql, data)
@@ -861,6 +870,7 @@ def update_from_excel(ds: DataStore | None = None) -> None:
                 f"INSERT INTO {quote_ident(table)} ({cols_sql}) VALUES ({placeholders})"
             )
             grouped: dict[str, list[tuple]] = {}
+            last_codigo: str | None = None
             for row in rows:
                 row_map = {
                     headers[i]: row[i] for i in range(min(len(headers), len(row)))
@@ -869,10 +879,16 @@ def update_from_excel(ds: DataStore | None = None) -> None:
                 if isinstance(codigo, str):
                     codigo = codigo.strip()
                     if not codigo:
-                        continue
+                        if last_codigo is None:
+                            continue
+                        codigo = last_codigo
                     row_map["ProdutoCodigo"] = codigo
                 elif _is_blank(codigo):
-                    continue
+                    if last_codigo is None:
+                        continue
+                    codigo = last_codigo
+                    row_map["ProdutoCodigo"] = codigo
+                last_codigo = codigo
                 grouped.setdefault(codigo, []).append(
                     tuple(row_map.get(c) for c in cols)
                 )
