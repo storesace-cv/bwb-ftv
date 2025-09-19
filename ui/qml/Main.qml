@@ -297,11 +297,11 @@ ApplicationWindow {
                     IngredientRow {
                         Layout.fillWidth: true
                         header: true
-                        ingredientName: qsTr("Ingrediente")
-                        quantity: qsTr("Quantidade")
-                        unit: qsTr("Unidade")
+                        ingredientName: qsTr("INGREDIENTE")
+                        quantity: qsTr("QUANTIDADE")
+                        unit: qsTr("UNIDADE")
                         ppu: qsTr("PPU")
-                        total: qsTr("Total")
+                        total: qsTr("TOTAL")
                         showOverlays: ingredientsZone.showOverlays
                         zoneType: ingredientsZone.zoneType
                         visible: ingredientsRepeater.count > 0

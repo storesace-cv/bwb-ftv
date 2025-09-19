@@ -97,7 +97,7 @@ Item {
 
         Label {
             id: nameLabel
-            text: header ? ingredientName : (ingredientName || "—")
+            text: header ? String(ingredientName).toUpperCase() : (ingredientName || "—")
             font.bold: header
             color: header ? "#2c3e66" : "#172b4d"
             Layout.fillWidth: true
@@ -108,7 +108,7 @@ Item {
 
         Label {
             id: quantityLabel
-            text: header ? quantity : root.formatNumber(quantity, 3)
+            text: header ? String(quantity).toUpperCase() : root.formatNumber(quantity, 3)
             font.bold: header
             horizontalAlignment: header ? Text.AlignHCenter : Text.AlignRight
             verticalAlignment: header ? Text.AlignVCenter : undefined
@@ -118,7 +118,7 @@ Item {
 
         Label {
             id: unitLabel
-            text: header ? unit : (unit || "—")
+            text: header ? String(unit).toUpperCase() : (unit || "—")
             font.bold: header
             horizontalAlignment: header ? Text.AlignHCenter : Text.AlignLeft
             verticalAlignment: header ? Text.AlignVCenter : undefined
@@ -128,7 +128,7 @@ Item {
 
         Label {
             id: ppuLabel
-            text: header ? ppu : root.formatCurrency(ppu)
+            text: header ? String(ppu).toUpperCase() : root.formatCurrency(ppu)
             font.bold: header
             horizontalAlignment: header ? Text.AlignHCenter : Text.AlignRight
             verticalAlignment: header ? Text.AlignVCenter : undefined
@@ -138,7 +138,7 @@ Item {
 
         Label {
             id: totalLabel
-            text: header ? total : root.formatCurrency(total)
+            text: header ? String(total).toUpperCase() : root.formatCurrency(total)
             font.bold: header
             horizontalAlignment: header ? Text.AlignHCenter : Text.AlignRight
             verticalAlignment: header ? Text.AlignVCenter : undefined
