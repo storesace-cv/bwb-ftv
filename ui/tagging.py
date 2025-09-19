@@ -26,8 +26,8 @@ _ZONE_TAGS: Mapping[str, str] = {
     # --- Simplified viewer aliases ---------------------------------------
     "viewer_identification_code": "B1.C1",
     "viewer_identification_name": "B1.C2",
-    "viewer_technical_state": "B4.C1",
-    "viewer_technical_validity": "B4.C2",
+    "viewer_technical_state": "B4.C3",
+    "viewer_technical_validity": "B4.C4",
     "viewer_notes_observations": "B5.C1",
 
     # --- Família & Combos -------------------------------------------------
