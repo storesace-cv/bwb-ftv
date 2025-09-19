@@ -402,34 +402,45 @@ class FTApp(QWidget):
 
     def _section_box(self, title: str, zone: Zone) -> QGroupBox:
         user_title = re.sub(r"^\[[^\]]+\]\s*-\s*", "", title).strip()
-        box = QGroupBox(title if layout.DEV_OVERLAYS else user_title)
+        box = QGroupBox()
+        box.setTitle("")
         box.setProperty("devTitle", title)
         box.setProperty("userTitle", user_title)
         box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        box.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        font = QFont(box.font())
-        font.setPointSize(18)
-        font.setBold(True)
-        font.setWeight(QFont.Bold)
-        box.setFont(font)
-        box.setStyleSheet(
-            "QGroupBox::title {\n"
-            "    subcontrol-origin: margin;\n"
-            "    subcontrol-position: top left;\n"
-            "    padding: 4px 10px;\n"
-            "    background-color: rgba(200, 200, 200, 0.5);\n"
-            "    border: 1px solid rgba(0, 0, 0, 0.3);\n"
-            "    border-top-color: rgba(255, 255, 255, 0.8);\n"
-            "    border-left-color: rgba(255, 255, 255, 0.8);\n"
-            "    border-bottom-color: rgba(0, 0, 0, 0.4);\n"
-            "    border-right-color: rgba(0, 0, 0, 0.4);\n"
-            "    border-radius: 6px;\n"
-            "}\n"
+
+        header = QLabel(title if layout.DEV_OVERLAYS else user_title)
+        header.setObjectName("sectionHeader")
+        header.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        header.setProperty("devLabel", title)
+        header.setProperty("userLabel", user_title)
+        header.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        header_font = QFont(header.font())
+        header_font.setPointSize(18)
+        header_font.setBold(True)
+        header_font.setWeight(QFont.Bold)
+        header.setFont(header_font)
+        header.setStyleSheet(
+            """
+            QLabel#sectionHeader {
+                background-color: rgba(200,200,200,0.5);
+                border: 1px solid rgba(0,0,0,0.3);
+                border-top-color: rgba(255,255,255,0.8);
+                border-left-color: rgba(255,255,255,0.8);
+                border-bottom-color: rgba(0,0,0,0.4);
+                border-right-color: rgba(0,0,0,0.4);
+                border-radius: 6px;
+                padding: 4px 10px;
+            }
+            """
         )
+
         ly = QVBoxLayout(box)
         ly.setContentsMargins(3, 5, 3, 5)
         ly.setSpacing(5)
+        ly.addWidget(header)
         ly.addWidget(zone)
+
+        box._section_header = header
         return box
 
     def _build_ui(self):
@@ -2462,7 +2473,15 @@ class FTApp(QWidget):
         for box in self._iter_layout_children(QGroupBox, include_header=True):
             user_title = box.property("userTitle")
             dev_title = box.property("devTitle")
-            if user_title is not None and dev_title is not None:
+            header = getattr(box, "_section_header", None)
+            if (
+                header is not None
+                and isinstance(header, QLabel)
+                and user_title is not None
+                and dev_title is not None
+            ):
+                header.setText(dev_title if layout.DEV_OVERLAYS else user_title)
+            elif user_title is not None and dev_title is not None:
                 box.setTitle(dev_title if layout.DEV_OVERLAYS else user_title)
                 layout.refresh_style(box)
         apply_fichas_tecnicas_headers(
