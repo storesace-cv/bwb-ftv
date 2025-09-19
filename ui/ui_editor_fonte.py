@@ -850,6 +850,11 @@ class FTApp(QWidget):
                 "padding: 6px;\n"
                 "padding-top: 0;\n"
                 "padding-bottom: 0;\n"
+                "border: none;\n"
+                "border-bottom-width: 2px;\n"
+                "border-bottom-style: groove;\n"
+                "border-bottom-color: #c7ccd8;\n"
+                "border-bottom: 2px groove #f7f9fc;\n"
             ),
         )
         C1A2_familias_margins = C1A2_familias.ly.contentsMargins()
@@ -952,7 +957,17 @@ class FTApp(QWidget):
         C1A2_combos_row.apply_metadata(
             zone_type="secao-combos",
             widget_type="campo",
-            apply_base_style=False,
+            base_declarations=(
+                "border-radius: 12px;\n"
+                "padding: 6px;\n"
+                "padding-top: 0;\n"
+                "padding-bottom: 0;\n"
+                "border: none;\n"
+                "border-bottom-width: 2px;\n"
+                "border-bottom-style: groove;\n"
+                "border-bottom-color: #c7ccd8;\n"
+                "border-bottom: 2px groove #f7f9fc;\n"
+            ),
         )
         C1A2_combos_row.ly.setContentsMargins(0, 0, 0, 0)
         C1A2_combos_row.apply_overlays(layout.DEV_OVERLAYS)
