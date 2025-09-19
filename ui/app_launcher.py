@@ -9,8 +9,6 @@ from typing import TYPE_CHECKING
 from PyQt5.QtGui import QFont, QFontDatabase
 from PyQt5.QtWidgets import QApplication
 
-from utils.paths import get_project_root
-
 from .qt_compat import exec_app
 
 if TYPE_CHECKING:  # pragma: no cover - import for type checking only
@@ -24,40 +22,13 @@ def _apply_global_theme(app: QApplication) -> None:
     """Apply the shared font/theme configuration to *app*."""
 
     try:
-        root = get_project_root()
-        font_path = (
-            root
-            / "ui"
-            / "fonts"
-            / "Roboto-Italic-VariableFont_wdth,wght.ttf"
-        )
-        font_family = "Roboto"
-        font_id = -1
+        base_font = app.font()
+        if not base_font.family():
+            base_font = QFontDatabase.systemFont(QFontDatabase.GeneralFont)
 
-        if font_path.exists():
-            font_id = QFontDatabase.addApplicationFont(str(font_path))
-            if font_id == -1:
-                logger.warning(
-                    "[THEME] Falha a carregar fonte variável Roboto-Italic a partir de %s",
-                    font_path,
-                )
-            else:
-                families = QFontDatabase.applicationFontFamilies(font_id)
-                if families:
-                    font_family = families[0]
-        else:
-            logger.warning(
-                "[THEME] Fonte variável Roboto-Italic não encontrada em %s", font_path
-            )
-
-        if font_id == -1 and font_family not in QFontDatabase().families():
-            logger.warning(
-                "[THEME] Fonte variável Roboto-Italic indisponível; a usar tipografia padrão"
-            )
-            font_family = app.font().family()
-
-        font = QFont(font_family)
-        font.setPointSizeF(14)
+        font = QFont(base_font)
+        if font.pointSizeF() <= 0:
+            font.setPointSizeF(14)
         app.setFont(font)
     except Exception as exc:  # pragma: no cover - defensive log guard
         logger.warning("[THEME] Falha a aplicar fonte global: %s", exc)
