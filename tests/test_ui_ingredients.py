@@ -103,6 +103,21 @@ def test_ingredient_table_has_no_frame_or_padding(qapp):
         ft.close()
 
 
+def test_identification_zone_has_embossed_bottom_border(qapp):
+    ds = StubDataStore()
+    service = ProductService(ds)
+    ft = FTApp(service)
+    try:
+        zone = ft.findChild(Zone, "B1.C1.A.1")
+        assert zone is not None
+        stylesheet = zone.base_stylesheet
+        assert "border-bottom-width: 2px" in stylesheet
+        assert "border-bottom-style: groove" in stylesheet
+        assert "border-bottom: 2px groove #f7f9fc" in stylesheet
+    finally:
+        ft.close()
+
+
 def test_load_record_uses_componente_nome_when_only_key(qapp):
     original = layout.DEV_OVERLAYS
     layout.DEV_OVERLAYS = False
