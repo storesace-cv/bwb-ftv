@@ -1126,13 +1126,14 @@ class FTApp(QWidget):
             overlay = f"PrecosTaxas.Preco{idx}"
             display_label = overlay if zone._overlay_active else label_text
             lbl = QLabel(display_label, zone)
-            lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-            lbl.setStyleSheet("")
             lbl.setProperty("userLabel", label_text)
             lbl.setProperty("devLabel", overlay)
             match_font(lbl, self.edNome)
             zone.add(lbl, 0)
             zone._labels.append(lbl)
+            apply_label_style(lbl, alignment=AlignmentVariant.DEFAULT)
+            if zone._overlay_active:
+                apply_overlay_label_style(lbl)
             install_tooltip_copy_handler(lbl)
 
             val = QLineEdit("—", zone)
@@ -1330,21 +1331,16 @@ class FTApp(QWidget):
             dev_label = f"FoodCost.Nivel{idx}"
             display_label = dev_label if label_zone._overlay_active else user_label
             lbl = QLabel(display_label, label_zone)
-            lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             lbl.setProperty("userLabel", user_label)
             lbl.setProperty("devLabel", dev_label)
-            # Food Cost level labels revert to the plain Qt appearance when
-            # overlays are hidden.  Mark them so ``Zone.apply_overlays`` can
-            # skip the themed helper during normal mode and simply clear the
-            # stylesheet back to default.
-            lbl.setProperty("prefersQtDefaultLabelStyle", True)
-            if label_zone._overlay_active:
+            label_zone.add(lbl, 0)
+            label_zone._labels.append(lbl)
+            apply_label_style(lbl, alignment=AlignmentVariant.DEFAULT)
+            if label_zone._overlay_active and layout.DEV_OVERLAYS:
                 apply_overlay_label_style(lbl)
                 lbl.setToolTip(f"{user_label} — {dev_label}")
             else:
                 lbl.setToolTip("")
-            label_zone.add(lbl, 0)
-            label_zone._labels.append(lbl)
             install_tooltip_copy_handler(lbl)
 
             val = QLineEdit("—", field_zone)
