@@ -24,7 +24,7 @@
 # 2025-09-08 17:35 — v3.73 — Restabelecido: botão Overlay no topo
 #    esquerdo; navegação no rodapé; scroll vertical; mantidas alterações
 #    pedidas (C1 swap, remoção C1.A.2.B.2, tags visíveis).
-# 2025-09-08 18:05 — v3.80 — Reintroduzidos [B4] Preparação e [B5]
+# 2025-09-08 18:05 — v3.80 — Reintroduzidos [B6] Preparação e [B7]
 #    Alergénios; overlays/cores preservados; footer com contador.
 # 2025-09-08 18:40 — v3.82 — C1.A.2.B ligado à BD
 #    (tipos/validade/temperaturas) com pré-seleção por FK; preservado
@@ -44,7 +44,7 @@
 #      quando necessário.
 #    • B3: C1.A.A = Custo Total (soma da coluna “Total”); C1.A.B =
 #      “Food Cost:” (placeholder).
-#    • B4: editor de Preparação com toolbar simples; B5: Alergénios 2×N
+#    • B6: editor de Preparação com toolbar simples; B7: Alergénios 2×N
 #      com persistência N–N.
 #    • Menu: QToolButton (InstantPopup) sem caret; Base de Dados /
 #      Tabelas / Utilitários; diálogos de gestão nas Tabelas.
