@@ -32,11 +32,35 @@ Item {
     }
 
     Rectangle {
+        id: backgroundRect
         anchors.fill: parent
         radius: header ? 6 : 4
-        color: header ? "#e9edf5" : overlayColor
-        border.width: header ? 0 : (showOverlays ? 1 : 0)
-        border.color: showOverlays ? "#4a6fa5" : "transparent"
+        color: header ? Qt.rgba(200 / 255, 200 / 255, 200 / 255, 0.5) : overlayColor
+        border.width: header ? 1 : (showOverlays ? 1 : 0)
+        border.color: header ? Qt.rgba(1, 1, 1, 0.8) : (showOverlays ? "#4a6fa5" : "transparent")
+        antialiasing: header
+
+        Rectangle {
+            visible: header
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 1
+            radius: parent.radius
+            color: Qt.rgba(0, 0, 0, 0.4)
+            antialiasing: true
+        }
+
+        Rectangle {
+            visible: header
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.right: parent.right
+            width: 1
+            radius: parent.radius
+            color: Qt.rgba(0, 0, 0, 0.4)
+            antialiasing: true
+        }
     }
 
     RowLayout {
@@ -52,13 +76,16 @@ Item {
             color: header ? "#2c3e66" : "#172b4d"
             Layout.fillWidth: true
             wrapMode: Text.WordWrap
+            horizontalAlignment: header ? Text.AlignHCenter : Text.AlignLeft
+            verticalAlignment: header ? Text.AlignVCenter : Text.AlignTop
         }
 
         Label {
             id: quantityLabel
             text: header ? quantity : root.formatNumber(quantity, 3)
             font.bold: header
-            horizontalAlignment: Text.AlignRight
+            horizontalAlignment: header ? Text.AlignHCenter : Text.AlignRight
+            verticalAlignment: header ? Text.AlignVCenter : Text.AlignTop
             Layout.preferredWidth: 96
             color: header ? "#2c3e66" : "#42526e"
         }
@@ -67,7 +94,8 @@ Item {
             id: unitLabel
             text: header ? unit : (unit || "—")
             font.bold: header
-            horizontalAlignment: Text.AlignLeft
+            horizontalAlignment: header ? Text.AlignHCenter : Text.AlignLeft
+            verticalAlignment: header ? Text.AlignVCenter : Text.AlignTop
             Layout.preferredWidth: 72
             color: header ? "#2c3e66" : "#42526e"
         }
@@ -76,7 +104,8 @@ Item {
             id: ppuLabel
             text: header ? ppu : root.formatCurrency(ppu)
             font.bold: header
-            horizontalAlignment: Text.AlignRight
+            horizontalAlignment: header ? Text.AlignHCenter : Text.AlignRight
+            verticalAlignment: header ? Text.AlignVCenter : Text.AlignTop
             Layout.preferredWidth: 100
             color: header ? "#2c3e66" : "#42526e"
         }
@@ -85,7 +114,8 @@ Item {
             id: totalLabel
             text: header ? total : root.formatCurrency(total)
             font.bold: header
-            horizontalAlignment: Text.AlignRight
+            horizontalAlignment: header ? Text.AlignHCenter : Text.AlignRight
+            verticalAlignment: header ? Text.AlignVCenter : Text.AlignTop
             Layout.preferredWidth: 110
             color: header ? "#2c3e66" : "#42526e"
         }
