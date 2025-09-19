@@ -492,7 +492,7 @@ class Zone(QWidget):
     def _label_alignment_flag(self) -> Qt.Alignment:
         if self._label_alignment is AlignmentVariant.RIGHT:
             return Qt.AlignRight | Qt.AlignVCenter
-        return Qt.AlignLeft | Qt.AlignVCenter
+        return Qt.AlignHCenter | Qt.AlignVCenter
 
     def set_label_alignment(
         self, alignment: AlignmentVariant | str | None
