@@ -103,7 +103,7 @@ Item {
             Layout.fillWidth: true
             wrapMode: Text.WordWrap
             horizontalAlignment: header ? Text.AlignHCenter : Text.AlignLeft
-            verticalAlignment: header ? Text.AlignVCenter : Text.AlignTop
+            verticalAlignment: header ? Text.AlignVCenter : undefined
         }
 
         Label {
@@ -111,7 +111,7 @@ Item {
             text: header ? quantity : root.formatNumber(quantity, 3)
             font.bold: header
             horizontalAlignment: header ? Text.AlignHCenter : Text.AlignRight
-            verticalAlignment: header ? Text.AlignVCenter : Text.AlignTop
+            verticalAlignment: header ? Text.AlignVCenter : undefined
             Layout.preferredWidth: 96
             color: header ? "#2c3e66" : "#42526e"
         }
@@ -121,7 +121,7 @@ Item {
             text: header ? unit : (unit || "—")
             font.bold: header
             horizontalAlignment: header ? Text.AlignHCenter : Text.AlignLeft
-            verticalAlignment: header ? Text.AlignVCenter : Text.AlignTop
+            verticalAlignment: header ? Text.AlignVCenter : undefined
             Layout.preferredWidth: 72
             color: header ? "#2c3e66" : "#42526e"
         }
@@ -131,7 +131,7 @@ Item {
             text: header ? ppu : root.formatCurrency(ppu)
             font.bold: header
             horizontalAlignment: header ? Text.AlignHCenter : Text.AlignRight
-            verticalAlignment: header ? Text.AlignVCenter : Text.AlignTop
+            verticalAlignment: header ? Text.AlignVCenter : undefined
             Layout.preferredWidth: 100
             color: header ? "#2c3e66" : "#42526e"
         }
@@ -141,7 +141,7 @@ Item {
             text: header ? total : root.formatCurrency(total)
             font.bold: header
             horizontalAlignment: header ? Text.AlignHCenter : Text.AlignRight
-            verticalAlignment: header ? Text.AlignVCenter : Text.AlignTop
+            verticalAlignment: header ? Text.AlignVCenter : undefined
             Layout.preferredWidth: 110
             color: header ? "#2c3e66" : "#42526e"
         }
