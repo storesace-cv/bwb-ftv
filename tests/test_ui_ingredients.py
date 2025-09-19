@@ -174,9 +174,12 @@ def test_classification_overlay_tags_hidden(qapp):
             "B1.C1.A.2.A.1.B.1",
             "B1.C1.A.2.A.1.B.2",
             "B1.C1.A.2.B",
-            "B1.C1.A.2.B.1",
-            "B1.C1.A.2.B.2",
-            "B1.C1.A.2.B.3",
+            "B1.C1.A.2.B.A",
+            "B1.C1.A.2.B.A.1",
+            "B1.C1.A.2.B.A.2",
+            "B1.C1.A.2.B.A.3",
+            "B1.C1.A.2.B.B",
+            "B1.C1.A.2.B.B.1",
         ]
 
         for tag in target_tags:
@@ -188,12 +191,16 @@ def test_classification_overlay_tags_hidden(qapp):
         combos_container = ft.findChild(
             Zone, zone_tag("family_combos_container")
         )
+        combos_wrapper = ft.findChild(Zone, zone_tag("family_combos_wrapper"))
         combos_section = ft.findChild(Zone, zone_tag("family_combos_section"))
         assert combos_container is not None
+        assert combos_wrapper is not None
         assert combos_section is not None
         assert isinstance(combos_container.ly, QHBoxLayout)
+        assert isinstance(combos_wrapper.ly, QHBoxLayout)
         assert isinstance(combos_section.ly, QHBoxLayout)
-        assert combos_section.parentWidget() is combos_container
+        assert combos_wrapper.parentWidget() is combos_container
+        assert combos_section.parentWidget() is combos_wrapper
 
         combo_columns = [
             ft.findChild(Zone, zone_tag("family_combo_col_1")),
@@ -206,7 +213,7 @@ def test_classification_overlay_tags_hidden(qapp):
             assert parent_widget is not None
             parent_layout = parent_widget.layout()
             assert isinstance(parent_layout, QHBoxLayout)
-            assert parent_widget.parentWidget() is combos_section
+            assert parent_widget is combos_section
 
         for tag in ("B1.C1.A.2.A.1.A.1", "B1.C1.A.2.A.1.A.2"):
             zone = ft.findChild(Zone, tag)
