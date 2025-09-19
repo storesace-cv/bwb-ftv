@@ -87,7 +87,7 @@ def test_load_record_populates_ingredients(qapp):
     ft.close()
 
 
-def test_ingredient_table_has_no_frame_or_padding(qapp):
+def test_ingredient_table_style_includes_bottom_border(qapp):
     ds = StubDataStore()
     service = ProductService(ds)
     ft = FTApp(service)
@@ -100,6 +100,9 @@ def test_ingredient_table_has_no_frame_or_padding(qapp):
         assert "QTableView::item" in style
         assert "margin: 0" in style
         assert "padding: 0" in style
+        assert "border-bottom: 1px solid #dfe3eb" in style
+        assert "QTableView::item:last" in style
+        assert "border-bottom: none" in style
     finally:
         ft.close()
 
