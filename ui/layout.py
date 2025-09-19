@@ -442,14 +442,6 @@ class Zone(QWidget):
         finally:
             self._next_base_style_label = previous_next_label
 
-    def set_base_stylesheet(
-        self, stylesheet: str, *, label: str | None = None
-    ) -> None:
-        """Backward compatibility wrapper for legacy theme API."""
-
-        effective_label: Any = label if label is not None else None
-        self.set_zone_stylesheet(stylesheet, label=effective_label)
-
     def _style_label_text(self) -> str | None:
         segments = [
             self._zone_type,
