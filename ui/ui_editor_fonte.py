@@ -941,7 +941,7 @@ class FTApp(QWidget):
         C1A2_combos_row = Zone(
             "B1.C1.A.2.B",
             C1A2_familias_spacer,
-            flow="h",
+            flow="v",
             margins=0,
             spacing=C1A2_familias_row_spacing_value,
             level=C1A2_familias_spacer._level + 1,
