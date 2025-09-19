@@ -1,6 +1,6 @@
 import shutil
 import pytest
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 
 from data.datastore import DataStore
 from services.products import ProductService, _update_from_excel, _import_single_excel
@@ -201,6 +201,72 @@ def test_update_from_excel_uses_produto_codigo(ds, imports_dir):
     assert pvps["pvps"][0] == 3.0
     assert len(pvps["pvps"]) == 5
 
+
+def test_import_from_excel_skips_rows_without_codigo(ds, imports_dir):
+    products = [("P1", "Produto 1"), ("   ", "Sem Código"), (None, "Outro")]
+    _write_base_files(imports_dir, products=products)
+    prec_path = imports_dir / "PreçosTaxas_base.xlsx"
+    wb = load_workbook(prec_path)
+    ws = wb.active
+    ws.append([" ", None, None, None, None, None])
+    wb.save(prec_path)
+    wb.close()
+
+    svc = ProductService(ds)
+    svc.import_from_excel()
+
+    rows = ds.conn.execute(
+        "SELECT Codigo FROM Produtos WHERE Codigo IS NULL OR Codigo = ''"
+    ).fetchall()
+    assert rows == []
+
+    ft_rows = ds.conn.execute(
+        "SELECT ProdutoCodigo FROM FichasTecnicas "
+        "WHERE ProdutoCodigo IS NULL OR ProdutoCodigo = ''"
+    ).fetchall()
+    assert ft_rows == []
+
+
+def test_update_from_excel_skips_rows_without_codigo(ds, imports_dir):
+    ds.conn.execute(
+        "INSERT INTO Produtos (Codigo, Produto, TipoVenda) VALUES ('P1', 'Produto 1', 1)"
+    )
+    ds.conn.execute(
+        "INSERT INTO FichasTecnicas (ProdutoCodigo, ProdutoNome) VALUES ('P1', 'Produto 1')"
+    )
+    ds.reload_ids()
+
+    products = [("P1", "Produto 1 atualizado"), ("P2", "Produto 2"), ("", "Sem Código")]
+    _write_base_files(imports_dir, products=products)
+    prec_path = imports_dir / "PreçosTaxas_base.xlsx"
+    wb = load_workbook(prec_path)
+    ws = wb.active
+    ws.append(["", None, None, None, None, None])
+    wb.save(prec_path)
+    wb.close()
+
+    svc = ProductService(ds)
+    svc.update_from_excel()
+    ds.reload_ids()
+
+    codigos = {
+        row[0]
+        for row in ds.conn.execute("SELECT Codigo FROM Produtos").fetchall()
+        if row[0] is not None
+    }
+    assert "" not in codigos
+    assert "P1" in codigos and "P2" in codigos
+
+    preco_rows = ds.conn.execute(
+        "SELECT Codigo FROM PrecosTaxas WHERE Codigo IS NULL OR Codigo = ''"
+    ).fetchall()
+    assert preco_rows == []
+
+    ft_invalid = ds.conn.execute(
+        "SELECT ProdutoCodigo FROM FichasTecnicas "
+        "WHERE ProdutoCodigo IS NULL OR ProdutoCodigo = ''"
+    ).fetchall()
+    assert ft_invalid == []
 
 def test_import_single_excel_accepts_canonical_headers(ds, tmp_path):
     wb = Workbook()
