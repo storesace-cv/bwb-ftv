@@ -640,11 +640,38 @@ class FTApp(QWidget):
         self.C1.apply_metadata(
             zone_type="bloco-dados-gerais",
             widget_type="campo",
+            base_declarations=(
+                "border-radius: 12px;\n"
+                "padding: 6px;\n"
+                "padding-bottom: 0;\n"
+            ),
+        )
+        C1_margins = self.C1.ly.contentsMargins()
+        self.C1.ly.setContentsMargins(
+            C1_margins.left(),
+            C1_margins.top(),
+            C1_margins.right(),
+            0,
         )
         page_ly.addWidget(self._section_box("[B1] - Dados Gerais", self.C1), 0)
 
         C1A, C1B = self.C1.split_h((3, 1))
-        C1A.apply_metadata(zone_type="coluna-principal", widget_type="campo")
+        C1A.apply_metadata(
+            zone_type="coluna-principal",
+            widget_type="campo",
+            base_declarations=(
+                "border-radius: 12px;\n"
+                "padding: 6px;\n"
+                "padding-bottom: 0;\n"
+            ),
+        )
+        C1A_margins = C1A.ly.contentsMargins()
+        C1A.ly.setContentsMargins(
+            C1A_margins.left(),
+            C1A_margins.top(),
+            C1A_margins.right(),
+            0,
+        )
         C1B.apply_metadata(zone_type="coluna-imagem", widget_type="legenda")
 
         C1A_cont = QWidget(C1A)
@@ -673,12 +700,20 @@ class FTApp(QWidget):
             base_declarations=(
                 "border-radius: 12px;\n"
                 "padding: 6px;\n"
+                "padding-bottom: 0;\n"
                 "border: none;\n"
                 "border-bottom-width: 2px;\n"
                 "border-bottom-style: groove;\n"
                 "border-bottom-color: #c7ccd8;\n"
                 "border-bottom: 2px groove #f7f9fc;\n"
             ),
+        )
+        C1A1_margins = self.C1A1.ly.contentsMargins()
+        self.C1A1.ly.setContentsMargins(
+            C1A1_margins.left(),
+            C1A1_margins.top(),
+            C1A1_margins.right(),
+            0,
         )
         C1A_cont_ly.addWidget(self.C1A1, 0)
 
@@ -696,6 +731,19 @@ class FTApp(QWidget):
         self.C1A2.apply_metadata(
             zone_type="bloco-familias-combos",
             widget_type="campo",
+            base_declarations=(
+                "border-radius: 12px;\n"
+                "padding: 6px;\n"
+                "padding-top: 0;\n"
+                "padding-bottom: 0;\n"
+            ),
+        )
+        C1A2_margins = self.C1A2.ly.contentsMargins()
+        self.C1A2.ly.setContentsMargins(
+            C1A2_margins.left(),
+            0,
+            C1A2_margins.right(),
+            0,
         )
         C1A_cont_ly.addWidget(self.C1A2, 0)
         C1A_cont_ly.addStretch(1)
@@ -785,6 +833,19 @@ class FTApp(QWidget):
         C1A2_familias.apply_metadata(
             zone_type="secao-familias",
             widget_type="campo",
+            base_declarations=(
+                "border-radius: 12px;\n"
+                "padding: 6px;\n"
+                "padding-top: 0;\n"
+                "padding-bottom: 0;\n"
+            ),
+        )
+        C1A2_familias_margins = C1A2_familias.ly.contentsMargins()
+        C1A2_familias.ly.setContentsMargins(
+            C1A2_familias_margins.left(),
+            0,
+            C1A2_familias_margins.right(),
+            0,
         )
         C1A2_combos.apply_metadata(
             zone_type="secao-combos",
@@ -804,6 +865,18 @@ class FTApp(QWidget):
         C1A2_familias_row.apply_metadata(
             zone_type="linha-familias",
             widget_type="campo",
+            base_declarations=(
+                "border-radius: 12px;\n"
+                "padding: 6px;\n"
+                "padding-top: 0;\n"
+            ),
+        )
+        C1A2_familias_row_margins = C1A2_familias_row.ly.contentsMargins()
+        C1A2_familias_row.ly.setContentsMargins(
+            C1A2_familias_row_margins.left(),
+            0,
+            C1A2_familias_row_margins.right(),
+            C1A2_familias_row_margins.bottom(),
         )
         C1A2_familias_row.apply_overlays(True)
         C1A2_familias.add(C1A2_familias_row, 0)
