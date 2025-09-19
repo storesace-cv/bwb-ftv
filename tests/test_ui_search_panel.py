@@ -1,5 +1,6 @@
 from data.datastore import DataStore
 from services.products import ProductService
+from ui.layout import Zone
 from ui.ui_editor_fonte import FTApp
 
 
@@ -60,6 +61,8 @@ def test_search_panel_toggle_and_submit(qapp):
         assert ft.searchContainer.isVisible()
         assert ft.btSearchToggle.isChecked()
         assert ft.searchProductField.hasFocus()
+        assert isinstance(ft.searchLeftZone, Zone)
+        assert ft.searchResetButton.text() == "Mostrar todos os registos"
 
         ft.searchProductField.setText("  Produto 1  ")
         ft.searchIngredientField.setText(" tomate ")
@@ -87,6 +90,16 @@ def test_search_panel_toggle_and_submit(qapp):
         ft.searchProductField.returnPressed.emit()
         qapp.processEvents()
         assert service.search_filters_calls[-1] == (None, "Queijo")
+
+        ft.searchProductField.setText("Produto 1")
+        ft.searchIngredientField.setText("Cebola")
+        ft.searchResetButton.click()
+        qapp.processEvents()
+
+        assert ft.searchProductField.text() == ""
+        assert ft.searchIngredientField.text() == ""
+        assert service.search_filters_calls[-1] == (None, None)
+        assert ft.cur_index == 0
     finally:
         ft.close()
         ds.close()
