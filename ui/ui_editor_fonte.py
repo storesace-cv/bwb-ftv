@@ -121,7 +121,7 @@ from .models import (
     build_fichas_tecnicas_model,
     update_fichas_tecnicas_model,
 )
-from .qt_compat import exec_app, exec_modal
+from .qt_compat import exec_modal
 from .utilities import (
     AlignmentVariant,
     FIELD_STYLE,
@@ -2280,18 +2280,15 @@ class FTApp(QWidget):
 # ------------------------ Main ------------------------
 
 
-def main():
-    app = QApplication(sys.argv)
-
-    app.setStyleSheet(APP_STYLESHEET)
-
+def main() -> int:
     ds = DataStore()
     svc = ProductService(ds)
-    w = FTApp(svc)
-    w.show()
-    sys.exit(exec_app(app))
+
+    from .app_launcher import launch_ftv_app
+
+    return launch_ftv_app(svc)
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    main()
+    sys.exit(main())

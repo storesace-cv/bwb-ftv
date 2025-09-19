@@ -6,15 +6,13 @@ import sys
 import logging
 import os
 from PyQt5.QtCore import QtMsgType, qInstallMessageHandler
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QFont, QFontDatabase
 
 from data.datastore import DataStore  # noqa: E402
 from data.migration import ALERGENIOS_SEED_FLAG  # noqa: E402
 from services.allergens import import_allergens  # noqa: E402
 from services.products import ProductService  # noqa: E402
-from ui.qt_compat import exec_app, exec_modal  # noqa: E402
-from ui.ui_editor_fonte import FTApp  # noqa: E402
+from ui.qt_compat import exec_modal  # noqa: E402
+from ui.app_launcher import ensure_ftv_app, launch_ftv_app  # noqa: E402
 from ui.splashscreen import SplashScreen  # noqa: E402
 from utils.paths import get_project_root  # noqa: E402
 from utils.files import archive_with_timestamp  # noqa: E402
@@ -62,60 +60,15 @@ def _qt_message_handler(mode, context, message):
 
     if mode == QtMsgType.QtFatalMsg:
         sys.exit(1)
-# --- UI principal ---
-
-
-def _apply_global_theme(app):
-    try:
-        root = get_project_root()
-        font_path = (
-            root
-            / "ui"
-            / "fonts"
-            / "Roboto-Italic-VariableFont_wdth,wght.ttf"
-        )
-        font_family = "Roboto"
-        font_id = -1
-
-        if font_path.exists():
-            font_id = QFontDatabase.addApplicationFont(str(font_path))
-            if font_id == -1:
-                logger.warning(
-                    "[THEME] Falha a carregar fonte variável Roboto-Italic a partir de %s",
-                    font_path,
-                )
-            else:
-                families = QFontDatabase.applicationFontFamilies(font_id)
-                if families:
-                    font_family = families[0]
-        else:
-            logger.warning(
-                "[THEME] Fonte variável Roboto-Italic não encontrada em %s", font_path
-            )
-
-        if font_id == -1 and font_family not in QFontDatabase().families():
-            logger.warning(
-                "[THEME] Fonte variável Roboto-Italic indisponível; a usar tipografia padrão"
-            )
-            font_family = app.font().family()
-
-        f = QFont(font_family, 12)  # tamanho global 12pt
-        app.setFont(f)
-        # pode-se adicionar QSS leve aqui se precisares
-    except Exception as e:
-        logger.warning("[THEME] Falha a aplicar fonte global: %s", e)
-
-
-def main():
-    # Qt app
-    app = QApplication(sys.argv)
-    _apply_global_theme(app)
+def main() -> int:
+    # Qt app (also applies the shared theme)
+    app = ensure_ftv_app()
 
     splash = SplashScreen()
     pending = DataStore.pending_migrations()
     if pending:
         splash.show_message("A migrar base de dados…")
-        QApplication.processEvents()
+        app.processEvents()
         DataStore.apply_migrations()
         splash.close()
     else:
@@ -177,12 +130,8 @@ def main():
 
     svc = ProductService(ds)
 
-    # Janela
-    win = FTApp(svc)
-    win.show()
-
-    # Loop
-    sys.exit(exec_app(app))
+    # Janela principal e ciclo de eventos
+    return launch_ftv_app(svc)
 
 
 def configure_logging():
@@ -217,4 +166,4 @@ def configure_logging():
 
 if __name__ == "__main__":
     configure_logging()
-    main()
+    sys.exit(main())
