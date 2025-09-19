@@ -5,7 +5,7 @@ import QtQuick.Layouts 1.15
 Item {
     id: root
     implicitWidth: layout.implicitWidth + 16
-    implicitHeight: layout.implicitHeight + 8
+    implicitHeight: layout.implicitHeight + 4
     Layout.fillWidth: true
 
     property bool header: false
@@ -42,7 +42,7 @@ Item {
     RowLayout {
         id: layout
         anchors.fill: parent
-        anchors.margins: 8
+        anchors.margins: 4
         spacing: 12
 
         Label {
