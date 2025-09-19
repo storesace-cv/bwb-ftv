@@ -3,10 +3,10 @@
 # Regras Aprovadas (manter sempre no topo e cumprir em TODO o código)
 # -------------------------------------------------------------------
 # 1) Nomenclatura de Blocos e Células
-#    - Blocos: [B1] Dados Gerais (inclui Família & Combos),
-#      [B3] PVPs, [B4] Ingredientes, [B5] Food Cost,
+#    - Blocos: [B1] Dados Gerais (inclui Família, Combos & PVPs),
+#      [B4] Ingredientes, [B5] Food Cost,
 #      [B6] Preparação, [B7] Nutrição / Alergénios.
-#    - Célula raiz do bloco: Bn.C1 (ex.: B1.C1, B3.C1, B4.C1, B5.C1).
+#    - Célula raiz do bloco: Bn.C1 (ex.: B1.C1, B4.C1, B5.C1).
 #    - Divisão horizontal: sufixos .A (esq.) e .B (dir.).
 #    - Divisão vertical: sufixos .1 (topo) e .2 (base).
 #    - Subdivisões encadeiam-se mantendo a regra (ex.: B1.C1.A.2.B).
@@ -18,7 +18,7 @@
 #
 # Changelog
 # ---------
-# 2025-09-08 16:06 — v3.64 — Alinhamento de nomenclatura em B3 (C1)
+# 2025-09-08 16:06 — v3.64 — Alinhamento de nomenclatura na secção de PVPs (C1)
 #    & reforço de comentários; split vertical em C1.A.2 com dados no topo;
 #    Custo Total = soma da coluna "Total".
 # 2025-09-08 17:35 — v3.73 — Restabelecido: botão Overlay no topo
@@ -42,8 +42,8 @@
 #      ordenadas) com pré-seleção por FK do produto.
 #    • B2: grelha 50/10/10/14/16 + Código oculto; cálculo Total por linha
 #      quando necessário.
-#    • B3: C1.A.A = Custo Total (soma da coluna “Total”); C1.A.B =
-#      “Food Cost:” (placeholder).
+#    • B1.C1.A.2.A.2.A: PVPs alinhados por coluna com etiqueta por cima
+#      e valor por baixo; leitura PVP1..2 de precos_taxas.
 #    • B6: editor de Preparação com toolbar simples; B7: Alergénios 2×N
 #      com persistência N–N.
 #    • Menu: QToolButton (InstantPopup) sem caret; Base de Dados /
@@ -936,6 +936,84 @@ class FTApp(QWidget):
         )
         C1A2_familias.add(C1A2_familias_reserva, 2)
 
+        C1A2_pvps_zone = Zone(
+            "B1.C1.A.2.A.2.A",
+            C1A2_familias_spacer,
+            flow="v",
+            margins=0,
+            spacing=C1A2_familias_row_spacing_value,
+            level=C1A2_familias_spacer._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+            base_style_label=C1A2_familias.base_style_label,
+            widget_type="campo",
+        )
+        C1A2_pvps_zone.apply_metadata(
+            zone_type="secao-pvps",
+            widget_type="campo",
+            apply_base_style=False,
+        )
+        C1A2_pvps_zone.ly.setContentsMargins(0, 0, 0, 0)
+        C1A2_pvps_zone.apply_overlays(layout.DEV_OVERLAYS)
+        C1A2_pvps_zone.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Fixed
+        )
+        C1A2_familias_spacer.add(C1A2_pvps_zone, 1)
+
+        self.lbPVPs: list[QLineEdit] = []
+
+        pvp_label = QLabel("PREÇOS DE VENDA")
+        pvp_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        pvp_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        pvp_label.setStyleSheet("")
+        match_font(pvp_label, self.edNome)
+        C1A2_pvps_zone.add(pvp_label, 0)
+
+        C1A2_pvps_grid = Zone(
+            "B1.C1.A.2.A.2.A.1",
+            C1A2_pvps_zone,
+            flow="h",
+            margins=0,
+            spacing=C1A2_familias_row_spacing_value,
+            level=C1A2_pvps_zone._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+            widget_type="campo",
+        )
+        C1A2_pvps_grid.apply_metadata(
+            zone_type="grade-pvps",
+            widget_type="campo",
+        )
+        C1A2_pvps_grid.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        C1A2_pvps_zone.add(C1A2_pvps_grid, 0)
+
+        pvp1, pvp2, pvp3, pvp4, pvp5 = C1A2_pvps_grid.split_h((1, 1, 1, 1, 1))
+        for idx, zone in enumerate((pvp1, pvp2, pvp3, pvp4, pvp5), start=1):
+            zone.apply_metadata(style_dev_info="")
+            zone.set_zone_type(None)
+            zone.set_widget_type(None)
+            zone.set_widget_qt_class(None)
+            zone.set_style_dev_info("")
+
+            label_text = f"PVP #{idx}"
+            overlay = f"PrecosTaxas.Preco{idx}"
+            display_label = overlay if zone._overlay_active else label_text
+            lbl = QLabel(display_label, zone)
+            lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            lbl.setStyleSheet("")
+            lbl.setProperty("userLabel", label_text)
+            lbl.setProperty("devLabel", overlay)
+            match_font(lbl, self.edNome)
+            zone.add(lbl, 0)
+            zone._labels.append(lbl)
+            install_tooltip_copy_handler(lbl)
+
+            val = QLineEdit("—", zone)
+            val.setFont(self.edNome.font())
+            make_readonly_lineedit(val)
+            val.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            zone.add(val, 0)
+            self.lbPVPs.append(val)
+
         C1A2_combos_row = Zone(
             "B1.C1.A.2.B",
             C1A2_familias_spacer,
@@ -1087,71 +1165,6 @@ class FTApp(QWidget):
         self.cbTipos.currentIndexChanged.connect(self._on_tipo_artigo_changed)
         self.cbValidade.currentIndexChanged.connect(self._on_validade_changed)
         self.cbTemp.currentIndexChanged.connect(self._on_temperatura_changed)
-
-        # ---------------- B3 — PVPs (B3.C1) ----------------
-        self.C3 = Zone(
-            "B3.C1",
-            self,
-            flow="v",
-            level=0,
-            show_overlays=layout.DEV_OVERLAYS,
-            spacing=2,
-            widget_type="campo",
-        )
-        self.C3.apply_metadata(
-            zone_type="bloco-pvps",
-            widget_type="campo",
-        )
-        page_ly.addWidget(self._section_box("[B3] - PVPs", self.C3), 0)
-
-        self.lbPVPs: list[QLineEdit] = []
-
-        pvp_label = QLabel("PREÇOS DE VENDA")
-        pvp_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        pvp_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        pvp_label.setStyleSheet("")
-        match_font(pvp_label, self.edNome)
-        self.C3.add(pvp_label, 0)
-
-        C3_grid = Zone(
-            "B3.C1.A",
-            self.C3,
-            flow="h",
-            level=self.C3._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-            widget_type="campo",
-        )
-        C3_grid.apply_metadata(zone_type="grade-pvps", widget_type="campo")
-        C3_grid.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.C3.add(C3_grid, 0)
-        pvp1, pvp2, pvp3, pvp4, pvp5 = C3_grid.split_h((1, 1, 1, 1, 1))
-        for idx, zone in enumerate((pvp1, pvp2, pvp3, pvp4, pvp5), start=1):
-            zone.apply_metadata(style_dev_info="")
-            zone.set_zone_type(None)
-            zone.set_widget_type(None)
-            zone.set_widget_qt_class(None)
-            zone.set_style_dev_info("")
-
-            label_text = f"PVP #{idx}"
-            overlay = f"PrecosTaxas.Preco{idx}"
-            display_label = overlay if zone._overlay_active else label_text
-            lbl = QLabel(display_label, zone)
-            lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-            lbl.setStyleSheet("")
-            lbl.setProperty("userLabel", label_text)
-            lbl.setProperty("devLabel", overlay)
-            match_font(lbl, self.edNome)
-            zone.add(lbl, 0)
-            zone._labels.append(lbl)
-            install_tooltip_copy_handler(lbl)
-
-            val = QLineEdit("—", zone)
-            val.setFont(self.edNome.font())
-            make_readonly_lineedit(val)
-            val.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-            val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            zone.add(val, 0)
-            self.lbPVPs.append(val)
 
         # ---------------- B4 — Ingredientes (B4.C1) ----------------
         self.C4 = Zone(
