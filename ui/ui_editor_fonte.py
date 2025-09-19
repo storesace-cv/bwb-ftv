@@ -829,7 +829,17 @@ class FTApp(QWidget):
         C1B.add(self.image_preview, 1)
 
         # ---------------- Família & Combos (B1.C1.A.2) ----------------
-        C1A2_familias, C1A2_combos = self.C1A2.split_h((3, 1))
+        C1A2_familias = Zone(
+            "B1.C1.A.2.A",
+            self.C1A2,
+            flow="v",
+            margins=(self.C1A2.margin_h, self.C1A2.margin_v),
+            spacing=self.C1A2.ly.spacing(),
+            level=self.C1A2._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+            base_style_label=self.C1A2.base_style_label,
+            widget_type="campo",
+        )
         C1A2_familias.apply_metadata(
             zone_type="secao-familias",
             widget_type="campo",
@@ -847,10 +857,7 @@ class FTApp(QWidget):
             C1A2_familias_margins.right(),
             0,
         )
-        C1A2_combos.apply_metadata(
-            zone_type="secao-combos",
-            widget_type="campo",
-        )
+        self.C1A2.add(C1A2_familias, 1)
 
         C1A2_familias_row_margin_value = 4
         C1A2_familias_row_spacing_value = 2
@@ -886,7 +893,7 @@ class FTApp(QWidget):
         C1A2_familias_spacer = Zone(
             "B1.C1.A.2.A.2",
             C1A2_familias,
-            flow="v",
+            flow="h",
             margins=C1A2_familias_row_margin_value,
             spacing=C1A2_familias_row_spacing_value,
             level=C1A2_familias_row._level,
@@ -900,7 +907,35 @@ class FTApp(QWidget):
         )
         C1A2_familias_spacer.ly.setContentsMargins(0, 0, 0, 0)
         C1A2_familias_spacer.apply_overlays(layout.DEV_OVERLAYS)
+        C1A2_familias_spacer.ly.setAlignment(Qt.AlignLeft)
+        C1A2_familias_spacer.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Fixed
+        )
         C1A2_familias.add(C1A2_familias_spacer, 2)
+
+        C1A2_combos_row = Zone(
+            "B1.C1.A.2.B",
+            C1A2_familias_spacer,
+            flow="h",
+            margins=0,
+            spacing=C1A2_familias_row_spacing_value,
+            level=C1A2_familias_spacer._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+            base_style_label=C1A2_familias.base_style_label,
+            widget_type="campo",
+        )
+        C1A2_combos_row.apply_metadata(
+            zone_type="secao-combos",
+            widget_type="campo",
+            apply_base_style=False,
+        )
+        C1A2_combos_row.ly.setContentsMargins(0, 0, 0, 0)
+        C1A2_combos_row.apply_overlays(layout.DEV_OVERLAYS)
+        C1A2_combos_row.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Fixed
+        )
+        C1A2_familias_spacer.add(C1A2_combos_row, 1)
+        C1A2_familias_spacer.ly.addStretch(1)
 
         family_labels_zone, family_values_zone = C1A2_familias_row.split_h((1, 3))
         family_labels_zone.apply_metadata(
@@ -1014,12 +1049,16 @@ class FTApp(QWidget):
         w_tipos, self.cbTipos = stack_combo("Tipos Artigos")
         w_val, self.cbValidade = stack_combo("Validade")
         w_temp, self.cbTemp = stack_combo("Temperaturas")
-        C1A2_combo_tipo, C1A2_combo_val, C1A2_combo_temp = C1A2_combos.split_v((1, 1, 1))
+        C1A2_combo_tipo, C1A2_combo_val, C1A2_combo_temp = C1A2_combos_row.split_h(
+            (1, 1, 1)
+        )
         for zone in (C1A2_combo_tipo, C1A2_combo_val, C1A2_combo_temp):
             zone.apply_metadata(
                 zone_type="linha-combo",
                 widget_type="campo",
             )
+            zone.ly.setContentsMargins(0, 0, 0, 0)
+            zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         C1A2_combo_tipo.add(w_tipos)
         C1A2_combo_val.add(w_val)
         C1A2_combo_temp.add(w_temp)
