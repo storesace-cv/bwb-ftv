@@ -61,13 +61,13 @@ _ZONE_TAGS: Mapping[str, str] = {
     "ingredients_root": "B4.C1",
     "ingredients_secondary": "B4.C2",
 
-    # --- Food Cost --------------------------------------------------------
+    # --- FOOD COST --------------------------------------------------------
     "food_cost_root": "B5.C1",
 
-    # --- Preparação -------------------------------------------------------
+    # --- PREPARAÇÃO -------------------------------------------------------
     "preparation_root": "B6.C1",
 
-    # --- Nutrição / Alergénios -------------------------------------------
+    # --- NUTRIÇÃO / ALERGÉNIOS -------------------------------------------
     "allergens_root": "B7.C1",
     "allergens_secondary": "B7.C2",
 }

@@ -1,4 +1,4 @@
--- Fase 3 — Migração para bloco [B6] Preparação
+-- Fase 3 — Migração para bloco [B6] PREPARAÇÃO
 -- Cria a tabela de preparação, caso não exista.
 -- É idempotente; pode ser corrido quantas vezes quiser.
 -- Diagnóstico: se der erro aqui, confirme que o ficheiro databases/ftv.db existe e é uma BD SQLite válida.

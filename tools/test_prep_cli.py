@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 
 """
-Fase 3 — Teste de fumo para o Bloco de Preparação [B6]
+Fase 3 — Teste de fumo para o bloco [B6] PREPARAÇÃO
 Uso (executar como módulo):
   python -m tools.test_prep_cli --codigo ABC123 --html "<p>Teste</p>"
   python -m tools.test_prep_cli --codigo ABC123 --file ./exemplo.html
   python -m tools.test_prep_cli            # tenta descobrir 1º código existente
 
 O que faz:
-- Valida especificamente o bloco de preparação identificado como [B6]
+- Valida especificamente o bloco identificado como [B6] PREPARAÇÃO
 - Abre <raiz do projeto>/databases/ftv.db (usando get_project_root)
 - Usa PreparacaoRepo diretamente (sem UI) para ler e escrever HTML
 - Mostra debug detalhado de cada passo e falhas com traceback
