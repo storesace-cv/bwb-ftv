@@ -37,8 +37,32 @@ Item {
         radius: header ? 6 : 4
         color: header ? Qt.rgba(200 / 255, 200 / 255, 200 / 255, 0.5) : overlayColor
         border.width: header ? 1 : (showOverlays ? 1 : 0)
-        border.color: header ? Qt.rgba(1, 1, 1, 0.8) : (showOverlays ? "#4a6fa5" : "transparent")
+        border.color: header ? Qt.rgba(0, 0, 0, 0.3) : (showOverlays ? "#4a6fa5" : "transparent")
         antialiasing: header
+
+        Rectangle {
+            visible: header
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: 1
+            radius: parent.radius
+            color: Qt.rgba(1, 1, 1, 0.8)
+            antialiasing: true
+            z: 1
+        }
+
+        Rectangle {
+            visible: header
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            width: 1
+            radius: parent.radius
+            color: Qt.rgba(1, 1, 1, 0.8)
+            antialiasing: true
+            z: 1
+        }
 
         Rectangle {
             visible: header
@@ -49,6 +73,7 @@ Item {
             radius: parent.radius
             color: Qt.rgba(0, 0, 0, 0.4)
             antialiasing: true
+            z: 2
         }
 
         Rectangle {
@@ -60,6 +85,7 @@ Item {
             radius: parent.radius
             color: Qt.rgba(0, 0, 0, 0.4)
             antialiasing: true
+            z: 2
         }
     }
 
