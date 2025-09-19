@@ -283,7 +283,7 @@ def load_qquick_app(
     show_overlays: bool | None = None,
     main_qml: str | Path | None = None,
 ) -> tuple[QApplication, QQmlApplicationEngine, OverlayController]:
-    """Create an application/engine triple ready to ``exec_``."""
+    """Create an application/engine triple ready to ``exec``."""
 
     app = QApplication.instance()
     if app is None:

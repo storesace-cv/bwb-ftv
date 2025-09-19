@@ -5,7 +5,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import ui.dialogs as dialogs
 from data.datastore import DataStore
-from PyQt5.QtWidgets import QDialog, QTableWidget, QPushButton
+from PyQt5.QtWidgets import QTableWidget, QPushButton
 from PyQt5.QtCore import Qt
 
 
@@ -14,12 +14,12 @@ from PyQt5.QtCore import Qt
 def _open_dialog(qtbot, repo, monkeypatch):
     captured = {}
 
-    def fake_exec(self):
-        captured["dlg"] = self
-        self.show()
+    def fake_exec_modal(dialog):
+        captured["dlg"] = dialog
+        dialog.show()
         return 0
 
-    monkeypatch.setattr(QDialog, "exec_", fake_exec)
+    monkeypatch.setattr(dialogs, "exec_modal", fake_exec_modal)
     dialogs.edit_fcost_values(None, repo)
     dlg = captured["dlg"]
     qtbot.addWidget(dlg)

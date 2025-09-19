@@ -4,6 +4,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QDialog, QLabel, QDialogButtonBox, QPushButton
 
+from .qt_compat import exec_modal
 from .utilities import apply_label_style
 
 
@@ -74,5 +75,5 @@ class SplashScreen(QDialog):
             btn = QPushButton(label)
             box.addButton(btn, QDialogButtonBox.ActionRole)
             btn.clicked.connect(lambda _, lbl=label: _set_choice(lbl))
-        self.exec_()
+        exec_modal(self)
         return choice["value"]

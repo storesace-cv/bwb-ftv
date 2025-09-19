@@ -13,6 +13,7 @@ from data.datastore import DataStore  # noqa: E402
 from data.migration import ALERGENIOS_SEED_FLAG  # noqa: E402
 from services.allergens import import_allergens  # noqa: E402
 from services.products import ProductService  # noqa: E402
+from ui.qt_compat import exec_app, exec_modal  # noqa: E402
 from ui.ui_editor_fonte import FTApp  # noqa: E402
 from ui.splashscreen import SplashScreen  # noqa: E402
 from utils.paths import get_project_root  # noqa: E402
@@ -118,7 +119,7 @@ def main():
         DataStore.apply_migrations()
         splash.close()
     else:
-        splash.exec_()
+        exec_modal(splash)
 
     # DataStore
     # Nota: deixamos FTV_SEED_ALERGENIOS indefinida para evitar dados fictícios
@@ -181,7 +182,7 @@ def main():
     win.show()
 
     # Loop
-    sys.exit(app.exec_())
+    sys.exit(exec_app(app))
 
 
 def configure_logging():
