@@ -407,13 +407,22 @@ class FTApp(QWidget):
         box.setProperty("userTitle", user_title)
         box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         font = QFont(box.font())
-        if font.bold() or font.weight() != QFont.Normal:
-            font.setBold(False)
-            font.setWeight(QFont.Normal)
+        font.setPointSize(18)
+        font.setBold(True)
+        font.setWeight(QFont.Bold)
         box.setFont(font)
         box.setStyleSheet(
             "QGroupBox::title {\n"
+            "    subcontrol-origin: margin;\n"
+            "    subcontrol-position: top left;\n"
             "    padding: 2px 6px;\n"
+            "    background-color: rgba(200,200,200,0.5);\n"
+            "    border: 1px solid rgba(0,0,0,0.3);\n"
+            "    border-top-color: rgba(255,255,255,0.8);\n"
+            "    border-left-color: rgba(255,255,255,0.8);\n"
+            "    border-bottom-color: rgba(0,0,0,0.4);\n"
+            "    border-right-color: rgba(0,0,0,0.4);\n"
+            "    border-radius: 6px;\n"
             "}\n"
         )
         ly = QVBoxLayout(box)
