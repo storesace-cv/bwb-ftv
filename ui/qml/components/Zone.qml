@@ -112,8 +112,57 @@ Item {
 
         Item {
             id: contentSlot
-            implicitWidth: childrenRect.width
-            implicitHeight: childrenRect.height
+            implicitWidth: {
+                if (childrenRect.width > 0) {
+                    return childrenRect.width;
+                }
+
+                var maxImplicitWidth = 0;
+                for (var i = 0; i < children.length; ++i) {
+                    var child = children[i];
+                    if (!child || !child.visible) {
+                        continue;
+                    }
+
+                    if (child.implicitWidth !== undefined && child.implicitWidth > maxImplicitWidth) {
+                        maxImplicitWidth = child.implicitWidth;
+                    } else if (child.contentWidth !== undefined && child.contentWidth > maxImplicitWidth) {
+                        maxImplicitWidth = child.contentWidth;
+                    } else if (child.width !== undefined && child.width > maxImplicitWidth) {
+                        maxImplicitWidth = child.width;
+                    }
+                }
+
+                return maxImplicitWidth;
+            }
+            implicitHeight: {
+                if (childrenRect.height > 0) {
+                    return childrenRect.height;
+                }
+
+                var maxImplicitHeight = 0;
+                for (var i = 0; i < children.length; ++i) {
+                    var child = children[i];
+                    if (!child || !child.visible) {
+                        continue;
+                    }
+
+                    var implicitHeight = 0;
+                    if (child.implicitHeight !== undefined && child.implicitHeight > implicitHeight) {
+                        implicitHeight = child.implicitHeight;
+                    } else if (child.contentHeight !== undefined && child.contentHeight > implicitHeight) {
+                        implicitHeight = child.contentHeight;
+                    } else if (child.height !== undefined && child.height > implicitHeight) {
+                        implicitHeight = child.height;
+                    }
+
+                    if (implicitHeight > maxImplicitHeight) {
+                        maxImplicitHeight = implicitHeight;
+                    }
+                }
+
+                return maxImplicitHeight;
+            }
             Layout.fillWidth: true
         }
     }
