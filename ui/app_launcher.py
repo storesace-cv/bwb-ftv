@@ -27,8 +27,7 @@ def _apply_global_theme(app: QApplication) -> None:
             base_font = QFontDatabase.systemFont(QFontDatabase.GeneralFont)
 
         font = QFont(base_font)
-        if font.pointSizeF() <= 0:
-            font.setPointSizeF(14)
+        font.setPointSizeF(14)
         app.setFont(font)
     except Exception as exc:  # pragma: no cover - defensive log guard
         logger.warning("[THEME] Falha a aplicar fonte global: %s", exc)
