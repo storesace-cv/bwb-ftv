@@ -315,13 +315,11 @@ class ProductService:
     def set_search_filters(
         self,
         *,
-        product_name: str | None = None,
-        ingredient_name: str | None = None,
+        produto: str | None = None,
+        ingrediente: str | None = None,
     ) -> None:
         if hasattr(self.ds, "set_search_filters"):
-            self.ds.set_search_filters(
-                product_name=product_name, ingredient_name=ingredient_name
-            )
+            self.ds.set_search_filters(produto=produto, ingrediente=ingrediente)
 
     # -- auxiliary tables -------------------------------------------------
     def list_tipos_artigos(self) -> list[tuple[int, str]]:

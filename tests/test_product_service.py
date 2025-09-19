@@ -202,3 +202,14 @@ def test_product_service_set_product_allergens_delegates():
 
     assert service.set_product_allergens("PX", [2, 4]) is True
     ds.set_product_allergens.assert_called_once_with("PX", [2, 4])
+
+
+def test_product_service_set_search_filters_delegates():
+    ds = MagicMock(spec=DataStore)
+    service = ProductService(ds)
+
+    service.set_search_filters(produto="bolo", ingrediente="chocolate")
+
+    ds.set_search_filters.assert_called_once_with(
+        produto="bolo", ingrediente="chocolate"
+    )

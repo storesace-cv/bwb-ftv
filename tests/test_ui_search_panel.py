@@ -39,13 +39,11 @@ class RecordingService(ProductService):
     def set_search_filters(
         self,
         *,
-        product_name: str | None = None,
-        ingredient_name: str | None = None,
+        produto: str | None = None,
+        ingrediente: str | None = None,
     ) -> None:
-        self.search_filters_calls.append((product_name, ingredient_name))
-        super().set_search_filters(
-            product_name=product_name, ingredient_name=ingredient_name
-        )
+        self.search_filters_calls.append((produto, ingrediente))
+        super().set_search_filters(produto=produto, ingrediente=ingrediente)
 
 
 def test_search_panel_toggle_and_submit(qapp):

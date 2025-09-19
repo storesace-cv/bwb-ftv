@@ -2081,7 +2081,7 @@ class FTApp(QWidget):
         ingredient_name = (self.searchIngredientField.text() or "").strip() or None
         setter = getattr(self.service, "set_search_filters", None)
         if callable(setter):
-            setter(product_name=product_name, ingredient_name=ingredient_name)
+            setter(produto=product_name, ingrediente=ingredient_name)
         self.cur_index = 0
         self._load_record(0)
 

@@ -171,10 +171,8 @@ class DataStore:
 
         # Cache de códigos
         self._ids = []
-        self._search_filters: dict[str, str | None] = {
-            "product": None,
-            "ingredient": None,
-        }
+        self._product_filter: str | None = None
+        self._ingredient_filter: str | None = None
         try:
             self.reload_ids()
         except sqlite3.Error as exc:
@@ -208,10 +206,10 @@ class DataStore:
     def set_search_filters(
         self,
         *,
-        product_name: str | None = None,
-        ingredient_name: str | None = None,
-    ):
-        """Atualizar filtros de pesquisa para códigos carregados."""
+        produto: str | None,
+        ingrediente: str | None,
+    ) -> None:
+        """Atualizar filtros de pesquisa e recarregar códigos se necessário."""
 
         def _clean(value: str | None) -> str | None:
             if value is None:
@@ -219,9 +217,17 @@ class DataStore:
             value = value.strip()
             return value or None
 
-        product = _clean(product_name)
-        ingredient = _clean(ingredient_name)
-        self._search_filters = {"product": product, "ingredient": ingredient}
+        produto_val = _clean(produto)
+        ingrediente_val = _clean(ingrediente)
+
+        if (
+            produto_val == self._product_filter
+            and ingrediente_val == self._ingredient_filter
+        ):
+            return
+
+        self._product_filter = produto_val
+        self._ingredient_filter = ingrediente_val
         self.reload_ids()
 
     def get_active_fcost_range(self) -> tuple[float, float] | None:
@@ -347,8 +353,12 @@ class DataStore:
         ids: list[str] = []
         source = None
 
-        # 1) tentar via repositório
-        if self.produtos:
+        produto_filtro = getattr(self, "_product_filter", None)
+        ingrediente_filtro = getattr(self, "_ingredient_filter", None)
+        filtros_ativos = bool(produto_filtro or ingrediente_filtro)
+
+        # 1) tentar via repositório (apenas sem filtros)
+        if self.produtos and not filtros_ativos:
             try:
                 ids = self.produtos.listar_codigos() or []
                 if ids:
@@ -359,33 +369,60 @@ class DataStore:
                 )
                 ids = []
 
-        # 2) fallback direto à BD
-        if not ids and self.conn:
+        # 2) fallback direto à BD (ou se filtros ativos)
+        if (filtros_ativos or not ids) and self.conn:
             try:
                 cur = self.conn.cursor()
                 cur.execute(
                     "SELECT 1 FROM sqlite_master WHERE type='table' AND name='Produtos'"
                 )
                 has_produtos = cur.fetchone() is not None
+
+                def _like(term: str | None) -> str:
+                    if not term:
+                        return "%"
+                    value = term.replace("\\", "\\\\").replace("%", "\\%").replace(
+                        "_", "\\_"
+                    )
+                    return f"%{value}%"
+
+                produto_like = _like(produto_filtro)
+                ingrediente_like = _like(ingrediente_filtro)
+
                 if has_produtos:
                     query = (
-                        "SELECT DISTINCT COALESCE(p.Codigo, ft.ProdutoCodigo) AS "
-                        "Codigo "
+                        "SELECT DISTINCT COALESCE(p.Codigo, ft.ProdutoCodigo) AS Codigo "
                         "FROM FichasTecnicas ft "
                         "LEFT JOIN Produtos p ON ft.ProdutoCodigo = p.Codigo "
                         "WHERE p.TipoVenda = 1 "
+                        "AND COALESCE(p.Produto, ft.ProdutoNome, '') "
+                        "LIKE ? ESCAPE '\\' COLLATE NOCASE "
+                        "AND COALESCE(ft.ComponenteNome, '') "
+                        "LIKE ? ESCAPE '\\' COLLATE NOCASE "
                         "ORDER BY Codigo"
                     )
-                    source = "Produtos"
+                    params = (produto_like, ingrediente_like)
+                    source = (
+                        "sql:Produtos filtrado"
+                        if filtros_ativos
+                        else "sql:Produtos"
+                    )
                 else:
                     query = (
                         "SELECT DISTINCT ft.ProdutoCodigo AS Codigo "
                         "FROM FichasTecnicas ft "
+                        "WHERE COALESCE(ft.ProdutoNome, '') LIKE ? ESCAPE '\\' COLLATE NOCASE "
+                        "AND COALESCE(ft.ComponenteNome, '') LIKE ? ESCAPE '\\' COLLATE NOCASE "
                         "ORDER BY ft.ProdutoCodigo"
                     )
-                    source = "FichasTecnicas"
+                    params = (produto_like, ingrediente_like)
+                    source = (
+                        "sql:FichasTecnicas filtrado"
+                        if filtros_ativos
+                        else "sql:FichasTecnicas"
+                    )
 
-                cur.execute(query)
+                cur.execute(query, params)
                 ids = [r[0] for r in cur.fetchall()]
             except sqlite3.Error as exc:
                 logger.error(
@@ -396,7 +433,8 @@ class DataStore:
         if source:
             logger.info("[DataStore] reload_ids: códigos via %s", source)
 
-        ids = [str(x) for x in ids if x not in (None, "")]
+        cleaned_ids = [str(x) for x in ids if x not in (None, "")]
+        ids = list(dict.fromkeys(cleaned_ids))
 
         if self.fcost_level is not None and self.fcost:
             rng = self.get_active_fcost_range()
@@ -435,35 +473,6 @@ class DataStore:
                             filtered.append(codigo)
                             break
                 ids = filtered
-
-        filters = getattr(self, "_search_filters", None) or {}
-        product_term = filters.get("product")
-        ingredient_term = filters.get("ingredient")
-        if product_term or ingredient_term:
-            product_cf = product_term.casefold() if product_term else ""
-            ingredient_cf = ingredient_term.casefold() if ingredient_term else ""
-            filtered_ids: list[str] = []
-            for codigo in ids:
-                include = True
-                if product_cf:
-                    info = self.get_produto_info(codigo) or {}
-                    nome = info.get("produto") or info.get("Produto") or ""
-                    include = product_cf in str(nome).casefold()
-                if include and ingredient_cf:
-                    ingredientes = self.get_ingredientes(codigo)
-                    include = any(
-                        ingredient_cf
-                        in str(
-                            ing.get("ComponenteNome")
-                            or ing.get("ComponenteCodigo")
-                            or ing.get("ProdutoNome")
-                            or ""
-                        ).casefold()
-                        for ing in ingredientes
-                    )
-                if include:
-                    filtered_ids.append(codigo)
-            ids = filtered_ids
 
         self._ids = ids
         return len(self._ids)

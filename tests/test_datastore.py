@@ -18,6 +18,39 @@ def _make_datastore():
     return ds
 
 
+def _make_filter_datastore():
+    ds = DataStore(db_path=":memory:")
+    cur = ds.conn.cursor()
+    cur.execute("DELETE FROM Produtos")
+    cur.execute("DELETE FROM FichasTecnicas")
+    products = [
+        ("P1", "Hambúrguer Clássico", 1),
+        ("P2", "Salada Fresca", 1),
+        ("P3", "Sopa do Dia", 1),
+    ]
+    cur.executemany(
+        "INSERT INTO Produtos (Codigo, Produto, TipoVenda) VALUES (?, ?, ?)",
+        products,
+    )
+    fichas = [
+        ("P1", "Hambúrguer Clássico", "Queijo Cheddar"),
+        ("P1", "Hambúrguer Clássico", "Pão Brioche"),
+        ("P2", "Salada Fresca", "Tomate Cherry"),
+        ("P2", "Salada Fresca", "Alface"),
+        ("P3", "Sopa do Dia", "Cenoura"),
+    ]
+    cur.executemany(
+        (
+            "INSERT INTO FichasTecnicas "
+            "(ProdutoCodigo, ProdutoNome, ComponenteNome) VALUES (?, ?, ?)"
+        ),
+        fichas,
+    )
+    ds.conn.commit()
+    ds.reload_ids()
+    return ds
+
+
 def test_datastore_upgrades_missing_columns(tmp_path):
     db_path = tmp_path / "old.db"
     conn = sqlite3.connect(db_path)
@@ -151,6 +184,44 @@ def test_reload_ids_filters_by_fcost_level():
 
     ds.set_fcost_level(1)
     assert ds._ids == ["P1"]
+
+
+def test_set_search_filters_filters_by_produto():
+    ds = _make_filter_datastore()
+    try:
+        ds.set_search_filters(produto="  salada ", ingrediente=None)
+        assert ds._ids == ["P2"]
+    finally:
+        ds.close()
+
+
+def test_set_search_filters_filters_by_ingrediente():
+    ds = _make_filter_datastore()
+    try:
+        ds.set_search_filters(produto=None, ingrediente="QUEIJO")
+        assert ds._ids == ["P1"]
+    finally:
+        ds.close()
+
+
+def test_set_search_filters_combined():
+    ds = _make_filter_datastore()
+    try:
+        ds.set_search_filters(produto="sopa", ingrediente="cenoura")
+        assert ds._ids == ["P3"]
+    finally:
+        ds.close()
+
+
+def test_set_search_filters_clears_with_empty_strings():
+    ds = _make_filter_datastore()
+    try:
+        ds.set_search_filters(produto="salada", ingrediente="tomate")
+        assert ds._ids == ["P2"]
+        ds.set_search_filters(produto="", ingrediente="  ")
+        assert ds._ids == ["P1", "P2", "P3"]
+    finally:
+        ds.close()
 
 
 def test_list_active_allergens_db():
