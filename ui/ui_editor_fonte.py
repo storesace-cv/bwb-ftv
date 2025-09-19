@@ -909,9 +909,32 @@ class FTApp(QWidget):
         C1A2_familias_spacer.apply_overlays(layout.DEV_OVERLAYS)
         C1A2_familias_spacer.ly.setAlignment(Qt.AlignLeft)
         C1A2_familias_spacer.setSizePolicy(
-            QSizePolicy.Expanding, QSizePolicy.Fixed
+            QSizePolicy.Expanding, QSizePolicy.Expanding
         )
-        C1A2_familias.add(C1A2_familias_spacer, 2)
+        C1A2_familias.add(C1A2_familias_spacer, 1)
+
+        C1A2_familias_reserva = Zone(
+            "B1.C1.A.2.A.3",
+            C1A2_familias,
+            flow="h",
+            margins=C1A2_familias_row_margin_value,
+            spacing=C1A2_familias_row_spacing_value,
+            level=C1A2_familias_row._level,
+            show_overlays=layout.DEV_OVERLAYS,
+            base_style_label=C1A2_familias.base_style_label,
+            widget_type="campo",
+        )
+        C1A2_familias_reserva.apply_metadata(
+            zone_type="secao-familias",
+            widget_type="campo",
+            apply_base_style=False,
+        )
+        C1A2_familias_reserva.ly.setContentsMargins(0, 0, 0, 0)
+        C1A2_familias_reserva.apply_overlays(layout.DEV_OVERLAYS)
+        C1A2_familias_reserva.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Expanding
+        )
+        C1A2_familias.add(C1A2_familias_reserva, 2)
 
         C1A2_combos_row = Zone(
             "B1.C1.A.2.B",
