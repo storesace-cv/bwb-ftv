@@ -248,7 +248,7 @@ class IngredientesRepo:
                 """
                 SELECT ComponenteNome, Qtd, Unidade, Ppu, Preco, ComponenteCodigo
                 FROM FichasTecnicas
-                WHERE ProdutoCodigo=?
+                WHERE TRIM(ProdutoCodigo) = TRIM(?)
                 ORDER BY Ordem
                 """,
                 (codigo,),
