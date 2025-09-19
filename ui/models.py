@@ -32,6 +32,7 @@ def build_fichas_tecnicas_model(
 
     model = QStandardItemModel()
     model._ft_rows: list[FichaTecnica] = []  # type: ignore[attr-defined]
+    model._ft_refreshing = False  # type: ignore[attr-defined]
     model._ft_item_handler = lambda item: _sync_item_to_ficha(model, item)  # type: ignore[attr-defined]
     model.itemChanged.connect(model._ft_item_handler)  # type: ignore[arg-type]
     update_fichas_tecnicas_model(model, rows, overlays=overlays)
@@ -47,14 +48,18 @@ def update_fichas_tecnicas_model(
     """Replace ``model`` contents with ``rows`` respecting overlays."""
 
     ficha_rows = list(rows or [])
-    model.blockSignals(True)
-    model.clear()
-    _apply_fichas_tecnicas_headers(model, overlays)
-    for ficha in ficha_rows:
-        model.appendRow(_build_ft_row_items(ficha))
-    model.blockSignals(False)
-    model._ft_rows = ficha_rows  # type: ignore[attr-defined]
-    model._ft_overlays = overlays  # type: ignore[attr-defined]
+    model._ft_refreshing = True  # type: ignore[attr-defined]
+    model.beginResetModel()
+    try:
+        model.clear()
+        _apply_fichas_tecnicas_headers(model, overlays)
+        for ficha in ficha_rows:
+            model.appendRow(_build_ft_row_items(ficha))
+        model._ft_rows = ficha_rows  # type: ignore[attr-defined]
+        model._ft_overlays = overlays  # type: ignore[attr-defined]
+    finally:
+        model.endResetModel()
+        model._ft_refreshing = False  # type: ignore[attr-defined]
 
 
 def apply_fichas_tecnicas_headers(
@@ -104,6 +109,9 @@ def _build_ft_row_items(ficha: FichaTecnica) -> list[QStandardItem]:
 
 
 def _sync_item_to_ficha(model: QStandardItemModel, item: QStandardItem) -> None:
+    if getattr(model, "_ft_refreshing", False):
+        return
+
     col = item.column()
     if col not in _EDITABLE_COLUMNS:
         return
