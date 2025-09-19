@@ -1889,7 +1889,7 @@ class FTApp(QWidget):
         self.tbIng.setColumnWidth(3, int(w * 0.15))
         self.tbIng.setColumnWidth(4, int(w * 0.125))
         self.tbIng.horizontalHeader().setDefaultAlignment(
-            Qt.AlignLeft | Qt.AlignVCenter
+            Qt.AlignHCenter | Qt.AlignVCenter
         )
 
     def _apply_ingredient_widths(self):

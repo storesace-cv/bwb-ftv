@@ -19,7 +19,7 @@ _FT_DEV_HEADERS = [
     "FichasTecnicas.Preco",
 ]
 _EDITABLE_COLUMNS = {1, 3, 4}
-_HEADER_ALIGNMENT = Qt.AlignLeft | Qt.AlignVCenter
+_HEADER_ALIGNMENT = Qt.AlignHCenter | Qt.AlignVCenter
 _CELL_ALIGNMENT = Qt.AlignLeft | Qt.AlignVCenter
 
 
