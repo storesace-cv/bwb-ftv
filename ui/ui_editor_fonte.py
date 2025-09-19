@@ -4,8 +4,8 @@
 # -------------------------------------------------------------------
 # 1) Nomenclatura de Blocos e Células
 #    - Blocos: [B1] Ficha do Artigo (inclui Família, Combos & PVPs),
-#      [B4] FICHA TÉCNICA, [B5] Food Cost,
-#      [B6] Preparação, [B7] Nutrição / Alergénios.
+#      [B4] FICHA TÉCNICA, [B5] FOOD COST,
+#      [B6] PREPARAÇÃO, [B7] NUTRIÇÃO / ALERGÉNIOS.
 #      • PVPs passaram do bloco [B3] para `B1.C1.A.2.A.*` e partilham
 #        a mesma grelha que Família/Sub-família.
 #    - Célula raiz do bloco: Bn.C1 (ex.: B1.C1, B4.C1, B5.C1).
@@ -26,8 +26,8 @@
 # 2025-09-08 17:35 — v3.73 — Restabelecido: botão Overlay no topo
 #    esquerdo; navegação no rodapé; scroll vertical; mantidas alterações
 #    pedidas (C1 swap, remoção C1.A.2.B.2, tags visíveis).
-# 2025-09-08 18:05 — v3.80 — Reintroduzidos [B6] Preparação e [B7]
-#    Alergénios; overlays/cores preservados; footer com contador.
+# 2025-09-08 18:05 — v3.80 — Reintroduzidos [B6] PREPARAÇÃO e [B7]
+#    NUTRIÇÃO / ALERGÉNIOS; overlays/cores preservados; footer com contador.
 # 2025-09-08 18:40 — v3.82 — C1.A.2.B ligado à BD
 #    (tipos/validade/temperaturas) com pré-seleção por FK; preservado
 #    layout.
@@ -1193,7 +1193,7 @@ class FTApp(QWidget):
         self.cbValidade.currentIndexChanged.connect(self._on_validade_changed)
         self.cbTemp.currentIndexChanged.connect(self._on_temperatura_changed)
 
-        # ---------------- B5 — Food Cost (B5.C1) ----------------
+        # ---------------- B5 — FOOD COST (B5.C1) ----------------
         self.C5 = Zone(
             "B5.C1",
             self,
@@ -1206,7 +1206,7 @@ class FTApp(QWidget):
             zone_type="bloco-food-cost",
             widget_type="campo",
         )
-        page_ly.addWidget(self._section_box("[B5] - Food Cost", self.C5), 0)
+        page_ly.addWidget(self._section_box("[B5] - FOOD COST", self.C5), 0)
 
         C5A = Zone(
             "B5.C1.A",
@@ -1486,7 +1486,7 @@ class FTApp(QWidget):
         self.edCustoTotal.setFixedWidth(self.edCustoTotal.sizeHint().width() * 2)
         self.C4Custo.add(self.edCustoTotal, 0)
 
-        # ---------------- B6 — Preparação (B6.C1) ----------------
+        # ---------------- B6 — PREPARAÇÃO (B6.C1) ----------------
         self.C6 = Zone(
             "B6.C1",
             self,
@@ -1499,7 +1499,7 @@ class FTApp(QWidget):
             zone_type="bloco-preparacao",
             widget_type="editor",
         )
-        page_ly.addWidget(self._section_box("[B6] - Preparação", self.C6), 1)
+        page_ly.addWidget(self._section_box("[B6] - PREPARAÇÃO", self.C6), 1)
 
         C6_text, C6_gallery = self.C6.split_v((3, 2))
         C6_text.apply_metadata(
@@ -1584,7 +1584,7 @@ class FTApp(QWidget):
         self.edPrep.textChanged.connect(self._on_prep_changed)
         C6_text.add(self.edPrep, 1)
 
-        # ---------------- B7 — Nutrição / Alergénios (B7.C1) ----------------
+        # ---------------- B7 — NUTRIÇÃO / ALERGÉNIOS (B7.C1) ----------------
         self.B7_C1 = Zone(
             "B7.C1",
             self,
@@ -1601,7 +1601,7 @@ class FTApp(QWidget):
             widget_type="caixa de seleção",
         )
         page_ly.addWidget(
-            self._section_box("[B7] - Nutrição / Alergénios", self.B7_C1),
+            self._section_box("[B7] - NUTRIÇÃO / ALERGÉNIOS", self.B7_C1),
             0,
         )
 
