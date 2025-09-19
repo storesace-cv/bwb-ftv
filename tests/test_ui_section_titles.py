@@ -1,6 +1,6 @@
 import pytest
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QGroupBox
+from PyQt5.QtWidgets import QGroupBox, QLabel
 from services.products import ProductService
 from ui.ui_editor_fonte import FTApp
 from ui import layout
@@ -42,27 +42,35 @@ def test_section_titles_toggle_prefix(qapp, start_overlays):
     ds = StubDataStore()
     service = ProductService(ds)
     ft = FTApp(service)
-    boxes = [
-        b for b in ft.findChildren(QGroupBox) if b.property("devTitle") is not None
+    headers = [
+        h
+        for h in ft.findChildren(QLabel)
+        if h.objectName() == "sectionHeader" and h.property("devLabel") is not None
     ]
-    assert boxes
-    for box in boxes:
+    assert headers
+    for header in headers:
         expected = (
-            box.property("devTitle") if start_overlays else box.property("userTitle")
+            header.property("devLabel")
+            if start_overlays
+            else header.property("userLabel")
         )
-        assert box.title() == expected
+        assert header.text() == expected
     ft._toggle_overlays()
-    for box in boxes:
+    for header in headers:
         expected = (
-            box.property("userTitle") if start_overlays else box.property("devTitle")
+            header.property("userLabel")
+            if start_overlays
+            else header.property("devLabel")
         )
-        assert box.title() == expected
+        assert header.text() == expected
     ft._toggle_overlays()
-    for box in boxes:
+    for header in headers:
         expected = (
-            box.property("devTitle") if start_overlays else box.property("userTitle")
+            header.property("devLabel")
+            if start_overlays
+            else header.property("userLabel")
         )
-        assert box.title() == expected
+        assert header.text() == expected
     ft.close()
     layout.DEV_OVERLAYS = original
 
