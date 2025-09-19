@@ -658,7 +658,10 @@ class Zone(QWidget):
         lbl.setProperty("userLabel", label_text)
         lbl.setProperty("devLabel", overlay_text)
         if label_minw is not None:
+            lbl.setProperty("labelMinimumWidth", int(label_minw))
             lbl.setFixedWidth(label_minw)
+        else:
+            lbl.setProperty("labelMinimumWidth", None)
         value_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         if debug_styles:
             try:
@@ -684,15 +687,25 @@ class Zone(QWidget):
     def sync_label_widths(self) -> None:
         if not self._labels:
             return
+        min_widths: list[int] = []
+        target_widths: list[int] = []
         for label in self._labels:
             # Release any fixed width constraint so the label's size hint reflects
             # the currently visible text before we compute the shared width.
             label.setMinimumWidth(0)
             label.setMaximumWidth(_QT_MAX_WIDGET_WIDTH)
             label.updateGeometry()
-        maxw = max(label.sizeHint().width() for label in self._labels)
-        for label in self._labels:
-            label.setFixedWidth(maxw)
+            stored_min = label.property("labelMinimumWidth")
+            try:
+                min_width = int(stored_min)
+            except (TypeError, ValueError):
+                min_width = 0
+            min_width = max(min_width, 0)
+            min_widths.append(min_width)
+            target_widths.append(max(label.sizeHint().width(), min_width))
+        maxw = max(target_widths)
+        for label, min_width in zip(self._labels, min_widths):
+            label.setFixedWidth(max(maxw, min_width))
 
     def split_h(
         self,
