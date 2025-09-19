@@ -151,7 +151,6 @@ APP_TITLE = "Fichas Técnicas Valorizadas"
 
 APP_STYLESHEET = (
     "QWidget {\n"
-    "    font-family: 'Roboto', 'Segoe UI', 'Helvetica Neue', sans-serif;\n"
     "    font-size: 12px;\n"
     "    color: #1d1f23;\n"
     "}\n"
