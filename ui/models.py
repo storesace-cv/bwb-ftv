@@ -10,7 +10,7 @@ from PyQt5.QtGui import QStandardItem, QStandardItemModel
 from domain import FichaTecnica
 from utils.formatting import format_pt_number, parse_decimal
 
-_FT_HEADERS = ["Ingredientes", "QTD", "U.M.", "PPU", "Total"]
+_FT_HEADERS = ["INGREDIENTES", "QTD", "U.M.", "PPU", "TOTAL"]
 _FT_DEV_HEADERS = [
     "FichasTecnicas.ComponenteNome",
     "FichasTecnicas.Qtd",
