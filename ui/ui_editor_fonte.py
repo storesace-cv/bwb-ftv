@@ -565,31 +565,57 @@ class FTApp(QWidget):
         root.addLayout(top)
 
         # --- Pesquisa de produtos/ingredientes ---
-        self.searchContainer = QFrame(self)
-        self.searchContainer.setFrameShape(QFrame.StyledPanel)
+        self.searchContainer = Zone(
+            "B0.C2",
+            self,
+            flow="v",
+            show_overlays=layout.DEV_OVERLAYS,
+            widget_type="campo",
+        )
+        self.searchContainer.apply_metadata(
+            zone_type="barra-pesquisa",
+            widget_type="campo",
+        )
         self.searchContainer.setVisible(False)
-        search_ly = QGridLayout(self.searchContainer)
-        search_ly.setContentsMargins(6, 6, 6, 6)
-        search_ly.setHorizontalSpacing(6)
-        search_ly.setVerticalSpacing(4)
+        self.searchLeftZone, self.searchCenterZone, self.searchRightZone = (
+            self.searchContainer.split_h((1, 1, 1))
+        )
+        for zone in (
+            self.searchLeftZone,
+            self.searchCenterZone,
+            self.searchRightZone,
+        ):
+            zone.apply_metadata(zone_type="barra-pesquisa", widget_type="campo")
 
-        self.searchProductField = QLineEdit(self.searchContainer)
+        search_left_widget = QWidget(self.searchLeftZone)
+        search_left_layout = QGridLayout(search_left_widget)
+        search_left_layout.setContentsMargins(6, 6, 6, 6)
+        search_left_layout.setHorizontalSpacing(6)
+        search_left_layout.setVerticalSpacing(4)
+
+        self.searchProductField = QLineEdit(search_left_widget)
         self.searchProductField.setPlaceholderText("Nome do produto")
-        self.searchProductButton = QPushButton("IR", self.searchContainer)
-        self.searchIngredientField = QLineEdit(self.searchContainer)
+        self.searchProductButton = QPushButton("IR", search_left_widget)
+        self.searchIngredientField = QLineEdit(search_left_widget)
         self.searchIngredientField.setPlaceholderText("Nome do ingrediente")
-        self.searchIngredientButton = QPushButton("IR", self.searchContainer)
+        self.searchIngredientButton = QPushButton("IR", search_left_widget)
+        self.searchResetButton = QPushButton("Mostrar todos os registos", search_left_widget)
+        self.searchResetButton.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
-        search_ly.addWidget(self.searchProductField, 0, 0)
-        search_ly.addWidget(self.searchProductButton, 0, 1)
-        search_ly.addWidget(self.searchIngredientField, 1, 0)
-        search_ly.addWidget(self.searchIngredientButton, 1, 1)
-        search_ly.setColumnStretch(0, 1)
+        search_left_layout.addWidget(self.searchProductField, 0, 0)
+        search_left_layout.addWidget(self.searchProductButton, 0, 1)
+        search_left_layout.addWidget(self.searchIngredientField, 1, 0)
+        search_left_layout.addWidget(self.searchIngredientButton, 1, 1)
+        search_left_layout.addWidget(self.searchResetButton, 2, 0, 1, 2)
+        search_left_layout.setColumnStretch(0, 1)
+
+        self.searchLeftZone.ly.addWidget(search_left_widget)
 
         self.searchProductButton.clicked.connect(self._apply_search_filters)
         self.searchIngredientButton.clicked.connect(self._apply_search_filters)
         self.searchProductField.returnPressed.connect(self._apply_search_filters)
         self.searchIngredientField.returnPressed.connect(self._apply_search_filters)
+        self.searchResetButton.clicked.connect(self._reset_search_filters)
 
         root.addWidget(self.searchContainer, 0)
 
@@ -2085,6 +2111,15 @@ class FTApp(QWidget):
         self.cur_index = 0
         self._load_record(0)
 
+    def _reset_search_filters(self):
+        self.searchProductField.clear()
+        self.searchIngredientField.clear()
+        setter = getattr(self.service, "set_search_filters", None)
+        if callable(setter):
+            setter(produto=None, ingrediente=None)
+        self.cur_index = 0
+        self._load_record(0)
+
     def _connect_nav(self):
         self.btFirst.clicked.connect(lambda: self._goto(0))
         self.btPrev.clicked.connect(lambda: self._go(-1))
@@ -2379,6 +2414,15 @@ class FTApp(QWidget):
 
     def _toggle_overlays(self):
         layout.DEV_OVERLAYS = not layout.DEV_OVERLAYS
+        if hasattr(self, "searchContainer") and isinstance(self.searchContainer, Zone):
+            self.searchContainer.apply_overlays(layout.DEV_OVERLAYS)
+            for zone in (
+                getattr(self, "searchLeftZone", None),
+                getattr(self, "searchCenterZone", None),
+                getattr(self, "searchRightZone", None),
+            ):
+                if isinstance(zone, Zone):
+                    zone.apply_overlays(layout.DEV_OVERLAYS)
         for z in self._iter_layout_children(Zone, include_header=True):
             if z.tag.count(".") == 1 and layout.validate_tag(z.tag):
                 z.apply_overlays(layout.DEV_OVERLAYS)
