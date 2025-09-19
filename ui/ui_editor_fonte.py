@@ -44,7 +44,7 @@
 #      ordenadas) com pré-seleção por FK do produto.
 #    • B2: grelha 50/10/10/14/16 + Código oculto; cálculo Total por linha
 #      quando necessário.
-#    • B1.C1.A.2.A.2.A: PVPs alinhados por coluna com etiqueta por cima
+#    • B1.C1.A.2.B.A: PVPs alinhados por coluna com etiqueta por cima
 #      e valor por baixo; leitura PVP1..2 de precos_taxas.
 #    • B6: editor de Preparação com toolbar simples; B7: Alergénios 2×N
 #      com persistência N–N.
@@ -938,13 +938,36 @@ class FTApp(QWidget):
         )
         C1A2_familias.add(C1A2_familias_reserva, 2)
 
-        C1A2_pvps_zone = Zone(
-            "B1.C1.A.2.A.2.A",
+        C1A2_combos_row = Zone(
+            "B1.C1.A.2.B",
             C1A2_familias_spacer,
-            flow="v",
+            flow="h",
             margins=0,
             spacing=C1A2_familias_row_spacing_value,
             level=C1A2_familias_spacer._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+            base_style_label=C1A2_familias.base_style_label,
+            widget_type="campo",
+        )
+        C1A2_combos_row.apply_metadata(
+            zone_type="secao-combos",
+            widget_type="campo",
+            apply_base_style=False,
+        )
+        C1A2_combos_row.ly.setContentsMargins(0, 0, 0, 0)
+        C1A2_combos_row.apply_overlays(layout.DEV_OVERLAYS)
+        C1A2_combos_row.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Fixed
+        )
+        C1A2_familias_spacer.add(C1A2_combos_row, 1)
+
+        C1A2_pvps_zone = Zone(
+            "B1.C1.A.2.B.A",
+            C1A2_combos_row,
+            flow="v",
+            margins=0,
+            spacing=C1A2_familias_row_spacing_value,
+            level=C1A2_combos_row._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
             base_style_label=C1A2_familias.base_style_label,
             widget_type="campo",
@@ -959,7 +982,7 @@ class FTApp(QWidget):
         C1A2_pvps_zone.setSizePolicy(
             QSizePolicy.Expanding, QSizePolicy.Fixed
         )
-        C1A2_familias_spacer.add(C1A2_pvps_zone, 1)
+        C1A2_combos_row.add(C1A2_pvps_zone, 1)
 
         self.lbPVPs: list[QLineEdit] = []
 
@@ -971,7 +994,7 @@ class FTApp(QWidget):
         C1A2_pvps_zone.add(pvp_label, 0)
 
         C1A2_pvps_grid = Zone(
-            "B1.C1.A.2.A.2.A.1",
+            "B1.C1.A.2.B.A.1",
             C1A2_pvps_zone,
             flow="h",
             margins=0,
@@ -1015,29 +1038,6 @@ class FTApp(QWidget):
             val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             zone.add(val, 0)
             self.lbPVPs.append(val)
-
-        C1A2_combos_row = Zone(
-            "B1.C1.A.2.B",
-            C1A2_familias_spacer,
-            flow="h",
-            margins=0,
-            spacing=C1A2_familias_row_spacing_value,
-            level=C1A2_familias_spacer._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-            base_style_label=C1A2_familias.base_style_label,
-            widget_type="campo",
-        )
-        C1A2_combos_row.apply_metadata(
-            zone_type="secao-combos",
-            widget_type="campo",
-            apply_base_style=False,
-        )
-        C1A2_combos_row.ly.setContentsMargins(0, 0, 0, 0)
-        C1A2_combos_row.apply_overlays(layout.DEV_OVERLAYS)
-        C1A2_combos_row.setSizePolicy(
-            QSizePolicy.Expanding, QSizePolicy.Fixed
-        )
-        C1A2_familias_spacer.add(C1A2_combos_row, 1)
 
         family_labels_zone, family_values_zone = C1A2_familias_row.split_h((1, 3))
         family_labels_zone.apply_metadata(
