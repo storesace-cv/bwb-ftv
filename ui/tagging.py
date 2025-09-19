@@ -57,7 +57,7 @@ _ZONE_TAGS: Mapping[str, str] = {
     "pvps_col_4": "B1.C1.A.2.B.B.1.4",
     "pvps_col_5": "B1.C1.A.2.B.B.1.5",
 
-    # --- Ingredientes -----------------------------------------------------
+    # --- Ficha Técnica ----------------------------------------------------
     "ingredients_root": "B4.C1",
     "ingredients_secondary": "B4.C2",
 

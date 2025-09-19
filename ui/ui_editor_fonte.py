@@ -4,7 +4,7 @@
 # -------------------------------------------------------------------
 # 1) Nomenclatura de Blocos e Células
 #    - Blocos: [B1] Ficha do Artigo (inclui Família, Combos & PVPs),
-#      [B4] Ingredientes, [B5] Food Cost,
+#      [B4] FICHA TÉCNICA, [B5] Food Cost,
 #      [B6] Preparação, [B7] Nutrição / Alergénios.
 #      • PVPs passaram do bloco [B3] para `B1.C1.A.2.A.*` e partilham
 #        a mesma grelha que Família/Sub-família.
@@ -1372,7 +1372,7 @@ class FTApp(QWidget):
         )
         self.btFcostReset.clicked.connect(self._on_fcost_filter_reset)
 
-        # ---------------- B4 — Ingredientes (B4.C1) ----------------
+        # ---------------- B4 — Ficha Técnica (B4.C1) ----------------
         self.C4 = Zone(
             "B4.C1",
             self,
@@ -1385,7 +1385,7 @@ class FTApp(QWidget):
             zone_type="bloco-ingredientes",
             widget_type="tabela",
         )
-        page_ly.addWidget(self._section_box("[B4] - Ingredientes", self.C4), 0)
+        page_ly.addWidget(self._section_box("[B4] - FICHA TÉCNICA", self.C4), 0)
 
         C4_ing_zone, C4_totals_zone = self.C4.split_v((1, 0))
         C4_ing_zone.apply_metadata(
@@ -1739,7 +1739,7 @@ class FTApp(QWidget):
         zone.add(gridw, 0)
         self._allergen_checkboxes = checkboxes
 
-    # ---------- Ingredientes: colunas ----------
+    # ---------- Ficha Técnica: colunas ----------
     def _collect_selected_allergens(self) -> list[int]:
         boxes = getattr(self, "_allergen_checkboxes", None)
         if not boxes:
