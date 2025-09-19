@@ -44,7 +44,7 @@
 #      ordenadas) com pré-seleção por FK do produto.
 #    • B2: grelha 50/10/10/14/16 + Código oculto; cálculo Total por linha
 #      quando necessário.
-#    • B1.C1.A.2.B.A: PVPs alinhados por coluna com etiqueta por cima
+#    • B1.C1.A.2.B.B: PVPs alinhados por coluna com etiqueta por cima
 #      e valor por baixo; leitura PVP1..2 de precos_taxas.
 #    • B6: editor de Preparação com toolbar simples; B7: Alergénios 2×N
 #      com persistência N–N.
@@ -961,8 +961,31 @@ class FTApp(QWidget):
         )
         C1A2_familias_spacer.add(C1A2_combos_row, 1)
 
-        C1A2_pvps_zone = Zone(
+        C1A2_combos_section = Zone(
             "B1.C1.A.2.B.A",
+            C1A2_combos_row,
+            flow="h",
+            margins=0,
+            spacing=C1A2_familias_row_spacing_value,
+            level=C1A2_combos_row._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+            base_style_label=C1A2_familias.base_style_label,
+            widget_type="campo",
+        )
+        C1A2_combos_section.apply_metadata(
+            zone_type="secao-combos",
+            widget_type="campo",
+            apply_base_style=False,
+        )
+        C1A2_combos_section.ly.setContentsMargins(0, 0, 0, 0)
+        C1A2_combos_section.apply_overlays(layout.DEV_OVERLAYS)
+        C1A2_combos_section.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Fixed
+        )
+        C1A2_combos_row.add(C1A2_combos_section, 1)
+
+        C1A2_pvps_zone = Zone(
+            "B1.C1.A.2.B.B",
             C1A2_combos_row,
             flow="v",
             margins=0,
@@ -994,7 +1017,7 @@ class FTApp(QWidget):
         C1A2_pvps_zone.add(pvp_label, 0)
 
         C1A2_pvps_grid = Zone(
-            "B1.C1.A.2.B.A.1",
+            "B1.C1.A.2.B.B.1",
             C1A2_pvps_zone,
             flow="h",
             margins=0,
@@ -1151,9 +1174,11 @@ class FTApp(QWidget):
         w_tipos, self.cbTipos = stack_combo("Tipos Artigos")
         w_val, self.cbValidade = stack_combo("Validade")
         w_temp, self.cbTemp = stack_combo("Temperaturas")
-        C1A2_combo_tipo, C1A2_combo_val, C1A2_combo_temp = C1A2_combos_row.split_h(
-            (1, 1, 1)
-        )
+        (
+            C1A2_combo_tipo,
+            C1A2_combo_val,
+            C1A2_combo_temp,
+        ) = C1A2_combos_section.split_h((1, 1, 1))
         for zone in (C1A2_combo_tipo, C1A2_combo_val, C1A2_combo_temp):
             zone.apply_metadata(
                 zone_type="linha-combo",

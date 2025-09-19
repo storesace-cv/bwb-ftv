@@ -141,13 +141,16 @@ def test_iter_layout_children_covers_block_roots(qapp, tag_service):
         assert zone_tag("header_root") in header_tags
         for tag in block_tags | pvps_column_tags:
             assert ft.findChild(Zone, tag) is not None
+        combos_wrapper = ft.findChild(Zone, zone_tag("family_combos_wrapper"))
         combos_section = ft.findChild(Zone, zone_tag("family_combos_section"))
         pvps_zone = ft.findChild(Zone, zone_tag("pvps_root"))
         pvps_grid_zone = ft.findChild(Zone, zone_tag("pvps_grid"))
+        assert combos_wrapper is not None
         assert combos_section is not None
         assert pvps_zone is not None
         assert pvps_grid_zone is not None
-        assert pvps_zone.parentWidget() is combos_section
+        assert combos_section.parentWidget() is combos_wrapper
+        assert pvps_zone.parentWidget() is combos_wrapper
         assert pvps_grid_zone.parentWidget() is pvps_zone
     finally:
         ft.close()
