@@ -171,6 +171,10 @@ class DataStore:
 
         # Cache de códigos
         self._ids = []
+        self._search_filters: dict[str, str | None] = {
+            "product": None,
+            "ingredient": None,
+        }
         try:
             self.reload_ids()
         except sqlite3.Error as exc:
@@ -199,6 +203,25 @@ class DataStore:
         """Definir nível de Food Cost para filtragem e recarregar códigos."""
 
         self.fcost_level = level
+        self.reload_ids()
+
+    def set_search_filters(
+        self,
+        *,
+        product_name: str | None = None,
+        ingredient_name: str | None = None,
+    ):
+        """Atualizar filtros de pesquisa para códigos carregados."""
+
+        def _clean(value: str | None) -> str | None:
+            if value is None:
+                return None
+            value = value.strip()
+            return value or None
+
+        product = _clean(product_name)
+        ingredient = _clean(ingredient_name)
+        self._search_filters = {"product": product, "ingredient": ingredient}
         self.reload_ids()
 
     def get_active_fcost_range(self) -> tuple[float, float] | None:
@@ -412,6 +435,35 @@ class DataStore:
                             filtered.append(codigo)
                             break
                 ids = filtered
+
+        filters = getattr(self, "_search_filters", None) or {}
+        product_term = filters.get("product")
+        ingredient_term = filters.get("ingredient")
+        if product_term or ingredient_term:
+            product_cf = product_term.casefold() if product_term else ""
+            ingredient_cf = ingredient_term.casefold() if ingredient_term else ""
+            filtered_ids: list[str] = []
+            for codigo in ids:
+                include = True
+                if product_cf:
+                    info = self.get_produto_info(codigo) or {}
+                    nome = info.get("produto") or info.get("Produto") or ""
+                    include = product_cf in str(nome).casefold()
+                if include and ingredient_cf:
+                    ingredientes = self.get_ingredientes(codigo)
+                    include = any(
+                        ingredient_cf
+                        in str(
+                            ing.get("ComponenteNome")
+                            or ing.get("ComponenteCodigo")
+                            or ing.get("ProdutoNome")
+                            or ""
+                        ).casefold()
+                        for ing in ingredientes
+                    )
+                if include:
+                    filtered_ids.append(codigo)
+            ids = filtered_ids
 
         self._ids = ids
         return len(self._ids)
