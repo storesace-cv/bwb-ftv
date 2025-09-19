@@ -3,10 +3,10 @@
 # Regras Aprovadas (manter sempre no topo e cumprir em TODO o código)
 # -------------------------------------------------------------------
 # 1) Nomenclatura de Blocos e Células
-#    - Blocos: [B1] Dados Gerais, [B2] Família & Combos,
+#    - Blocos: [B1] Dados Gerais (inclui Família & Combos),
 #      [B3] PVPs, [B4] Ingredientes, [B5] Food Cost,
 #      [B6] Preparação, [B7] Nutrição / Alergénios.
-#    - Célula raiz do bloco: Bn.C1 (ex.: B1.C1, B2.C1, B3.C1, B4.C1, B5.C1).
+#    - Célula raiz do bloco: Bn.C1 (ex.: B1.C1, B3.C1, B4.C1, B5.C1).
 #    - Divisão horizontal: sufixos .A (esq.) e .B (dir.).
 #    - Divisão vertical: sufixos .1 (topo) e .2 (base).
 #    - Subdivisões encadeiam-se mantendo a regra (ex.: B1.C1.A.2.B).
@@ -70,6 +70,8 @@
 # 2025-09-18 23:41 — v3.100 — Família/Sub-família e combos extraídos de
 #    B1.C1.A.2 para o novo bloco [B2] com raiz B2.C1; alinhamento de tags
 #    atualizado nas verificações automáticas.
+# 2025-09-19 10:45 — v3.101 — Família/Sub-família e combos reintegrados em
+#    B1.C1.A.*, preservando metadados de bloco e alinhamentos partilhados.
 
 import sys
 import json
@@ -669,6 +671,23 @@ class FTApp(QWidget):
             widget_type="campo",
         )
         C1A_cont_ly.addWidget(self.C1A1, 0)
+
+        # --- Família & combos (B1.C1.A.2) ---
+        self.C1A2 = Zone(
+            "B1.C1.A.2",
+            C1A_cont,
+            flow="v",
+            margins=4,
+            spacing=2,
+            level=C1A._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+            widget_type="campo",
+        )
+        self.C1A2.apply_metadata(
+            zone_type="bloco-familias-combos",
+            widget_type="campo",
+        )
+        C1A_cont_ly.addWidget(self.C1A2, 0)
         C1A_cont_ly.addStretch(1)
 
         self.edCodigo = QLineEdit()
@@ -751,50 +770,35 @@ class FTApp(QWidget):
         self.image_preview = ImagePreview(init_code, self.service)
         C1B.add(self.image_preview, 1)
 
-        # ---------------- B2 — Família & Combos (B2.C1) ----------------
-        self.B2C1 = Zone(
-            "B2.C1",
-            self,
-            flow="v",
-            level=0,
-            show_overlays=layout.DEV_OVERLAYS,
-            spacing=2,
-            widget_type="campo",
-        )
-        self.B2C1.apply_metadata(
-            zone_type="bloco-familias-combos",
-            widget_type="campo",
-        )
-        page_ly.addWidget(self._section_box("[B2] - Família & Combos", self.B2C1), 0)
-
-        B2_familias, B2_combos = self.B2C1.split_h((3, 1))
-        B2_familias.apply_metadata(
+        # ---------------- Família & Combos (B1.C1.A.2) ----------------
+        C1A2_familias, C1A2_combos = self.C1A2.split_h((3, 1))
+        C1A2_familias.apply_metadata(
             zone_type="secao-familias",
             widget_type="campo",
         )
-        B2_combos.apply_metadata(
+        C1A2_combos.apply_metadata(
             zone_type="secao-combos",
             widget_type="campo",
         )
 
-        B2_familias_row = Zone(
-            "B2.C1.A.1",
-            B2_familias,
+        C1A2_familias_row = Zone(
+            "B1.C1.A.2.A.1",
+            C1A2_familias,
             flow="h",
             margins=4,
             spacing=2,
-            level=B2_familias._level + 1,
+            level=C1A2_familias._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
         )
-        B2_familias_row.apply_metadata(
+        C1A2_familias_row.apply_metadata(
             zone_type="linha-familias",
             widget_type="campo",
         )
-        B2_familias_row.apply_overlays(True)
-        B2_familias.add(B2_familias_row, 0)
+        C1A2_familias_row.apply_overlays(True)
+        C1A2_familias.add(C1A2_familias_row, 0)
 
-        family_labels_zone, family_values_zone = B2_familias_row.split_h((1, 3))
+        family_labels_zone, family_values_zone = C1A2_familias_row.split_h((1, 3))
         family_labels_zone.apply_metadata(
             zone_type="coluna-legendas",
             widget_type="legenda",
@@ -906,15 +910,15 @@ class FTApp(QWidget):
         w_tipos, self.cbTipos = stack_combo("Tipos Artigos")
         w_val, self.cbValidade = stack_combo("Validade")
         w_temp, self.cbTemp = stack_combo("Temperaturas")
-        B2_combo_tipo, B2_combo_val, B2_combo_temp = B2_combos.split_v((1, 1, 1))
-        for zone in (B2_combo_tipo, B2_combo_val, B2_combo_temp):
+        C1A2_combo_tipo, C1A2_combo_val, C1A2_combo_temp = C1A2_combos.split_v((1, 1, 1))
+        for zone in (C1A2_combo_tipo, C1A2_combo_val, C1A2_combo_temp):
             zone.apply_metadata(
                 zone_type="linha-combo",
                 widget_type="campo",
             )
-        B2_combo_tipo.add(w_tipos)
-        B2_combo_val.add(w_val)
-        B2_combo_temp.add(w_temp)
+        C1A2_combo_tipo.add(w_tipos)
+        C1A2_combo_val.add(w_val)
+        C1A2_combo_temp.add(w_temp)
         self.cbTipos.currentIndexChanged.connect(self._on_tipo_artigo_changed)
         self.cbValidade.currentIndexChanged.connect(self._on_validade_changed)
         self.cbTemp.currentIndexChanged.connect(self._on_temperatura_changed)
