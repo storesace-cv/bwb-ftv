@@ -97,12 +97,13 @@ def _compose_style_label(
     )
 
 
-def test_apply_label_style_center_variant_uses_left_alignment(qapp):
+def test_apply_label_style_center_variant_uses_center_alignment(qapp):
     label = QLabel("Centro")
-    apply_label_style(label, alignment=AlignmentVariant.CENTER)
+    stylesheet = apply_label_style(label, alignment=AlignmentVariant.CENTER)
 
+    assert stylesheet == CENTER_LABEL_STYLE
     assert label.styleSheet() == CENTER_LABEL_STYLE
-    assert label.alignment() == Qt.AlignLeft | Qt.AlignVCenter
+    assert label.alignment() == Qt.AlignHCenter | Qt.AlignVCenter
     assert label.property("labelAlignmentVariant") == AlignmentVariant.CENTER.value
 
 
@@ -110,16 +111,18 @@ def test_apply_label_style_reuses_stored_alignment(qapp):
     label = QLabel("Centro")
     apply_label_style(label, alignment=AlignmentVariant.CENTER)
 
-    apply_label_style(label)
+    stylesheet = apply_label_style(label)
 
+    assert stylesheet == CENTER_LABEL_STYLE
     assert label.styleSheet() == CENTER_LABEL_STYLE
-    assert label.alignment() == Qt.AlignLeft | Qt.AlignVCenter
+    assert label.alignment() == Qt.AlignHCenter | Qt.AlignVCenter
 
 
 def test_apply_label_style_right_variant_uses_right_alignment(qapp):
     label = QLabel("Direita")
-    apply_label_style(label, alignment=AlignmentVariant.RIGHT)
+    stylesheet = apply_label_style(label, alignment=AlignmentVariant.RIGHT)
 
+    assert stylesheet == LABEL_STYLE
     assert label.styleSheet() == LABEL_STYLE
     assert label.alignment() == Qt.AlignRight | Qt.AlignVCenter
     assert label.property("labelAlignmentVariant") == AlignmentVariant.RIGHT.value
@@ -139,7 +142,7 @@ def test_apply_overlay_label_style_preserves_alignment_variant(qapp):
     apply_label_style(label)
 
     assert label.styleSheet() == CENTER_LABEL_STYLE
-    assert label.alignment() == Qt.AlignLeft | Qt.AlignVCenter
+    assert label.alignment() == Qt.AlignHCenter | Qt.AlignVCenter
 
 
 def test_make_readonly_lineedit_center_variant_uses_left_alignment(qapp):

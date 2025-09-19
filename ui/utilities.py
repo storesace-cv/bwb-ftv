@@ -25,10 +25,15 @@ LABEL_STYLE = (
     "QLabel {\n"
     "    color: #1d1f23;\n"
     "    font-size: 13px;\n"
-    "    font-weight: 500;\n"
-    "    background: transparent;\n"
-    "    border: none;\n"
-    "    padding: 0;\n"
+    "    font-weight: bold;\n"
+    "    background-color: rgba(200, 200, 200, 0.5);\n"
+    "    border: 1px solid rgba(0, 0, 0, 0.3);\n"
+    "    border-top-color: rgba(255, 255, 255, 0.8);\n"
+    "    border-left-color: rgba(255, 255, 255, 0.8);\n"
+    "    border-bottom-color: rgba(0, 0, 0, 0.4);\n"
+    "    border-right-color: rgba(0, 0, 0, 0.4);\n"
+    "    border-radius: 6px;\n"
+    "    padding: 4px;\n"
     "}"
 )
 
@@ -36,10 +41,15 @@ CENTER_LABEL_STYLE = (
     "QLabel {\n"
     "    color: #1d1f23;\n"
     "    font-size: 13px;\n"
-    "    font-weight: 500;\n"
-    "    background: transparent;\n"
-    "    border: none;\n"
-    "    padding: 0;\n"
+    "    font-weight: bold;\n"
+    "    background-color: rgba(200, 200, 200, 0.5);\n"
+    "    border: 1px solid rgba(0, 0, 0, 0.3);\n"
+    "    border-top-color: rgba(255, 255, 255, 0.8);\n"
+    "    border-left-color: rgba(255, 255, 255, 0.8);\n"
+    "    border-bottom-color: rgba(0, 0, 0, 0.4);\n"
+    "    border-right-color: rgba(0, 0, 0, 0.4);\n"
+    "    border-radius: 6px;\n"
+    "    padding: 4px;\n"
     "    text-align: center;\n"
     "}"
 )
@@ -151,11 +161,12 @@ def apply_label_style(
     extra: str | None = None,
     *,
     alignment: AlignmentVariant | str | None = None,
-) -> None:
+) -> str:
     """Apply the neutral label style to ``label``.
 
     ``extra`` may contain additional stylesheet rules appended to the base style.
-    ``alignment`` selects between the default (left-aligned) and centred variants.
+    ``alignment`` selects between the default (centred) and right-aligned variants.
+    The computed style sheet is returned so callers can persist or inspect it.
     """
 
     variant = _normalize_alignment(
@@ -166,19 +177,21 @@ def apply_label_style(
     if OVERLAY_ON_CLASS in classes:
         classes = [cls for cls in classes if cls != OVERLAY_ON_CLASS]
         _set_widget_classes(label, classes)
-    if variant is AlignmentVariant.CENTER:
-        base_style = CENTER_LABEL_STYLE
-        alignment_flag = Qt.AlignLeft | Qt.AlignVCenter
-    elif variant is AlignmentVariant.RIGHT:
+    if variant is AlignmentVariant.RIGHT:
         base_style = LABEL_STYLE
         alignment_flag = Qt.AlignRight | Qt.AlignVCenter
     else:
-        base_style = LABEL_STYLE
-        alignment_flag = Qt.AlignLeft | Qt.AlignVCenter
+        base_style = (
+            CENTER_LABEL_STYLE
+            if variant is AlignmentVariant.CENTER
+            else LABEL_STYLE
+        )
+        alignment_flag = Qt.AlignHCenter | Qt.AlignVCenter
     label.setAlignment(alignment_flag)
     style = base_style if not extra else f"{base_style}\n{extra}"
     label.setStyleSheet(style)
     _refresh_widget_style(label)
+    return style
 
 
 def apply_overlay_label_style(label: QLabel) -> None:
@@ -242,9 +255,8 @@ def stack_combo(title: str):
     v.setContentsMargins(0, 0, 0, 0)
     v.setSpacing(2)
     lbl = QLabel(title)
-    lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-    lbl.setStyleSheet("")
-    v.addWidget(lbl, 0, Qt.AlignLeft | Qt.AlignVCenter)
+    apply_label_style(lbl)
+    v.addWidget(lbl, 0, Qt.AlignHCenter | Qt.AlignVCenter)
     cb = QComboBox()
     cb.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
     cb.setStyleSheet(FIELD_STYLE)
