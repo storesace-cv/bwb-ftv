@@ -56,7 +56,8 @@ def _apply_global_theme(app: QApplication) -> None:
             )
             font_family = app.font().family()
 
-        font = QFont(font_family, 12)
+        font = QFont(font_family)
+        font.setPointSizeF(14)
         app.setFont(font)
     except Exception as exc:  # pragma: no cover - defensive log guard
         logger.warning("[THEME] Falha a aplicar fonte global: %s", exc)
