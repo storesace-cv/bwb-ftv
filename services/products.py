@@ -56,6 +56,16 @@ NUMERIC_NAMES = {
 }
 
 
+def _is_blank(value: Any) -> bool:
+    """Return ``True`` if ``value`` should be treated as missing data."""
+
+    if value is None:
+        return True
+    if isinstance(value, str):
+        return not value.strip()
+    return False
+
+
 def canonicalize_header(text: str, table: str | None = None) -> str:
     """Return a canonical CamelCase column name for a spreadsheet header."""
 
@@ -701,6 +711,11 @@ def import_from_excel(ds: DataStore | None = None) -> None:
                 f"INSERT INTO {quote_ident(table)} ({cols_sql}) VALUES ({placeholders})"
             )
             data: list[tuple] = []
+            id_col = None
+            if table == "FichasTecnicas":
+                id_col = "ProdutoCodigo"
+            elif table == "Produtos":
+                id_col = "Codigo"
             for row in rows:
                 row_map = {}
                 for i in range(min(len(headers), len(row))):
@@ -709,6 +724,15 @@ def import_from_excel(ds: DataStore | None = None) -> None:
                     if col in numeric_cols:
                         val = parse_decimal(val)
                     row_map[col] = val
+                if id_col:
+                    identifier = row_map.get(id_col)
+                    if isinstance(identifier, str):
+                        stripped = identifier.strip()
+                        if not stripped:
+                            continue
+                        row_map[id_col] = stripped
+                    elif _is_blank(identifier):
+                        continue
                 data.append(tuple(row_map.get(c) for c in cols))
             if data:
                 conn.executemany(sql, data)
@@ -761,6 +785,14 @@ def import_from_excel(ds: DataStore | None = None) -> None:
                     if col in numeric_cols:
                         val = parse_decimal(val)
                     row_map[col] = val
+                codigo = row_map.get("Codigo")
+                if isinstance(codigo, str):
+                    stripped = codigo.strip()
+                    if not stripped:
+                        continue
+                    row_map["Codigo"] = stripped
+                elif _is_blank(codigo):
+                    continue
                 data.append(tuple(row_map.get(c) for c in cols))
             if data:
                 conn.executemany(sql, data)
@@ -834,7 +866,12 @@ def update_from_excel(ds: DataStore | None = None) -> None:
                     headers[i]: row[i] for i in range(min(len(headers), len(row)))
                 }
                 codigo = row_map.get("ProdutoCodigo")
-                if codigo is None:
+                if isinstance(codigo, str):
+                    codigo = codigo.strip()
+                    if not codigo:
+                        continue
+                    row_map["ProdutoCodigo"] = codigo
+                elif _is_blank(codigo):
                     continue
                 grouped.setdefault(codigo, []).append(
                     tuple(row_map.get(c) for c in cols)
@@ -853,10 +890,20 @@ def update_from_excel(ds: DataStore | None = None) -> None:
                 f"VALUES ({placeholders})"
             )
             data: list[tuple] = []
+            id_col = "Codigo" if table in {"Produtos", "PrecosTaxas"} else None
             for row in rows:
                 row_map = {
                     headers[i]: row[i] for i in range(min(len(headers), len(row)))
                 }
+                if id_col:
+                    identifier = row_map.get(id_col)
+                    if isinstance(identifier, str):
+                        identifier = identifier.strip()
+                        if not identifier:
+                            continue
+                        row_map[id_col] = identifier
+                    elif _is_blank(identifier):
+                        continue
                 data.append(tuple(row_map.get(c) for c in cols))
             if data:
                 conn.executemany(sql, data)
@@ -926,6 +973,14 @@ def update_from_excel(ds: DataStore | None = None) -> None:
                 if col in numeric_cols:
                     val = parse_decimal(val)
                 row_map[col] = val
+            codigo = row_map.get("Codigo")
+            if isinstance(codigo, str):
+                codigo = codigo.strip()
+                if not codigo:
+                    continue
+                row_map["Codigo"] = codigo
+            elif _is_blank(codigo):
+                continue
             data.append(tuple(row_map.get(c) for c in cols))
         if data:
             conn.executemany(sql, data)
