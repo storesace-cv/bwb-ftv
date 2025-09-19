@@ -271,6 +271,71 @@ ApplicationWindow {
         }
 
         Block {
+            id: ingredientsBlock
+            objectName: "block_ingredientes"
+            Layout.fillWidth: true
+            title: qsTr("Ficha Técnica")
+            product: root.product
+            showOverlays: root.showDevOverlays
+
+            Zone {
+                id: ingredientsZone
+                tag: zoneTagMap["ingredients_root"]
+                title: qsTr("Ingredientes")
+                zoneType: "bloco-ingredientes"
+                widgetType: "tabela"
+                widgetQtClass: "QTableViews"
+                metadataKey: ""
+                product: ingredientsBlock.product
+                showOverlays: ingredientsBlock.showOverlays
+
+                ColumnLayout {
+                    id: ingredientsContent
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    IngredientRow {
+                        Layout.fillWidth: true
+                        header: true
+                        ingredientName: qsTr("Ingrediente")
+                        quantity: qsTr("Quantidade")
+                        unit: qsTr("Unidade")
+                        ppu: qsTr("PPU")
+                        total: qsTr("Total")
+                        showOverlays: ingredientsZone.showOverlays
+                        zoneType: ingredientsZone.zoneType
+                        visible: ingredientsRepeater.count > 0
+                    }
+
+                    Repeater {
+                        id: ingredientsRepeater
+                        model: ingredientsBlock.product && ingredientsBlock.product.ingredients ? ingredientsBlock.product.ingredients : []
+
+                        IngredientRow {
+                            Layout.fillWidth: true
+                            ingredientName: modelData.name || modelData.ingredient || modelData.ComponenteNome || ""
+                            quantity: modelData.quantity !== undefined ? modelData.quantity : (modelData.Qtd !== undefined ? modelData.Qtd : "")
+                            unit: modelData.unit || modelData.Unidade || ""
+                            ppu: modelData.ppu !== undefined ? modelData.ppu : (modelData.Ppu !== undefined ? modelData.Ppu : "")
+                            total: modelData.total !== undefined ? modelData.total : (modelData.Preco !== undefined ? modelData.Preco : "")
+                            showOverlays: ingredientsZone.showOverlays
+                            zoneType: ingredientsZone.zoneType
+                        }
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: qsTr("Sem ingredientes disponíveis")
+                        color: "#6b778c"
+                        font.italic: true
+                        horizontalAlignment: Text.AlignHCenter
+                        visible: ingredientsRepeater.count === 0
+                    }
+                }
+            }
+        }
+
+        Block {
             id: overlayBlock
             objectName: "block_overlays"
             Layout.fillWidth: true
