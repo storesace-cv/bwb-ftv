@@ -6,6 +6,8 @@
 #    - Blocos: [B1] Dados Gerais (inclui Família, Combos & PVPs),
 #      [B4] Ingredientes, [B5] Food Cost,
 #      [B6] Preparação, [B7] Nutrição / Alergénios.
+#      • PVPs passaram do bloco [B3] para `B1.C1.A.2.A.*` e partilham
+#        a mesma grelha que Família/Sub-família.
 #    - Célula raiz do bloco: Bn.C1 (ex.: B1.C1, B4.C1, B5.C1).
 #    - Divisão horizontal: sufixos .A (esq.) e .B (dir.).
 #    - Divisão vertical: sufixos .1 (topo) e .2 (base).

@@ -47,7 +47,13 @@ _ZONE_TAGS: Mapping[str, str] = {
     "family_combo_col_3": "B1.C1.A.2.B.3",
 
     # --- PVPs -------------------------------------------------------------
-    "pvps_root": "B3.C1",
+    "pvps_root": "B1.C1.A.2.A.2.A",
+    "pvps_grid": "B1.C1.A.2.A.2.A.1",
+    "pvps_col_1": "B1.C1.A.2.A.2.A.1.1",
+    "pvps_col_2": "B1.C1.A.2.A.2.A.1.2",
+    "pvps_col_3": "B1.C1.A.2.A.2.A.1.3",
+    "pvps_col_4": "B1.C1.A.2.A.2.A.1.4",
+    "pvps_col_5": "B1.C1.A.2.A.2.A.1.5",
 
     # --- Ingredientes -----------------------------------------------------
     "ingredients_root": "B4.C1",
