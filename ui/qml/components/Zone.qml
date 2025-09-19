@@ -29,6 +29,29 @@ Item {
         return values.join(" | ");
     }
     property var product: ({})
+    property string overlayTooltipText: {
+        var lines = [];
+        lines.push("Tag: " + (tag || ""));
+        lines.push("Title: " + (title || ""));
+        lines.push("Zone type: " + (zoneType || ""));
+        lines.push("Widget type: " + (widgetType || ""));
+        lines.push("Widget Qt class: " + (widgetQtClass || ""));
+        lines.push("Metadata key: " + (metadataKey || ""));
+
+        var productSummary = "";
+        if (product && typeof product === "object") {
+            var productKeys = Object.keys(product);
+            if (productKeys.length > 0) {
+                productSummary = productKeys.map(function(key) {
+                    return key + ": " + product[key];
+                }).join(", ");
+            }
+        }
+        lines.push("Product: " + productSummary);
+        lines.push("Show overlays: " + (showOverlays ? "true" : "false"));
+
+        return lines.join("\n");
+    }
     property string displayValue: {
         if (!metadataKey || !product) {
             return "";
@@ -132,6 +155,19 @@ Item {
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                 verticalAlignment: Text.AlignVCenter
             }
+        }
+
+        HoverHandler {
+            id: overlayHoverHandler
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            enabled: overlayBadge.visible
+        }
+
+        ToolTip {
+            id: overlayTooltip
+            parent: overlayBadge
+            visible: overlayHoverHandler.hovered && overlayBadge.visible
+            text: root.overlayTooltipText
         }
     }
 }
