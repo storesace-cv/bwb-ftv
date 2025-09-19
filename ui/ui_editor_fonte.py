@@ -2189,6 +2189,7 @@ class FTApp(QWidget):
             update_fichas_tecnicas_model(
                 self.ingModel, fichas, overlays=layout.DEV_OVERLAYS
             )
+            self._apply_ingredient_widths()
             self._apply_ing_autofit_or_scroll()
 
             self.edCustoTotal.setText(
