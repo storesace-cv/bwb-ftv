@@ -1,11 +1,12 @@
 import pytest
 from PyQt5.QtCore import QSize, Qt, QPoint
 from PyQt5.QtGui import QResizeEvent
-from PyQt5.QtWidgets import QFrame
+from PyQt5.QtWidgets import QFrame, QHBoxLayout
 from services.products import ProductService
 from ui import layout
 from ui.layout import Zone
 from ui.utilities import AlignmentVariant
+from ui.tagging import zone_tag
 from ui.models import build_fichas_tecnicas_model
 from ui.ui_editor_fonte import FTApp
 from domain import FichaTecnica
@@ -182,6 +183,29 @@ def test_classification_overlay_tags_hidden(qapp):
             assert zone is not None, f"Zone {tag} not found"
             assert zone._style_lbl.isHidden()
             assert zone._style_lbl.text() == ""
+
+        combos_container = ft.findChild(
+            Zone, zone_tag("family_combos_container")
+        )
+        combos_section = ft.findChild(Zone, zone_tag("family_combos_section"))
+        assert combos_container is not None
+        assert combos_section is not None
+        assert isinstance(combos_container.ly, QHBoxLayout)
+        assert isinstance(combos_section.ly, QHBoxLayout)
+        assert combos_section.parentWidget() is combos_container
+
+        combo_columns = [
+            ft.findChild(Zone, zone_tag("family_combo_col_1")),
+            ft.findChild(Zone, zone_tag("family_combo_col_2")),
+            ft.findChild(Zone, zone_tag("family_combo_col_3")),
+        ]
+        assert all(column is not None for column in combo_columns)
+        for column in combo_columns:
+            parent_widget = column.parentWidget()
+            assert parent_widget is not None
+            parent_layout = parent_widget.layout()
+            assert isinstance(parent_layout, QHBoxLayout)
+            assert parent_widget.parentWidget() is combos_section
 
         for tag in ("B1.C1.A.2.A.1.A.1", "B1.C1.A.2.A.1.A.2"):
             zone = ft.findChild(Zone, tag)

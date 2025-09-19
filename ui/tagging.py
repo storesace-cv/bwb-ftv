@@ -34,6 +34,7 @@ _ZONE_TAGS: Mapping[str, str] = {
     "family_root": "B1.C1.A.2",
     "family_section": "B1.C1.A.2.A",
     "family_row": "B1.C1.A.2.A.1",
+    "family_combos_container": "B1.C1.A.2.A.2",
     "family_labels_column": "B1.C1.A.2.A.1.A",
     "family_label_familia": "B1.C1.A.2.A.1.A.1",
     "family_label_subfamilia": "B1.C1.A.2.A.1.A.2",
