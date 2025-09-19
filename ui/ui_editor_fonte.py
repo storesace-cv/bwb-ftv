@@ -669,6 +669,16 @@ class FTApp(QWidget):
         self.C1A1.apply_metadata(
             zone_type="secao-identificacao",
             widget_type="campo",
+            base_style_label="identificacao-embossed",
+            base_declarations=(
+                "border-radius: 12px;\n"
+                "padding: 6px;\n"
+                "border: none;\n"
+                "border-bottom-width: 2px;\n"
+                "border-bottom-style: groove;\n"
+                "border-bottom-color: #c7ccd8;\n"
+                "border-bottom: 2px groove #f7f9fc;\n"
+            ),
         )
         C1A_cont_ly.addWidget(self.C1A1, 0)
 
