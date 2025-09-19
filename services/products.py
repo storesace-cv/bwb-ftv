@@ -312,6 +312,17 @@ class ProductService:
     def codigo_at(self, idx: int):
         return self.ds.codigo_at(idx)
 
+    def set_search_filters(
+        self,
+        *,
+        product_name: str | None = None,
+        ingredient_name: str | None = None,
+    ) -> None:
+        if hasattr(self.ds, "set_search_filters"):
+            self.ds.set_search_filters(
+                product_name=product_name, ingredient_name=ingredient_name
+            )
+
     # -- auxiliary tables -------------------------------------------------
     def list_tipos_artigos(self) -> list[tuple[int, str]]:
         return self.ds.list_tipos_artigos()

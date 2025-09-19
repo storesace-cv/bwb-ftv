@@ -89,7 +89,7 @@ except ImportError:  # pragma: no cover - fallback for stripped builds
     from PyQt5.QtCore import Qt, QTimer, QPoint
 
     QWIDGETSIZE_MAX = 16777215
-from PyQt5.QtGui import QFont, QKeySequence, QTextOption, QPixmap
+from PyQt5.QtGui import QFont, QIcon, QKeySequence, QTextOption, QPixmap
 from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
@@ -112,6 +112,7 @@ from PyQt5.QtWidgets import (
     QAction,
     QFileDialog,
     QFrame,
+    QStyle,
 )
 from data.datastore import DataStore
 from services.products import ProductService, calculate_food_cost
@@ -549,8 +550,48 @@ class FTApp(QWidget):
         actFoodCost.triggered.connect(
             lambda: edit_fcost_values(self, self.ds.fcost)
         )
+        self.btSearchToggle = QToolButton()
+        self.btSearchToggle.setCheckable(True)
+        self.btSearchToggle.setAutoRaise(True)
+        search_icon = self.style().standardIcon(QStyle.SP_FileDialogContentsView)
+        if isinstance(search_icon, QIcon):
+            self.btSearchToggle.setIcon(search_icon)
+        else:  # pragma: no cover - defensive fallback
+            self.btSearchToggle.setText("🔍")
+        self.btSearchToggle.setToolTip("Pesquisar fichas")
+        self.btSearchToggle.toggled.connect(self._toggle_search_panel)
+        top.addWidget(self.btSearchToggle, 0, Qt.AlignRight)
         top.addWidget(self.btMenu, 0, Qt.AlignRight)
         root.addLayout(top)
+
+        # --- Pesquisa de produtos/ingredientes ---
+        self.searchContainer = QFrame(self)
+        self.searchContainer.setFrameShape(QFrame.StyledPanel)
+        self.searchContainer.setVisible(False)
+        search_ly = QGridLayout(self.searchContainer)
+        search_ly.setContentsMargins(6, 6, 6, 6)
+        search_ly.setHorizontalSpacing(6)
+        search_ly.setVerticalSpacing(4)
+
+        self.searchProductField = QLineEdit(self.searchContainer)
+        self.searchProductField.setPlaceholderText("Nome do produto")
+        self.searchProductButton = QPushButton("IR", self.searchContainer)
+        self.searchIngredientField = QLineEdit(self.searchContainer)
+        self.searchIngredientField.setPlaceholderText("Nome do ingrediente")
+        self.searchIngredientButton = QPushButton("IR", self.searchContainer)
+
+        search_ly.addWidget(self.searchProductField, 0, 0)
+        search_ly.addWidget(self.searchProductButton, 0, 1)
+        search_ly.addWidget(self.searchIngredientField, 1, 0)
+        search_ly.addWidget(self.searchIngredientButton, 1, 1)
+        search_ly.setColumnStretch(0, 1)
+
+        self.searchProductButton.clicked.connect(self._apply_search_filters)
+        self.searchIngredientButton.clicked.connect(self._apply_search_filters)
+        self.searchProductField.returnPressed.connect(self._apply_search_filters)
+        self.searchIngredientField.returnPressed.connect(self._apply_search_filters)
+
+        root.addWidget(self.searchContainer, 0)
 
         lbl_w = 110
 
@@ -2025,6 +2066,25 @@ class FTApp(QWidget):
         self._prep_dirty = False
 
     # ---------- Navegação ----------
+    def _toggle_search_panel(self, checked: bool | None = None):
+        desired = bool(checked) if checked is not None else not self.searchContainer.isVisible()
+        self.searchContainer.setVisible(desired)
+        if self.btSearchToggle.isChecked() != desired:
+            self.btSearchToggle.blockSignals(True)
+            self.btSearchToggle.setChecked(desired)
+            self.btSearchToggle.blockSignals(False)
+        if desired:
+            self.searchProductField.setFocus(Qt.TabFocusReason)
+
+    def _apply_search_filters(self):
+        product_name = (self.searchProductField.text() or "").strip() or None
+        ingredient_name = (self.searchIngredientField.text() or "").strip() or None
+        setter = getattr(self.service, "set_search_filters", None)
+        if callable(setter):
+            setter(product_name=product_name, ingredient_name=ingredient_name)
+        self.cur_index = 0
+        self._load_record(0)
+
     def _connect_nav(self):
         self.btFirst.clicked.connect(lambda: self._goto(0))
         self.btPrev.clicked.connect(lambda: self._go(-1))
