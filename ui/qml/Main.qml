@@ -292,7 +292,7 @@ ApplicationWindow {
                 ColumnLayout {
                     id: ingredientsContent
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: 4
 
                     IngredientRow {
                         Layout.fillWidth: true
