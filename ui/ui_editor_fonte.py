@@ -3,7 +3,7 @@
 # Regras Aprovadas (manter sempre no topo e cumprir em TODO o código)
 # -------------------------------------------------------------------
 # 1) Nomenclatura de Blocos e Células
-#    - Blocos: [B1] Dados Gerais (inclui Família, Combos & PVPs),
+#    - Blocos: [B1] Ficha do Artigo (inclui Família, Combos & PVPs),
 #      [B4] Ingredientes, [B5] Food Cost,
 #      [B6] Preparação, [B7] Nutrição / Alergénios.
 #      • PVPs passaram do bloco [B3] para `B1.C1.A.2.A.*` e partilham
@@ -629,7 +629,7 @@ class FTApp(QWidget):
         root.addWidget(scroll, 1)
         self._update_page_width()
 
-        # ---------------- B1 — Dados Gerais (B1.C1) ----------------
+        # ---------------- B1 — Ficha do Artigo (B1.C1) ----------------
         self.C1 = Zone(
             "B1.C1",
             self,
@@ -655,7 +655,7 @@ class FTApp(QWidget):
             C1_margins.right(),
             0,
         )
-        page_ly.addWidget(self._section_box("[B1] - Dados Gerais", self.C1), 0)
+        page_ly.addWidget(self._section_box("[B1] - FICHA DO ARTIGO", self.C1), 0)
 
         C1A, C1B = self.C1.split_h((3, 1))
         C1A.apply_metadata(

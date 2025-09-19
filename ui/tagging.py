@@ -16,7 +16,7 @@ _ZONE_TAGS: Mapping[str, str] = {
     # --- Shared header ----------------------------------------------------
     "header_root": "B0.C1",
 
-    # --- Dados Gerais / identificação ------------------------------------
+    # --- Ficha do Artigo / identificação ---------------------------------
     "general_root": "B1.C1",
     "general_name_zone": "B1.C2",
     "general_ident_labels": "B1.C1.A.1.A",
