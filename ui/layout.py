@@ -951,6 +951,11 @@ class Zone(QWidget):
                 zone_type=child_zone_type,
                 widget_qt_class=child_widget_qt_class,
             )
+            current_policy = zone.sizePolicy()
+            zone.setSizePolicy(
+                QSizePolicy.Expanding,
+                current_policy.verticalPolicy(),
+            )
             h.addWidget(zone, ratio)
             zones.append(zone)
         self.ly.addWidget(cont, 1)
