@@ -1,7 +1,7 @@
 import pytest
 from PyQt5.QtCore import QSize, Qt, QPoint
 from PyQt5.QtGui import QResizeEvent
-from PyQt5.QtWidgets import QFrame, QSizePolicy
+from PyQt5.QtWidgets import QFrame, QSizePolicy, QHBoxLayout
 from services.products import ProductService
 from ui import layout
 from ui.layout import Zone
@@ -284,6 +284,46 @@ def test_general_aux_reserved_slots_exist_and_hidden(qapp):
         assert prices_zone is not None, "Zone B1.A1.A.4 should exist"
         assert not prices_zone.isHidden(), "Zone B1.A1.A.4 should be visible"
         assert prices_zone.ly.count() > 0, "Zone B1.A1.A.4 should contain widgets"
+    finally:
+        ft.close()
+
+
+def test_article_sheet_zones_use_two_to_one_ratio(qapp):
+    ds = StubDataStore()
+    service = ProductService(ds)
+    ft = FTApp(service)
+    try:
+        ft.show()
+        qapp.processEvents()
+
+        root_zone = ft.findChild(Zone, "B2.C1")
+        assert root_zone is not None, "Expected article sheet root zone B2.C1"
+
+        left_zone = ft.findChild(Zone, "B2.C1.A")
+        right_zone = ft.findChild(Zone, "B2.C1.B")
+        assert left_zone is not None, "Expected article sheet left zone"
+        assert right_zone is not None, "Expected article sheet right zone"
+
+        container = left_zone.parentWidget()
+        assert container is not None
+        layout = container.layout()
+        assert isinstance(layout, QHBoxLayout)
+
+        left_index = layout.indexOf(left_zone)
+        right_index = layout.indexOf(right_zone)
+        assert left_index != -1 and right_index != -1
+        assert layout.stretch(left_index) == 2
+        assert layout.stretch(right_index) == 1
+
+        for zone in (root_zone, left_zone, right_zone):
+            margins = zone.ly.contentsMargins()
+            assert margins.left() == 0
+            assert margins.right() == 0
+            assert margins.top() == 0
+            assert margins.bottom() == 0
+            policy = zone.sizePolicy()
+            assert policy.horizontalPolicy() == QSizePolicy.Expanding
+            assert policy.verticalPolicy() == QSizePolicy.Expanding
     finally:
         ft.close()
 

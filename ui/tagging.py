@@ -76,6 +76,11 @@ _ZONE_TAGS: Mapping[str, str] = {
     "pvps_col_5_legend": "B1.A1.A.4.5.1",
     "pvps_col_5_field": "B1.A1.A.4.5.2",
 
+    # --- [B2] Ficha de Artigo (secção complementar) ---------------------
+    "article_sheet_root": "B2.C1",
+    "article_sheet_left": "B2.C1.A",
+    "article_sheet_right": "B2.C1.B",
+
     # --- Simplified viewer aliases (other blocks) -----------------------
     "viewer_technical_state": "B4.C3",
     "viewer_technical_validity": "B4.C4",

@@ -179,6 +179,38 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         assert additional_field_zone.property("zoneType") == "linha-campo"
         assert additional_field_zone.property("widgetQtClass") == "QLineEdits"
 
+        article_sheet_root_tag = zone_tag("article_sheet_root")
+        article_sheet_root_meta = zones_metadata.get(article_sheet_root_tag)
+        assert article_sheet_root_meta is not None
+        assert article_sheet_root_meta.get("zoneType") == "secao-ficha-artigo"
+        assert article_sheet_root_meta.get("widgetType") == "campo"
+
+        article_sheet_root_zone = _find_zone(root, "article_sheet_root")
+        assert article_sheet_root_zone is not None
+        assert (
+            article_sheet_root_zone.property("zoneType") == "secao-ficha-artigo"
+        )
+
+        article_sheet_left_tag = zone_tag("article_sheet_left")
+        article_sheet_left_meta = zones_metadata.get(article_sheet_left_tag)
+        assert article_sheet_left_meta is not None
+        assert article_sheet_left_meta.get("zoneType") == "coluna-campos"
+        assert article_sheet_left_meta.get("widgetType") == "campo"
+
+        article_sheet_right_tag = zone_tag("article_sheet_right")
+        article_sheet_right_meta = zones_metadata.get(article_sheet_right_tag)
+        assert article_sheet_right_meta is not None
+        assert article_sheet_right_meta.get("zoneType") == "coluna-campos"
+        assert article_sheet_right_meta.get("widgetType") == "campo"
+
+        article_sheet_left_zone = _find_zone(root, "article_sheet_left")
+        assert article_sheet_left_zone is not None
+        assert article_sheet_left_zone.property("zoneType") == "coluna-campos"
+
+        article_sheet_right_zone = _find_zone(root, "article_sheet_right")
+        assert article_sheet_right_zone is not None
+        assert article_sheet_right_zone.property("zoneType") == "coluna-campos"
+
         pvps_root_tag = zone_tag("pvps_root")
         pvps_root_meta = zones_metadata.get(pvps_root_tag)
         assert pvps_root_meta is not None
