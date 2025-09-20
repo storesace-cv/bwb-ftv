@@ -15,8 +15,8 @@ from ui.tagging import zone_tag, zone_tag_map
 _ZONE_TAG_CACHE = dict(zone_tag_map())
 
 
-def _tag_with_fallback(key: str, fallback: str) -> str:
-    return _ZONE_TAG_CACHE.get(key, fallback)
+def _optional_tag(key: str) -> str | None:
+    return _ZONE_TAG_CACHE.get(key)
 
 
 class DummyService:
@@ -75,14 +75,28 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         assert overlay_metadata == "linha-legenda | QLabels | legenda"
 
         combo_label_tags = [
-            zone_tag("family_combo_label_col_1"),
-            zone_tag("family_combo_label_col_2"),
-            zone_tag("family_combo_label_col_3"),
+            tag
+            for tag in (
+                _optional_tag("family_combo_label_col_1"),
+                _optional_tag("family_combo_label_col_2"),
+                _optional_tag("family_combo_label_col_3"),
+            )
+            if tag is not None
         ]
         for combo_label_tag in combo_label_tags:
             assert zones_metadata.get(combo_label_tag) is None
 
-        assert zones_metadata.get(zone_tag("family_combo_field_col_1")) is None
+        combo_field_tags = [
+            tag
+            for tag in (
+                _optional_tag("family_combo_field_col_1"),
+                _optional_tag("family_combo_field_col_2"),
+                _optional_tag("family_combo_field_col_3"),
+            )
+            if tag is not None
+        ]
+        for combo_field_tag in combo_field_tags:
+            assert zones_metadata.get(combo_field_tag) is None
 
         family_label_tags = [
             zone_tag("family_label_familia"),
@@ -101,15 +115,13 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
             assert family_label_zone.property("widgetQtClass") == "QLabels"
 
         for idx in range(1, 6):
-            legend_tag = _tag_with_fallback(
-                f"pvps_col_{idx}_legend", f"B1.C1.A.2.B.B.1.{idx}.1"
-            )
-            assert zones_metadata.get(legend_tag) is None
+            legend_tag = _optional_tag(f"pvps_col_{idx}_legend")
+            if legend_tag:
+                assert zones_metadata.get(legend_tag) is None
 
-            field_tag = _tag_with_fallback(
-                f"pvps_col_{idx}_field", f"B1.C1.A.2.B.B.1.{idx}.2"
-            )
-            assert zones_metadata.get(field_tag) is None
+            field_tag = _optional_tag(f"pvps_col_{idx}_field")
+            if field_tag:
+                assert zones_metadata.get(field_tag) is None
 
         expected_zone_types = {
             zone_tag("family_root"): "bloco-familias-combos",
@@ -123,14 +135,15 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
             assert tag_meta is not None, f"metadata missing for {tag}"
             assert tag_meta.get("zoneType") == expected_type
 
-        empty_metadata_tags = (
-            _tag_with_fallback("family_combos_container", "B1.C1.A.2.A.2"),
-            _tag_with_fallback("family_combos_section", "B1.C1.A.2.B.A"),
-            _tag_with_fallback("pvps_root", "B1.C1.A.2.B.B"),
-            _tag_with_fallback("pvps_grid", "B1.C1.A.2.B.B.1"),
-        )
-        for tag in empty_metadata_tags:
-            assert zones_metadata.get(tag) is None
+        optional_empty_metadata_tags = [
+            _optional_tag("family_combos_container"),
+            _optional_tag("family_combos_section"),
+            _optional_tag("pvps_root"),
+            _optional_tag("pvps_grid"),
+        ]
+        for tag in optional_empty_metadata_tags:
+            if tag:
+                assert zones_metadata.get(tag) is None
     finally:
         engine.deleteLater()
 

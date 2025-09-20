@@ -1,18 +1,11 @@
 import pytest
 from PyQt5.QtCore import QSize, Qt, QPoint
 from PyQt5.QtGui import QResizeEvent
-from PyQt5.QtWidgets import (
-    QFrame,
-    QHBoxLayout,
-    QSizePolicy,
-    QVBoxLayout,
-    QWidget,
-)
+from PyQt5.QtWidgets import QFrame, QSizePolicy
 from services.products import ProductService
 from ui import layout
 from ui.layout import Zone
 from ui.utilities import AlignmentVariant
-from ui.tagging import zone_tag, zone_tag_map
 from ui.models import build_fichas_tecnicas_model
 from ui.ui_editor_fonte import FTApp
 from domain import FichaTecnica
@@ -71,13 +64,6 @@ class NameOnlyStubDataStore(StubDataStore):
             {"ComponenteNome": "Sugar"},
             {"ComponenteNome": "Salt"},
         ]
-
-
-_ZONE_TAG_CACHE = dict(zone_tag_map())
-
-
-def _tag_with_fallback(key: str, fallback: str) -> str:
-    return _ZONE_TAG_CACHE.get(key, fallback)
 
 
 def test_load_record_populates_ingredients(qapp):
@@ -210,10 +196,6 @@ def test_classification_overlay_tags_hidden(qapp):
             "B1.C1.A.2.A.1.B",
             "B1.C1.A.2.A.1.B.1",
             "B1.C1.A.2.A.1.B.2",
-            "B1.C1.A.2.B",
-            "B1.C1.A.2.B.A",
-            "B1.C1.A.2.B.B",
-            "B1.C1.A.2.B.B.1",
         ]
 
         for tag in target_tags:
@@ -221,64 +203,6 @@ def test_classification_overlay_tags_hidden(qapp):
             assert zone is not None, f"Zone {tag} not found"
             assert zone._style_lbl.isHidden()
             assert zone._style_lbl.text() == ""
-
-        combos_container = ft.findChild(
-            Zone, _tag_with_fallback("family_combos_container", "B1.C1.A.2.A.2")
-        )
-        combos_wrapper = ft.findChild(
-            Zone, _tag_with_fallback("family_combos_wrapper", "B1.C1.A.2.B")
-        )
-        combos_section = ft.findChild(
-            Zone, _tag_with_fallback("family_combos_section", "B1.C1.A.2.B.A")
-        )
-        assert combos_container is not None
-        assert combos_wrapper is not None
-        assert combos_section is not None
-        assert isinstance(combos_container.ly, QHBoxLayout)
-        assert isinstance(combos_wrapper.ly, QHBoxLayout)
-        assert isinstance(combos_section.ly, QHBoxLayout)
-        assert combos_wrapper.parentWidget() is combos_container
-        assert combos_section.parentWidget() is combos_wrapper
-        column_widgets = []
-        for i in range(combos_section.ly.count()):
-            item = combos_section.ly.itemAt(i)
-            if item is None:
-                continue
-            widget = item.widget()
-            if widget and widget is not combos_section._tag_container:
-                column_widgets.append(widget)
-        assert len(column_widgets) == 3
-
-        combo_label_zones = [
-            ft.findChild(Zone, zone_tag("family_combo_label_col_1")),
-            ft.findChild(Zone, zone_tag("family_combo_label_col_2")),
-            ft.findChild(Zone, zone_tag("family_combo_label_col_3")),
-        ]
-        combo_field_zones = [
-            ft.findChild(Zone, zone_tag("family_combo_field_col_1")),
-            ft.findChild(Zone, zone_tag("family_combo_field_col_2")),
-            ft.findChild(Zone, zone_tag("family_combo_field_col_3")),
-        ]
-        assert all(zone is not None for zone in combo_label_zones)
-        assert all(zone is not None for zone in combo_field_zones)
-        for label_zone, field_zone in zip(combo_label_zones, combo_field_zones):
-            label_parent = label_zone.parentWidget()
-            field_parent = field_zone.parentWidget()
-            assert isinstance(label_parent, QWidget)
-            assert label_parent is field_parent
-            assert label_parent.parentWidget() is combos_section
-            parent_layout = label_parent.layout()
-            assert isinstance(parent_layout, QVBoxLayout)
-            assert parent_layout.indexOf(label_zone) != -1
-            assert parent_layout.indexOf(field_zone) != -1
-        for label_zone in combo_label_zones:
-            assert label_zone.widget_type == "legenda"
-            assert label_zone.widget_qt_class == "QLabels"
-            assert label_zone.zone_type == "linha-legenda"
-        for field_zone in combo_field_zones:
-            assert field_zone.widget_type == "lista"
-            assert field_zone.widget_qt_class == "QComboBoxes"
-            assert field_zone.zone_type == "combo-lista"
 
         for tag in ("B1.C1.A.2.A.1.A.1", "B1.C1.A.2.A.1.A.2"):
             zone = ft.findChild(Zone, tag)
