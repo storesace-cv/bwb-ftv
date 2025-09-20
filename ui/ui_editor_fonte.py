@@ -819,18 +819,8 @@ class FTApp(QWidget):
             slot.apply_metadata(zone_type="coluna-campos", widget_type="campo")
 
         # --- Identificação e família (B2.C1.A.1) ---
-        self.zone_general_aux_stack = Zone(
-            "B2.C1.A.1",
-            self.zone_article_sheet_left_slot_1,
-            flow="v",
-            margins=self.zone_article_sheet_left_slot_1._margin_spec,
-            spacing=self.zone_article_sheet_left_slot_1.ly.spacing(),
-            level=self.zone_article_sheet_left_slot_1._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-            base_style_label=self.zone_article_sheet_left_slot_1.base_style_label,
-        )
+        self.zone_general_aux_stack = self.zone_article_sheet_left_slot_1
         self.zone_general_aux_stack.ly.setSpacing(2)
-        self.zone_article_sheet_left_slot_1.add(self.zone_general_aux_stack, 0)
 
         (
             self.zone_general_aux_identification_slot,
