@@ -1070,7 +1070,6 @@ class FTApp(QWidget):
             self.lbPVPs.append(val)
 
         family_labels_zone, family_values_zone = C1A2_familias_row.split_h((4, 8))
-
         familia_values_zone, subfamilia_values_zone = family_values_zone.split_v((1, 1))
 
         familia_label_zone, subfamilia_label_zone = family_labels_zone.split_v((1, 1))
