@@ -32,7 +32,11 @@ class StubDataStore:
         return []
 
     def get_produto_info(self, codigo):
-        return {"codigo": codigo, "produto": "Prod"}
+        return {
+            "codigo": codigo,
+            "produto": "Prod",
+            "informacaoadicional": "Sem glúten",
+        }
 
     def get_pvps(self, codigo):
         return {"pvps": [], "iva": None}
@@ -72,6 +76,7 @@ def test_load_record_populates_ingredients(qapp):
     ft = FTApp(service)
     ft._load_record(0)
     model = ft.tbIng.model()
+    assert ft.lbInformacaoAdicional.text() == "Sem glúten"
     assert model.rowCount() == 2
     expected = ds.get_ingredientes("P1")
     for row, data in enumerate(expected):
@@ -126,7 +131,7 @@ def test_legend_labels_use_expanding_horizontal_policy(qapp):
     service = ProductService(ds)
     ft = FTApp(service)
     try:
-        legend_tags = ["B1.A1.A.1.A.1", "B1.A1.A.3.A.1"]
+        legend_tags = ["B1.A1.A.1.A.1", "B1.A1.A.3.A.1", "B1.A1.A.3.C.1"]
         for tag in legend_tags:
             zone = ft.findChild(Zone, tag)
             assert zone is not None, f"Zone {tag} not found"
@@ -201,6 +206,9 @@ def test_classification_overlay_tags_hidden(qapp):
             "B1.A1.A.3.B",
             "B1.A1.A.3.B.1",
             "B1.A1.A.3.B.2",
+            "B1.A1.A.3.C",
+            "B1.A1.A.3.C.1",
+            "B1.A1.A.3.C.2",
             "B1.A1.A.4",
             "B1.A1.4",
             "B1.A1.5",

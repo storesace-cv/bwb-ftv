@@ -26,7 +26,11 @@ class StubDataStore:
         return []
 
     def get_produto_info(self, codigo):
-        return {"codigo": codigo, "produto": "Prod"}
+        return {
+            "codigo": codigo,
+            "produto": "Prod",
+            "informacaoadicional": "Sem lactose",
+        }
 
     def get_pvps(self, codigo):
         return {"pvps": [], "iva": None}

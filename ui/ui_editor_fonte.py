@@ -1059,6 +1059,68 @@ class FTApp(QWidget):
         self.cbValidade.currentIndexChanged.connect(self._on_validade_changed)
         self.cbTemp.currentIndexChanged.connect(self._on_temperatura_changed)
 
+        # --- Informação adicional (B1.A1.A.3.C) ---
+        info_zone = Zone(
+            "B1.A1.A.3.C",
+            self.zone_general_aux_family_slot,
+            flow="v",
+            margins=family_row_margin_value,
+            spacing=family_row_spacing_value,
+            level=self.zone_general_aux_family_slot._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+            base_style_label=self.zone_general_aux_family_slot.base_style_label,
+        )
+        self.zone_general_aux_family_slot.ly.addWidget(info_zone, 0)
+        info_zone.apply_metadata(
+            zone_type="secao-informacao",
+            widget_type="campo",
+            apply_base_style=False,
+            base_style_label=self.zone_general_aux_family_slot.base_style_label,
+        )
+
+        info_legend_zone, info_field_zone = info_zone.split_v((1, 1))
+        for zone in (info_legend_zone, info_field_zone):
+            zone.ly.setContentsMargins(0, 0, 0, 0)
+
+        info_legend_zone.apply_metadata(
+            zone_type="linha-legenda",
+            widget_type="etiqueta-c",
+            apply_base_style=False,
+        )
+        info_field_zone.apply_metadata(
+            zone_type="linha-campo",
+            widget_type="campo",
+            apply_base_style=False,
+        )
+
+        info_label_text = "INFORMAÇÃO ADICIONAL"
+        info_label_overlay = "Produtos.InformacaoAdicional"
+        info_label = QLabel(
+            info_label_overlay
+            if info_legend_zone._overlay_active and info_label_overlay
+            else info_label_text,
+            info_legend_zone,
+        )
+        info_label.setProperty("userLabel", info_label_text)
+        info_label.setProperty("devLabel", info_label_overlay)
+        info_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        info_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        info_label.setStyleSheet("")
+        match_font(info_label, self.edNome)
+        info_legend_zone.ly.addWidget(info_label, 0, Qt.AlignVCenter)
+        info_legend_zone._labels.append(info_label)
+        info_zone._labels.append(info_label)
+
+        self.lbInformacaoAdicional = QLineEdit("", info_field_zone)
+        make_readonly_lineedit(self.lbInformacaoAdicional)
+        self.lbInformacaoAdicional.setStyleSheet(FIELD_STYLE)
+        self.lbInformacaoAdicional.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.lbInformacaoAdicional.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Fixed
+        )
+        self.lbInformacaoAdicional.setFont(self.edNome.font())
+        info_field_zone.ly.addWidget(self.lbInformacaoAdicional, 0, Qt.AlignVCenter)
+
         # --- PVPs (B1.A1.5) ---
         pvps_section = self.zone_general_aux_reserved_slot_5
         pvps_section.show()
@@ -2031,6 +2093,9 @@ class FTApp(QWidget):
             self.edNome.setText(product.name or "")
             self.lbFamiliaVal.setText(product.familia or "")
             self.lbSubFamiliaVal.setText(product.subfamilia or "")
+            self.lbInformacaoAdicional.setText(
+                product.informacao_adicional or ""
+            )
 
             pvps = list(product.pvps or [])
             pvps.extend([None] * (5 - len(pvps)))
