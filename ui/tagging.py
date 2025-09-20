@@ -17,6 +17,13 @@ _ZONE_TAGS: Mapping[str, str] = {
     "header_root": "B0.C1",
 
     # --- Ficha do Artigo / identificação ---------------------------------
+    "general_aux_root": "B1.A1",
+    "general_aux_stack": "B1.A1.A",
+    "general_aux_primary": "B1.A1.A.A",
+    "general_aux_identification_slot": "B1.A1.A.A.1",
+    "general_aux_family_slot": "B1.A1.A.A.2",
+    "general_aux_reserved_slot": "B1.A1.A.A.3",
+    "general_aux_preview": "B1.A1.A.B",
     "general_root": "B1.C1",
     "general_name_zone": "B1.C2",
     "general_ident_labels": "B1.C1.A.1.A",
