@@ -1155,37 +1155,17 @@ class FTApp(QWidget):
         match_font(pvp_label, self.edNome)
         pvps_section.add(pvp_label, 0)
 
-        pvps_grid = Zone(
-            "B1.A1.A.4.A",
-            pvps_section,
-            flow="h",
-            margins=0,
-            spacing=family_row_spacing_value,
-            level=pvps_section._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-        )
-        pvps_grid.ly.setContentsMargins(0, 0, 0, 0)
-        pvps_grid.set_zone_stylesheet(
-            layout.compose_stylesheet(
-                pvps_grid,
-                "font-size: 1px; margin: 0px; padding: 0px;",
-            )
-        )
-        pvps_section.add(pvps_grid, 0)
+        pvps_columns = pvps_section.split_h((1, 1, 1, 1, 1))
 
-        for idx in range(1, 6):
-            column_zone = Zone(
-                f"B1.A1.A.4.A.{idx}",
-                pvps_grid,
-                flow="v",
-                margins=0,
-                spacing=2,
-                level=pvps_grid._level + 1,
-                show_overlays=layout.DEV_OVERLAYS,
-            )
+        for idx, column_zone in enumerate(pvps_columns, start=1):
             column_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             column_zone.ly.setContentsMargins(0, 0, 0, 0)
-            pvps_grid.add(column_zone, 1)
+            column_zone.ly.setSpacing(2)
+            column_zone.apply_metadata(
+                zone_type="grade-pvps",
+                widget_type="campo",
+                apply_base_style=False,
+            )
 
             legend_zone, field_zone = column_zone.split_v((1, 1))
             legend_zone.apply_metadata(

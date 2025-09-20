@@ -188,20 +188,28 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         assert pvps_root_meta.get("overlayBaseColor") != general_root_meta["overlayBaseColor"]
         assert pvps_root_meta.get("overlayBaseColor") == pvps_root_meta.get("overlayColor")
 
-        pvps_grid_tag = zone_tag("pvps_grid")
-        pvps_grid_meta = zones_metadata.get(pvps_grid_tag)
-        assert pvps_grid_meta is not None
-        assert pvps_grid_meta.get("overlayBaseColor") == pvps_root_meta.get("overlayBaseColor")
-        for root_channel, grid_channel in zip(
-            _hex_channels(pvps_root_meta["overlayColor"]),
-            _hex_channels(pvps_grid_meta["overlayColor"]),
-        ):
-            assert grid_channel >= root_channel
-        assert pvps_grid_meta.get("zoneType") == "grade-pvps"
-        assert pvps_grid_meta.get("widgetType") == "campo"
-        assert pvps_grid_meta.get("widgetQtClass") == "QLineEdits"
-
         for idx in range(1, 6):
+            column_key = f"pvps_col_{idx}"
+            column_tag = zone_tag(column_key)
+            column_meta = zones_metadata.get(column_tag)
+            assert column_meta is not None
+            assert column_meta.get("overlayBaseColor") == pvps_root_meta.get(
+                "overlayBaseColor"
+            )
+            for root_channel, column_channel in zip(
+                _hex_channels(pvps_root_meta["overlayColor"]),
+                _hex_channels(column_meta["overlayColor"]),
+            ):
+                assert column_channel >= root_channel
+            assert column_meta.get("zoneType") == "grade-pvps"
+            assert column_meta.get("widgetType") == "campo"
+            assert column_meta.get("widgetQtClass") == "QLineEdits"
+
+            column_zone = _find_zone(root, column_key)
+            assert column_zone is not None
+            assert column_zone.property("zoneType") == "grade-pvps"
+            assert column_zone.property("widgetQtClass") == "QLineEdits"
+
             legend_key = f"pvps_col_{idx}_legend"
             legend_tag = zone_tag(legend_key)
             legend_meta = zones_metadata.get(legend_tag)
