@@ -854,8 +854,6 @@ class FTApp(QWidget):
             3,
             field_col_margins.bottom(),
         )
-        label_col.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-
         label_top, label_bottom = label_col.split_v((1, 1))
         label_top.apply_metadata(
             zone_type="linha-legenda",
@@ -880,7 +878,6 @@ class FTApp(QWidget):
             display = overlay if zone._overlay_active and overlay else text
             lbl = QLabel(display, zone)
             lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-            lbl.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Maximum)
             lbl.setProperty("userLabel", text)
             lbl.setProperty("devLabel", overlay)
             if zone._overlay_active and overlay:
@@ -1224,8 +1221,6 @@ class FTApp(QWidget):
         )
         subfamilia_label_zone.set_label_alignment(AlignmentVariant.RIGHT)
         subfamilia_label_zone.ly.setContentsMargins(0, 0, 0, 0)
-        for zone in (familia_label_zone, subfamilia_label_zone):
-            zone.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
 
         def _make_family_label(zone: Zone, text: str, overlay: str) -> QLabel:
             display = overlay if zone._overlay_active and overlay else text
@@ -1237,7 +1232,6 @@ class FTApp(QWidget):
                 apply_overlay_label_style(lbl)
             else:
                 lbl.setStyleSheet("")
-            lbl.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Maximum)
             zone.ly.addWidget(lbl, 0, Qt.AlignLeft | Qt.AlignVCenter)
             zone._labels.append(lbl)
             family_labels_zone._labels.append(lbl)
