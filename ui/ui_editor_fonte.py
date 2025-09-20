@@ -70,7 +70,7 @@
 #    normal e alinhamentos ajustados para legibilidade sem sobrescritas
 #    agressivas de estilo.
 # 2025-09-18 23:41 — v3.100 — Família/Sub-família e combos extraídos de
-#    B1.C1.A.2 para o novo bloco [B2] com raiz B2.C1; alinhamento de tags
+#    B1.D1 para o novo bloco [B2] com raiz B2.C1; alinhamento de tags
 #    atualizado nas verificações automáticas.
 # 2025-09-19 10:45 — v3.101 — Família/Sub-família e combos reintegrados em
 #    B1.C1.A.*, preservando metadados de bloco e alinhamentos partilhados.
@@ -706,10 +706,16 @@ class FTApp(QWidget):
         root.addWidget(scroll, 1)
         self._update_page_width()
 
+        b1_container = QWidget(self)
+        b1_container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        b1_layout = QVBoxLayout(b1_container)
+        b1_layout.setContentsMargins(0, 0, 0, 0)
+        b1_layout.setSpacing(6)
+
         # ---------------- B1 — Ficha do Artigo (B1.C1) ----------------
         self.C1 = Zone(
             "B1.C1",
-            self,
+            b1_container,
             flow="v",
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
@@ -722,7 +728,11 @@ class FTApp(QWidget):
             C1_margins.right(),
             0,
         )
-        page_ly.addWidget(self._section_box("[B1] - FICHA DO ARTIGO", self.C1), 0)
+        b1_layout.addWidget(self.C1, 0)
+        page_ly.addWidget(
+            self._section_box("[B1] - FICHA DO ARTIGO", b1_container),
+            0,
+        )
 
         C1A, C1B = self.C1.split_h((3, 1))
         C1A_margins = C1A.ly.contentsMargins()
@@ -760,25 +770,26 @@ class FTApp(QWidget):
         )
         C1A_cont_ly.addWidget(self.C1A1, 0)
 
-        # --- Família & combos (B1.C1.A.2) ---
-        self.C1A2 = Zone(
-            "B1.C1.A.2",
-            C1A_cont,
+        C1A_cont_ly.addStretch(1)
+
+        # --- Família & combos (B1.D1) ---
+        self.D1 = Zone(
+            "B1.D1",
+            b1_container,
             flow="v",
             margins=4,
             spacing=2,
-            level=C1A._level + 1,
+            level=self.C1._level,
             show_overlays=layout.DEV_OVERLAYS,
         )
-        C1A2_margins = self.C1A2.ly.contentsMargins()
-        self.C1A2.ly.setContentsMargins(
-            C1A2_margins.left(),
+        D1_margins = self.D1.ly.contentsMargins()
+        self.D1.ly.setContentsMargins(
+            D1_margins.left(),
             0,
-            C1A2_margins.right(),
+            D1_margins.right(),
             0,
         )
-        C1A_cont_ly.addWidget(self.C1A2, 0)
-        C1A_cont_ly.addStretch(1)
+        b1_layout.addWidget(self.D1, 0)
 
         self.edCodigo = QLineEdit()
         make_readonly_lineedit(self.edCodigo)
@@ -869,94 +880,94 @@ class FTApp(QWidget):
         self.image_preview = ImagePreview(init_code, self.service)
         C1B.add(self.image_preview, 1)
 
-        # ---------------- Família & Combos (B1.C1.A.2) ----------------
-        C1A2_familias = Zone(
-            "B1.C1.A.2.A",
-            self.C1A2,
+        # ---------------- Família & Combos (B1.D1) ----------------
+        D1_familias = Zone(
+            "B1.D1.A",
+            self.D1,
             flow="v",
-            margins=(self.C1A2.margin_h, self.C1A2.margin_v),
-            spacing=self.C1A2.ly.spacing(),
-            level=self.C1A2._level + 1,
+            margins=(self.D1.margin_h, self.D1.margin_v),
+            spacing=self.D1.ly.spacing(),
+            level=self.D1._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
-            base_style_label=self.C1A2.base_style_label,
+            base_style_label=self.D1.base_style_label,
         )
-        C1A2_familias_margins = C1A2_familias.ly.contentsMargins()
-        C1A2_familias.ly.setContentsMargins(
-            C1A2_familias_margins.left(),
+        D1_familias_margins = D1_familias.ly.contentsMargins()
+        D1_familias.ly.setContentsMargins(
+            D1_familias_margins.left(),
             0,
-            C1A2_familias_margins.right(),
+            D1_familias_margins.right(),
             0,
         )
-        self.C1A2.add(C1A2_familias, 1)
+        self.D1.add(D1_familias, 1)
 
-        C1A2_familias_row_margin_value = 4
-        C1A2_familias_row_spacing_value = 2
-        C1A2_familias_row = Zone(
-            "B1.C1.A.2.A.1",
-            C1A2_familias,
+        D1_familias_row_margin_value = 4
+        D1_familias_row_spacing_value = 2
+        D1_familias_row = Zone(
+            "B1.D1.A.1",
+            D1_familias,
             flow="v",
-            margins=C1A2_familias_row_margin_value,
-            spacing=C1A2_familias_row_spacing_value,
-            level=C1A2_familias._level + 1,
+            margins=D1_familias_row_margin_value,
+            spacing=D1_familias_row_spacing_value,
+            level=D1_familias._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
         )
-        C1A2_familias_row.ly.setContentsMargins(0, 0, 0, 0)
-        C1A2_familias_row.set_zone_stylesheet(
+        D1_familias_row.ly.setContentsMargins(0, 0, 0, 0)
+        D1_familias_row.set_zone_stylesheet(
             layout.compose_stylesheet(
-                C1A2_familias_row,
+                D1_familias_row,
                 "font-size: 1px; margin: 0px; padding: 0px;",
             )
         )
-        C1A2_familias_row.apply_overlays(True)
-        C1A2_familias.add(C1A2_familias_row, 1)
+        D1_familias_row.apply_overlays(True)
+        D1_familias.add(D1_familias_row, 1)
 
-        C1A2_familias_spacer = Zone(
-            "B1.C1.A.2.A.2",
-            C1A2_familias,
+        D1_familias_spacer = Zone(
+            "B1.D1.A.2",
+            D1_familias,
             flow="h",
-            margins=C1A2_familias_row_margin_value,
-            spacing=C1A2_familias_row_spacing_value,
-            level=C1A2_familias_row._level,
+            margins=D1_familias_row_margin_value,
+            spacing=D1_familias_row_spacing_value,
+            level=D1_familias_row._level,
             show_overlays=layout.DEV_OVERLAYS,
         )
-        C1A2_familias_spacer.ly.setContentsMargins(0, 0, 0, 0)
-        C1A2_familias_spacer.set_zone_stylesheet(
+        D1_familias_spacer.ly.setContentsMargins(0, 0, 0, 0)
+        D1_familias_spacer.set_zone_stylesheet(
             layout.compose_stylesheet(
-                C1A2_familias_spacer,
+                D1_familias_spacer,
                 "font-size: 1px; margin: 0px; padding: 0px;",
             )
         )
-        C1A2_familias_spacer.apply_overlays(layout.DEV_OVERLAYS)
-        C1A2_familias_spacer.ly.setAlignment(Qt.AlignLeft)
-        C1A2_familias_spacer.setSizePolicy(
+        D1_familias_spacer.apply_overlays(layout.DEV_OVERLAYS)
+        D1_familias_spacer.ly.setAlignment(Qt.AlignLeft)
+        D1_familias_spacer.setSizePolicy(
             QSizePolicy.Expanding, QSizePolicy.Expanding
         )
-        C1A2_familias.add(C1A2_familias_spacer, 1)
+        D1_familias.add(D1_familias_spacer, 1)
 
-        C1A2_familias_reserva = Zone(
-            "B1.C1.A.2.A.3",
-            C1A2_familias,
+        D1_familias_reserva = Zone(
+            "B1.D1.A.3",
+            D1_familias,
             flow="h",
-            margins=C1A2_familias_row_margin_value,
-            spacing=C1A2_familias_row_spacing_value,
-            level=C1A2_familias_row._level,
+            margins=D1_familias_row_margin_value,
+            spacing=D1_familias_row_spacing_value,
+            level=D1_familias_row._level,
             show_overlays=layout.DEV_OVERLAYS,
-            base_style_label=C1A2_familias.base_style_label,
+            base_style_label=D1_familias.base_style_label,
         )
-        C1A2_familias_reserva.ly.setContentsMargins(0, 0, 0, 0)
-        C1A2_familias_reserva.apply_overlays(layout.DEV_OVERLAYS)
-        C1A2_familias_reserva.setSizePolicy(
+        D1_familias_reserva.ly.setContentsMargins(0, 0, 0, 0)
+        D1_familias_reserva.apply_overlays(layout.DEV_OVERLAYS)
+        D1_familias_reserva.setSizePolicy(
             QSizePolicy.Expanding, QSizePolicy.Expanding
         )
-        C1A2_familias.add(C1A2_familias_reserva, 2)
+        D1_familias.add(D1_familias_reserva, 2)
 
         combos_pvp_container = Zone(
-            "B1.C1.A.2.B",
-            C1A2_familias_spacer,
+            "B1.D1.B",
+            D1_familias_spacer,
             flow="v",
-            margins=C1A2_familias_row_margin_value,
-            spacing=C1A2_familias_row_spacing_value,
-            level=C1A2_familias_spacer._level + 1,
+            margins=D1_familias_row_margin_value,
+            spacing=D1_familias_row_spacing_value,
+            level=D1_familias_spacer._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
         )
@@ -965,22 +976,22 @@ class FTApp(QWidget):
         combos_pvp_container.setSizePolicy(
             QSizePolicy.Expanding, QSizePolicy.Fixed
         )
-        C1A2_familias_spacer.add(combos_pvp_container, 1)
+        D1_familias_spacer.add(combos_pvp_container, 1)
 
         combos_section = QWidget(combos_pvp_container)
-        combos_section.setObjectName("B1.C1.A.2.B.A")
+        combos_section.setObjectName("B1.D1.B.A")
         combos_section.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         combos_section_layout = QHBoxLayout(combos_section)
         combos_section_layout.setContentsMargins(0, 0, 0, 0)
-        combos_section_layout.setSpacing(C1A2_familias_row_spacing_value)
+        combos_section_layout.setSpacing(D1_familias_row_spacing_value)
         combos_pvp_container.add(combos_section, 0)
 
         pvps_section = Zone(
-            "B1.C1.A.2.B.B",
+            "B1.D1.B.B",
             combos_pvp_container,
             flow="v",
-            margins=C1A2_familias_row_margin_value,
-            spacing=C1A2_familias_row_spacing_value,
+            margins=D1_familias_row_margin_value,
+            spacing=D1_familias_row_spacing_value,
             level=combos_pvp_container._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
@@ -1004,11 +1015,11 @@ class FTApp(QWidget):
         pvps_section.add(pvp_label, 0)
 
         pvps_grid = Zone(
-            "B1.C1.A.2.B.B.1",
+            "B1.D1.B.B.1",
             pvps_section,
             flow="h",
             margins=0,
-            spacing=C1A2_familias_row_spacing_value,
+            spacing=D1_familias_row_spacing_value,
             level=pvps_section._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
         )
@@ -1023,7 +1034,7 @@ class FTApp(QWidget):
 
         for idx in range(1, 6):
             column_zone = Zone(
-                f"B1.C1.A.2.B.B.1.{idx}",
+                f"B1.D1.B.B.1.{idx}",
                 pvps_grid,
                 flow="v",
                 margins=0,
@@ -1077,7 +1088,7 @@ class FTApp(QWidget):
             field_zone.ly.addWidget(val, 0, Qt.AlignLeft | Qt.AlignVCenter)
             self.lbPVPs.append(val)
 
-        family_labels_zone, family_values_zone = C1A2_familias_row.split_h((4, 8))
+        family_labels_zone, family_values_zone = D1_familias_row.split_h((4, 8))
         familia_values_zone, subfamilia_values_zone = family_values_zone.split_v((1, 1))
 
         familia_label_zone, subfamilia_label_zone = family_labels_zone.split_v((1, 1))
@@ -1140,9 +1151,9 @@ class FTApp(QWidget):
         self._refresh_family_label_column_widths()
 
         combo_zone_specs = (
-            ("B1.C1.A.2.B.A.1", "Tipos Artigos", "cbTipos"),
-            ("B1.C1.A.2.B.A.2", "Validade", "cbValidade"),
-            ("B1.C1.A.2.B.A.3", "Temperaturas", "cbTemp"),
+            ("B1.D1.B.A.1", "Tipos Artigos", "cbTipos"),
+            ("B1.D1.B.A.2", "Validade", "cbValidade"),
+            ("B1.D1.B.A.3", "Temperaturas", "cbTemp"),
         )
         for tag_prefix, label_text, attr_name in combo_zone_specs:
             column_widget = QWidget(combos_section)
