@@ -995,12 +995,6 @@ class FTApp(QWidget):
             spacing=C1A2_familias_row_spacing_value,
             level=C1A2_familias_row._level,
             show_overlays=layout.DEV_OVERLAYS,
-            widget_type="campo",
-        )
-        C1A2_familias_spacer.apply_metadata(
-            zone_type="secao-familias",
-            widget_type="campo",
-            apply_base_style=False,
         )
         C1A2_familias_spacer.ly.setContentsMargins(0, 0, 0, 0)
         C1A2_familias_spacer.apply_overlays(layout.DEV_OVERLAYS)
@@ -1075,12 +1069,6 @@ class FTApp(QWidget):
             level=C1A2_combos_row._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
             base_style_label=C1A2_familias.base_style_label,
-            widget_type=None,
-        )
-        C1A2_combos_section.apply_metadata(
-            zone_type="secao-combos",
-            widget_type=None,
-            apply_base_style=False,
         )
         C1A2_combos_section.ly.setContentsMargins(0, 0, 0, 0)
         C1A2_combos_section.apply_overlays(layout.DEV_OVERLAYS)
@@ -1098,12 +1086,6 @@ class FTApp(QWidget):
             level=C1A2_combos_row._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
             base_style_label=C1A2_familias.base_style_label,
-            widget_type="campo",
-        )
-        C1A2_pvps_zone.apply_metadata(
-            zone_type="secao-pvps",
-            widget_type="campo",
-            apply_base_style=False,
         )
         C1A2_pvps_zone.ly.setContentsMargins(0, 0, 0, 0)
         C1A2_pvps_zone.apply_overlays(layout.DEV_OVERLAYS)
@@ -1129,11 +1111,6 @@ class FTApp(QWidget):
             spacing=C1A2_familias_row_spacing_value,
             level=C1A2_pvps_zone._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
-            widget_type="campo",
-        )
-        C1A2_pvps_grid.apply_metadata(
-            zone_type="grade-pvps",
-            widget_type="campo",
         )
         C1A2_pvps_grid.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         C1A2_pvps_zone.add(C1A2_pvps_grid, 0)
