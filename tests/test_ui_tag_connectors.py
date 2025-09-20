@@ -147,6 +147,12 @@ def test_load_record_populates_new_tag_widgets(qapp, tag_service):
         assert ft.lbPVPs[0].text() == format_pt_number(12.5)
         assert ft.lbPVPs[1].text() == format_pt_number(9.75)
         assert ft.lbInformacaoAdicional.text() == "Consumir fresco"
+        additional_field_zone = ft.findChild(
+            Zone, zone_tag("general_aux_additional_info_field")
+        )
+        assert additional_field_zone is not None
+        for combo in (ft.cbTipos, ft.cbValidade, ft.cbTemp):
+            assert additional_field_zone.isAncestorOf(combo)
         checkboxes = ft._allergen_checkboxes
         assert 10 in checkboxes and 11 in checkboxes
         assert checkboxes[10].isChecked()
