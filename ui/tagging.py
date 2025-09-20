@@ -43,17 +43,6 @@ _ZONE_TAGS: Mapping[str, str] = {
     "family_values_column": "B1.A1.A.3.B",
     "family_value_familia": "B1.A1.A.3.B.1",
     "family_value_subfamilia": "B1.A1.A.3.B.2",
-    "general_aux_combo_slot": "B1.A1.A.3.C",
-    "general_aux_combo_section": "B1.A1.A.3.C",
-    "general_aux_combo_col_1": "B1.A1.A.3.C.1",
-    "family_combo_label_col_1": "B1.A1.A.3.C.1",
-    "family_combo_field_col_1": "B1.A1.A.3.C.1",
-    "general_aux_combo_col_2": "B1.A1.A.3.C.2",
-    "family_combo_label_col_2": "B1.A1.A.3.C.2",
-    "family_combo_field_col_2": "B1.A1.A.3.C.2",
-    "general_aux_combo_col_3": "B1.A1.A.3.C.3",
-    "family_combo_label_col_3": "B1.A1.A.3.C.3",
-    "family_combo_field_col_3": "B1.A1.A.3.C.3",
 
     # Prices & preview columns
     "general_aux_prices_slot": "B1.A1.A.4",
