@@ -706,18 +706,48 @@ class FTApp(QWidget):
         root.addWidget(scroll, 1)
         self._update_page_width()
 
-        b1_container = QWidget(self)
-        b1_container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        b1_layout = QVBoxLayout(b1_container)
-        b1_layout.setContentsMargins(0, 0, 0, 0)
-        b1_layout.setSpacing(6)
+        self.B1 = Zone(
+            "B1",
+            self,
+            flow="v",
+            margins=0,
+            spacing=6,
+            level=0,
+            show_overlays=layout.DEV_OVERLAYS,
+        )
+        self.B1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.B1.ly.setContentsMargins(0, 0, 0, 0)
+
+        # ---------------- B1.A1 — zona auxiliar ----------------
+        self.B1A1 = Zone(
+            "B1.A1",
+            self.B1,
+            flow="v",
+            margins=4,
+            spacing=4,
+            level=self.B1._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+        )
+        self.B1.ly.addWidget(self.B1A1, 0)
+
+        self.B1A1A = Zone(
+            "B1.A1.A",
+            self.B1A1,
+            flow="v",
+            margins=4,
+            spacing=2,
+            level=self.B1A1._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+        )
+        self.B1A1.ly.addWidget(self.B1A1A, 0)
+        self.B1A1AA, self.B1A1AB = self.B1A1A.split_h((3, 1))
 
         # ---------------- B1 — Ficha do Artigo (B1.C1) ----------------
         self.C1 = Zone(
             "B1.C1",
-            b1_container,
+            self.B1,
             flow="v",
-            level=0,
+            level=self.B1._level,
             show_overlays=layout.DEV_OVERLAYS,
             spacing=2,
         )
@@ -728,9 +758,9 @@ class FTApp(QWidget):
             C1_margins.right(),
             0,
         )
-        b1_layout.addWidget(self.C1, 0)
+        self.B1.ly.addWidget(self.C1, 0)
         page_ly.addWidget(
-            self._section_box("[B1] - FICHA DO ARTIGO", b1_container),
+            self._section_box("[B1] - FICHA DO ARTIGO", self.B1),
             0,
         )
 
@@ -775,7 +805,7 @@ class FTApp(QWidget):
         # --- Combos & PVP (B1.E1) ---
         self.E1 = Zone(
             "B1.E1",
-            b1_container,
+            self.B1,
             flow="v",
             margins=4,
             spacing=2,
@@ -789,12 +819,12 @@ class FTApp(QWidget):
             E1_margins.right(),
             0,
         )
-        b1_layout.addWidget(self.E1, 0)
+        self.B1.ly.addWidget(self.E1, 0)
 
         # --- Família (B1.D1) ---
         self.D1 = Zone(
             "B1.D1",
-            b1_container,
+            self.B1,
             flow="v",
             margins=4,
             spacing=2,
@@ -808,7 +838,7 @@ class FTApp(QWidget):
             D1_margins.right(),
             0,
         )
-        b1_layout.addWidget(self.D1, 0)
+        self.B1.ly.addWidget(self.D1, 0)
 
         self.edCodigo = QLineEdit()
         make_readonly_lineedit(self.edCodigo)
