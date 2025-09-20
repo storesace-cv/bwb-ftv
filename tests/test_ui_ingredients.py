@@ -247,7 +247,10 @@ def test_general_aux_additional_slots_created(qapp):
 
         for tag in ("B1.A1.B", "B1.A1.C", "B1.A1.D"):
             zone = ft.findChild(Zone, tag)
-            assert zone is not None, f"Expected zone {tag} to exist"
+            assert zone is None, f"Zone {tag} should have been removed"
+
+        preview_zone = ft.findChild(Zone, "B1.A1.E")
+        assert preview_zone is not None, "Expected preview zone B1.A1.E to exist"
     finally:
         ft.close()
 

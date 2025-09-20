@@ -734,26 +734,44 @@ class FTApp(QWidget):
         )
         self.B1.ly.addWidget(self.zone_general_aux_root, 0)
 
-        (
-            self.zone_general_aux_stack,
-            self.zone_general_aux_preview_panel,
-            self.zone_general_aux_free_slot_c,
-            self.zone_general_aux_free_slot_d,
-        ) = self.zone_general_aux_root.split_h((12, 4, 3, 3))
-        for zone in (
-            self.zone_general_aux_stack,
-            self.zone_general_aux_preview_panel,
-            self.zone_general_aux_free_slot_c,
-            self.zone_general_aux_free_slot_d,
-        ):
-            zone.ly.setSpacing(2)
+        aux_columns = QWidget(self.zone_general_aux_root)
+        aux_columns.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        aux_columns_ly = QHBoxLayout(aux_columns)
+        aux_columns_ly.setContentsMargins(0, 0, 0, 0)
+        aux_columns_ly.setSpacing(self.zone_general_aux_root.ly.spacing())
+
+        self.zone_general_aux_stack = Zone(
+            "B1.A1.A",
+            aux_columns,
+            flow="v",
+            margins=self.zone_general_aux_root._margin_spec,
+            spacing=self.zone_general_aux_root.ly.spacing(),
+            level=self.zone_general_aux_root._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+        )
+        self.zone_general_aux_stack.ly.setSpacing(2)
+
+        self.zone_general_aux_preview_panel = Zone(
+            "B1.A1.E",
+            aux_columns,
+            flow="v",
+            margins=self.zone_general_aux_root._margin_spec,
+            spacing=self.zone_general_aux_root.ly.spacing(),
+            level=self.zone_general_aux_root._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+        )
+        self.zone_general_aux_preview_panel.ly.setSpacing(2)
+
+        aux_columns_ly.addWidget(self.zone_general_aux_stack, 12)
+        aux_columns_ly.addWidget(self.zone_general_aux_preview_panel, 4)
+        self.zone_general_aux_root.add(aux_columns, 1)
         (
             self.zone_general_aux_identification_slot,
             self.zone_general_aux_family_slot,
             self.zone_general_aux_prices_slot,
         ) = self.zone_general_aux_stack.split_v((1, 1, 1))
         self.zone_general_aux_preview_image_slot = Zone(
-            "B1.A1.B.4",
+            "B1.A1.E.1",
             self.zone_general_aux_preview_panel,
             flow="v",
             margins=4,
@@ -768,8 +786,6 @@ class FTApp(QWidget):
             self.zone_general_aux_identification_slot,
             self.zone_general_aux_family_slot,
             self.zone_general_aux_prices_slot,
-            self.zone_general_aux_free_slot_c,
-            self.zone_general_aux_free_slot_d,
         ):
             zone.ly.setContentsMargins(0, 0, 0, 0)
             current_policy = zone.sizePolicy()
@@ -779,8 +795,6 @@ class FTApp(QWidget):
             )
         for zone in (
             self.zone_general_aux_preview_image_slot,
-            self.zone_general_aux_free_slot_c,
-            self.zone_general_aux_free_slot_d,
         ):
             zone.ly.setContentsMargins(0, 0, 0, 0)
             current_policy = zone.sizePolicy()
@@ -888,7 +902,7 @@ class FTApp(QWidget):
         self.edCodigo.textChanged.connect(self.headerEdCodigo.setText)
         self.edNome.textChanged.connect(self.headerEdNome.setText)
 
-        # B1.A1.B.4 — preview de imagem
+        # B1.A1.E.1 — preview de imagem
         try:
             init_code = self.service.codigo_at(self.cur_index)
         except Exception:
