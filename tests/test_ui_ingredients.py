@@ -126,7 +126,7 @@ def test_legend_labels_use_expanding_horizontal_policy(qapp):
     service = ProductService(ds)
     ft = FTApp(service)
     try:
-        legend_tags = ["B1.C1.A.1.A.1", "B1.D1.A.1.A.1"]
+        legend_tags = ["B1.A1.A.1.A.1", "B1.A1.A.2.A.1"]
         for tag in legend_tags:
             zone = ft.findChild(Zone, tag)
             assert zone is not None, f"Zone {tag} not found"
@@ -198,12 +198,12 @@ def test_classification_overlay_tags_hidden(qapp):
             "B1.D1.A",
             "B1.D1.A.1",
             "B1.D1.A.3",
-            "B1.D1.A.1.A",
-            "B1.D1.A.1.A.1",
-            "B1.D1.A.1.A.2",
-            "B1.D1.A.1.B",
-            "B1.D1.A.1.B.1",
-            "B1.D1.A.1.B.2",
+            "B1.A1.A.2.A",
+            "B1.A1.A.2.A.1",
+            "B1.A1.A.2.A.2",
+            "B1.A1.A.2.B",
+            "B1.A1.A.2.B.1",
+            "B1.A1.A.2.B.2",
             "B1.E1",
             "B1.E1.A",
             "B1.E1.A.B",
@@ -216,7 +216,7 @@ def test_classification_overlay_tags_hidden(qapp):
             assert zone._style_lbl.isHidden()
             assert zone._style_lbl.text() == ""
 
-        for tag in ("B1.D1.A.1.A.1", "B1.D1.A.1.A.2"):
+        for tag in ("B1.A1.A.2.A.1", "B1.A1.A.2.A.2"):
             zone = ft.findChild(Zone, tag)
             assert zone is not None, f"Zone {tag} not found"
             margins = zone.ly.contentsMargins()
@@ -243,8 +243,8 @@ def test_identification_and_family_label_columns_expand_with_long_text(qapp):
         ft.show()
         qapp.processEvents()
 
-        ident_zone = ft.findChild(Zone, "B1.C1.A.1.A")
-        family_zone = ft.findChild(Zone, "B1.D1.A.1.A")
+        ident_zone = ft.findChild(Zone, "B1.A1.A.1.A")
+        family_zone = ft.findChild(Zone, "B1.A1.A.2.A")
 
         assert ident_zone is not None
         assert family_zone is not None
@@ -284,7 +284,7 @@ def test_family_caption_zone_keeps_padding_gap(qapp):
         ft._refresh_family_label_column_widths()
         qapp.processEvents()
 
-        caption_zone = ft.findChild(Zone, "B1.C1.A.1.A.1")
+        caption_zone = ft.findChild(Zone, "B1.A1.A.1.A.1")
         assert caption_zone is not None
         assert caption_zone._labels, "expected caption label in zone"
 

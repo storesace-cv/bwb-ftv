@@ -740,21 +740,10 @@ class FTApp(QWidget):
         ) = self.zone_general_aux_root.split_h((8, 4))
         self.zone_general_aux_stack.ly.setSpacing(2)
         self.zone_general_aux_preview_panel.ly.setSpacing(2)
-        self.zone_general_aux_primary_column = Zone(
-            "B1.A1.A.A",
-            self.zone_general_aux_stack,
-            flow="v",
-            margins=4,
-            spacing=2,
-            level=self.zone_general_aux_stack._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-        )
-        self.zone_general_aux_primary_column.ly.setContentsMargins(0, 0, 0, 0)
-        self.zone_general_aux_stack.add(self.zone_general_aux_primary_column, 1)
         (
             self.zone_general_aux_identification_slot,
             self.zone_general_aux_family_slot,
-        ) = self.zone_general_aux_primary_column.split_v((1, 1))
+        ) = self.zone_general_aux_stack.split_v((1, 1))
         self.zone_general_aux_preview_image_slot = Zone(
             "B1.A1.B.4",
             self.zone_general_aux_preview_panel,
@@ -946,6 +935,21 @@ class FTApp(QWidget):
         field_bottom.ly.setContentsMargins(0, 0, 0, 0)
         field_top.apply_metadata(zone_type="linha-campo", widget_type="campo")
         field_bottom.apply_metadata(zone_type="linha-campo", widget_type="campo")
+
+        def _retag_zone(zone: Zone, new_tag: str) -> None:
+            if not layout.validate_tag(new_tag):
+                raise ValueError(f"Invalid zone tag: {new_tag}")
+            zone.tag = new_tag
+            zone.setObjectName(new_tag)
+            zone._tag_lbl.setText(new_tag)
+            zone.set_style_dev_info(new_tag)
+
+        _retag_zone(label_col, "B1.A1.A.1.A")
+        _retag_zone(field_col, "B1.A1.A.1.B")
+        _retag_zone(label_top, "B1.A1.A.1.A.1")
+        _retag_zone(label_bottom, "B1.A1.A.1.A.2")
+        _retag_zone(field_top, "B1.A1.A.1.B.1")
+        _retag_zone(field_bottom, "B1.A1.A.1.B.2")
 
         def _make_ident_label(zone: Zone, text: str, overlay: str) -> QLabel:
             display = overlay if zone._overlay_active and overlay else text
@@ -1248,6 +1252,12 @@ class FTApp(QWidget):
         familia_values_zone, subfamilia_values_zone = family_values_zone.split_v((1, 1))
 
         familia_label_zone, subfamilia_label_zone = family_labels_zone.split_v((1, 1))
+        _retag_zone(family_labels_zone, "B1.A1.A.2.A")
+        _retag_zone(family_values_zone, "B1.A1.A.2.B")
+        _retag_zone(familia_label_zone, "B1.A1.A.2.A.1")
+        _retag_zone(subfamilia_label_zone, "B1.A1.A.2.A.2")
+        _retag_zone(familia_values_zone, "B1.A1.A.2.B.1")
+        _retag_zone(subfamilia_values_zone, "B1.A1.A.2.B.2")
         for zone in (familia_label_zone, subfamilia_label_zone):
             zone_margins = zone.ly.contentsMargins()
             zone.ly.setContentsMargins(
@@ -1305,20 +1315,27 @@ class FTApp(QWidget):
 
         self._family_label_zone = family_labels_zone
 
-        family_aux_parent = getattr(
-            self, "zone_general_aux_family_slot", None
+        family_aux_container = QWidget(self.zone_general_aux_family_slot)
+        family_aux_container.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Fixed
         )
-        if isinstance(family_aux_parent, Zone):
-            parent_widget = D1_familias_row.parentWidget()
-            if parent_widget is not None:
-                parent_layout = parent_widget.layout()
-                if parent_layout is not None:
-                    parent_layout.removeWidget(D1_familias_row)
-            D1_familias_row.setParent(family_aux_parent)
-            family_aux_parent.add(D1_familias_row, 0)
-            D1_familias_row.setSizePolicy(
-                QSizePolicy.Expanding, QSizePolicy.Fixed
-            )
+        family_aux_layout = QHBoxLayout(family_aux_container)
+        family_aux_layout.setContentsMargins(0, 0, 0, 0)
+        family_aux_layout.setSpacing(
+            self.zone_general_aux_family_slot.ly.spacing()
+        )
+        self.zone_general_aux_family_slot.add(family_aux_container, 0)
+
+        for zone, stretch in (
+            (family_labels_zone, 1),
+            (family_values_zone, 4),
+        ):
+            parent_widget = zone.parentWidget()
+            parent_layout = parent_widget.layout() if parent_widget else None
+            if parent_layout is not None:
+                parent_layout.removeWidget(zone)
+            zone.setParent(family_aux_container)
+            family_aux_layout.addWidget(zone, stretch)
 
         self._refresh_family_label_column_widths()
 
