@@ -1274,9 +1274,21 @@ class FTApp(QWidget):
         self._family_label_zone = family_labels_zone
         self._refresh_family_label_column_widths()
 
-        w_tipos, self.cbTipos = stack_combo("Tipos Artigos")
-        w_val, self.cbValidade = stack_combo("Validade")
-        w_temp, self.cbTemp = stack_combo("Temperaturas")
+        (
+            w_tipos,
+            self.cbTipos,
+            tipos_label,
+        ) = stack_combo("Tipos Artigos")
+        (
+            w_val,
+            self.cbValidade,
+            validade_label,
+        ) = stack_combo("Validade")
+        (
+            w_temp,
+            self.cbTemp,
+            temp_label,
+        ) = stack_combo("Temperaturas")
         (
             C1A2_combo_tipo,
             C1A2_combo_val,
@@ -1292,6 +1304,20 @@ class FTApp(QWidget):
         C1A2_combo_tipo.add(w_tipos)
         C1A2_combo_val.add(w_val)
         C1A2_combo_temp.add(w_temp)
+
+        for zone, label in (
+            (C1A2_combo_tipo, tipos_label),
+            (C1A2_combo_val, validade_label),
+            (C1A2_combo_temp, temp_label),
+        ):
+            dynamic_names = {bytes(name) for name in label.dynamicPropertyNames()}
+            if b"userLabel" not in dynamic_names:
+                label.setProperty("userLabel", label.text())
+            if b"devLabel" not in dynamic_names:
+                label.setProperty("devLabel", None)
+            zone._labels.append(label)
+            install_tooltip_copy_handler(label)
+            zone.sync_label_widths()
         self.cbTipos.currentIndexChanged.connect(self._on_tipo_artigo_changed)
         self.cbValidade.currentIndexChanged.connect(self._on_validade_changed)
         self.cbTemp.currentIndexChanged.connect(self._on_temperatura_changed)

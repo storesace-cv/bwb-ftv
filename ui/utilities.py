@@ -256,12 +256,14 @@ def stack_combo(title: str):
     v.setSpacing(2)
     lbl = QLabel(title)
     apply_label_style(lbl)
+    lbl.setProperty("userLabel", lbl.text())
+    lbl.setProperty("devLabel", None)
     v.addWidget(lbl, 0, Qt.AlignHCenter | Qt.AlignVCenter)
     cb = QComboBox()
     cb.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
     cb.setStyleSheet(FIELD_STYLE)
     v.addWidget(cb, 0)
-    return w, cb
+    return w, cb, lbl
 
 
 def apply_fcfilter_btn_style(
