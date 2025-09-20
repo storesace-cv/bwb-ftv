@@ -5,10 +5,13 @@ específicos; não utilize ``apply_label_style`` nem folhas de estilo globais
 nesses rótulos.
 """
 
+import colorsys
+import hashlib
 import os
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Any, Sequence
 
 from PyQt5.QtCore import QEvent, QObject, Qt
@@ -40,6 +43,9 @@ DEV_OVERLAYS = (
     else False
 )
 
+OVERLAY_LIGHTEN_STEP = 0.18
+OVERLAY_LIGHTEN_MAX = 0.85
+
 DEFAULT_ZONE_MARGINS = (3, 5)
 # Default maximum widget width used by Qt when no explicit constraint is set.
 _QT_MAX_WIDGET_WIDTH = 16777215
@@ -63,6 +69,73 @@ def _escape_object_name(name: str) -> str:
     return re.sub(r"([^\w-])", r"\\\1", name)
 
 
+def _top_level_segment(tag: str | None) -> str:
+    if not tag:
+        return ""
+    return tag.split(".", 1)[0]
+
+
+def _clamp(value: float, minimum: float, maximum: float) -> float:
+    if value < minimum:
+        return minimum
+    if value > maximum:
+        return maximum
+    return value
+
+
+def _rgb_float_to_hex(red: float, green: float, blue: float) -> str:
+    def _channel_to_int(component: float) -> int:
+        return int(round(_clamp(component, 0.0, 1.0) * 255))
+
+    return "#{:02x}{:02x}{:02x}".format(
+        _channel_to_int(red),
+        _channel_to_int(green),
+        _channel_to_int(blue),
+    )
+
+
+def _hex_to_rgb_components(color: str) -> tuple[int, int, int]:
+    text = color.lstrip("#")
+    if len(text) != 6:
+        return (255, 255, 255)
+    return tuple(int(text[i : i + 2], 16) for i in (0, 2, 4))
+
+
+def _mix_with_white(color: str, ratio: float) -> str:
+    ratio = _clamp(ratio, 0.0, 1.0)
+    red, green, blue = _hex_to_rgb_components(color)
+    return "#{:02x}{:02x}{:02x}".format(
+        int(round(red + (255 - red) * ratio)),
+        int(round(green + (255 - green) * ratio)),
+        int(round(blue + (255 - blue) * ratio)),
+    )
+
+
+def overlay_lighten_ratio(level: int) -> float:
+    return _clamp(level * OVERLAY_LIGHTEN_STEP, 0.0, OVERLAY_LIGHTEN_MAX)
+
+
+@lru_cache(maxsize=None)
+def _base_color_for_segment(segment: str) -> str:
+    if not segment:
+        return "#d9d9d9"
+    digest = hashlib.sha1(segment.encode("utf-8")).digest()
+    hue = int.from_bytes(digest[:2], "big") / 65535.0
+    saturation = 0.55 + (digest[2] / 255.0) * 0.2
+    value = 0.75 + (digest[3] / 255.0) * 0.15
+    red, green, blue = colorsys.hsv_to_rgb(hue, saturation, value)
+    return _rgb_float_to_hex(red, green, blue)
+
+
+def overlay_base_color_for_tag(tag: str | None) -> str:
+    return _base_color_for_segment(_top_level_segment(tag))
+
+
+def overlay_color_for_tag(tag: str | None, level: int) -> str:
+    base_color = overlay_base_color_for_tag(tag)
+    return _mix_with_white(base_color, overlay_lighten_ratio(max(level, 0)))
+
+
 def compose_stylesheet(widget: QWidget, declarations: str) -> str:
     """Return a stylesheet applying ``declarations`` to ``widget``."""
 
@@ -78,9 +151,10 @@ def validate_tag(tag: str) -> bool:
     return bool(_TAG_RE.fullmatch(tag))
 
 
-def bg_for_level(level: int) -> str:
-    colors = ["#eafbf1", "#eef5ff", "#fff5e8", "#f7f0ff", "#fff0f0"]
-    return colors[level % len(colors)] if DEV_OVERLAYS else "transparent"
+def bg_for_level(level: int, tag: str | None = None) -> str:
+    if not DEV_OVERLAYS:
+        return "transparent"
+    return overlay_color_for_tag(tag, level)
 
 
 def refresh_style(widget: QWidget) -> None:
@@ -225,6 +299,8 @@ class ZoneMetadata:
     margin_h: int | None = None
     margin_v: int | None = None
     overlays_active: bool = False
+    overlay_base_color: str | None = None
+    overlay_color: str | None = None
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -237,6 +313,8 @@ class ZoneMetadata:
             "marginH": self.margin_h,
             "marginV": self.margin_v,
             "overlaysActive": self.overlays_active,
+            "overlayBaseColor": self.overlay_base_color,
+            "overlayColor": self.overlay_color,
         }
 
 
@@ -521,6 +599,8 @@ class Zone(QWidget):
             margin_h=self.margin_h,
             margin_v=self.margin_v,
             overlays_active=self.overlays_active,
+            overlay_base_color=overlay_base_color_for_tag(self.tag),
+            overlay_color=overlay_color_for_tag(self.tag, self.level),
         )
 
     @property
@@ -729,9 +809,9 @@ class Zone(QWidget):
         header_present = self.ly.indexOf(self._tag_container) != -1
         if active:
             style = (
-                f"{selector} {{ background:{bg_for_level(self._level)}; border:2px dashed blue; }}"
+                f"{selector} {{ background:{bg_for_level(self._level, self.tag)}; border:2px dashed blue; }}"
                 if selector
-                else f"background:{bg_for_level(self._level)}; border:2px dashed blue;"
+                else f"background:{bg_for_level(self._level, self.tag)}; border:2px dashed blue;"
             )
             self._suspend_base_tracking = True
             try:

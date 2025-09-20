@@ -65,13 +65,70 @@ Item {
     property bool overlayActive: showOverlays
     default property alias content: contentSlot.children
 
-    readonly property var overlayPalette: [
-        "#eafbf1",
-        "#eef5ff",
-        "#fff5e8",
-        "#f7f0ff",
-        "#fff0f0"
-    ]
+    property string overlayBaseColor: metadata && metadata.overlayBaseColor ? metadata.overlayBaseColor : ""
+    property string overlayMetadataColor: metadata && metadata.overlayColor ? metadata.overlayColor : ""
+    property real overlayLightenStep: (typeof zoneOverlayLightenStep !== "undefined") ? zoneOverlayLightenStep : 0.18
+    property real overlayLightenMax: (typeof zoneOverlayLightenMax !== "undefined") ? zoneOverlayLightenMax : 0.85
+    property string overlayColor: {
+        if (!overlayActive) {
+            return "#ffffff";
+        }
+        if (overlayBaseColor && overlayBaseColor.length === 7) {
+            var computed = lightenColor(overlayBaseColor, level);
+            if (overlayMetadataColor && overlayMetadataColor.length === 7 && overlayMetadataColor !== computed) {
+                return overlayMetadataColor;
+            }
+            return computed;
+        }
+        if (overlayMetadataColor && overlayMetadataColor.length === 7) {
+            return overlayMetadataColor;
+        }
+        return "#ffffff";
+    }
+
+    function clamp(value, minimum, maximum) {
+        if (value < minimum) {
+            return minimum;
+        }
+        if (value > maximum) {
+            return maximum;
+        }
+        return value;
+    }
+
+    function hexToRgb(hex) {
+        var clean = hex.replace(/^#/, "");
+        if (clean.length !== 6) {
+            return { r: 255, g: 255, b: 255 };
+        }
+        return {
+            r: parseInt(clean.slice(0, 2), 16),
+            g: parseInt(clean.slice(2, 4), 16),
+            b: parseInt(clean.slice(4, 6), 16)
+        };
+    }
+
+    function rgbToHex(r, g, b) {
+        function toHex(value) {
+            var clamped = clamp(Math.round(value), 0, 255).toString(16);
+            return clamped.length === 1 ? "0" + clamped : clamped;
+        }
+        return "#" + toHex(r) + toHex(g) + toHex(b);
+    }
+
+    function mixWithWhite(hex, ratio) {
+        var rgb = hexToRgb(hex);
+        var blend = clamp(ratio, 0.0, 1.0);
+        var r = rgb.r + (255 - rgb.r) * blend;
+        var g = rgb.g + (255 - rgb.g) * blend;
+        var b = rgb.b + (255 - rgb.b) * blend;
+        return rgbToHex(r, g, b);
+    }
+
+    function lightenColor(hex, levelValue) {
+        var ratio = clamp(levelValue * overlayLightenStep, 0.0, overlayLightenMax);
+        return mixWithWhite(hex, ratio);
+    }
 
     Rectangle {
         id: background
@@ -79,7 +136,7 @@ Item {
         radius: 12
         border.width: overlayActive ? 2 : 1
         border.color: overlayActive ? "#4a6fa5" : "#ccd4e0"
-        color: overlayActive ? overlayPalette[level % overlayPalette.length] : "#ffffff"
+        color: overlayColor
     }
 
     ColumnLayout {

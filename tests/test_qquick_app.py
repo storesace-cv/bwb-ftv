@@ -8,6 +8,7 @@ pytest.importorskip("PyQt5.QtQuick")
 
 from PyQt5.QtCore import QObject
 
+from ui import layout
 from ui.qquick_app import build_sample_product, create_engine
 from ui.tagging import zone_tag, zone_tag_map
 
@@ -28,6 +29,11 @@ def _find_zone(root: QObject, tag_key: str) -> QObject | None:
     tag = zone_tag(tag_key)
     object_name = f"zone_{tag.replace('.', '_')}"
     return root.findChild(QObject, object_name)
+
+
+def _hex_channels(color: str) -> tuple[int, int, int]:
+    hex_value = color.lstrip("#")
+    return tuple(int(hex_value[i : i + 2], 16) for i in (0, 2, 4))
 
 
 def test_qquick_engine_loads_and_binds_metadata(qapp):
@@ -60,18 +66,40 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         context = engine.rootContext()
         zones_metadata = context.contextProperty("zonesMetadata")
         assert isinstance(zones_metadata, dict)
+        assert context.contextProperty("zoneOverlayLightenStep") == layout.OVERLAY_LIGHTEN_STEP
+        assert context.contextProperty("zoneOverlayLightenMax") == layout.OVERLAY_LIGHTEN_MAX
+
+        general_root_tag = zone_tag("general_root")
+        general_root_meta = zones_metadata.get(general_root_tag)
+        assert general_root_meta is not None
+        assert general_root_meta.get("overlayBaseColor")
+        assert general_root_meta.get("overlayColor")
+        assert general_root_meta["overlayBaseColor"] == general_root_meta["overlayColor"]
+        assert codigo_zone.property("overlayBaseColor") == general_root_meta["overlayBaseColor"]
+        assert codigo_zone.property("overlayColor") == general_root_meta["overlayColor"]
+
         legend_tag = zone_tag("general_ident_label_codigo")
         legend_meta = zones_metadata.get(legend_tag)
         assert legend_meta is not None
+        assert legend_meta.get("overlayBaseColor") == general_root_meta["overlayBaseColor"]
+        assert legend_meta.get("overlayColor") != general_root_meta["overlayColor"]
         assert legend_meta.get("zoneType") == "linha-legenda"
         assert legend_meta.get("widgetType") == "etiqueta-c"
         assert legend_meta.get("widgetQtClass") == "QLabels"
 
         legend_zone = _find_zone(root, "general_ident_label_codigo")
         assert legend_zone is not None
+        assert legend_zone.property("overlayBaseColor") == legend_meta["overlayBaseColor"]
+        assert legend_zone.property("overlayColor") == legend_meta["overlayColor"]
         assert legend_zone.property("overlayActive") is True
         assert legend_zone.property("zoneType") == "linha-legenda"
         assert legend_zone.property("widgetQtClass") == "QLabels"
+        assert legend_zone.property("overlayColor") != codigo_zone.property("overlayColor")
+        for parent, child in zip(
+            _hex_channels(general_root_meta["overlayColor"]),
+            _hex_channels(legend_meta["overlayColor"]),
+        ):
+            assert child >= parent
         overlay_metadata = legend_zone.property("overlayMetadata")
         assert overlay_metadata == "linha-legenda | QLabels | etiqueta-c"
 
@@ -157,10 +185,18 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         assert pvps_root_meta.get("zoneType") == "secao-pvps"
         assert pvps_root_meta.get("widgetType") == "campo"
         assert pvps_root_meta.get("widgetQtClass") == "QLineEdits"
+        assert pvps_root_meta.get("overlayBaseColor") != general_root_meta["overlayBaseColor"]
+        assert pvps_root_meta.get("overlayBaseColor") == pvps_root_meta.get("overlayColor")
 
         pvps_grid_tag = zone_tag("pvps_grid")
         pvps_grid_meta = zones_metadata.get(pvps_grid_tag)
         assert pvps_grid_meta is not None
+        assert pvps_grid_meta.get("overlayBaseColor") == pvps_root_meta.get("overlayBaseColor")
+        for root_channel, grid_channel in zip(
+            _hex_channels(pvps_root_meta["overlayColor"]),
+            _hex_channels(pvps_grid_meta["overlayColor"]),
+        ):
+            assert grid_channel >= root_channel
         assert pvps_grid_meta.get("zoneType") == "grade-pvps"
         assert pvps_grid_meta.get("widgetType") == "campo"
         assert pvps_grid_meta.get("widgetQtClass") == "QLineEdits"
