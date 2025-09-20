@@ -22,6 +22,8 @@
 # ---------
 # 2025-09-21 11:20 — v3.108 — Inserida célula reservada B1.A1.A.2 e
 #    realinhados os separadores auxiliares para corresponder à nomenclatura.
+# 2025-09-21 14:45 — v3.109 — Família/Sub-família e combos passam para
+#    B1.A1.A.2.*, mantendo B1.A1.A.3 como placeholder reservado.
 # 2025-09-21 10:30 — v3.107 — Slot reservado removido; combos de família
 #    reposicionados para B1.A1.A.B com grelha horizontal partilhada.
 # 2025-09-08 16:06 — v3.64 — Alinhamento de nomenclatura na secção de PVPs (C1)
@@ -74,7 +76,7 @@
 #    normal e alinhamentos ajustados para legibilidade sem sobrescritas
 #    agressivas de estilo.
 # 2025-09-18 23:41 — v3.100 — Família/Sub-família e combos extraídos de
-#    B1.A1.A.3.C para o novo bloco [B2] com raiz B2.C1; alinhamento de tags
+#    B1.A1.A.2.C para o novo bloco [B2] com raiz B2.C1; alinhamento de tags
 #    atualizado nas verificações automáticas.
 # 2025-09-19 21:45 — v3.102 — Nomenclatura do bloco auxiliar B1.A1 alinhada
 #    com zonas canónicas e aliases partilhados.
@@ -797,10 +799,10 @@ class FTApp(QWidget):
         )
         (
             self.zone_general_aux_identification_slot,
-            self.zone_general_aux_secondary_slot,
             self.zone_general_aux_family_slot,
+            self.zone_general_aux_secondary_slot,
             self.zone_general_aux_prices_slot,
-        ) = self.zone_general_aux_stack.split_v((1, 0, 1, 1))
+        ) = self.zone_general_aux_stack.split_v((1, 1, 0, 1))
         self.zone_general_aux_preview_image_slot = Zone(
             "B1.A1.E.1",
             self.zone_general_aux_preview_panel,
@@ -815,8 +817,8 @@ class FTApp(QWidget):
         )
         for zone in (
             self.zone_general_aux_identification_slot,
-            self.zone_general_aux_secondary_slot,
             self.zone_general_aux_family_slot,
+            self.zone_general_aux_secondary_slot,
             self.zone_general_aux_prices_slot,
         ):
             zone.ly.setContentsMargins(0, 0, 0, 0)
@@ -825,7 +827,6 @@ class FTApp(QWidget):
                 QSizePolicy.Expanding,
                 current_policy.verticalPolicy(),
             )
-        self.zone_general_aux_secondary_slot.hide()
         for zone in (
             self.zone_general_aux_preview_image_slot,
         ):
@@ -937,7 +938,7 @@ class FTApp(QWidget):
         self.zone_general_aux_family_slot.add(family_row_container, 0)
 
         family_labels_zone = Zone(
-            "B1.A1.A.3.A",
+            "B1.A1.A.2.A",
             family_row_container,
             flow="v",
             margins=family_row_margin_value,
@@ -947,7 +948,7 @@ class FTApp(QWidget):
             base_style_label=self.zone_general_aux_family_slot.base_style_label,
         )
         family_values_zone = Zone(
-            "B1.A1.A.3.B",
+            "B1.A1.A.2.B",
             family_row_container,
             flow="v",
             margins=family_row_margin_value,
@@ -1022,9 +1023,9 @@ class FTApp(QWidget):
 
         self._refresh_family_label_column_widths()
 
-        # --- Informação adicional (B1.A1.A.3.C) ---
+        # --- Informação adicional (B1.A1.A.2.C) ---
         info_zone = Zone(
-            "B1.A1.A.3.C",
+            "B1.A1.A.2.C",
             self.zone_general_aux_family_slot,
             flow="v",
             margins=family_row_margin_value,
@@ -1075,7 +1076,7 @@ class FTApp(QWidget):
         info_legend_zone._labels.append(info_label)
         info_zone._labels.append(info_label)
 
-        # --- Combos (B1.A1.A.3) ---
+        # --- Combos (B1.A1.A.2) ---
         combo_container = QWidget(info_field_zone)
         combo_container.setSizePolicy(
             QSizePolicy.Expanding,

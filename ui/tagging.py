@@ -25,7 +25,8 @@ _ZONE_TAGS: Mapping[str, str] = {
 
     # Identification (B1.A1.A.1)
     "general_aux_identification_slot": "B1.A1.A.1",
-    "general_aux_secondary_slot": "B1.A1.A.2",
+    "general_aux_family_slot": "B1.A1.A.2",
+    "general_aux_secondary_slot": "B1.A1.A.3",
     "general_ident_labels": "B1.A1.A.1.A",
     "general_ident_label_codigo": "B1.A1.A.1.A.1",
     "general_ident_label_nome": "B1.A1.A.1.A.2",
@@ -33,20 +34,19 @@ _ZONE_TAGS: Mapping[str, str] = {
     "viewer_identification_name": "B1.A1.A.1.B.2",
     "general_name_zone": "B1.A1.A.1.B.2",
 
-    # Família & Combos (B1.A1.A.3)
-    "general_aux_family_slot": "B1.A1.A.3",
-    "family_root": "B1.A1.A.3",
-    "family_section": "B1.A1.A.3",
-    "family_row": "B1.A1.A.3.A",
-    "family_labels_column": "B1.A1.A.3.A",
-    "family_label_familia": "B1.A1.A.3.A.1",
-    "family_label_subfamilia": "B1.A1.A.3.A.2",
-    "family_values_column": "B1.A1.A.3.B",
-    "family_value_familia": "B1.A1.A.3.B.1",
-    "family_value_subfamilia": "B1.A1.A.3.B.2",
-    "general_aux_additional_info_section": "B1.A1.A.3.C",
-    "general_aux_additional_info_legend": "B1.A1.A.3.C.1",
-    "general_aux_additional_info_field": "B1.A1.A.3.C.2",
+    # Família & Combos (B1.A1.A.2)
+    "family_root": "B1.A1.A.2",
+    "family_section": "B1.A1.A.2",
+    "family_row": "B1.A1.A.2.A",
+    "family_labels_column": "B1.A1.A.2.A",
+    "family_label_familia": "B1.A1.A.2.A.1",
+    "family_label_subfamilia": "B1.A1.A.2.A.2",
+    "family_values_column": "B1.A1.A.2.B",
+    "family_value_familia": "B1.A1.A.2.B.1",
+    "family_value_subfamilia": "B1.A1.A.2.B.2",
+    "general_aux_additional_info_section": "B1.A1.A.2.C",
+    "general_aux_additional_info_legend": "B1.A1.A.2.C.1",
+    "general_aux_additional_info_field": "B1.A1.A.2.C.2",
 
     # Prices & preview columns
     "general_aux_prices_slot": "B1.A1.A.4",
