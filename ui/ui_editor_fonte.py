@@ -1298,7 +1298,7 @@ class FTApp(QWidget):
 
             label_zone, field_zone = zone.split_v((1, 4))
             label_zone.apply_metadata(
-                zone_type="combo-legenda",
+                zone_type="linha-legenda",
                 widget_type="legenda",
                 apply_base_style=False,
             )

@@ -233,7 +233,7 @@ def test_classification_overlay_tags_hidden(qapp):
         for label_zone in combo_label_zones:
             assert label_zone.widget_type == "legenda"
             assert label_zone.widget_qt_class == "QLabels"
-            assert label_zone.zone_type == "combo-legenda"
+            assert label_zone.zone_type == "linha-legenda"
         for field_zone in combo_field_zones:
             assert field_zone.widget_type == "lista"
             assert field_zone.widget_qt_class == "QComboBoxes"
