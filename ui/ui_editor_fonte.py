@@ -734,28 +734,51 @@ class FTApp(QWidget):
         )
         self.B1.ly.addWidget(self.zone_general_aux_root, 0)
 
-        self.zone_general_aux_stack = Zone(
-            "B1.A1.A",
-            self.zone_general_aux_root,
+        (
+            self.zone_general_aux_stack,
+            self.zone_general_aux_preview_panel,
+        ) = self.zone_general_aux_root.split_h((8, 4))
+        self.zone_general_aux_stack.ly.setSpacing(2)
+        self.zone_general_aux_preview_panel.ly.setSpacing(2)
+        self.zone_general_aux_primary_column = Zone(
+            "B1.A1.A.A",
+            self.zone_general_aux_stack,
             flow="v",
             margins=4,
             spacing=2,
-            level=self.zone_general_aux_root._level + 1,
+            level=self.zone_general_aux_stack._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
         )
-        self.zone_general_aux_root.ly.addWidget(self.zone_general_aux_stack, 0)
-        (
-            self.zone_general_aux_primary_column,
-            self.zone_general_aux_preview_column,
-        ) = self.zone_general_aux_stack.split_h((3, 1))
+        self.zone_general_aux_primary_column.ly.setContentsMargins(0, 0, 0, 0)
+        self.zone_general_aux_stack.add(self.zone_general_aux_primary_column, 1)
         (
             self.zone_general_aux_identification_slot,
             self.zone_general_aux_family_slot,
         ) = self.zone_general_aux_primary_column.split_v((1, 1))
-        (
-            self.zone_general_aux_preview_image_slot,
-            self.zone_general_aux_combo_slot,
-        ) = self.zone_general_aux_preview_column.split_v((3, 2))
+        self.zone_general_aux_preview_image_slot = Zone(
+            "B1.A1.B.4",
+            self.zone_general_aux_preview_panel,
+            flow="v",
+            margins=4,
+            spacing=2,
+            level=self.zone_general_aux_preview_panel._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+        )
+        self.zone_general_aux_preview_combo_slot = Zone(
+            "B1.A1.B.3",
+            self.zone_general_aux_preview_panel,
+            flow="v",
+            margins=4,
+            spacing=2,
+            level=self.zone_general_aux_preview_panel._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+        )
+        self.zone_general_aux_preview_panel.add(
+            self.zone_general_aux_preview_image_slot, 3
+        )
+        self.zone_general_aux_preview_panel.add(
+            self.zone_general_aux_preview_combo_slot, 2
+        )
         for zone in (
             self.zone_general_aux_identification_slot,
             self.zone_general_aux_family_slot,
@@ -768,7 +791,7 @@ class FTApp(QWidget):
             )
         for zone in (
             self.zone_general_aux_preview_image_slot,
-            self.zone_general_aux_combo_slot,
+            self.zone_general_aux_preview_combo_slot,
         ):
             zone.ly.setContentsMargins(0, 0, 0, 0)
             current_policy = zone.sizePolicy()
@@ -991,7 +1014,7 @@ class FTApp(QWidget):
         self.edCodigo.textChanged.connect(self.headerEdCodigo.setText)
         self.edNome.textChanged.connect(self.headerEdNome.setText)
 
-        # B1.A1.A.B — preview de imagem
+        # B1.A1.B.4 — preview de imagem
         try:
             init_code = self.service.codigo_at(self.cur_index)
         except Exception:
@@ -999,20 +1022,20 @@ class FTApp(QWidget):
         self.image_preview = ImagePreview(init_code, self.service)
         self.zone_general_aux_preview_image_slot.add(self.image_preview, 1)
 
-        combos_section = QWidget(self.zone_general_aux_combo_slot)
-        combos_section.setObjectName("B1.A1.A.B.2")
+        combos_section = QWidget(self.zone_general_aux_preview_combo_slot)
+        combos_section.setObjectName("B1.A1.B.3")
         combos_section.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         combos_section_layout = QHBoxLayout(combos_section)
         combos_section_layout.setContentsMargins(0, 0, 0, 0)
         combos_section_layout.setSpacing(
-            self.zone_general_aux_combo_slot.ly.spacing()
+            self.zone_general_aux_preview_combo_slot.ly.spacing()
         )
-        self.zone_general_aux_combo_slot.add(combos_section, 0)
+        self.zone_general_aux_preview_combo_slot.add(combos_section, 0)
 
         combo_zone_specs = (
-            ("B1.A1.A.B.2.1", "Tipos Artigos", "cbTipos"),
-            ("B1.A1.A.B.2.2", "Validade", "cbValidade"),
-            ("B1.A1.A.B.2.3", "Temperaturas", "cbTemp"),
+            ("B1.A1.B.3.1", "Tipos Artigos", "cbTipos"),
+            ("B1.A1.B.3.2", "Validade", "cbValidade"),
+            ("B1.A1.B.3.3", "Temperaturas", "cbTemp"),
         )
         for tag_prefix, label_text, attr_name in combo_zone_specs:
             column_widget = QWidget(combos_section)
