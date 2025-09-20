@@ -7,7 +7,7 @@ from ui import layout
 from ui.layout import Zone
 from ui.utilities import AlignmentVariant
 from ui.models import build_fichas_tecnicas_model
-from ui.ui_editor_fonte import FTApp
+from ui.ui_editor_fonte import FTApp, ImagePreview
 from domain import FichaTecnica
 from utils.formatting import format_pt_number
 
@@ -256,7 +256,15 @@ def test_general_aux_additional_slots_created(qapp):
             assert zone is None, f"Zone {tag} should have been removed"
 
         preview_zone = ft.findChild(Zone, "B1.A1.E")
-        assert preview_zone is not None, "Expected preview zone B1.A1.E to exist"
+        assert preview_zone is None, "Legacy preview zone B1.A1.E should be removed"
+
+        right_zone = ft.findChild(Zone, "B2.C1.B")
+        assert right_zone is not None, "Expected preview column B2.C1.B to exist"
+
+        preview_widget = right_zone.findChild(ImagePreview)
+        assert preview_widget is not None, "ImagePreview should reside in B2.C1.B"
+        assert preview_widget is ft.image_preview
+        assert right_zone.isAncestorOf(ft.image_preview)
     finally:
         ft.close()
 
@@ -324,6 +332,9 @@ def test_article_sheet_zones_use_two_to_one_ratio(qapp):
             policy = zone.sizePolicy()
             assert policy.horizontalPolicy() == QSizePolicy.Expanding
             assert policy.verticalPolicy() == QSizePolicy.Expanding
+
+        assert right_zone.findChild(ImagePreview) is ft.image_preview
+        assert left_zone.findChild(ImagePreview) is None
     finally:
         ft.close()
 

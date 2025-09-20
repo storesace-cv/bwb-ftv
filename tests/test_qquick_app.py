@@ -203,6 +203,14 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         assert article_sheet_right_meta.get("zoneType") == "coluna-campos"
         assert article_sheet_right_meta.get("widgetType") == "campo"
 
+        general_preview_tag = zone_tag("general_aux_preview")
+        assert general_preview_tag == article_sheet_right_tag
+        general_preview_meta = zones_metadata.get(general_preview_tag)
+        assert general_preview_meta == article_sheet_right_meta
+
+        general_preview_image_tag = zone_tag("general_aux_preview_image")
+        assert general_preview_image_tag == article_sheet_right_tag
+
         article_sheet_left_zone = _find_zone(root, "article_sheet_left")
         assert article_sheet_left_zone is not None
         assert article_sheet_left_zone.property("zoneType") == "coluna-campos"
@@ -210,6 +218,10 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         article_sheet_right_zone = _find_zone(root, "article_sheet_right")
         assert article_sheet_right_zone is not None
         assert article_sheet_right_zone.property("zoneType") == "coluna-campos"
+
+        general_preview_zone = _find_zone(root, "general_aux_preview")
+        assert general_preview_zone is not None
+        assert general_preview_zone is article_sheet_right_zone
 
         pvps_root_tag = zone_tag("pvps_root")
         pvps_root_meta = zones_metadata.get(pvps_root_tag)
