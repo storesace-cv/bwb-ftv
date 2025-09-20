@@ -50,7 +50,11 @@ _DEFAULT_ZONE_BASE_DECLARATIONS = (
 )
 
 # Updated to allow block-prefixed cell identifiers like ``B1.C1``
-_TAG_RE = re.compile(r"^B\d+(?:\.C\d+(?:\.(?:A|B|\d+))*)?$")
+# and the newer family & combos hierarchy identifiers such as ``B1.D1``.
+# The pattern intentionally accepts any future block letters and general
+# ``.<LETTER><digits>`` cell identifiers, followed by ``.LETTER`` or ``.digits``
+# segments.
+_TAG_RE = re.compile(r"^[A-Z]\d+(?:\.[A-Z]\d+)?(?:\.(?:[A-Z]+|\d+))*$")
 
 
 def _escape_object_name(name: str) -> str:
