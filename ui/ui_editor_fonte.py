@@ -742,8 +742,9 @@ class FTApp(QWidget):
         self.zone_general_aux_preview_panel.ly.setSpacing(2)
         (
             self.zone_general_aux_identification_slot,
+            self.zone_general_aux_combo_slot,
             self.zone_general_aux_family_slot,
-        ) = self.zone_general_aux_stack.split_v((1, 1))
+        ) = self.zone_general_aux_stack.split_v((1, 1, 1))
         self.zone_general_aux_preview_image_slot = Zone(
             "B1.A1.B.4",
             self.zone_general_aux_preview_panel,
@@ -753,23 +754,12 @@ class FTApp(QWidget):
             level=self.zone_general_aux_preview_panel._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
         )
-        self.zone_general_aux_preview_combo_slot = Zone(
-            "B1.A1.B.3",
-            self.zone_general_aux_preview_panel,
-            flow="v",
-            margins=4,
-            spacing=2,
-            level=self.zone_general_aux_preview_panel._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-        )
         self.zone_general_aux_preview_panel.add(
-            self.zone_general_aux_preview_image_slot, 3
-        )
-        self.zone_general_aux_preview_panel.add(
-            self.zone_general_aux_preview_combo_slot, 2
+            self.zone_general_aux_preview_image_slot, 1
         )
         for zone in (
             self.zone_general_aux_identification_slot,
+            self.zone_general_aux_combo_slot,
             self.zone_general_aux_family_slot,
         ):
             zone.ly.setContentsMargins(0, 0, 0, 0)
@@ -778,10 +768,7 @@ class FTApp(QWidget):
                 QSizePolicy.Expanding,
                 current_policy.verticalPolicy(),
             )
-        for zone in (
-            self.zone_general_aux_preview_image_slot,
-            self.zone_general_aux_preview_combo_slot,
-        ):
+        for zone in (self.zone_general_aux_preview_image_slot,):
             zone.ly.setContentsMargins(0, 0, 0, 0)
             current_policy = zone.sizePolicy()
             zone.setSizePolicy(
@@ -1026,20 +1013,19 @@ class FTApp(QWidget):
         self.image_preview = ImagePreview(init_code, self.service)
         self.zone_general_aux_preview_image_slot.add(self.image_preview, 1)
 
-        combos_section = QWidget(self.zone_general_aux_preview_combo_slot)
-        combos_section.setObjectName("B1.A1.B.3")
+        combos_section = QWidget(self.zone_general_aux_combo_slot)
         combos_section.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         combos_section_layout = QHBoxLayout(combos_section)
         combos_section_layout.setContentsMargins(0, 0, 0, 0)
         combos_section_layout.setSpacing(
-            self.zone_general_aux_preview_combo_slot.ly.spacing()
+            self.zone_general_aux_combo_slot.ly.spacing()
         )
-        self.zone_general_aux_preview_combo_slot.add(combos_section, 0)
+        self.zone_general_aux_combo_slot.add(combos_section, 0)
 
         combo_zone_specs = (
-            ("B1.A1.B.3.1", "Tipos Artigos", "cbTipos"),
-            ("B1.A1.B.3.2", "Validade", "cbValidade"),
-            ("B1.A1.B.3.3", "Temperaturas", "cbTemp"),
+            ("B1.A1.A.2.1", "Tipos Artigos", "cbTipos"),
+            ("B1.A1.A.2.2", "Validade", "cbValidade"),
+            ("B1.A1.A.2.3", "Temperaturas", "cbTemp"),
         )
         for tag_prefix, label_text, attr_name in combo_zone_specs:
             column_widget = QWidget(combos_section)
@@ -1252,12 +1238,12 @@ class FTApp(QWidget):
         familia_values_zone, subfamilia_values_zone = family_values_zone.split_v((1, 1))
 
         familia_label_zone, subfamilia_label_zone = family_labels_zone.split_v((1, 1))
-        _retag_zone(family_labels_zone, "B1.A1.A.2.A")
-        _retag_zone(family_values_zone, "B1.A1.A.2.B")
-        _retag_zone(familia_label_zone, "B1.A1.A.2.A.1")
-        _retag_zone(subfamilia_label_zone, "B1.A1.A.2.A.2")
-        _retag_zone(familia_values_zone, "B1.A1.A.2.B.1")
-        _retag_zone(subfamilia_values_zone, "B1.A1.A.2.B.2")
+        _retag_zone(family_labels_zone, "B1.A1.A.3.A")
+        _retag_zone(family_values_zone, "B1.A1.A.3.B")
+        _retag_zone(familia_label_zone, "B1.A1.A.3.A.1")
+        _retag_zone(subfamilia_label_zone, "B1.A1.A.3.A.2")
+        _retag_zone(familia_values_zone, "B1.A1.A.3.B.1")
+        _retag_zone(subfamilia_values_zone, "B1.A1.A.3.B.2")
         for zone in (familia_label_zone, subfamilia_label_zone):
             zone_margins = zone.ly.contentsMargins()
             zone.ly.setContentsMargins(
