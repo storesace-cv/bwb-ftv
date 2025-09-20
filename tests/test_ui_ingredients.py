@@ -204,6 +204,7 @@ def test_classification_overlay_tags_hidden(qapp):
             "B1.A1.A.3.B",
             "B1.A1.A.3.B.1",
             "B1.A1.A.3.B.2",
+            "B1.A1.A.4",
             "B1.E1",
             "B1.E1.A",
             "B1.E1.A.B",
