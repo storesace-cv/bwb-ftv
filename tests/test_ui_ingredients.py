@@ -12,7 +12,7 @@ from services.products import ProductService
 from ui import layout
 from ui.layout import Zone
 from ui.utilities import AlignmentVariant
-from ui.tagging import zone_tag
+from ui.tagging import zone_tag, zone_tag_map
 from ui.models import build_fichas_tecnicas_model
 from ui.ui_editor_fonte import FTApp
 from domain import FichaTecnica
@@ -71,6 +71,13 @@ class NameOnlyStubDataStore(StubDataStore):
             {"ComponenteNome": "Sugar"},
             {"ComponenteNome": "Salt"},
         ]
+
+
+_ZONE_TAG_CACHE = dict(zone_tag_map())
+
+
+def _tag_with_fallback(key: str, fallback: str) -> str:
+    return _ZONE_TAG_CACHE.get(key, fallback)
 
 
 def test_load_record_populates_ingredients(qapp):
@@ -216,10 +223,14 @@ def test_classification_overlay_tags_hidden(qapp):
             assert zone._style_lbl.text() == ""
 
         combos_container = ft.findChild(
-            Zone, zone_tag("family_combos_container")
+            Zone, _tag_with_fallback("family_combos_container", "B1.C1.A.2.A.2")
         )
-        combos_wrapper = ft.findChild(Zone, zone_tag("family_combos_wrapper"))
-        combos_section = ft.findChild(Zone, zone_tag("family_combos_section"))
+        combos_wrapper = ft.findChild(
+            Zone, _tag_with_fallback("family_combos_wrapper", "B1.C1.A.2.B")
+        )
+        combos_section = ft.findChild(
+            Zone, _tag_with_fallback("family_combos_section", "B1.C1.A.2.B.A")
+        )
         assert combos_container is not None
         assert combos_wrapper is not None
         assert combos_section is not None
