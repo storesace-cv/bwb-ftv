@@ -434,7 +434,7 @@ def test_apply_bwb_etiqueta_c_normal_aligns_without_theming(qapp):
     assert "linear-gradient" not in zone.base_stylesheet
 
     value_widget = QLabel("valor", zone)
-    label = zone.add_row("Etiqueta", value_widget)
+    label = zone.add_row("Etiqueta-c", value_widget)
 
     assert label.alignment() == Qt.AlignHCenter | Qt.AlignVCenter
     assert label.property("labelAlignmentVariant") == AlignmentVariant.CENTER.value
