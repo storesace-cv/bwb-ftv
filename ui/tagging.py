@@ -16,38 +16,24 @@ _ZONE_TAGS: Mapping[str, str] = {
     # --- Shared header ----------------------------------------------------
     "header_root": "B0.C1",
 
-    # --- Ficha do Artigo / identificação ---------------------------------
+    # --- [B1] Ficha do Artigo -------------------------------------------
+    # Root containers
+    "general_root": "B1.A1",
     "general_aux_root": "B1.A1",
     "general_aux_stack": "B1.A1.A",
     "general_aux_primary": "B1.A1.A",
+
+    # Identification (B1.A1.A.1)
     "general_aux_identification_slot": "B1.A1.A.1",
-    "general_aux_combo_slot": "B1.A1.A.3.C",
-    "general_aux_family_slot": "B1.A1.A.3",
-    "general_aux_prices_slot": "B1.A1.A.4",
-    "general_aux_preview": "B1.A1.E",
-    "general_aux_preview_image": "B1.A1.E.1",
-    "general_aux_combo_section": "B1.A1.A.3.C",
-    "general_aux_combo_col_1": "B1.A1.A.3.C.1",
-    "general_aux_combo_col_2": "B1.A1.A.3.C.2",
-    "general_aux_combo_col_3": "B1.A1.A.3.C.3",
-    "general_aux_reserved_slot_2": "B1.A1.2",
-    "general_aux_reserved_slot_3": "B1.A1.3",
-    "general_aux_reserved_slot_4": "B1.A1.4",
-    "general_aux_reserved_slot_5": "B1.A1.5",
-    "general_root": "B1.A1",
-    "general_name_zone": "B1.A1.A.1.B.2",
     "general_ident_labels": "B1.A1.A.1.A",
     "general_ident_label_codigo": "B1.A1.A.1.A.1",
     "general_ident_label_nome": "B1.A1.A.1.A.2",
-
-    # --- Simplified viewer aliases ---------------------------------------
     "viewer_identification_code": "B1.A1.A.1.B.1",
     "viewer_identification_name": "B1.A1.A.1.B.2",
-    "viewer_technical_state": "B4.C3",
-    "viewer_technical_validity": "B4.C4",
-    "viewer_notes_observations": "B5.C1",
+    "general_name_zone": "B1.A1.A.1.B.2",
 
-    # --- Família & Combos -------------------------------------------------
+    # Família & Combos (B1.A1.A.3)
+    "general_aux_family_slot": "B1.A1.A.3",
     "family_root": "B1.A1.A.3",
     "family_section": "B1.A1.A.3",
     "family_row": "B1.A1.A.3.A",
@@ -57,14 +43,30 @@ _ZONE_TAGS: Mapping[str, str] = {
     "family_values_column": "B1.A1.A.3.B",
     "family_value_familia": "B1.A1.A.3.B.1",
     "family_value_subfamilia": "B1.A1.A.3.B.2",
+    "general_aux_combo_slot": "B1.A1.A.3.C",
+    "general_aux_combo_section": "B1.A1.A.3.C",
+    "general_aux_combo_col_1": "B1.A1.A.3.C.1",
     "family_combo_label_col_1": "B1.A1.A.3.C.1",
     "family_combo_field_col_1": "B1.A1.A.3.C.1",
+    "general_aux_combo_col_2": "B1.A1.A.3.C.2",
     "family_combo_label_col_2": "B1.A1.A.3.C.2",
     "family_combo_field_col_2": "B1.A1.A.3.C.2",
+    "general_aux_combo_col_3": "B1.A1.A.3.C.3",
     "family_combo_label_col_3": "B1.A1.A.3.C.3",
     "family_combo_field_col_3": "B1.A1.A.3.C.3",
 
-    # --- PVPs -------------------------------------------------------------
+    # Prices & preview columns
+    "general_aux_prices_slot": "B1.A1.A.4",
+    "general_aux_preview": "B1.A1.E",
+    "general_aux_preview_image": "B1.A1.E.1",
+
+    # Reserved/auxiliary slots off the root
+    "general_aux_reserved_slot_2": "B1.A1.2",
+    "general_aux_reserved_slot_3": "B1.A1.3",
+    "general_aux_reserved_slot_4": "B1.A1.4",
+
+    # PVPs (nested under reserved slot 5)
+    "general_aux_reserved_slot_5": "B1.A1.5",
     "pvps_root": "B1.A1.5",
     "pvps_grid": "B1.A1.5.1",
     "pvps_col_1": "B1.A1.5.1.1",
@@ -82,6 +84,11 @@ _ZONE_TAGS: Mapping[str, str] = {
     "pvps_col_5": "B1.A1.5.1.5",
     "pvps_col_5_legend": "B1.A1.5.1.5.1",
     "pvps_col_5_field": "B1.A1.5.1.5.2",
+
+    # --- Simplified viewer aliases (other blocks) -----------------------
+    "viewer_technical_state": "B4.C3",
+    "viewer_technical_validity": "B4.C4",
+    "viewer_notes_observations": "B5.C1",
 
     # --- Ficha Técnica ----------------------------------------------------
     "ingredients_root": "B4.C1",
