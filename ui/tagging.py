@@ -58,9 +58,8 @@ _ZONE_TAGS: Mapping[str, str] = {
     "general_aux_reserved_slot_3": "B1.A1.3",
     "general_aux_reserved_slot_4": "B1.A1.4",
 
-    # PVPs (nested under reserved slot 5)
-    "general_aux_reserved_slot_5": "B1.A1.5",
-    "pvps_root": "B1.A1.5",
+    # PVPs (nested under prices slot)
+    "pvps_root": "B1.A1.A.4",
     "pvps_grid": "B1.A1.5.1",
     "pvps_col_1": "B1.A1.5.1.1",
     "pvps_col_1_legend": "B1.A1.5.1.1.1",

@@ -211,7 +211,6 @@ def test_classification_overlay_tags_hidden(qapp):
             "B1.A1.A.2.C.2",
             "B1.A1.A.4",
             "B1.A1.4",
-            "B1.A1.5",
             "B1.A1.5.1",
         ]
 
@@ -275,9 +274,12 @@ def test_general_aux_reserved_slots_exist_and_hidden(qapp):
         assert zone.ly.count() == 0, "Zone B1.A1.4 should no longer contain widgets"
 
         zone = ft.findChild(Zone, "B1.A1.5")
-        assert zone is not None, "Zone B1.A1.5 should exist"
-        assert not zone.isHidden(), "Zone B1.A1.5 should be visible"
-        assert zone.ly.count() > 0, "Zone B1.A1.5 should contain widgets"
+        assert zone is None, "Zone B1.A1.5 should have been removed"
+
+        prices_zone = ft.findChild(Zone, "B1.A1.A.4")
+        assert prices_zone is not None, "Zone B1.A1.A.4 should exist"
+        assert not prices_zone.isHidden(), "Zone B1.A1.A.4 should be visible"
+        assert prices_zone.ly.count() > 0, "Zone B1.A1.A.4 should contain widgets"
     finally:
         ft.close()
 

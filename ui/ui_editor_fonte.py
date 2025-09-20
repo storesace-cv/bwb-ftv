@@ -794,9 +794,6 @@ class FTApp(QWidget):
         self.zone_general_aux_reserved_slot_4 = _create_general_aux_reserved_slot(
             "B1.A1.4"
         )
-        self.zone_general_aux_reserved_slot_5 = _create_general_aux_reserved_slot(
-            "B1.A1.5"
-        )
         (
             self.zone_general_aux_identification_slot,
             self.zone_general_aux_family_slot,
@@ -1128,8 +1125,8 @@ class FTApp(QWidget):
         self.lbInformacaoAdicional.setFont(self.edNome.font())
         info_field_zone.ly.addWidget(self.lbInformacaoAdicional, 0, Qt.AlignVCenter)
 
-        # --- PVPs (B1.A1.5) ---
-        pvps_section = self.zone_general_aux_reserved_slot_5
+        # --- PVPs (B1.A1.A.4) ---
+        pvps_section = self.zone_general_aux_prices_slot
         pvps_section.show()
         pvps_section.ly.setContentsMargins(
             family_row_margin_value,
