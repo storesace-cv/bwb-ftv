@@ -1209,6 +1209,37 @@ class FTApp(QWidget):
             field_zone.ly.addWidget(val, 0, Qt.AlignLeft | Qt.AlignVCenter)
             self.lbPVPs.append(val)
 
+        # ---------------- B2 — Ficha de Artigo (B2.C1) ----------------
+        self.C2 = Zone(
+            "B2.C1",
+            self,
+            flow="v",
+            level=0,
+            show_overlays=layout.DEV_OVERLAYS,
+        )
+        self.C2.apply_metadata(zone_type="secao-ficha-artigo", widget_type="campo")
+        self.C2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.C2.ly.setContentsMargins(0, 0, 0, 0)
+
+        (
+            self.zone_article_sheet_left,
+            self.zone_article_sheet_right,
+        ) = self.C2.split_h((2, 1))
+        for zone in (self.zone_article_sheet_left, self.zone_article_sheet_right):
+            zone.ly.setContentsMargins(0, 0, 0, 0)
+            zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.zone_article_sheet_left.apply_metadata(
+            zone_type="coluna-campos", widget_type="campo"
+        )
+        self.zone_article_sheet_right.apply_metadata(
+            zone_type="coluna-campos", widget_type="campo"
+        )
+
+        page_ly.addWidget(
+            self._section_box("[B2] - FICHA DE ARTIGO", self.C2),
+            0,
+        )
+
         # ---------------- B5 — FOOD COST (B5.C1) ----------------
         self.C5 = Zone(
             "B5.C1",
