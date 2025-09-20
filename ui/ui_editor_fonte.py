@@ -894,7 +894,7 @@ class FTApp(QWidget):
         C1A2_familias_row = Zone(
             "B1.C1.A.2.A.1",
             C1A2_familias,
-            flow="h",
+            flow="v",
             margins=C1A2_familias_row_margin_value,
             spacing=C1A2_familias_row_spacing_value,
             level=C1A2_familias._level + 1,
