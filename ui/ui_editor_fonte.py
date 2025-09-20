@@ -873,7 +873,6 @@ class FTApp(QWidget):
         )
         for zone in (label_top, label_bottom):
             zone.set_label_alignment(AlignmentVariant.RIGHT)
-            zone.ly.setContentsMargins(0, 0, 0, 0)
         field_top, field_bottom = field_col.split_v((1, 1))
         field_top.ly.setContentsMargins(0, 0, 0, 0)
         field_bottom.ly.setContentsMargins(0, 0, 0, 0)
@@ -1124,7 +1123,6 @@ class FTApp(QWidget):
                 widget_type="etiqueta-c",
                 apply_base_style=False,
             )
-            legend_zone.ly.setContentsMargins(0, 0, 0, 0)
             field_zone.apply_metadata(
                 zone_type="linha-campo",
                 widget_type="campo",

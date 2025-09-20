@@ -463,6 +463,8 @@ class Zone(QWidget):
             self.set_widget_qt_class(
                 self._resolve_widget_qt_class(effective_widget_type)
             )
+            if effective_widget_type == "etiqueta-c":
+                apply_bwb_etiqueta_c_normal(self)
         effective_zone_type = zone_type if zone_type is not None else self.zone_type
         self._configure_legend_label_policy(
             effective_zone_type == "linha-legenda"
