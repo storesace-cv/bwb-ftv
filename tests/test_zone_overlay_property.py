@@ -5,7 +5,8 @@ pytest.importorskip("PyQt5", reason="PyQt5 requires libGL.so.1")
 pytest.importorskip("PyQt5.QtCore", reason="PyQt5.QtCore requires libGL.so.1")
 pytest.importorskip("PyQt5.QtWidgets", reason="PyQt5.QtWidgets requires libGL.so.1")
 
-from PyQt5.QtCore import Qt, qInstallMessageHandler
+from PyQt5.QtCore import Qt, QPointF, QEvent, qInstallMessageHandler
+from PyQt5.QtGui import QMouseEvent
 from PyQt5.QtWidgets import QLabel, QLineEdit
 
 from domain import Product
@@ -81,20 +82,54 @@ def _widget_classes(widget: QLabel) -> list[str]:
     return [str(value)]
 
 
-def _compose_style_label(
+def _expected_metadata_lines(
     zone: layout.Zone,
-    style_label: str | None,
-) -> str:
-    return " | ".join(
-        segment
-        for segment in (
-            zone.zone_type,
-            zone.widget_qt_class,
-            zone.widget_type,
-            style_label,
-        )
-        if segment
+    *,
+    zone_type: str | None = None,
+    widget_type: str | None = None,
+    widget_qt_class: str | None = None,
+    base_style_label: str | None = None,
+    style_dev_info: str | None = None,
+) -> list[str]:
+    snapshot = zone._metadata_snapshot
+
+    def _resolve(attr: str, key: str, override: str | None) -> str | None:
+        if override is not None:
+            return override
+        value = getattr(zone, attr)
+        if value:
+            return value
+        return snapshot.get(key)
+
+    lines = [f"tag: {zone.tag}"]
+
+    resolved_zone_type = _resolve("_zone_type", "zone_type", zone_type)
+    if resolved_zone_type:
+        lines.append(f"zoneType: {resolved_zone_type}")
+
+    resolved_widget_type = _resolve("_widget_type", "widget_type", widget_type)
+    if resolved_widget_type:
+        lines.append(f"widgetType: {resolved_widget_type}")
+
+    resolved_widget_qt_class = _resolve(
+        "_widget_qt_class", "widget_qt_class", widget_qt_class
     )
+    if resolved_widget_qt_class:
+        lines.append(f"widgetQtClass: {resolved_widget_qt_class}")
+
+    resolved_base_style_label = _resolve(
+        "_base_style_label", "base_style_label", base_style_label
+    )
+    if resolved_base_style_label:
+        lines.append(f"baseStyleLabel: {resolved_base_style_label}")
+
+    resolved_dev_info = _resolve(
+        "_style_dev_info", "style_dev_info", style_dev_info
+    )
+    if resolved_dev_info:
+        lines.append(f"style_dev_info: {resolved_dev_info}")
+
+    return lines
 
 
 def test_apply_label_style_center_variant_uses_center_alignment(qapp):
@@ -418,14 +453,15 @@ def test_zone_style_label_tooltip_tracks_dev_info(qapp, overlays_enabled):
 
     zone.apply_overlays(True)
 
-    expected_text = _compose_style_label(zone, None)
-    expected_tooltip = layout.Zone._build_label_tooltip(expected_text, dev_info)
+    expected_lines = _expected_metadata_lines(zone, style_dev_info=dev_info)
 
-    assert zone._style_lbl.text() == expected_text
-    assert zone._style_lbl.toolTip() == expected_tooltip
+    assert zone._style_lbl.isHidden()
+    assert zone._metadata_tooltip_text.splitlines() == expected_lines
+    assert expected_lines[-1] == f"style_dev_info: {dev_info}"
 
     zone.apply_overlays(False)
 
+    assert zone._style_lbl.isHidden()
     assert zone._style_lbl.toolTip() == ""
 
 
@@ -434,16 +470,18 @@ def test_configure_zone_sets_dev_info_tooltip(qapp, overlays_enabled):
 
     _configure_zone(zone, zone_type="secao", widget_type="campo")
 
-    expected_text = _compose_style_label(zone, None)
-    expected_tooltip = layout.Zone._build_label_tooltip(
-        expected_text, zone.objectName()
+    zone.apply_overlays(True)
+
+    expected_lines = _expected_metadata_lines(
+        zone, style_dev_info=zone.objectName()
     )
 
-    assert zone._style_lbl.text() == expected_text
-    assert zone._style_lbl.toolTip() == expected_tooltip
+    assert zone._style_lbl.isHidden()
+    assert zone._metadata_tooltip_text.splitlines() == expected_lines
 
     zone.apply_overlays(False)
 
+    assert zone._style_lbl.isHidden()
     assert zone._style_lbl.toolTip() == ""
 
 
@@ -469,9 +507,11 @@ def test_zone_overlay_shows_style_label_when_base_stylesheet_set(
 
     zone.apply_overlays(True)
 
-    assert not zone._style_lbl.isHidden()
-    expected = _compose_style_label(zone, style_label)
-    assert zone._style_lbl.text() == expected
+    expected_lines = _expected_metadata_lines(
+        zone, base_style_label=style_label, widget_type=widget_type
+    )
+    assert zone._style_lbl.isHidden()
+    assert zone._metadata_tooltip_text.splitlines() == expected_lines
 
 
 def test_zone_overlay_shows_widget_type_when_other_metadata_missing(
@@ -486,8 +526,9 @@ def test_zone_overlay_shows_widget_type_when_other_metadata_missing(
 
     zone.apply_overlays(True)
 
-    assert not zone._style_lbl.isHidden()
-    assert zone._style_lbl.text() == widget_type
+    expected_lines = _expected_metadata_lines(zone, widget_type=widget_type)
+    assert zone._style_lbl.isHidden()
+    assert zone._metadata_tooltip_text.splitlines() == expected_lines
 
 
 def test_zone_overlay_hides_style_label_when_disabled(qapp, overlays_enabled):
@@ -497,7 +538,7 @@ def test_zone_overlay_hides_style_label_when_disabled(qapp, overlays_enabled):
     )
 
     zone.apply_overlays(True)
-    assert not zone._style_lbl.isHidden()
+    assert zone._style_lbl.isHidden()
 
     zone.apply_overlays(False)
 
@@ -515,20 +556,20 @@ def test_zone_set_base_stylesheet_updates_style_label_when_overlay_active(
         widget_type=widget_type,
     )
 
-    if widget_type is None:
-        assert zone._style_lbl.isHidden()
-    else:
-        assert not zone._style_lbl.isHidden()
-        assert zone._style_lbl.text() == widget_type
+    initial_expected = _expected_metadata_lines(zone)
+    assert zone._style_lbl.isHidden()
+    assert zone._metadata_tooltip_text.splitlines() == initial_expected
 
     style_label = "estilo-base"
     zone.set_zone_stylesheet(
         _base_stylesheet(zone, BASE_STYLE_DECLARATIONS), label=style_label
     )
 
-    assert not zone._style_lbl.isHidden()
-    expected = _compose_style_label(zone, style_label)
-    assert zone._style_lbl.text() == expected
+    updated_expected = _expected_metadata_lines(
+        zone, base_style_label=style_label
+    )
+    assert zone._style_lbl.isHidden()
+    assert zone._metadata_tooltip_text.splitlines() == updated_expected
 
 
 @pytest.mark.parametrize("widget_type", [None, "campo"])
@@ -550,9 +591,11 @@ def test_zone_init_base_stylesheet_shows_style_label_when_overlays_active(
     assert zone.property("overlays") == "on"
     assert zone.base_stylesheet == base_stylesheet
     assert zone.styleSheet() == _overlay_stylesheet(zone)
-    assert not zone._style_lbl.isHidden()
-    expected = _compose_style_label(zone, style_label)
-    assert zone._style_lbl.text() == expected
+    expected_lines = _expected_metadata_lines(
+        zone, base_style_label=style_label
+    )
+    assert zone._style_lbl.isHidden()
+    assert zone._metadata_tooltip_text.splitlines() == expected_lines
 
 
 def test_zone_style_label_without_widget_type_stays_on_theme(qapp, overlays_enabled):
@@ -566,8 +609,11 @@ def test_zone_style_label_without_widget_type_stays_on_theme(qapp, overlays_enab
         base_style_label=style_label,
     )
 
-    expected = _compose_style_label(zone, style_label)
-    assert zone._style_lbl.text() == expected
+    expected_lines = _expected_metadata_lines(
+        zone, base_style_label=style_label
+    )
+    assert zone._style_lbl.isHidden()
+    assert zone._metadata_tooltip_text.splitlines() == expected_lines
 
 
 def test_zone_set_widget_type_updates_style_label(qapp, overlays_enabled):
@@ -583,8 +629,11 @@ def test_zone_set_widget_type_updates_style_label(qapp, overlays_enabled):
 
     zone.set_widget_type("campo")
 
-    expected = _compose_style_label(zone, style_label)
-    assert zone._style_lbl.text() == expected
+    expected_lines = _expected_metadata_lines(
+        zone, base_style_label=style_label, widget_type="campo"
+    )
+    assert zone._style_lbl.isHidden()
+    assert zone._metadata_tooltip_text.splitlines() == expected_lines
 
 
 def test_zone_style_label_includes_all_segments(qapp, overlays_enabled):
@@ -601,9 +650,16 @@ def test_zone_style_label_includes_all_segments(qapp, overlays_enabled):
     zone.set_zone_type("secao-teste")
     zone.set_widget_qt_class("QLineEdits")
 
-    expected = _compose_style_label(zone, "estilo-base")
-    assert expected == "secao-teste | QLineEdits | campo | estilo-base"
-    assert zone._style_lbl.text() == expected
+    expected_lines = _expected_metadata_lines(zone)
+    assert expected_lines == [
+        f"tag: {zone.tag}",
+        "zoneType: secao-teste",
+        "widgetType: campo",
+        "widgetQtClass: QLineEdits",
+        "baseStyleLabel: estilo-base",
+    ]
+    assert zone._style_lbl.isHidden()
+    assert zone._metadata_tooltip_text.splitlines() == expected_lines
 
 
 def test_zone_style_label_skips_missing_segments(qapp, overlays_enabled):
@@ -618,15 +674,60 @@ def test_zone_style_label_skips_missing_segments(qapp, overlays_enabled):
     )
 
     zone.set_zone_type("secao-teste")
-    expected = _compose_style_label(zone, style_label)
-    assert expected == "secao-teste | estilo-base"
-    assert zone._style_lbl.text() == expected
+    expected_with_zone_type = _expected_metadata_lines(
+        zone, base_style_label=style_label
+    )
+    assert expected_with_zone_type == [
+        f"tag: {zone.tag}",
+        "zoneType: secao-teste",
+        "baseStyleLabel: estilo-base",
+    ]
+    assert zone._style_lbl.isHidden()
+    assert zone._metadata_tooltip_text.splitlines() == expected_with_zone_type
 
     zone.set_zone_type(None)
     zone.set_widget_type("campo")
-    expected = _compose_style_label(zone, style_label)
-    assert expected == "campo | estilo-base"
-    assert zone._style_lbl.text() == expected
+    expected_with_widget_type = _expected_metadata_lines(
+        zone, base_style_label=style_label, widget_type="campo"
+    )
+    assert expected_with_widget_type == [
+        f"tag: {zone.tag}",
+        "widgetType: campo",
+        "baseStyleLabel: estilo-base",
+    ]
+    assert zone._metadata_tooltip_text.splitlines() == expected_with_widget_type
+
+
+def test_zone_metadata_click_filter_triggers_tooltip(
+    qapp, overlays_enabled, monkeypatch
+):
+    zone = layout.Zone(_block_prefix("general_root"), show_overlays=False)
+    zone.set_zone_type("secao")
+    zone.set_widget_type("campo")
+
+    zone.apply_overlays(True)
+
+    calls = []
+
+    def fake_show_text(pos, text, widget=None):
+        calls.append((pos, text, widget))
+
+    monkeypatch.setattr(layout.QToolTip, "showText", fake_show_text)
+
+    event = QMouseEvent(
+        QEvent.MouseButtonPress,
+        QPointF(1.0, 1.0),
+        Qt.LeftButton,
+        Qt.LeftButton,
+        Qt.NoModifier,
+    )
+
+    qapp.sendEvent(zone, event)
+
+    assert calls
+    _, text, widget = calls[-1]
+    assert text == zone._metadata_tooltip_text
+    assert widget is zone
 
 
 def test_zone_split_propagates_metadata(qapp):

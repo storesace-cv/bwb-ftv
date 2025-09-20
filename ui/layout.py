@@ -10,7 +10,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Sequence
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import QEvent, QObject, Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QHBoxLayout,
@@ -19,6 +19,7 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
     QVBoxLayout,
     QWidget,
+    QToolTip,
 )
 
 from .utilities import (
@@ -110,6 +111,32 @@ def _clear_overlay_class(label: QLabel) -> None:
         label.setProperty("class", None)
 
 
+class _OverlayMetadataClickFilter(QObject):
+    """Show the zone metadata tooltip when a target widget is clicked."""
+
+    def __init__(self, zone: "Zone") -> None:
+        super().__init__(zone)
+        self._zone = zone
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:  # type: ignore[override]
+        if (
+            event.type() == QEvent.MouseButtonPress
+            and self._zone._overlay_active
+            and self._zone._metadata_tooltip_text
+        ):
+            widget = watched if isinstance(watched, QWidget) else None
+            if widget is not None:
+                pos = getattr(event, "pos", lambda: None)()
+                if pos is not None:
+                    pos_point = pos.toPoint() if hasattr(pos, "toPoint") else pos
+                    QToolTip.showText(
+                        widget.mapToGlobal(pos_point),
+                        self._zone._metadata_tooltip_text,
+                        widget,
+                    )
+        return QObject.eventFilter(self, watched, event)
+
+
 @dataclass(slots=True)
 class ZoneMetadata:
     """Serializable snapshot of a :class:`Zone` for Qt Quick bindings."""
@@ -187,6 +214,10 @@ class Zone(QWidget):
         self._suspend_base_tracking = False
         self._next_base_style_label: Any = _KEEP_LABEL
         self._metadata_snapshot: dict[str, str] = {}
+        self._metadata_tooltip_text: str = ""
+        self._metadata_click_filter = _OverlayMetadataClickFilter(self)
+        self._overlay_metadata_targets: set[QWidget] = set()
+        self._rows: list[tuple[QWidget, QLabel, QWidget]] = []
         self._update_metadata_snapshot(
             zone_type=self._zone_type,
             widget_type=self._widget_type,
@@ -289,8 +320,7 @@ class Zone(QWidget):
 
     def set_widget_type(self, widget_type: str | None) -> None:
         self._widget_type = widget_type or None
-        if self._widget_type:
-            self._update_metadata_snapshot(widget_type=self._widget_type)
+        self._update_metadata_snapshot(widget_type=self._widget_type)
         self._sync_style_label()
 
     @property
@@ -319,12 +349,12 @@ class Zone(QWidget):
 
     def set_zone_type(self, zone_type: str | None) -> None:
         self._zone_type = zone_type or None
-        if self._zone_type:
-            self._update_metadata_snapshot(zone_type=self._zone_type)
+        self._update_metadata_snapshot(zone_type=self._zone_type)
         self._sync_style_label()
 
     def set_style_dev_info(self, info: str | None) -> None:
         self._style_dev_info = info or None
+        self._update_metadata_snapshot(style_dev_info=self._style_dev_info)
         self._sync_style_label()
 
     @property
@@ -333,8 +363,7 @@ class Zone(QWidget):
 
     def set_widget_qt_class(self, widget_qt_class: str | None) -> None:
         self._widget_qt_class = widget_qt_class or None
-        if self._widget_qt_class:
-            self._update_metadata_snapshot(widget_qt_class=self._widget_qt_class)
+        self._update_metadata_snapshot(widget_qt_class=self._widget_qt_class)
         self._sync_style_label()
 
     @classmethod
@@ -427,10 +456,9 @@ class Zone(QWidget):
             self._base_stylesheet = stylesheet
             if label is not _KEEP_LABEL:
                 self._base_style_label = label
-                if self._base_style_label:
-                    self._update_metadata_snapshot(
-                        base_style_label=self._base_style_label
-                    )
+                self._update_metadata_snapshot(
+                    base_style_label=self._base_style_label
+                )
             self._sync_style_label()
             return
 
@@ -442,16 +470,6 @@ class Zone(QWidget):
         finally:
             self._next_base_style_label = previous_next_label
 
-    def _style_label_text(self) -> str | None:
-        segments = [
-            self._zone_type,
-            self._widget_qt_class,
-            self._widget_type,
-            self._base_style_label,
-        ]
-        filtered = [segment for segment in segments if segment]
-        return " | ".join(filtered) if filtered else None
-
     def _update_metadata_snapshot(
         self,
         *,
@@ -459,35 +477,91 @@ class Zone(QWidget):
         widget_type: str | None = None,
         widget_qt_class: str | None = None,
         base_style_label: str | None = None,
+        style_dev_info: str | None = None,
     ) -> None:
-        if zone_type:
-            self._metadata_snapshot["zone_type"] = zone_type
-        if widget_type:
-            self._metadata_snapshot["widget_type"] = widget_type
-        if widget_qt_class:
-            self._metadata_snapshot["widget_qt_class"] = widget_qt_class
-        if base_style_label:
-            self._metadata_snapshot["base_style_label"] = base_style_label
+        mapping = (
+            ("zone_type", zone_type),
+            ("widget_type", widget_type),
+            ("widget_qt_class", widget_qt_class),
+            ("base_style_label", base_style_label),
+            ("style_dev_info", style_dev_info),
+        )
+        for key, value in mapping:
+            if value is None or value == "":
+                self._metadata_snapshot.pop(key, None)
+            elif value:
+                self._metadata_snapshot[key] = value
+        self._refresh_metadata_tooltip()
+
+    def _refresh_metadata_tooltip(self) -> None:
+        snapshot = self._metadata_snapshot
+
+        def _resolve(attr_name: str, key: str) -> str | None:
+            value = getattr(self, attr_name)
+            if value:
+                return value
+            return snapshot.get(key)
+
+        entries: list[str] = []
+
+        def _append(label: str, value: str | None) -> None:
+            if value:
+                entries.append(f"{label}: {value}")
+
+        _append("tag", self.tag)
+        _append("zoneType", _resolve("_zone_type", "zone_type"))
+        _append("widgetType", _resolve("_widget_type", "widget_type"))
+        _append("widgetQtClass", _resolve("_widget_qt_class", "widget_qt_class"))
+        _append(
+            "baseStyleLabel",
+            _resolve("_base_style_label", "base_style_label"),
+        )
+        _append(
+            "style_dev_info",
+            _resolve("_style_dev_info", "style_dev_info"),
+        )
+        self._metadata_tooltip_text = "\n".join(entries)
 
     def _sync_style_label(self) -> None:
-        if self._overlay_active:
-            text = self._style_label_text()
-            tooltip = self._build_label_tooltip(text, self._style_dev_info)
-            if text:
-                self._style_lbl.setText(text)
-                self._style_lbl.show()
-            else:
-                self._style_lbl.clear()
-                self._style_lbl.hide()
-            if text or self._style_dev_info:
-                self._style_lbl.setToolTip(tooltip)
-            else:
-                self._style_lbl.setToolTip("")
-        else:
-            self._style_lbl.clear()
-            self._style_lbl.hide()
-            self._style_lbl.setToolTip("")
+        self._style_lbl.clear()
+        self._style_lbl.hide()
+        self._style_lbl.setToolTip("")
         refresh_style(self._style_lbl)
+        self._refresh_metadata_tooltip()
+
+    def _iter_metadata_tooltip_widgets(self):
+        yield self
+        yield self._tag_container
+        yield self._tag_lbl
+        yield self._style_lbl
+        for row, label, value_widget in self._rows:
+            yield row
+            yield label
+            yield value_widget
+
+    def _register_overlay_metadata_target(self, widget: QWidget | None) -> None:
+        if widget is None or not isinstance(widget, QWidget):
+            return
+        if widget in self._overlay_metadata_targets:
+            return
+        widget.installEventFilter(self._metadata_click_filter)
+        self._overlay_metadata_targets.add(widget)
+        widget.destroyed.connect(  # type: ignore[union-attr]
+            lambda _=None, w=widget: self._overlay_metadata_targets.discard(w)
+        )
+
+    def _install_metadata_click_filters(self) -> None:
+        for widget in self._iter_metadata_tooltip_widgets():
+            self._register_overlay_metadata_target(widget)
+
+    def _remove_metadata_click_filters(self) -> None:
+        for widget in list(self._overlay_metadata_targets):
+            try:
+                widget.removeEventFilter(self._metadata_click_filter)
+            except RuntimeError:
+                # Widget may have been deleted while overlays were active.
+                pass
+        self._overlay_metadata_targets.clear()
 
     def _label_alignment_flag(self) -> Qt.Alignment:
         if self._label_alignment is AlignmentVariant.RIGHT:
@@ -526,6 +600,10 @@ class Zone(QWidget):
         active = bool(on) and DEV_OVERLAYS
         self._overlay_active = active
         self.setProperty("overlays", "on" if active else "off")
+        if active:
+            self._install_metadata_click_filters()
+        else:
+            self._remove_metadata_click_filters()
         name = self.objectName()
         selector = f"#{_escape_object_name(name)}" if name else ""
         header_present = self.ly.indexOf(self._tag_container) != -1
@@ -559,7 +637,6 @@ class Zone(QWidget):
                 self.ly.removeWidget(self._tag_container)
             self._tag_container.hide()
             self._tag_lbl.hide()
-            self._style_lbl.setToolTip("")
         self._sync_style_label()
         for lbl in self._labels:
             user_label = lbl.property("userLabel")
@@ -606,10 +683,9 @@ class Zone(QWidget):
         if self._next_base_style_label is not _KEEP_LABEL:
             self._base_style_label = self._next_base_style_label
         self._next_base_style_label = _KEEP_LABEL
-        if self._base_style_label:
-            self._update_metadata_snapshot(
-                base_style_label=self._base_style_label
-            )
+        self._update_metadata_snapshot(
+            base_style_label=self._base_style_label
+        )
         self._sync_style_label()
         refresh_style(self)
 
@@ -676,11 +752,16 @@ class Zone(QWidget):
         grid.addWidget(value_widget, 0, 1, alignment=Qt.AlignLeft | Qt.AlignVCenter)
         self.ly.addWidget(row, 0)
         self._labels.append(lbl)
+        self._rows.append((row, lbl, value_widget))
         install_tooltip_copy_handler(lbl)
         if self._overlay_active and overlay_text is not None:
             lbl.setToolTip(self._build_label_tooltip(label_text, overlay_text))
         else:
             lbl.setToolTip("")
+        if self._overlay_active:
+            self._register_overlay_metadata_target(row)
+            self._register_overlay_metadata_target(lbl)
+            self._register_overlay_metadata_target(value_widget)
         self.sync_label_widths()
         return lbl
 
