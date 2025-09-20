@@ -7,7 +7,7 @@
 #      [B4] FICHA TÉCNICA, [B5] FOOD COST,
 #      [B6] PREPARAÇÃO, [B7] NUTRIÇÃO / ALERGÉNIOS.
 #      • PVPs passaram do bloco [B3] para a mesma grelha de Família/
-#        Sub-família e mantêm etiquetas por coluna.
+#        Sub-família e mantêm etiquetas-c por coluna.
 #    - Célula raiz do bloco: Bn.C1 (ex.: B1.C1, B4.C1, B5.C1).
 #    - Divisão horizontal: sufixos .A (esq.) e .B (dir.).
 #    - Divisão vertical: sufixos .1 (topo) e .2 (base).
@@ -38,13 +38,13 @@
 #    tocar no layout base.
 # 2025-09-08 19:45 — v3.88 — CONSOLIDAÇÃO FINAL:
 #    • C1.A.2.A dividido (topo: Família/Sub-família; base: PVP1..PVP5 com
-#      etiqueta por cima e valor por baixo; leitura PVP1..2 de
+#      etiqueta-c por cima e valor por baixo; leitura PVP1..2 de
 #      precos_taxas).
 #    • C1.A.2.B: combos ligados às tabelas auxiliares (ativo=1,
 #      ordenadas) com pré-seleção por FK do produto.
 #    • B2: grelha 50/10/10/14/16 + Código oculto; cálculo Total por linha
 #      quando necessário.
-#    • Secção de PVPs alinhada por coluna com etiqueta por cima e
+#    • Secção de PVPs alinhada por coluna com etiqueta-c por cima e
 #      valor por baixo; leitura PVP1..2 de precos_taxas.
 #    • B6: editor de Preparação com toolbar simples; B7: Alergénios 2×N
 #      com persistência N–N.
