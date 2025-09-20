@@ -332,3 +332,18 @@ def test_qquick_engine_uses_sample_product_when_missing(qapp):
         assert product["code"] == build_sample_product()["code"]
     finally:
         engine.deleteLater()
+
+
+def test_zone_metadata_snapshot_uses_single_general_aux_stack(qapp):
+    from ui import qquick_app
+
+    tag = zone_tag("article_sheet_left_slot_1")
+
+    qquick_app._ZONE_METADATA_CACHE = None
+    snapshot = qquick_app._collect_zone_metadata_snapshot()
+
+    assert tag in snapshot
+    assert snapshot[tag]["zoneType"] == "coluna-campos"
+    assert snapshot[tag]["widgetType"] == "campo"
+    assert snapshot[tag]["widgetQtClass"] == "QLineEdits"
+    assert f"{tag}.stack" not in snapshot
