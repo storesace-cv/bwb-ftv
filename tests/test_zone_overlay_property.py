@@ -442,6 +442,32 @@ def test_apply_bwb_etiqueta_c_normal_aligns_without_theming(qapp):
     assert other_zone.base_stylesheet == other_zone.styleSheet()
 
 
+def test_apply_metadata_invokes_etiqueta_c_defaults(qapp):
+    zone = layout.Zone(zone_tag("etiqueta_c_auto"), show_overlays=False)
+
+    zone.apply_metadata(widget_type="etiqueta-c")
+
+    margins = zone.ly.contentsMargins()
+    assert margins.left() == 0
+    assert margins.right() == 0
+    assert margins.top() == 0
+    assert margins.bottom() == 0
+    assert zone._label_alignment is AlignmentVariant.CENTER
+
+    stylesheet = zone.base_stylesheet
+    assert zone.styleSheet() == stylesheet
+    assert "margin: 0" in stylesheet
+    assert "padding: 0" in stylesheet
+    assert "padding: 6" not in stylesheet
+    assert "margin: 6" not in stylesheet
+
+    value_widget = QLabel("valor", zone)
+    label = zone.add_row("Etiqueta-c", value_widget)
+
+    assert label.alignment() == Qt.AlignHCenter | Qt.AlignVCenter
+    assert label.property("labelAlignmentVariant") == AlignmentVariant.CENTER.value
+
+
 def test_zone_style_label_tooltip_tracks_dev_info(qapp, overlays_enabled):
     zone = layout.Zone(_block_prefix("general_root"), show_overlays=False)
     zone.set_zone_type("secao")
