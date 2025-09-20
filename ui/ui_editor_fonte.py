@@ -391,6 +391,8 @@ class FTApp(QWidget):
         self._prep_dirty = False
         self._active_fcost_filter: int | None = None
         self._allergen_checkboxes: dict[int, QCheckBox] = {}
+        self._allergen_tooltips: dict[int, str] = {}
+        self._allergen_zone: Zone | None = None
         self._build_ui()
         self._connect_nav()
         self._load_record(self.cur_index)
@@ -1827,6 +1829,7 @@ class FTApp(QWidget):
         details_getter = getattr(self.service, "get_allergen_details", None)
 
         checkboxes: dict[int, QCheckBox] = {}
+        tooltips: dict[int, str] = {}
 
         def _extract(values, key, idx):
             if isinstance(values, dict):
@@ -1886,7 +1889,8 @@ class FTApp(QWidget):
                 notas_txt = str(notas_raw).strip()
                 if notas_txt:
                     tooltip_parts.append(notas_txt)
-            cb.setToolTip("\n".join(tooltip_parts) if tooltip_parts else "")
+            tooltip_text = "\n".join(tooltip_parts) if tooltip_parts else ""
+            tooltips[key] = tooltip_text
             cb.stateChanged.connect(
                 lambda state, key=key: self._on_allergen_state_changed(key, state)
             )
@@ -1899,6 +1903,9 @@ class FTApp(QWidget):
             return
         zone.add(gridw, 0)
         self._allergen_checkboxes = checkboxes
+        self._allergen_tooltips = tooltips
+        self._allergen_zone = zone
+        self._refresh_allergen_tooltips()
 
     # ---------- Ficha Técnica: colunas ----------
     def _collect_selected_allergens(self) -> list[int]:
@@ -2513,6 +2520,25 @@ class FTApp(QWidget):
             else:
                 button.setToolTip(tooltip_text or "")
 
+    def _refresh_allergen_tooltips(self) -> None:
+        """Restore or clear allergen tooltips based on overlay state."""
+
+        checkboxes = getattr(self, "_allergen_checkboxes", None)
+        tooltips = getattr(self, "_allergen_tooltips", None)
+        if not checkboxes or tooltips is None:
+            return
+
+        zone = getattr(self, "_allergen_zone", None)
+        zone_overlay_active = bool(getattr(zone, "_overlay_active", False))
+        overlays_enabled = bool(layout.DEV_OVERLAYS)
+        show_tooltips = not overlays_enabled and not zone_overlay_active
+
+        for aid, checkbox in checkboxes.items():
+            if checkbox is None:
+                continue
+            tooltip_text = tooltips.get(aid, "") if show_tooltips else ""
+            checkbox.setToolTip(tooltip_text)
+
     def _toggle_overlays(self):
         layout.DEV_OVERLAYS = not layout.DEV_OVERLAYS
         if hasattr(self, "searchContainer") and isinstance(self.searchContainer, Zone):
@@ -2551,6 +2577,7 @@ class FTApp(QWidget):
         )
         self._refresh_family_label_column_widths()
         self._refresh_fcost_tooltips()
+        self._refresh_allergen_tooltips()
 
     def _toggle_overlays_btn(self):
         self._toggle_overlays()
