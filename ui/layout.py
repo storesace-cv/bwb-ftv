@@ -7,6 +7,7 @@ nesses rótulos.
 
 import os
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any, Sequence
 
@@ -88,6 +89,26 @@ def refresh_style(widget: QWidget) -> None:
 
 
 _KEEP_LABEL = object()
+
+
+class _ZoneLabelList(list[QLabel]):
+    """List that keeps zone label metadata in sync."""
+
+    def __init__(self, zone: "Zone") -> None:
+        super().__init__()
+        self._zone = zone
+
+    def append(self, label: QLabel) -> None:  # type: ignore[override]
+        super().append(label)
+        self._zone._on_label_registered(label)
+
+    def extend(self, labels: Iterable[QLabel]) -> None:  # type: ignore[override]
+        for label in labels:
+            self.append(label)
+
+    def insert(self, index: int, label: QLabel) -> None:  # type: ignore[override]
+        super().insert(index, label)
+        self._zone._on_label_registered(label)
 
 
 def _clear_overlay_class(label: QLabel) -> None:
@@ -226,7 +247,8 @@ class Zone(QWidget):
         self.tag = tag
         self.setObjectName(tag)
         self._level = level
-        self._labels: list[QLabel] = []
+        self._legend_label_force_expanding = False
+        self._labels: _ZoneLabelList = _ZoneLabelList(self)
         self._overlay_active = False
         self._label_alignment = AlignmentVariant.DEFAULT
         self._base_style_label: str | None = base_style_label or None
@@ -440,6 +462,11 @@ class Zone(QWidget):
             self.set_widget_qt_class(
                 self._resolve_widget_qt_class(effective_widget_type)
             )
+        effective_zone_type = zone_type if zone_type is not None else self.zone_type
+        self._configure_legend_label_policy(
+            effective_zone_type == "linha-legenda"
+            and effective_widget_type == "legenda"
+        )
         info = style_dev_info if style_dev_info is not None else self.objectName()
         self.set_style_dev_info(info)
         return self
@@ -598,6 +625,29 @@ class Zone(QWidget):
                 # teardown; ignore and continue cleanup.
                 pass
         self._overlay_metadata_targets.clear()
+
+    def _on_label_registered(self, label: QLabel) -> None:
+        self._apply_registered_label_policy(label)
+
+    def _apply_registered_label_policy(self, label: QLabel) -> None:
+        if not self._legend_label_force_expanding:
+            return
+        policy = label.sizePolicy()
+        if policy.horizontalPolicy() == QSizePolicy.Expanding:
+            return
+        policy.setHorizontalPolicy(QSizePolicy.Expanding)
+        label.setSizePolicy(policy)
+
+    def _configure_legend_label_policy(self, enabled: bool) -> None:
+        self._legend_label_force_expanding = enabled
+        if not enabled:
+            return
+        zone_policy = self.sizePolicy()
+        if zone_policy.horizontalPolicy() != QSizePolicy.Expanding:
+            zone_policy.setHorizontalPolicy(QSizePolicy.Expanding)
+            self.setSizePolicy(zone_policy)
+        for registered_label in self._labels:
+            self._apply_registered_label_policy(registered_label)
 
     def _label_alignment_flag(self) -> Qt.Alignment:
         if self._label_alignment is AlignmentVariant.RIGHT:

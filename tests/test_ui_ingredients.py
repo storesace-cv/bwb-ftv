@@ -1,7 +1,13 @@
 import pytest
 from PyQt5.QtCore import QSize, Qt, QPoint
 from PyQt5.QtGui import QResizeEvent
-from PyQt5.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
 from services.products import ProductService
 from ui import layout
 from ui.layout import Zone
@@ -118,6 +124,27 @@ def test_identification_zone_has_embossed_bottom_border(qapp):
         assert "border-bottom-width: 2px" in stylesheet
         assert "border-bottom-style: groove" in stylesheet
         assert "border-bottom: 2px groove #f7f9fc" in stylesheet
+    finally:
+        ft.close()
+
+
+def test_legend_labels_use_expanding_horizontal_policy(qapp):
+    ds = StubDataStore()
+    service = ProductService(ds)
+    ft = FTApp(service)
+    try:
+        legend_tags = ["B1.C1.A.1.A.1", "B1.C1.A.2.A.1.A.1"]
+        for tag in legend_tags:
+            zone = ft.findChild(Zone, tag)
+            assert zone is not None, f"Zone {tag} not found"
+            assert (
+                zone.sizePolicy().horizontalPolicy() == QSizePolicy.Expanding
+            ), f"Zone {tag} should expand horizontally"
+            assert zone._labels, f"Zone {tag} should register legend labels"
+            for label in zone._labels:
+                assert (
+                    label.sizePolicy().horizontalPolicy() == QSizePolicy.Expanding
+                ), f"Legend label in {tag} should expand horizontally"
     finally:
         ft.close()
 
