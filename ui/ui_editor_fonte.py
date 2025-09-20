@@ -8,7 +8,7 @@
 #      [B6] PREPARAÇÃO, [B7] NUTRIÇÃO / ALERGÉNIOS.
 #      • PVPs passaram do bloco [B3] para a mesma grelha de Família/
 #        Sub-família e mantêm etiquetas-c centradas (por omissão) por coluna.
-#    - Célula raiz do bloco: Bn.C1 (ex.: B1.C1, B4.C1, B5.C1).
+#    - Célula raiz do bloco: Bn.C1 (ex.: B4.C1, B5.C1) ou sub-blocos como B1.A1.
 #    - Divisão horizontal: sufixos .A (esq.) e .B (dir.).
 #    - Divisão vertical: sufixos .1 (topo) e .2 (base).
 #    - Subdivisões encadeiam-se mantendo a regra (ex.: B2.C1.B.1).
@@ -67,17 +67,17 @@
 # 2025-09-15 05:15 — v3.96 — Food Cost "--" quando falta IVA; loga "missing Iva1".
 # 2025-09-15 15:40 — v3.97 — Filtro Food Cost (Bom/Aceitável/Mau) com botões exclusivos.
 # 2025-09-15 17:15 — v3.98 — Código/Nome fixos fora do scroll;
-#    B1.C1 inicia após cabeçalho.
+#    B1.A1 inicia após cabeçalho.
 # 2025-09-18 01:41 — v3.99 — Títulos das secções regressam ao peso
 #    normal e alinhamentos ajustados para legibilidade sem sobrescritas
 #    agressivas de estilo.
 # 2025-09-18 23:41 — v3.100 — Família/Sub-família e combos extraídos de
-#    B1.D1 para o novo bloco [B2] com raiz B2.C1; alinhamento de tags
+#    B1.A1.A.3.C para o novo bloco [B2] com raiz B2.C1; alinhamento de tags
 #    atualizado nas verificações automáticas.
 # 2025-09-19 21:45 — v3.102 — Nomenclatura do bloco auxiliar B1.A1 alinhada
 #    com zonas canónicas e aliases partilhados.
 # 2025-09-19 10:45 — v3.101 — Família/Sub-família e combos reintegrados em
-#    B1.C1.A.*, preservando metadados de bloco e alinhamentos partilhados.
+#    B1.A1.A.*, preservando metadados de bloco e alinhamentos partilhados.
 
 import sys
 import json
@@ -742,10 +742,9 @@ class FTApp(QWidget):
         self.zone_general_aux_preview_panel.ly.setSpacing(2)
         (
             self.zone_general_aux_identification_slot,
-            self.zone_general_aux_combo_slot,
             self.zone_general_aux_family_slot,
             self.zone_general_aux_prices_slot,
-        ) = self.zone_general_aux_stack.split_v((1, 1, 1, 1))
+        ) = self.zone_general_aux_stack.split_v((1, 1, 1))
         self.zone_general_aux_preview_image_slot = Zone(
             "B1.A1.B.4",
             self.zone_general_aux_preview_panel,
@@ -760,7 +759,6 @@ class FTApp(QWidget):
         )
         for zone in (
             self.zone_general_aux_identification_slot,
-            self.zone_general_aux_combo_slot,
             self.zone_general_aux_family_slot,
             self.zone_general_aux_prices_slot,
         ):
@@ -778,65 +776,11 @@ class FTApp(QWidget):
                 current_policy.verticalPolicy(),
             )
 
-        # ---------------- B1 — Ficha do Artigo (B1.C1) ----------------
-        self.C1 = Zone(
-            "B1.C1",
-            self.B1,
-            flow="v",
-            level=self.B1._level,
-            show_overlays=layout.DEV_OVERLAYS,
-            spacing=2,
-        )
-        C1_margins = self.C1.ly.contentsMargins()
-        self.C1.ly.setContentsMargins(
-            C1_margins.left(),
-            C1_margins.top(),
-            C1_margins.right(),
-            0,
-        )
-        self.B1.ly.addWidget(self.C1, 0)
+        # ---------------- B1 — Ficha do Artigo ----------------
         page_ly.addWidget(
             self._section_box("[B1] - FICHA DO ARTIGO", self.B1),
             0,
         )
-
-        C1A = self.C1
-        C1A_margins = C1A.ly.contentsMargins()
-        C1A.ly.setContentsMargins(
-            C1A_margins.left(),
-            C1A_margins.top(),
-            C1A_margins.right(),
-            0,
-        )
-
-        C1A_cont = QWidget(C1A)
-        C1A_cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        C1A_cont_ly = QVBoxLayout(C1A_cont)
-        C1A_cont_ly.setContentsMargins(0, 0, 0, 0)
-        C1A_section_spacing = 3
-        C1A_cont_ly.setSpacing(C1A_section_spacing)
-        C1A.ly.addWidget(C1A_cont, 1)
-
-        # --- Identificação do produto (B1.C1.A.1) ---
-        self.C1A1 = Zone(
-            "B1.C1.A.1",
-            C1A_cont,
-            flow="v",
-            margins=4,
-            spacing=C1A_section_spacing,
-            level=C1A._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-        )
-        C1A1_margins = self.C1A1.ly.contentsMargins()
-        self.C1A1.ly.setContentsMargins(
-            C1A1_margins.left(),
-            C1A1_margins.top(),
-            C1A1_margins.right(),
-            0,
-        )
-        C1A_cont_ly.addWidget(self.C1A1, 0)
-
-        C1A_cont_ly.addStretch(1)
 
         # --- Combos & PVP (B1.E1) ---
         self.E1 = Zone(
@@ -857,32 +801,14 @@ class FTApp(QWidget):
         )
         self.zone_general_aux_prices_slot.add(self.E1, 1)
 
-        # --- Família (B1.D1) ---
-        self.D1 = Zone(
-            "B1.D1",
-            self.B1,
-            flow="v",
-            margins=4,
-            spacing=2,
-            level=self.C1._level,
-            show_overlays=layout.DEV_OVERLAYS,
-        )
-        D1_margins = self.D1.ly.contentsMargins()
-        self.D1.ly.setContentsMargins(
-            D1_margins.left(),
-            0,
-            D1_margins.right(),
-            0,
-        )
-        self.B1.ly.addWidget(self.D1, 0)
-
         self.edCodigo = QLineEdit()
         make_readonly_lineedit(self.edCodigo)
         self.edCodigo.setStyleSheet(FIELD_STYLE)
         self.edNome = QLineEdit()
         make_readonly_lineedit(self.edNome)
         self.edNome.setStyleSheet(FIELD_STYLE)
-        label_col, field_col = self.C1A1.split_h((1, 4))
+
+        label_col, field_col = self.zone_general_aux_identification_slot.split_h((1, 4))
         label_col.apply_metadata(zone_type="coluna-legendas", widget_type="legenda")
         field_col.apply_metadata(zone_type="coluna-campos", widget_type="campo")
         field_col_margins = field_col.ly.contentsMargins()
@@ -892,6 +818,7 @@ class FTApp(QWidget):
             3,
             field_col_margins.bottom(),
         )
+
         label_top, label_bottom = label_col.split_v((1, 1))
         for zone in (label_top, label_bottom):
             zone_margins = zone.ly.contentsMargins()
@@ -901,44 +828,20 @@ class FTApp(QWidget):
                 0,
                 zone_margins.bottom(),
             )
-        label_top.apply_metadata(
-            zone_type="linha-legenda",
-            widget_type="etiqueta-c",
-            base_declarations=(
-                "border-radius: 12px;\n",
-                "padding: 6px;\n",
-            ),
-        )
-        label_bottom.apply_metadata(
-            zone_type="linha-legenda",
-            widget_type="etiqueta-c",
-            base_declarations=(
-                "border-radius: 12px;\n",
-                "padding: 6px;\n",
-            ),
-        )
-        for zone in (label_top, label_bottom):
+            zone.apply_metadata(
+                zone_type="linha-legenda",
+                widget_type="etiqueta-c",
+                base_declarations=(
+                    "border-radius: 12px;\n",
+                    "padding: 6px;\n",
+                ),
+            )
             zone.set_label_alignment(AlignmentVariant.RIGHT)
+
         field_top, field_bottom = field_col.split_v((1, 1))
-        field_top.ly.setContentsMargins(0, 0, 0, 0)
-        field_bottom.ly.setContentsMargins(0, 0, 0, 0)
-        field_top.apply_metadata(zone_type="linha-campo", widget_type="campo")
-        field_bottom.apply_metadata(zone_type="linha-campo", widget_type="campo")
-
-        def _retag_zone(zone: Zone, new_tag: str) -> None:
-            if not layout.validate_tag(new_tag):
-                raise ValueError(f"Invalid zone tag: {new_tag}")
-            zone.tag = new_tag
-            zone.setObjectName(new_tag)
-            zone._tag_lbl.setText(new_tag)
-            zone.set_style_dev_info(new_tag)
-
-        _retag_zone(label_col, "B1.A1.A.1.A")
-        _retag_zone(field_col, "B1.A1.A.1.B")
-        _retag_zone(label_top, "B1.A1.A.1.A.1")
-        _retag_zone(label_bottom, "B1.A1.A.1.A.2")
-        _retag_zone(field_top, "B1.A1.A.1.B.1")
-        _retag_zone(field_bottom, "B1.A1.A.1.B.2")
+        for field_zone in (field_top, field_bottom):
+            field_zone.ly.setContentsMargins(0, 0, 0, 0)
+            field_zone.apply_metadata(zone_type="linha-campo", widget_type="campo")
 
         def _make_ident_label(zone: Zone, text: str, overlay: str) -> QLabel:
             display = overlay if zone._overlay_active and overlay else text
@@ -966,41 +869,6 @@ class FTApp(QWidget):
         field_top.ly.addWidget(self.edCodigo, 0, Qt.AlignLeft)
         field_bottom.ly.addWidget(self.edNome, 0)
 
-        codigo_aux_container = QWidget(self.zone_general_aux_identification_slot)
-        codigo_aux_container.setSizePolicy(
-            QSizePolicy.Expanding, QSizePolicy.Fixed
-        )
-        codigo_aux_layout = QVBoxLayout(codigo_aux_container)
-        codigo_aux_layout.setContentsMargins(0, 0, 0, 0)
-        codigo_aux_layout.setSpacing(
-            self.zone_general_aux_identification_slot.ly.spacing()
-        )
-        self.zone_general_aux_identification_slot.add(codigo_aux_container, 0)
-
-        def _relocate_ident_row(label_zone: Zone, field_zone: Zone) -> None:
-            row_container = QWidget(codigo_aux_container)
-            row_container.setSizePolicy(
-                QSizePolicy.Expanding, QSizePolicy.Fixed
-            )
-            row_layout = QHBoxLayout(row_container)
-            row_layout.setContentsMargins(0, 0, 0, 0)
-            row_layout.setSpacing(
-                self.zone_general_aux_identification_slot.ly.spacing()
-            )
-
-            for zone, stretch in ((label_zone, 1), (field_zone, 4)):
-                parent_widget = zone.parentWidget()
-                parent_layout = parent_widget.layout() if parent_widget else None
-                if parent_layout is not None:
-                    parent_layout.removeWidget(zone)
-                zone.setParent(row_container)
-                row_layout.addWidget(zone, stretch)
-
-            codigo_aux_layout.addWidget(row_container)
-
-        _relocate_ident_row(label_top, field_top)
-        _relocate_ident_row(label_bottom, field_bottom)
-
         scroll.verticalScrollBar().valueChanged.connect(
             self._toggle_header_on_scroll
         )
@@ -1015,41 +883,38 @@ class FTApp(QWidget):
         self.image_preview = ImagePreview(init_code, self.service)
         self.zone_general_aux_preview_image_slot.add(self.image_preview, 1)
 
-        combos_section = QWidget(self.zone_general_aux_combo_slot)
-        combos_section.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        combos_section_layout = QHBoxLayout(combos_section)
-        combos_section_layout.setContentsMargins(0, 0, 0, 0)
-        combos_section_layout.setSpacing(
-            self.zone_general_aux_combo_slot.ly.spacing()
+        # --- Combos (B1.A1.A.3.C) ---
+        self.zone_general_aux_combo_slot = Zone(
+            "B1.A1.A.3.C",
+            self.zone_general_aux_family_slot,
+            flow="v",
+            margins=0,
+            spacing=self.zone_general_aux_family_slot.ly.spacing(),
+            level=self.zone_general_aux_family_slot._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
         )
-        self.zone_general_aux_combo_slot.add(combos_section, 0)
+        self.zone_general_aux_combo_slot.ly.setContentsMargins(0, 0, 0, 0)
+        self.zone_general_aux_family_slot.add(self.zone_general_aux_combo_slot, 0)
 
         combo_zone_specs = (
-            ("B1.A1.A.2.1", "Tipos Artigos", "cbTipos"),
-            ("B1.A1.A.2.2", "Validade", "cbValidade"),
-            ("B1.A1.A.2.3", "Temperaturas", "cbTemp"),
+            ("Tipos Artigos", "cbTipos"),
+            ("Validade", "cbValidade"),
+            ("Temperaturas", "cbTemp"),
         )
-        for tag_prefix, label_text, attr_name in combo_zone_specs:
-            column_widget = QWidget(combos_section)
-            column_widget.setObjectName(tag_prefix)
-            column_widget.setSizePolicy(
-                QSizePolicy.Expanding, QSizePolicy.Preferred
-            )
-            column_layout = QVBoxLayout(column_widget)
-            column_layout.setContentsMargins(0, 0, 0, 0)
-            column_layout.setSpacing(2)
-            combos_section_layout.addWidget(column_widget, 1)
-
-            label = QLabel(label_text, column_widget)
+        combo_columns = self.zone_general_aux_combo_slot.split_h((1, 1, 1))
+        for zone, (label_text, attr_name) in zip(combo_columns, combo_zone_specs):
+            zone.ly.setContentsMargins(0, 0, 0, 0)
+            zone.ly.setSpacing(2)
+            label = QLabel(label_text, zone)
             label.setProperty("userLabel", label_text)
             label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             apply_label_style(label)
-            column_layout.addWidget(label, 0)
+            zone.add(label, 0)
 
-            combo = QComboBox(column_widget)
+            combo = QComboBox(zone)
             combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             combo.setStyleSheet(FIELD_STYLE)
-            column_layout.addWidget(combo, 0)
+            zone.ly.addWidget(combo, 0)
             setattr(self, attr_name, combo)
 
         self.cbTipos: QComboBox
@@ -1059,70 +924,110 @@ class FTApp(QWidget):
         self.cbValidade.currentIndexChanged.connect(self._on_validade_changed)
         self.cbTemp.currentIndexChanged.connect(self._on_temperatura_changed)
 
-        # ---------------- Família & Combos (B1.D1) ----------------
-        D1_familias = Zone(
-            "B1.D1.A",
-            self.D1,
-            flow="v",
-            margins=(self.D1.margin_h, self.D1.margin_v),
-            spacing=self.D1.ly.spacing(),
-            level=self.D1._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-            base_style_label=self.D1.base_style_label,
-        )
-        D1_familias_margins = D1_familias.ly.contentsMargins()
-        D1_familias.ly.setContentsMargins(
-            D1_familias_margins.left(),
-            0,
-            D1_familias_margins.right(),
-            0,
-        )
-        self.D1.add(D1_familias, 1)
+        family_row_margin_value = 4
+        family_row_spacing_value = 2
 
-        D1_familias_row_margin_value = 4
-        D1_familias_row_spacing_value = 2
-        D1_familias_row = Zone(
-            "B1.D1.A.1",
-            D1_familias,
-            flow="v",
-            margins=D1_familias_row_margin_value,
-            spacing=D1_familias_row_spacing_value,
-            level=D1_familias._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
+        family_row_container = QWidget(self.zone_general_aux_family_slot)
+        family_row_container.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Fixed
         )
-        D1_familias_row.ly.setContentsMargins(0, 0, 0, 0)
-        D1_familias_row.set_zone_stylesheet(
-            layout.compose_stylesheet(
-                D1_familias_row,
-                "font-size: 1px; margin: 0px; padding: 0px;",
+        family_row_layout = QHBoxLayout(family_row_container)
+        family_row_layout.setContentsMargins(0, 0, 0, 0)
+        family_row_layout.setSpacing(family_row_spacing_value)
+        self.zone_general_aux_family_slot.add(family_row_container, 0)
+
+        family_labels_zone = Zone(
+            "B1.A1.A.3.A",
+            family_row_container,
+            flow="v",
+            margins=family_row_margin_value,
+            spacing=family_row_spacing_value,
+            level=self.zone_general_aux_family_slot._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+            base_style_label=self.zone_general_aux_family_slot.base_style_label,
+        )
+        family_values_zone = Zone(
+            "B1.A1.A.3.B",
+            family_row_container,
+            flow="v",
+            margins=family_row_margin_value,
+            spacing=family_row_spacing_value,
+            level=self.zone_general_aux_family_slot._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+            base_style_label=self.zone_general_aux_family_slot.base_style_label,
+        )
+        family_labels_zone.ly.setContentsMargins(0, 0, 0, 0)
+        family_values_zone.ly.setContentsMargins(0, 0, 0, 0)
+
+        family_row_layout.addWidget(family_labels_zone, 1)
+        family_row_layout.addWidget(family_values_zone, 4)
+
+        familia_label_zone, subfamilia_label_zone = family_labels_zone.split_v((1, 1))
+        familia_values_zone, subfamilia_values_zone = family_values_zone.split_v((1, 1))
+
+        for zone in (familia_label_zone, subfamilia_label_zone):
+            zone_margins = zone.ly.contentsMargins()
+            zone.ly.setContentsMargins(
+                0,
+                zone_margins.top(),
+                0,
+                zone_margins.bottom(),
             )
-        )
-        D1_familias_row.apply_overlays(True)
-        D1_familias.add(D1_familias_row, 1)
+            zone.apply_metadata(
+                zone_type="linha-legenda",
+                widget_type="etiqueta-c",
+            )
+        family_labels_zone.set_label_alignment(AlignmentVariant.RIGHT)
 
-        D1_familias_reserva = Zone(
-            "B1.D1.A.3",
-            D1_familias,
-            flow="h",
-            margins=D1_familias_row_margin_value,
-            spacing=D1_familias_row_spacing_value,
-            level=D1_familias_row._level,
-            show_overlays=layout.DEV_OVERLAYS,
-            base_style_label=D1_familias.base_style_label,
+        def _make_family_label(zone: Zone, text: str, overlay: str) -> QLabel:
+            display = overlay if zone._overlay_active and overlay else text
+            lbl = QLabel(display, zone)
+            lbl.setProperty("userLabel", text)
+            lbl.setProperty("devLabel", overlay)
+            apply_label_style(lbl, alignment=AlignmentVariant.RIGHT)
+            if zone._overlay_active and overlay:
+                apply_overlay_label_style(lbl)
+            zone.ly.addWidget(lbl, 0)
+            zone._labels.append(lbl)
+            family_labels_zone._labels.append(lbl)
+            return lbl
+
+        _make_family_label(familia_label_zone, "Família:", "Produtos.Familia")
+        _make_family_label(
+            subfamilia_label_zone, "Sub-família:", "Produtos.SubFamilia"
         )
-        D1_familias_reserva.ly.setContentsMargins(0, 0, 0, 0)
-        D1_familias_reserva.apply_overlays(layout.DEV_OVERLAYS)
-        D1_familias_reserva.setSizePolicy(
-            QSizePolicy.Expanding, QSizePolicy.Expanding
+
+        self.lbFamiliaVal = QLineEdit("")
+        make_readonly_lineedit(self.lbFamiliaVal)
+        self.lbFamiliaVal.setStyleSheet(FIELD_STYLE)
+        self.lbFamiliaVal.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.lbFamiliaVal.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.lbFamiliaVal.setFont(self.edNome.font())
+
+        self.lbSubFamiliaVal = QLineEdit("")
+        make_readonly_lineedit(self.lbSubFamiliaVal)
+        self.lbSubFamiliaVal.setStyleSheet(FIELD_STYLE)
+        self.lbSubFamiliaVal.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.lbSubFamiliaVal.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Fixed
         )
-        D1_familias.add(D1_familias_reserva, 2)
+        self.lbSubFamiliaVal.setFont(self.edNome.font())
+
+        familia_values_zone.ly.addWidget(self.lbFamiliaVal, 0, Qt.AlignVCenter)
+        subfamilia_values_zone.ly.addWidget(
+            self.lbSubFamiliaVal, 0, Qt.AlignVCenter
+        )
+
+        self._family_label_zone = family_labels_zone
+
+        self._refresh_family_label_column_widths()
 
         pvps_container = Zone(
             "B1.E1.A",
             self.E1,
             flow="v",
-            margins=D1_familias_row_margin_value,
-            spacing=D1_familias_row_spacing_value,
+            margins=family_row_margin_value,
+            spacing=family_row_spacing_value,
             level=self.E1._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
@@ -1138,8 +1043,8 @@ class FTApp(QWidget):
             "B1.E1.A.B",
             pvps_container,
             flow="v",
-            margins=D1_familias_row_margin_value,
-            spacing=D1_familias_row_spacing_value,
+            margins=family_row_margin_value,
+            spacing=family_row_spacing_value,
             level=pvps_container._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
@@ -1167,7 +1072,7 @@ class FTApp(QWidget):
             pvps_section,
             flow="h",
             margins=0,
-            spacing=D1_familias_row_spacing_value,
+            spacing=family_row_spacing_value,
             level=pvps_section._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
         )
@@ -1235,97 +1140,6 @@ class FTApp(QWidget):
             val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             field_zone.ly.addWidget(val, 0, Qt.AlignLeft | Qt.AlignVCenter)
             self.lbPVPs.append(val)
-
-        family_labels_zone, family_values_zone = D1_familias_row.split_h((1, 4))
-        familia_values_zone, subfamilia_values_zone = family_values_zone.split_v((1, 1))
-
-        familia_label_zone, subfamilia_label_zone = family_labels_zone.split_v((1, 1))
-        _retag_zone(family_labels_zone, "B1.A1.A.3.A")
-        _retag_zone(family_values_zone, "B1.A1.A.3.B")
-        _retag_zone(familia_label_zone, "B1.A1.A.3.A.1")
-        _retag_zone(subfamilia_label_zone, "B1.A1.A.3.A.2")
-        _retag_zone(familia_values_zone, "B1.A1.A.3.B.1")
-        _retag_zone(subfamilia_values_zone, "B1.A1.A.3.B.2")
-        for zone in (familia_label_zone, subfamilia_label_zone):
-            zone_margins = zone.ly.contentsMargins()
-            zone.ly.setContentsMargins(
-                0,
-                zone_margins.top(),
-                0,
-                zone_margins.bottom(),
-            )
-        familia_label_zone.apply_metadata(
-            zone_type="linha-legenda",
-            widget_type="etiqueta-c",
-        )
-        subfamilia_label_zone.apply_metadata(
-            zone_type="linha-legenda",
-            widget_type="etiqueta-c",
-        )
-        family_labels_zone.set_label_alignment(AlignmentVariant.RIGHT)
-
-        def _make_family_label(zone: Zone, text: str, overlay: str) -> QLabel:
-            display = overlay if zone._overlay_active and overlay else text
-            lbl = QLabel(display, zone)
-            lbl.setProperty("userLabel", text)
-            lbl.setProperty("devLabel", overlay)
-            apply_label_style(lbl, alignment=AlignmentVariant.RIGHT)
-            if zone._overlay_active and overlay:
-                apply_overlay_label_style(lbl)
-            zone.ly.addWidget(lbl, 0)
-            zone._labels.append(lbl)
-            family_labels_zone._labels.append(lbl)
-            return lbl
-
-        _make_family_label(familia_label_zone, "Família:", "Produtos.Familia")
-        _make_family_label(
-            subfamilia_label_zone, "Sub-família:", "Produtos.SubFamilia"
-        )
-
-        self.lbFamiliaVal = QLineEdit("")
-        make_readonly_lineedit(self.lbFamiliaVal)
-        self.lbFamiliaVal.setStyleSheet(FIELD_STYLE)
-        self.lbFamiliaVal.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        self.lbFamiliaVal.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.lbFamiliaVal.setFont(self.edNome.font())
-
-        self.lbSubFamiliaVal = QLineEdit("")
-        make_readonly_lineedit(self.lbSubFamiliaVal)
-        self.lbSubFamiliaVal.setStyleSheet(FIELD_STYLE)
-        self.lbSubFamiliaVal.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        self.lbSubFamiliaVal.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.lbSubFamiliaVal.setFont(self.edNome.font())
-
-        familia_values_zone.ly.addWidget(self.lbFamiliaVal, 0, Qt.AlignVCenter)
-        subfamilia_values_zone.ly.addWidget(
-            self.lbSubFamiliaVal, 0, Qt.AlignVCenter
-        )
-
-        self._family_label_zone = family_labels_zone
-
-        family_aux_container = QWidget(self.zone_general_aux_family_slot)
-        family_aux_container.setSizePolicy(
-            QSizePolicy.Expanding, QSizePolicy.Fixed
-        )
-        family_aux_layout = QHBoxLayout(family_aux_container)
-        family_aux_layout.setContentsMargins(0, 0, 0, 0)
-        family_aux_layout.setSpacing(
-            self.zone_general_aux_family_slot.ly.spacing()
-        )
-        self.zone_general_aux_family_slot.add(family_aux_container, 0)
-
-        for zone, stretch in (
-            (family_labels_zone, 1),
-            (family_values_zone, 4),
-        ):
-            parent_widget = zone.parentWidget()
-            parent_layout = parent_widget.layout() if parent_widget else None
-            if parent_layout is not None:
-                parent_layout.removeWidget(zone)
-            zone.setParent(family_aux_container)
-            family_aux_layout.addWidget(zone, stretch)
-
-        self._refresh_family_label_column_widths()
 
         # ---------------- B5 — FOOD COST (B5.C1) ----------------
         self.C5 = Zone(
