@@ -854,7 +854,7 @@ class FTApp(QWidget):
         self.edNome = QLineEdit()
         make_readonly_lineedit(self.edNome)
         self.edNome.setStyleSheet(FIELD_STYLE)
-        label_col, field_col = self.C1A1.split_h((4, 8))
+        label_col, field_col = self.C1A1.split_h((1, 4))
         label_col.apply_metadata(zone_type="coluna-legendas", widget_type="legenda")
         field_col.apply_metadata(zone_type="coluna-campos", widget_type="campo")
         field_col_margins = field_col.ly.contentsMargins()
@@ -900,14 +900,14 @@ class FTApp(QWidget):
         def _make_ident_label(zone: Zone, text: str, overlay: str) -> QLabel:
             display = overlay if zone._overlay_active and overlay else text
             lbl = QLabel(display, zone)
-            lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             lbl.setProperty("userLabel", text)
             lbl.setProperty("devLabel", overlay)
             if zone._overlay_active and overlay:
                 apply_overlay_label_style(lbl)
             else:
                 lbl.setStyleSheet("")
-            zone.ly.addWidget(lbl, 0, Qt.AlignLeft | Qt.AlignVCenter)
+            zone.ly.addWidget(lbl, 0, Qt.AlignRight | Qt.AlignVCenter)
             label_col._labels.append(lbl)
             return lbl
 
@@ -941,7 +941,7 @@ class FTApp(QWidget):
             row_layout.setContentsMargins(0, 0, 0, 0)
             row_layout.setSpacing(self.B1A1AAA.ly.spacing())
 
-            for zone, stretch in ((label_zone, 4), (field_zone, 8)):
+            for zone, stretch in ((label_zone, 1), (field_zone, 4)):
                 parent_widget = zone.parentWidget()
                 parent_layout = parent_widget.layout() if parent_widget else None
                 if parent_layout is not None:
@@ -1153,7 +1153,7 @@ class FTApp(QWidget):
             field_zone.ly.addWidget(val, 0, Qt.AlignLeft | Qt.AlignVCenter)
             self.lbPVPs.append(val)
 
-        family_labels_zone, family_values_zone = D1_familias_row.split_h((4, 8))
+        family_labels_zone, family_values_zone = D1_familias_row.split_h((1, 4))
         familia_values_zone, subfamilia_values_zone = family_values_zone.split_v((1, 1))
 
         familia_label_zone, subfamilia_label_zone = family_labels_zone.split_v((1, 1))
