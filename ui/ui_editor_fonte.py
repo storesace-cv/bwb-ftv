@@ -737,9 +737,16 @@ class FTApp(QWidget):
         (
             self.zone_general_aux_stack,
             self.zone_general_aux_preview_panel,
-        ) = self.zone_general_aux_root.split_h((8, 4))
-        self.zone_general_aux_stack.ly.setSpacing(2)
-        self.zone_general_aux_preview_panel.ly.setSpacing(2)
+            self.zone_general_aux_free_slot_c,
+            self.zone_general_aux_free_slot_d,
+        ) = self.zone_general_aux_root.split_h((12, 4, 3, 3))
+        for zone in (
+            self.zone_general_aux_stack,
+            self.zone_general_aux_preview_panel,
+            self.zone_general_aux_free_slot_c,
+            self.zone_general_aux_free_slot_d,
+        ):
+            zone.ly.setSpacing(2)
         (
             self.zone_general_aux_identification_slot,
             self.zone_general_aux_family_slot,
@@ -761,6 +768,8 @@ class FTApp(QWidget):
             self.zone_general_aux_identification_slot,
             self.zone_general_aux_family_slot,
             self.zone_general_aux_prices_slot,
+            self.zone_general_aux_free_slot_c,
+            self.zone_general_aux_free_slot_d,
         ):
             zone.ly.setContentsMargins(0, 0, 0, 0)
             current_policy = zone.sizePolicy()
@@ -768,7 +777,11 @@ class FTApp(QWidget):
                 QSizePolicy.Expanding,
                 current_policy.verticalPolicy(),
             )
-        for zone in (self.zone_general_aux_preview_image_slot,):
+        for zone in (
+            self.zone_general_aux_preview_image_slot,
+            self.zone_general_aux_free_slot_c,
+            self.zone_general_aux_free_slot_d,
+        ):
             zone.ly.setContentsMargins(0, 0, 0, 0)
             current_policy = zone.sizePolicy()
             zone.setSizePolicy(

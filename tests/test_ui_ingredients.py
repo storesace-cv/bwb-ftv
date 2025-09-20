@@ -237,6 +237,21 @@ def test_classification_overlay_tags_hidden(qapp):
         layout.DEV_OVERLAYS = original
 
 
+def test_general_aux_additional_slots_created(qapp):
+    ds = StubDataStore()
+    service = ProductService(ds)
+    ft = FTApp(service)
+    try:
+        ft.show()
+        qapp.processEvents()
+
+        for tag in ("B1.A1.B", "B1.A1.C", "B1.A1.D"):
+            zone = ft.findChild(Zone, tag)
+            assert zone is not None, f"Expected zone {tag} to exist"
+    finally:
+        ft.close()
+
+
 def test_identification_and_family_label_columns_expand_with_long_text(qapp):
     ds = StubDataStore()
     service = ProductService(ds)

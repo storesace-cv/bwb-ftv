@@ -26,6 +26,8 @@ _ZONE_TAGS: Mapping[str, str] = {
     "general_aux_prices_slot": "B1.A1.A.4",
     "general_aux_preview": "B1.A1.B",
     "general_aux_preview_image": "B1.A1.B.4",
+    "general_aux_free_slot_c": "B1.A1.C",
+    "general_aux_free_slot_d": "B1.A1.D",
     "general_aux_combo_section": "B1.A1.A.3.C",
     "general_aux_combo_col_1": "B1.A1.A.3.C.1",
     "general_aux_combo_col_2": "B1.A1.A.3.C.2",
