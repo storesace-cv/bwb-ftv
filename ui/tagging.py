@@ -49,7 +49,7 @@ _ZONE_TAGS: Mapping[str, str] = {
     "general_aux_additional_info_field": "B1.A1.A.3.2",
 
     # Prices & preview columns
-    "general_aux_prices_slot": "B1.A1.A.4",
+    "general_aux_prices_slot": "B2.C1.A.3",
     "general_aux_preview": "B2.C1.B",
     "general_aux_preview_image": "B2.C1.B",
 
@@ -59,22 +59,22 @@ _ZONE_TAGS: Mapping[str, str] = {
     "general_aux_reserved_slot_4": "B1.A1.4",
 
     # PVPs (nested under prices slot)
-    "pvps_root": "B1.A1.A.4",
-    "pvps_col_1": "B1.A1.A.4.1",
-    "pvps_col_1_legend": "B1.A1.A.4.1.1",
-    "pvps_col_1_field": "B1.A1.A.4.1.2",
-    "pvps_col_2": "B1.A1.A.4.2",
-    "pvps_col_2_legend": "B1.A1.A.4.2.1",
-    "pvps_col_2_field": "B1.A1.A.4.2.2",
-    "pvps_col_3": "B1.A1.A.4.3",
-    "pvps_col_3_legend": "B1.A1.A.4.3.1",
-    "pvps_col_3_field": "B1.A1.A.4.3.2",
-    "pvps_col_4": "B1.A1.A.4.4",
-    "pvps_col_4_legend": "B1.A1.A.4.4.1",
-    "pvps_col_4_field": "B1.A1.A.4.4.2",
-    "pvps_col_5": "B1.A1.A.4.5",
-    "pvps_col_5_legend": "B1.A1.A.4.5.1",
-    "pvps_col_5_field": "B1.A1.A.4.5.2",
+    "pvps_root": "B2.C1.A.3",
+    "pvps_col_1": "B2.C1.A.3.1",
+    "pvps_col_1_legend": "B2.C1.A.3.1.1",
+    "pvps_col_1_field": "B2.C1.A.3.1.2",
+    "pvps_col_2": "B2.C1.A.3.2",
+    "pvps_col_2_legend": "B2.C1.A.3.2.1",
+    "pvps_col_2_field": "B2.C1.A.3.2.2",
+    "pvps_col_3": "B2.C1.A.3.3",
+    "pvps_col_3_legend": "B2.C1.A.3.3.1",
+    "pvps_col_3_field": "B2.C1.A.3.3.2",
+    "pvps_col_4": "B2.C1.A.3.4",
+    "pvps_col_4_legend": "B2.C1.A.3.4.1",
+    "pvps_col_4_field": "B2.C1.A.3.4.2",
+    "pvps_col_5": "B2.C1.A.3.5",
+    "pvps_col_5_legend": "B2.C1.A.3.5.1",
+    "pvps_col_5_field": "B2.C1.A.3.5.2",
 
     # --- [B2] Ficha de Artigo (secção complementar) ---------------------
     "article_sheet_root": "B2.C1",
