@@ -1152,7 +1152,7 @@ class FTApp(QWidget):
         pvps_section.add(pvp_label, 0)
 
         pvps_grid = Zone(
-            "B1.A1.5.1",
+            "B1.A1.A.4.A",
             pvps_section,
             flow="h",
             margins=0,
@@ -1171,7 +1171,7 @@ class FTApp(QWidget):
 
         for idx in range(1, 6):
             column_zone = Zone(
-                f"B1.A1.5.1.{idx}",
+                f"B1.A1.A.4.A.{idx}",
                 pvps_grid,
                 flow="v",
                 margins=0,
