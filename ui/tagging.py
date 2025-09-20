@@ -48,6 +48,23 @@ _ZONE_TAGS: Mapping[str, str] = {
     "family_combo_field_col_3": "B1.C1.A.2.B.A.3.2",
 
     # --- PVPs -------------------------------------------------------------
+    "pvps_root": "B1.C1.A.2.B.B",
+    "pvps_grid": "B1.C1.A.2.B.B.1",
+    "pvps_col_1": "B1.C1.A.2.B.B.1.1",
+    "pvps_col_1_legend": "B1.C1.A.2.B.B.1.1.1",
+    "pvps_col_1_field": "B1.C1.A.2.B.B.1.1.2",
+    "pvps_col_2": "B1.C1.A.2.B.B.1.2",
+    "pvps_col_2_legend": "B1.C1.A.2.B.B.1.2.1",
+    "pvps_col_2_field": "B1.C1.A.2.B.B.1.2.2",
+    "pvps_col_3": "B1.C1.A.2.B.B.1.3",
+    "pvps_col_3_legend": "B1.C1.A.2.B.B.1.3.1",
+    "pvps_col_3_field": "B1.C1.A.2.B.B.1.3.2",
+    "pvps_col_4": "B1.C1.A.2.B.B.1.4",
+    "pvps_col_4_legend": "B1.C1.A.2.B.B.1.4.1",
+    "pvps_col_4_field": "B1.C1.A.2.B.B.1.4.2",
+    "pvps_col_5": "B1.C1.A.2.B.B.1.5",
+    "pvps_col_5_legend": "B1.C1.A.2.B.B.1.5.1",
+    "pvps_col_5_field": "B1.C1.A.2.B.B.1.5.2",
 
     # --- Ficha Técnica ----------------------------------------------------
     "ingredients_root": "B4.C1",
