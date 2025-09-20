@@ -927,22 +927,32 @@ class FTApp(QWidget):
         codigo_aux_container.setSizePolicy(
             QSizePolicy.Expanding, QSizePolicy.Fixed
         )
-        codigo_aux_layout = QHBoxLayout(codigo_aux_container)
+        codigo_aux_layout = QVBoxLayout(codigo_aux_container)
         codigo_aux_layout.setContentsMargins(0, 0, 0, 0)
         codigo_aux_layout.setSpacing(self.B1A1AAA.ly.spacing())
         self.B1A1AAA.add(codigo_aux_container, 0)
 
-        label_top_parent = label_top.parentWidget()
-        if label_top_parent is not None and label_top_parent.layout() is not None:
-            label_top_parent.layout().removeWidget(label_top)
-        label_top.setParent(codigo_aux_container)
-        codigo_aux_layout.addWidget(label_top, 4)
+        def _relocate_ident_row(label_zone: Zone, field_zone: Zone) -> None:
+            row_container = QWidget(codigo_aux_container)
+            row_container.setSizePolicy(
+                QSizePolicy.Expanding, QSizePolicy.Fixed
+            )
+            row_layout = QHBoxLayout(row_container)
+            row_layout.setContentsMargins(0, 0, 0, 0)
+            row_layout.setSpacing(self.B1A1AAA.ly.spacing())
 
-        field_top_parent = field_top.parentWidget()
-        if field_top_parent is not None and field_top_parent.layout() is not None:
-            field_top_parent.layout().removeWidget(field_top)
-        field_top.setParent(codigo_aux_container)
-        codigo_aux_layout.addWidget(field_top, 8)
+            for zone, stretch in ((label_zone, 4), (field_zone, 8)):
+                parent_widget = zone.parentWidget()
+                parent_layout = parent_widget.layout() if parent_widget else None
+                if parent_layout is not None:
+                    parent_layout.removeWidget(zone)
+                zone.setParent(row_container)
+                row_layout.addWidget(zone, stretch)
+
+            codigo_aux_layout.addWidget(row_container)
+
+        _relocate_ident_row(label_top, field_top)
+        _relocate_ident_row(label_bottom, field_bottom)
 
         scroll.verticalScrollBar().valueChanged.connect(
             self._toggle_header_on_scroll
