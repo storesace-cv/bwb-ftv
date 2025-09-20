@@ -75,7 +75,7 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         for combo_label_tag in combo_label_tags:
             combo_label_meta = zones_metadata.get(combo_label_tag)
             assert combo_label_meta is not None
-            assert combo_label_meta.get("zoneType") == "combo-legenda"
+            assert combo_label_meta.get("zoneType") == "linha-legenda"
             assert combo_label_meta.get("widgetType") == "legenda"
             assert combo_label_meta.get("widgetQtClass") == "QLabels"
 
