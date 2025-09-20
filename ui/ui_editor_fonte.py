@@ -1287,11 +1287,6 @@ class FTApp(QWidget):
         for zone, label_text, attr_name in combo_zone_specs:
             zone.set_widget_type(None)
             zone.set_widget_qt_class(None)
-            zone.apply_metadata(
-                zone_type="linha-combo",
-                widget_type=None,
-                apply_base_style=False,
-            )
             zone.ly.setContentsMargins(0, 0, 0, 0)
             zone.ly.setSpacing(2)
             zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
