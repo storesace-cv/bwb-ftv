@@ -738,26 +738,6 @@ class FTApp(QWidget):
         )
         self.B1.ly.addWidget(self.zone_general_aux_root, 0)
 
-        aux_columns = QWidget(self.zone_general_aux_root)
-        aux_columns.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        aux_columns_ly = QHBoxLayout(aux_columns)
-        aux_columns_ly.setContentsMargins(0, 0, 0, 0)
-        aux_columns_ly.setSpacing(self.zone_general_aux_root.ly.spacing())
-
-        self.zone_general_aux_stack = Zone(
-            "B1.A1.A",
-            aux_columns,
-            flow="v",
-            margins=self.zone_general_aux_root._margin_spec,
-            spacing=self.zone_general_aux_root.ly.spacing(),
-            level=self.zone_general_aux_root._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-        )
-        self.zone_general_aux_stack.ly.setSpacing(2)
-
-        aux_columns_ly.addWidget(self.zone_general_aux_stack, 1)
-        self.zone_general_aux_root.add(aux_columns, 1)
-
         def _create_general_aux_reserved_slot(tag: str) -> Zone:
             slot = Zone(
                 tag,
@@ -782,6 +762,68 @@ class FTApp(QWidget):
         self.zone_general_aux_reserved_slot_4 = _create_general_aux_reserved_slot(
             "B1.A1.4"
         )
+        # ---------------- B1 — Ficha do Artigo ----------------
+        page_ly.addWidget(
+            self._section_box("[B1] - FICHA DO ARTIGO", self.B1),
+            0,
+        )
+        # ---------------- B2 — Ficha de Artigo (B2.C1) ----------------
+        self.C2 = Zone(
+            "B2.C1",
+            self,
+            flow="v",
+            level=0,
+            show_overlays=layout.DEV_OVERLAYS,
+        )
+        self.C2.apply_metadata(zone_type="secao-ficha-artigo", widget_type="campo")
+        self.C2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.C2.ly.setContentsMargins(0, 0, 0, 0)
+
+        (
+            self.zone_article_sheet_left,
+            self.zone_article_sheet_right,
+        ) = self.C2.split_h((2, 1))
+        for zone in (self.zone_article_sheet_left, self.zone_article_sheet_right):
+            zone.ly.setContentsMargins(0, 0, 0, 0)
+            zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.zone_article_sheet_left.apply_metadata(
+            zone_type="coluna-campos", widget_type="campo"
+        )
+        self.zone_article_sheet_right.apply_metadata(
+            zone_type="coluna-campos", widget_type="campo"
+        )
+
+        (
+            self.zone_article_sheet_left_slot_1,
+            self.zone_article_sheet_left_slot_2,
+            self.zone_article_sheet_left_slot_3,
+        ) = self.zone_article_sheet_left.split_v((1, 1, 1))
+        self.zone_article_sheet_left_slots = (
+            self.zone_article_sheet_left_slot_1,
+            self.zone_article_sheet_left_slot_2,
+            self.zone_article_sheet_left_slot_3,
+        )
+        left_slot_spacing = self.zone_article_sheet_left.ly.spacing()
+        for slot in self.zone_article_sheet_left_slots:
+            slot.ly.setContentsMargins(0, 0, 0, 0)
+            slot.ly.setSpacing(left_slot_spacing)
+            slot.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            slot.apply_metadata(zone_type="coluna-campos", widget_type="campo")
+
+        # --- Identificação e família (B2.C1.A.1) ---
+        self.zone_general_aux_stack = Zone(
+            "B2.C1.A.1",
+            self.zone_article_sheet_left_slot_1,
+            flow="v",
+            margins=self.zone_article_sheet_left_slot_1._margin_spec,
+            spacing=self.zone_article_sheet_left_slot_1.ly.spacing(),
+            level=self.zone_article_sheet_left_slot_1._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+            base_style_label=self.zone_article_sheet_left_slot_1.base_style_label,
+        )
+        self.zone_general_aux_stack.ly.setSpacing(2)
+        self.zone_article_sheet_left_slot_1.add(self.zone_general_aux_stack, 0)
+
         (
             self.zone_general_aux_identification_slot,
             self.zone_general_aux_family_slot,
@@ -798,12 +840,6 @@ class FTApp(QWidget):
                 QSizePolicy.Expanding,
                 current_policy.verticalPolicy(),
             )
-
-        # ---------------- B1 — Ficha do Artigo ----------------
-        page_ly.addWidget(
-            self._section_box("[B1] - FICHA DO ARTIGO", self.B1),
-            0,
-        )
 
         self.edCodigo = QLineEdit()
         make_readonly_lineedit(self.edCodigo)
@@ -892,7 +928,7 @@ class FTApp(QWidget):
         self.zone_general_aux_family_slot.add(family_row_container, 0)
 
         family_labels_zone = Zone(
-            "B1.A1.A.2.A",
+            "B2.C1.A.1.2.A",
             family_row_container,
             flow="v",
             margins=family_row_margin_value,
@@ -902,7 +938,7 @@ class FTApp(QWidget):
             base_style_label=self.zone_general_aux_family_slot.base_style_label,
         )
         family_values_zone = Zone(
-            "B1.A1.A.2.B",
+            "B2.C1.A.1.2.B",
             family_row_container,
             flow="v",
             margins=family_row_margin_value,
@@ -974,57 +1010,12 @@ class FTApp(QWidget):
         )
 
         self._family_label_zone = family_labels_zone
-
         self._refresh_family_label_column_widths()
 
-        # --- Informação adicional (B1.A1.A.3) ---
         self.zone_general_aux_secondary_slot.hide()
         self.zone_general_aux_secondary_slot.ly.setSpacing(
             family_row_spacing_value
         )
-
-        # ---------------- B2 — Ficha de Artigo (B2.C1) ----------------
-        self.C2 = Zone(
-            "B2.C1",
-            self,
-            flow="v",
-            level=0,
-            show_overlays=layout.DEV_OVERLAYS,
-        )
-        self.C2.apply_metadata(zone_type="secao-ficha-artigo", widget_type="campo")
-        self.C2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.C2.ly.setContentsMargins(0, 0, 0, 0)
-
-        (
-            self.zone_article_sheet_left,
-            self.zone_article_sheet_right,
-        ) = self.C2.split_h((2, 1))
-        for zone in (self.zone_article_sheet_left, self.zone_article_sheet_right):
-            zone.ly.setContentsMargins(0, 0, 0, 0)
-            zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.zone_article_sheet_left.apply_metadata(
-            zone_type="coluna-campos", widget_type="campo"
-        )
-        self.zone_article_sheet_right.apply_metadata(
-            zone_type="coluna-campos", widget_type="campo"
-        )
-
-        (
-            self.zone_article_sheet_left_slot_1,
-            self.zone_article_sheet_left_slot_2,
-            self.zone_article_sheet_left_slot_3,
-        ) = self.zone_article_sheet_left.split_v((1, 1, 1))
-        self.zone_article_sheet_left_slots = (
-            self.zone_article_sheet_left_slot_1,
-            self.zone_article_sheet_left_slot_2,
-            self.zone_article_sheet_left_slot_3,
-        )
-        left_slot_spacing = self.zone_article_sheet_left.ly.spacing()
-        for slot in self.zone_article_sheet_left_slots:
-            slot.ly.setContentsMargins(0, 0, 0, 0)
-            slot.ly.setSpacing(left_slot_spacing)
-            slot.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-            slot.apply_metadata(zone_type="coluna-campos", widget_type="campo")
 
         # --- Informação adicional (B2.C1.A.2) ---
         info_zone = Zone(
