@@ -195,10 +195,6 @@ def test_classification_overlay_tags_hidden(qapp):
 
         target_tags = [
             "B1.A1.A.3",
-            "B1.A1.A.3.C",
-            "B1.A1.A.3.C.1",
-            "B1.A1.A.3.C.2",
-            "B1.A1.A.3.C.3",
             "B1.A1.A.3.A",
             "B1.A1.A.3.A.1",
             "B1.A1.A.3.A.2",
@@ -206,10 +202,12 @@ def test_classification_overlay_tags_hidden(qapp):
             "B1.A1.A.3.B.1",
             "B1.A1.A.3.B.2",
             "B1.A1.A.4",
-            "B1.E1",
-            "B1.E1.A",
-            "B1.E1.A.B",
-            "B1.E1.A.B.1",
+            "B1.A1.4",
+            "B1.A1.4.1",
+            "B1.A1.4.2",
+            "B1.A1.4.3",
+            "B1.A1.5",
+            "B1.A1.5.1",
         ]
 
         for tag in target_tags:
@@ -260,11 +258,17 @@ def test_general_aux_reserved_slots_exist_and_hidden(qapp):
     service = ProductService(ds)
     ft = FTApp(service)
     try:
-        for tag in ("B1.A1.2", "B1.A1.3", "B1.A1.4", "B1.A1.5"):
+        for tag in ("B1.A1.2", "B1.A1.3"):
             zone = ft.findChild(Zone, tag)
             assert zone is not None, f"Zone {tag} should exist"
             assert zone.isHidden(), f"Zone {tag} should be hidden by default"
             assert zone.ly.count() == 0, f"Zone {tag} should start empty"
+
+        for tag in ("B1.A1.4", "B1.A1.5"):
+            zone = ft.findChild(Zone, tag)
+            assert zone is not None, f"Zone {tag} should exist"
+            assert not zone.isHidden(), f"Zone {tag} should be visible"
+            assert zone.ly.count() > 0, f"Zone {tag} should contain widgets"
     finally:
         ft.close()
 

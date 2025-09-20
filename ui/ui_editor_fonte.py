@@ -837,25 +837,6 @@ class FTApp(QWidget):
             0,
         )
 
-        # --- Combos & PVP (B1.E1) ---
-        self.E1 = Zone(
-            "B1.E1",
-            self.zone_general_aux_prices_slot,
-            flow="v",
-            margins=4,
-            spacing=2,
-            level=self.zone_general_aux_prices_slot._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-        )
-        E1_margins = self.E1.ly.contentsMargins()
-        self.E1.ly.setContentsMargins(
-            E1_margins.left(),
-            0,
-            E1_margins.right(),
-            0,
-        )
-        self.zone_general_aux_prices_slot.add(self.E1, 1)
-
         self.edCodigo = QLineEdit()
         make_readonly_lineedit(self.edCodigo)
         self.edCodigo.setStyleSheet(FIELD_STYLE)
@@ -938,18 +919,13 @@ class FTApp(QWidget):
         self.image_preview = ImagePreview(init_code, self.service)
         self.zone_general_aux_preview_image_slot.add(self.image_preview, 1)
 
-        # --- Combos (B1.A1.A.3.C) ---
-        self.zone_general_aux_combo_slot = Zone(
-            "B1.A1.A.3.C",
-            self.zone_general_aux_family_slot,
-            flow="v",
-            margins=0,
-            spacing=self.zone_general_aux_family_slot.ly.spacing(),
-            level=self.zone_general_aux_family_slot._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-        )
+        # --- Combos (B1.A1.4) ---
+        self.zone_general_aux_combo_slot = self.zone_general_aux_reserved_slot_4
+        self.zone_general_aux_combo_slot.show()
         self.zone_general_aux_combo_slot.ly.setContentsMargins(0, 0, 0, 0)
-        self.zone_general_aux_family_slot.add(self.zone_general_aux_combo_slot, 0)
+        self.zone_general_aux_combo_slot.ly.setSpacing(
+            self.zone_general_aux_family_slot.ly.spacing()
+        )
 
         combo_zone_specs = (
             ("Tipos Artigos", "cbTipos"),
@@ -1077,41 +1053,22 @@ class FTApp(QWidget):
 
         self._refresh_family_label_column_widths()
 
-        pvps_container = Zone(
-            "B1.E1.A",
-            self.E1,
-            flow="v",
-            margins=family_row_margin_value,
-            spacing=family_row_spacing_value,
-            level=self.E1._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-            widget_type="campo",
+        # --- PVPs (B1.A1.5) ---
+        pvps_section = self.zone_general_aux_reserved_slot_5
+        pvps_section.show()
+        pvps_section.ly.setContentsMargins(
+            family_row_margin_value,
+            family_row_margin_value,
+            family_row_margin_value,
+            family_row_margin_value,
         )
-        pvps_container.ly.setContentsMargins(0, 0, 0, 0)
-        pvps_container.apply_overlays(layout.DEV_OVERLAYS)
-        pvps_container.setSizePolicy(
-            QSizePolicy.Expanding, QSizePolicy.Fixed
-        )
-        self.E1.add(pvps_container, 1)
-
-        pvps_section = Zone(
-            "B1.E1.A.B",
-            pvps_container,
-            flow="v",
-            margins=family_row_margin_value,
-            spacing=family_row_spacing_value,
-            level=pvps_container._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-            widget_type="campo",
-        )
+        pvps_section.ly.setSpacing(family_row_spacing_value)
         pvps_section.apply_metadata(
             zone_type="secao-pvps",
             widget_type="campo",
             apply_base_style=False,
         )
-        pvps_section.ly.setContentsMargins(0, 0, 0, 0)
         pvps_section.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        pvps_container.add(pvps_section, 0)
 
         self.lbPVPs: list[QLineEdit] = []
 
@@ -1123,7 +1080,7 @@ class FTApp(QWidget):
         pvps_section.add(pvp_label, 0)
 
         pvps_grid = Zone(
-            "B1.E1.A.B.1",
+            "B1.A1.5.1",
             pvps_section,
             flow="h",
             margins=0,
@@ -1142,7 +1099,7 @@ class FTApp(QWidget):
 
         for idx in range(1, 6):
             column_zone = Zone(
-                f"B1.E1.A.B.1.{idx}",
+                f"B1.A1.5.1.{idx}",
                 pvps_grid,
                 flow="v",
                 margins=0,
