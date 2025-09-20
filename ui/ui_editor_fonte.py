@@ -1120,19 +1120,8 @@ class FTApp(QWidget):
         info_field_zone.ly.addWidget(self.lbInformacaoAdicional, 0, Qt.AlignVCenter)
 
         # --- PVPs (B2.C1.A.3) ---
-        self.zone_general_aux_prices_slot = Zone(
-            "B2.C1.A.3",
-            self.zone_article_sheet_left_slot_3,
-            flow="v",
-            margins=family_row_margin_value,
-            spacing=family_row_spacing_value,
-            level=self.zone_article_sheet_left_slot_3._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-            base_style_label=self.zone_article_sheet_left_slot_3.base_style_label,
-        )
-        self.zone_article_sheet_left_slot_3.add(self.zone_general_aux_prices_slot, 1)
-
-        pvps_section = self.zone_general_aux_prices_slot
+        pvps_section = self.zone_article_sheet_left_slot_3
+        self.zone_general_aux_prices_slot = pvps_section
         pvps_section.show()
         pvps_section.ly.setContentsMargins(
             family_row_margin_value,

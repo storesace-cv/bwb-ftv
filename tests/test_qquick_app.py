@@ -347,3 +347,13 @@ def test_zone_metadata_snapshot_uses_single_general_aux_stack(qapp):
     assert snapshot[tag]["widgetType"] == "campo"
     assert snapshot[tag]["widgetQtClass"] == "QLineEdits"
     assert f"{tag}.stack" not in snapshot
+
+    pvps_tag = zone_tag("pvps_root")
+    assert pvps_tag == zone_tag("general_aux_prices_slot")
+    assert pvps_tag in snapshot
+    assert snapshot[pvps_tag]["tag"] == pvps_tag
+    assert snapshot[pvps_tag]["zoneType"] == "secao-pvps"
+    assert snapshot[pvps_tag]["widgetType"] == "campo"
+    assert snapshot[pvps_tag]["widgetQtClass"] == "QLineEdits"
+    assert f"{pvps_tag}.stack" not in snapshot
+    assert sum(1 for data in snapshot.values() if data["tag"] == pvps_tag) == 1
