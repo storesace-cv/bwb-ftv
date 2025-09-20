@@ -744,7 +744,8 @@ class FTApp(QWidget):
             self.zone_general_aux_identification_slot,
             self.zone_general_aux_combo_slot,
             self.zone_general_aux_family_slot,
-        ) = self.zone_general_aux_stack.split_v((1, 1, 1))
+            self.zone_general_aux_prices_slot,
+        ) = self.zone_general_aux_stack.split_v((1, 1, 1, 1))
         self.zone_general_aux_preview_image_slot = Zone(
             "B1.A1.B.4",
             self.zone_general_aux_preview_panel,
@@ -761,6 +762,7 @@ class FTApp(QWidget):
             self.zone_general_aux_identification_slot,
             self.zone_general_aux_combo_slot,
             self.zone_general_aux_family_slot,
+            self.zone_general_aux_prices_slot,
         ):
             zone.ly.setContentsMargins(0, 0, 0, 0)
             current_policy = zone.sizePolicy()
@@ -839,11 +841,11 @@ class FTApp(QWidget):
         # --- Combos & PVP (B1.E1) ---
         self.E1 = Zone(
             "B1.E1",
-            self.B1,
+            self.zone_general_aux_prices_slot,
             flow="v",
             margins=4,
             spacing=2,
-            level=self.C1._level,
+            level=self.zone_general_aux_prices_slot._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
         )
         E1_margins = self.E1.ly.contentsMargins()
@@ -853,7 +855,7 @@ class FTApp(QWidget):
             E1_margins.right(),
             0,
         )
-        self.B1.ly.addWidget(self.E1, 0)
+        self.zone_general_aux_prices_slot.add(self.E1, 1)
 
         # --- Família (B1.D1) ---
         self.D1 = Zone(
