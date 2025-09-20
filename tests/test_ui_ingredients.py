@@ -255,6 +255,20 @@ def test_general_aux_additional_slots_created(qapp):
         ft.close()
 
 
+def test_general_aux_reserved_slots_exist_and_hidden(qapp):
+    ds = StubDataStore()
+    service = ProductService(ds)
+    ft = FTApp(service)
+    try:
+        for tag in ("B1.A1.2", "B1.A1.3", "B1.A1.4", "B1.A1.5"):
+            zone = ft.findChild(Zone, tag)
+            assert zone is not None, f"Zone {tag} should exist"
+            assert zone.isHidden(), f"Zone {tag} should be hidden by default"
+            assert zone.ly.count() == 0, f"Zone {tag} should start empty"
+    finally:
+        ft.close()
+
+
 def test_identification_and_family_label_columns_expand_with_long_text(qapp):
     ds = StubDataStore()
     service = ProductService(ds)

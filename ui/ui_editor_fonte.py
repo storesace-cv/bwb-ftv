@@ -765,6 +765,34 @@ class FTApp(QWidget):
         aux_columns_ly.addWidget(self.zone_general_aux_stack, 12)
         aux_columns_ly.addWidget(self.zone_general_aux_preview_panel, 4)
         self.zone_general_aux_root.add(aux_columns, 1)
+
+        def _create_general_aux_reserved_slot(tag: str) -> Zone:
+            slot = Zone(
+                tag,
+                self.zone_general_aux_root,
+                flow="v",
+                margins=self.zone_general_aux_root._margin_spec,
+                spacing=self.zone_general_aux_root.ly.spacing(),
+                level=self.zone_general_aux_root._level + 1,
+                show_overlays=layout.DEV_OVERLAYS,
+            )
+            slot.ly.setContentsMargins(0, 0, 0, 0)
+            slot.hide()
+            self.zone_general_aux_root.add(slot, 0)
+            return slot
+
+        self.zone_general_aux_reserved_slot_2 = _create_general_aux_reserved_slot(
+            "B1.A1.2"
+        )
+        self.zone_general_aux_reserved_slot_3 = _create_general_aux_reserved_slot(
+            "B1.A1.3"
+        )
+        self.zone_general_aux_reserved_slot_4 = _create_general_aux_reserved_slot(
+            "B1.A1.4"
+        )
+        self.zone_general_aux_reserved_slot_5 = _create_general_aux_reserved_slot(
+            "B1.A1.5"
+        )
         (
             self.zone_general_aux_identification_slot,
             self.zone_general_aux_family_slot,
