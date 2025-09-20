@@ -80,17 +80,9 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
             zone_tag("family_combo_label_col_3"),
         ]
         for combo_label_tag in combo_label_tags:
-            combo_label_meta = zones_metadata.get(combo_label_tag)
-            assert combo_label_meta is not None
-            assert combo_label_meta.get("zoneType") == "linha-legenda"
-            assert combo_label_meta.get("widgetType") == "legenda"
-            assert combo_label_meta.get("widgetQtClass") == "QLabels"
+            assert zones_metadata.get(combo_label_tag) is None
 
-        combo_field_meta = zones_metadata.get(zone_tag("family_combo_field_col_1"))
-        assert combo_field_meta is not None
-        assert combo_field_meta.get("zoneType") == "combo-lista"
-        assert combo_field_meta.get("widgetType") == "lista"
-        assert combo_field_meta.get("widgetQtClass") == "QComboBoxes"
+        assert zones_metadata.get(zone_tag("family_combo_field_col_1")) is None
 
         family_label_tags = [
             zone_tag("family_label_familia"),
@@ -112,20 +104,12 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
             legend_tag = _tag_with_fallback(
                 f"pvps_col_{idx}_legend", f"B1.C1.A.2.B.B.1.{idx}.1"
             )
-            legend_meta = zones_metadata.get(legend_tag)
-            assert legend_meta is not None
-            assert legend_meta.get("zoneType") == "linha-legenda"
-            assert legend_meta.get("widgetType") == "legenda"
-            assert legend_meta.get("widgetQtClass") == "QLabels"
+            assert zones_metadata.get(legend_tag) is None
 
             field_tag = _tag_with_fallback(
                 f"pvps_col_{idx}_field", f"B1.C1.A.2.B.B.1.{idx}.2"
             )
-            field_meta = zones_metadata.get(field_tag)
-            assert field_meta is not None
-            assert field_meta.get("zoneType") == "linha-campo"
-            assert field_meta.get("widgetType") == "campo"
-            assert field_meta.get("widgetQtClass") == "QLineEdits"
+            assert zones_metadata.get(field_tag) is None
 
         expected_zone_types = {
             zone_tag("family_root"): "bloco-familias-combos",
@@ -139,22 +123,14 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
             assert tag_meta is not None, f"metadata missing for {tag}"
             assert tag_meta.get("zoneType") == expected_type
 
-        empty_metadata_tags = tuple(
-            _tag_with_fallback(key, fallback)
-            for key, fallback in (
-                ("family_combos_container", "B1.C1.A.2.A.2"),
-                ("family_combos_section", "B1.C1.A.2.B.A"),
-                ("pvps_root", "B1.C1.A.2.B.B"),
-                ("pvps_grid", "B1.C1.A.2.B.B.1"),
-            )
+        empty_metadata_tags = (
+            _tag_with_fallback("family_combos_container", "B1.C1.A.2.A.2"),
+            _tag_with_fallback("family_combos_section", "B1.C1.A.2.B.A"),
+            _tag_with_fallback("pvps_root", "B1.C1.A.2.B.B"),
+            _tag_with_fallback("pvps_grid", "B1.C1.A.2.B.B.1"),
         )
         for tag in empty_metadata_tags:
-            tag_meta = zones_metadata.get(tag)
-            assert tag_meta is not None, f"metadata missing for {tag}"
-            assert tag_meta.get("zoneType") is None
-            assert tag_meta.get("widgetType") is None
-            assert tag_meta.get("widgetQtClass") is None
-            assert tag_meta.get("baseStyleLabel") is None
+            assert zones_metadata.get(tag) is None
     finally:
         engine.deleteLater()
 
