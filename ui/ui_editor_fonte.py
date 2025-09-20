@@ -1020,23 +1020,27 @@ class FTApp(QWidget):
 
         self._refresh_family_label_column_widths()
 
-        # --- Informação adicional (B1.A1.A.2.C) ---
+        # --- Informação adicional (B1.A1.A.3) ---
+        self.zone_general_aux_secondary_slot.show()
+        self.zone_general_aux_secondary_slot.ly.setSpacing(
+            family_row_spacing_value
+        )
         info_zone = Zone(
-            "B1.A1.A.2.C",
-            self.zone_general_aux_family_slot,
+            "B1.A1.A.3",
+            self.zone_general_aux_secondary_slot,
             flow="v",
             margins=family_row_margin_value,
             spacing=family_row_spacing_value,
-            level=self.zone_general_aux_family_slot._level + 1,
+            level=self.zone_general_aux_secondary_slot._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
-            base_style_label=self.zone_general_aux_family_slot.base_style_label,
+            base_style_label=self.zone_general_aux_secondary_slot.base_style_label,
         )
-        self.zone_general_aux_family_slot.ly.addWidget(info_zone, 0)
+        self.zone_general_aux_secondary_slot.add(info_zone, 0)
         info_zone.apply_metadata(
             zone_type="secao-informacao",
             widget_type="campo",
             apply_base_style=False,
-            base_style_label=self.zone_general_aux_family_slot.base_style_label,
+            base_style_label=self.zone_general_aux_secondary_slot.base_style_label,
         )
 
         info_legend_zone, info_field_zone = info_zone.split_v((1, 1))
