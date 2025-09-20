@@ -1027,137 +1027,70 @@ class FTApp(QWidget):
         )
         C1A2_familias.add(C1A2_familias_reserva, 2)
 
-        C1A2_combos_row = Zone(
-            "B1.C1.A.2.B",
-            C1A2_familias_spacer,
-            flow="v",
-            margins=0,
-            spacing=C1A2_familias_row_spacing_value,
-            level=C1A2_familias_spacer._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-            base_style_label=C1A2_familias.base_style_label,
-            widget_type="campo",
-        )
-        C1A2_combos_row.apply_metadata(
-            zone_type="secao-combos",
-            widget_type="campo",
-            base_declarations=(
-                "border-radius: 12px;\n"
-                "padding: 6px;\n"
-                "padding-top: 0;\n"
-                "padding-bottom: 0;\n"
-                "border: none;\n"
-                "border-bottom-width: 2px;\n"
-                "border-bottom-style: groove;\n"
-                "border-bottom-color: #c7ccd8;\n"
-                "border-bottom: 2px groove #f7f9fc;\n"
-            ),
-        )
-        C1A2_combos_row.ly.setContentsMargins(0, 0, 0, 0)
-        C1A2_combos_row.apply_overlays(layout.DEV_OVERLAYS)
-        C1A2_combos_row.setSizePolicy(
+        combos_pvp_container = QWidget(C1A2_familias_spacer)
+        combos_pvp_container.setObjectName("B1.C1.A.2.B")
+        combos_pvp_container.setSizePolicy(
             QSizePolicy.Expanding, QSizePolicy.Fixed
         )
-        C1A2_familias_spacer.add(C1A2_combos_row, 1)
+        combos_pvp_layout = QVBoxLayout(combos_pvp_container)
+        combos_pvp_layout.setContentsMargins(0, 0, 0, 0)
+        combos_pvp_layout.setSpacing(C1A2_familias_row_spacing_value)
+        C1A2_familias_spacer.add(combos_pvp_container, 1)
 
-        C1A2_combos_section = Zone(
-            "B1.C1.A.2.B.A",
-            C1A2_combos_row,
-            flow="h",
-            margins=0,
-            spacing=C1A2_familias_row_spacing_value,
-            level=C1A2_combos_row._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-            base_style_label=C1A2_familias.base_style_label,
-        )
-        C1A2_combos_section.ly.setContentsMargins(0, 0, 0, 0)
-        C1A2_combos_section.apply_overlays(layout.DEV_OVERLAYS)
-        C1A2_combos_section.setSizePolicy(
-            QSizePolicy.Expanding, QSizePolicy.Fixed
-        )
-        C1A2_combos_row.add(C1A2_combos_section, 1)
+        combos_section = QWidget(combos_pvp_container)
+        combos_section.setObjectName("B1.C1.A.2.B.A")
+        combos_section.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        combos_section_layout = QHBoxLayout(combos_section)
+        combos_section_layout.setContentsMargins(0, 0, 0, 0)
+        combos_section_layout.setSpacing(C1A2_familias_row_spacing_value)
+        combos_pvp_layout.addWidget(combos_section, 0)
 
-        C1A2_pvps_zone = Zone(
-            "B1.C1.A.2.B.B",
-            C1A2_combos_row,
-            flow="v",
-            margins=0,
-            spacing=C1A2_familias_row_spacing_value,
-            level=C1A2_combos_row._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-            base_style_label=C1A2_familias.base_style_label,
-        )
-        C1A2_pvps_zone.ly.setContentsMargins(0, 0, 0, 0)
-        C1A2_pvps_zone.apply_overlays(layout.DEV_OVERLAYS)
-        C1A2_pvps_zone.setSizePolicy(
-            QSizePolicy.Expanding, QSizePolicy.Fixed
-        )
-        C1A2_combos_row.add(C1A2_pvps_zone, 1)
+        pvps_section = QWidget(combos_pvp_container)
+        pvps_section.setObjectName("B1.C1.A.2.B.B")
+        pvps_section.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        pvps_section_layout = QVBoxLayout(pvps_section)
+        pvps_section_layout.setContentsMargins(0, 0, 0, 0)
+        pvps_section_layout.setSpacing(C1A2_familias_row_spacing_value)
+        combos_pvp_layout.addWidget(pvps_section, 0)
 
         self.lbPVPs: list[QLineEdit] = []
 
-        pvp_label = QLabel("PREÇOS DE VENDA")
+        pvp_label = QLabel("PREÇOS DE VENDA", pvps_section)
         pvp_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         pvp_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         pvp_label.setStyleSheet("")
         match_font(pvp_label, self.edNome)
-        C1A2_pvps_zone.add(pvp_label, 0)
+        pvps_section_layout.addWidget(pvp_label, 0)
 
-        C1A2_pvps_grid = Zone(
-            "B1.C1.A.2.B.B.1",
-            C1A2_pvps_zone,
-            flow="h",
-            margins=0,
-            spacing=C1A2_familias_row_spacing_value,
-            level=C1A2_pvps_zone._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-        )
-        C1A2_pvps_grid.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        C1A2_pvps_zone.add(C1A2_pvps_grid, 0)
+        pvps_grid = QWidget(pvps_section)
+        pvps_grid.setObjectName("B1.C1.A.2.B.B.1")
+        pvps_grid_layout = QHBoxLayout(pvps_grid)
+        pvps_grid_layout.setContentsMargins(0, 0, 0, 0)
+        pvps_grid_layout.setSpacing(C1A2_familias_row_spacing_value)
+        pvps_section_layout.addWidget(pvps_grid, 0)
 
-        pvp1, pvp2, pvp3, pvp4, pvp5 = C1A2_pvps_grid.split_h((1, 1, 1, 1, 1))
-        for idx, zone in enumerate((pvp1, pvp2, pvp3, pvp4, pvp5), start=1):
-            zone.apply_metadata(style_dev_info="")
-            legend_zone, field_zone = zone.split_v((1, 1))
-            legend_zone.apply_metadata(
-                zone_type="linha-legenda",
-                widget_type="legenda",
-                base_declarations=(
-                    "border-radius: 12px;\n",
-                    "padding: 6px;\n",
-                ),
-            )
-            field_zone.apply_metadata(
-                zone_type="linha-campo",
-                widget_type="campo",
-            )
-            legend_zone.ly.setContentsMargins(0, 0, 0, 0)
-            field_zone.ly.setContentsMargins(0, 0, 0, 0)
-            legend_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            field_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        for idx in range(1, 6):
+            column = QWidget(pvps_grid)
+            column.setObjectName(f"B1.C1.A.2.B.B.1.{idx}")
+            column.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            column_layout = QVBoxLayout(column)
+            column_layout.setContentsMargins(0, 0, 0, 0)
+            column_layout.setSpacing(2)
+            pvps_grid_layout.addWidget(column, 1)
 
             label_text = f"PVP #{idx}"
-            overlay = f"PrecosTaxas.Preco{idx}"
-            display_label = (
-                overlay if legend_zone._overlay_active else label_text
-            )
-            lbl = QLabel(display_label, legend_zone)
+            lbl = QLabel(label_text, column)
             lbl.setProperty("userLabel", label_text)
-            lbl.setProperty("devLabel", overlay)
             match_font(lbl, self.edNome)
-            legend_zone.add(lbl, 0)
-            legend_zone._labels.append(lbl)
-            zone._labels.append(lbl)
             apply_label_style(lbl, alignment=AlignmentVariant.DEFAULT)
-            if legend_zone._overlay_active:
-                apply_overlay_label_style(lbl)
+            column_layout.addWidget(lbl, 0, Qt.AlignLeft | Qt.AlignVCenter)
 
-            val = QLineEdit("—", field_zone)
+            val = QLineEdit("—", column)
             val.setFont(self.edNome.font())
             make_readonly_lineedit(val)
             val.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            field_zone.add(val, 0)
+            column_layout.addWidget(val, 0)
             self.lbPVPs.append(val)
 
         family_labels_zone, family_values_zone = C1A2_familias_row.split_h((1, 3))
@@ -1222,75 +1155,26 @@ class FTApp(QWidget):
             ("B1.C1.A.2.B.A.3", "Temperaturas", "cbTemp"),
         )
         for tag_prefix, label_text, attr_name in combo_zone_specs:
-            column_widget = QWidget(C1A2_combos_section)
+            column_widget = QWidget(combos_section)
+            column_widget.setObjectName(tag_prefix)
             column_widget.setSizePolicy(
                 QSizePolicy.Expanding, QSizePolicy.Preferred
             )
             column_layout = QVBoxLayout(column_widget)
             column_layout.setContentsMargins(0, 0, 0, 0)
             column_layout.setSpacing(2)
-            C1A2_combos_section.ly.addWidget(column_widget, 1)
+            combos_section_layout.addWidget(column_widget, 1)
 
-            label_zone = Zone(
-                f"{tag_prefix}.1",
-                column_widget,
-                flow="v",
-                margins=0,
-                spacing=0,
-                level=C1A2_combos_section._level + 1,
-                show_overlays=layout.DEV_OVERLAYS,
-                base_style_label=C1A2_combos_section.base_style_label,
-                widget_type=None,
-            )
-            label_zone.apply_metadata(
-                zone_type="linha-legenda",
-                widget_type="legenda",
-                base_declarations=(
-                    "border-radius: 12px;\n",
-                    "padding: 6px;\n",
-                ),
-            )
-            label_zone.set_widget_type("legenda")
-            label_zone.set_widget_qt_class("QLabels")
-            label_zone.ly.setContentsMargins(0, 0, 0, 0)
-            label_zone.ly.setSpacing(0)
-            label_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            column_layout.addWidget(label_zone, 0)
-
-            field_zone = Zone(
-                f"{tag_prefix}.2",
-                column_widget,
-                flow="v",
-                margins=0,
-                spacing=0,
-                level=C1A2_combos_section._level + 1,
-                show_overlays=layout.DEV_OVERLAYS,
-                base_style_label=C1A2_combos_section.base_style_label,
-                widget_type=None,
-            )
-            field_zone.apply_metadata(
-                zone_type="combo-lista",
-                widget_type="lista",
-            )
-            field_zone.ly.setContentsMargins(0, 0, 0, 0)
-            field_zone.ly.setSpacing(0)
-            field_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            column_layout.addWidget(field_zone, 0)
-
-            label = QLabel(label_text, label_zone)
-            apply_label_style(label)
+            label = QLabel(label_text, column_widget)
             label.setProperty("userLabel", label_text)
-            label.setProperty("devLabel", None)
-            if label_zone._overlay_active:
-                apply_overlay_label_style(label)
-            label_zone.ly.addWidget(label, 0, Qt.AlignHCenter | Qt.AlignVCenter)
-            label_zone._labels.append(label)
-            label_zone.sync_label_widths()
+            label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            apply_label_style(label)
+            column_layout.addWidget(label, 0)
 
-            combo = QComboBox(field_zone)
+            combo = QComboBox(column_widget)
             combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             combo.setStyleSheet(FIELD_STYLE)
-            field_zone.ly.addWidget(combo, 0)
+            column_layout.addWidget(combo, 0)
             setattr(self, attr_name, combo)
 
         self.cbTipos: QComboBox

@@ -3,7 +3,7 @@ from __future__ import annotations
 import types
 
 import pytest
-from PyQt5.QtWidgets import QCheckBox
+from PyQt5.QtWidgets import QCheckBox, QWidget
 
 from services.products import ProductService
 from ui.layout import Zone
@@ -128,37 +128,27 @@ def test_iter_layout_children_covers_block_roots(qapp, tag_service):
         block_tags = {
             zone_tag("general_root"),
             zone_tag("family_root"),
-            _tag_with_fallback("pvps_root", "B1.C1.A.2.B.B"),
             zone_tag("ingredients_root"),
             zone_tag("food_cost_root"),
             zone_tag("preparation_root"),
             zone_tag("allergens_root"),
         }
         assert block_tags.issubset(_collect_zone_tags(ft))
-        pvps_column_tags = {
-            _tag_with_fallback("pvps_grid", "B1.C1.A.2.B.B.1"),
-            _tag_with_fallback("pvps_col_1", "B1.C1.A.2.B.B.1.1"),
-            _tag_with_fallback("pvps_col_2", "B1.C1.A.2.B.B.1.2"),
-            _tag_with_fallback("pvps_col_3", "B1.C1.A.2.B.B.1.3"),
-            _tag_with_fallback("pvps_col_4", "B1.C1.A.2.B.B.1.4"),
-            _tag_with_fallback("pvps_col_5", "B1.C1.A.2.B.B.1.5"),
-        }
-        assert pvps_column_tags.issubset(_collect_zone_tags(ft))
         header_tags = _collect_zone_tags(ft, include_header=True)
         assert zone_tag("header_root") in header_tags
-        for tag in block_tags | pvps_column_tags:
+        for tag in block_tags:
             assert ft.findChild(Zone, tag) is not None
         combos_wrapper = ft.findChild(
-            Zone, _tag_with_fallback("family_combos_wrapper", "B1.C1.A.2.B")
+            QWidget, _tag_with_fallback("family_combos_wrapper", "B1.C1.A.2.B")
         )
         combos_section = ft.findChild(
-            Zone, _tag_with_fallback("family_combos_section", "B1.C1.A.2.B.A")
+            QWidget, _tag_with_fallback("family_combos_section", "B1.C1.A.2.B.A")
         )
         pvps_zone = ft.findChild(
-            Zone, _tag_with_fallback("pvps_root", "B1.C1.A.2.B.B")
+            QWidget, _tag_with_fallback("pvps_root", "B1.C1.A.2.B.B")
         )
         pvps_grid_zone = ft.findChild(
-            Zone, _tag_with_fallback("pvps_grid", "B1.C1.A.2.B.B.1")
+            QWidget, _tag_with_fallback("pvps_grid", "B1.C1.A.2.B.B.1")
         )
         assert combos_wrapper is not None
         assert combos_section is not None
@@ -167,6 +157,10 @@ def test_iter_layout_children_covers_block_roots(qapp, tag_service):
         assert combos_section.parentWidget() is combos_wrapper
         assert pvps_zone.parentWidget() is combos_wrapper
         assert pvps_grid_zone.parentWidget() is pvps_zone
+        assert not isinstance(combos_wrapper, Zone)
+        assert not isinstance(combos_section, Zone)
+        assert not isinstance(pvps_zone, Zone)
+        assert not isinstance(pvps_grid_zone, Zone)
     finally:
         ft.close()
 
