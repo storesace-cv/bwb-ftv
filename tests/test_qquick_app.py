@@ -100,8 +100,6 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
 
         expected_zone_types = {
             zone_tag("family_root"): "bloco-familias-combos",
-            zone_tag("pvps_root"): "secao-pvps",
-            zone_tag("pvps_grid"): "grade-pvps",
             zone_tag("ingredients_root"): "bloco-ingredientes",
             zone_tag("food_cost_root"): "bloco-food-cost",
             zone_tag("preparation_root"): "bloco-preparacao",
@@ -111,6 +109,20 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
             tag_meta = zones_metadata.get(tag)
             assert tag_meta is not None, f"metadata missing for {tag}"
             assert tag_meta.get("zoneType") == expected_type
+
+        empty_metadata_tags = (
+            zone_tag("family_combos_container"),
+            zone_tag("family_combos_section"),
+            zone_tag("pvps_root"),
+            zone_tag("pvps_grid"),
+        )
+        for tag in empty_metadata_tags:
+            tag_meta = zones_metadata.get(tag)
+            assert tag_meta is not None, f"metadata missing for {tag}"
+            assert tag_meta.get("zoneType") is None
+            assert tag_meta.get("widgetType") is None
+            assert tag_meta.get("widgetQtClass") is None
+            assert tag_meta.get("baseStyleLabel") is None
     finally:
         engine.deleteLater()
 
