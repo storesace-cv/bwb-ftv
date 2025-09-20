@@ -1161,71 +1161,10 @@ class FTApp(QWidget):
             self.lbPVPs.append(val)
 
         family_labels_zone, family_values_zone = C1A2_familias_row.split_h((1, 3))
-        family_labels_zone.apply_metadata(
-            zone_type="coluna-legendas",
-            widget_type="legenda",
-        )
-        family_values_zone.apply_metadata(
-            zone_type="coluna-campos",
-            widget_type="campo",
-        )
-        family_row_layout = family_labels_zone.parentWidget().layout()
-        if family_row_layout is not None:
-            reference_spacing = self.C1A1.ly.spacing()
-            if reference_spacing >= 0:
-                family_row_layout.setSpacing(reference_spacing)
-            family_row_layout.setStretch(0, 0)
-            family_row_layout.setStretch(1, 1)
-            family_row_layout.setAlignment(family_labels_zone, Qt.AlignLeft)
-        family_values_margins = family_values_zone.ly.contentsMargins()
-        family_values_zone.ly.setContentsMargins(
-            3,
-            family_values_margins.top(),
-            3,
-            family_values_margins.bottom(),
-        )
-        family_labels_zone.setSizePolicy(
-            QSizePolicy.Preferred, QSizePolicy.Preferred
-        )
-        family_values_zone.setSizePolicy(
-            QSizePolicy.Expanding, QSizePolicy.Preferred
-        )
 
         familia_values_zone, subfamilia_values_zone = family_values_zone.split_v((1, 1))
-        familia_values_zone.apply_metadata(
-            zone_type="linha-campo",
-            widget_type="campo",
-        )
-        subfamilia_values_zone.apply_metadata(
-            zone_type="linha-campo",
-            widget_type="campo",
-        )
-        familia_values_zone.ly.setContentsMargins(0, 0, 0, 0)
-        subfamilia_values_zone.ly.setContentsMargins(0, 0, 0, 0)
-        for zone in (familia_values_zone, subfamilia_values_zone):
-            zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         familia_label_zone, subfamilia_label_zone = family_labels_zone.split_v((1, 1))
-        familia_label_zone.apply_metadata(
-            zone_type="linha-legenda",
-            widget_type="legenda",
-            base_declarations=(
-                "border-radius: 12px;\n",
-                "padding: 6px;\n",
-            ),
-        )
-        familia_label_zone.set_label_alignment(AlignmentVariant.RIGHT)
-        familia_label_zone.ly.setContentsMargins(0, 0, 0, 0)
-        subfamilia_label_zone.apply_metadata(
-            zone_type="linha-legenda",
-            widget_type="legenda",
-            base_declarations=(
-                "border-radius: 12px;\n",
-                "padding: 6px;\n",
-            ),
-        )
-        subfamilia_label_zone.set_label_alignment(AlignmentVariant.RIGHT)
-        subfamilia_label_zone.ly.setContentsMargins(0, 0, 0, 0)
 
         def _make_family_label(zone: Zone, text: str, overlay: str) -> QLabel:
             display = overlay if zone._overlay_active and overlay else text
@@ -1246,8 +1185,6 @@ class FTApp(QWidget):
         _make_family_label(
             subfamilia_label_zone, "Sub-família:", "Produtos.SubFamilia"
         )
-        family_labels_zone.set_label_alignment(AlignmentVariant.RIGHT)
-        family_labels_zone.sync_label_widths()
 
         self.lbFamiliaVal = QLineEdit("")
         make_readonly_lineedit(self.lbFamiliaVal)
