@@ -254,6 +254,8 @@ def create_engine(
         product_data = dict(build_sample_product())
     context.setContextProperty("productModel", product_data)
     context.setContextProperty("zonesMetadata", zones_metadata)
+    context.setContextProperty("zoneOverlayLightenStep", layout.OVERLAY_LIGHTEN_STEP)
+    context.setContextProperty("zoneOverlayLightenMax", layout.OVERLAY_LIGHTEN_MAX)
     context.setContextProperty("zoneTagMap", dict(zone_tag_map()))
 
     qml_path = _resolve_qml_path(main_qml)

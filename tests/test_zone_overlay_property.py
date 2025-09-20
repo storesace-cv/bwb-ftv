@@ -63,12 +63,37 @@ def _overlay_stylesheet(zone: layout.Zone) -> str:
         if zone.objectName()
         else ""
     )
-    background = layout.bg_for_level(zone._level)
+    background = layout.bg_for_level(zone._level, zone.tag)
     return (
         f"{selector} {{ background:{background}; border:2px dashed blue; }}"
         if selector
         else f"background:{background}; border:2px dashed blue;"
     )
+
+
+def _hex_channels(color: str) -> tuple[int, int, int]:
+    hex_value = color.lstrip("#")
+    return tuple(int(hex_value[i : i + 2], 16) for i in (0, 2, 4))
+
+
+def test_overlay_colors_are_tag_specific(monkeypatch):
+    monkeypatch.setattr(layout, "DEV_OVERLAYS", True)
+    root_a = layout.overlay_color_for_tag("B1.A1", 0)
+    root_b = layout.overlay_color_for_tag("C1.A1", 0)
+    assert root_a != root_b
+
+    child_a = layout.overlay_color_for_tag("B1.A1.A2", 1)
+    assert child_a != root_a
+
+    base_channels = _hex_channels(root_a)
+    child_channels = _hex_channels(child_a)
+    for base, child in zip(base_channels, child_channels):
+        assert child >= base
+
+
+def test_bg_for_level_transparent_when_overlays_disabled(monkeypatch):
+    monkeypatch.setattr(layout, "DEV_OVERLAYS", False)
+    assert layout.bg_for_level(0, "B1.A1") == "transparent"
 
 
 def _widget_classes(widget: QLabel) -> list[str]:
