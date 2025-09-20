@@ -211,7 +211,7 @@ def test_classification_overlay_tags_hidden(qapp):
             "B1.A1.A.2.C.2",
             "B1.A1.A.4",
             "B1.A1.4",
-            "B1.A1.5.1",
+            "B1.A1.A.4.A",
         ]
 
         for tag in target_tags:
