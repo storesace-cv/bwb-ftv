@@ -1135,30 +1135,43 @@ class FTApp(QWidget):
         pvp1, pvp2, pvp3, pvp4, pvp5 = C1A2_pvps_grid.split_h((1, 1, 1, 1, 1))
         for idx, zone in enumerate((pvp1, pvp2, pvp3, pvp4, pvp5), start=1):
             zone.apply_metadata(style_dev_info="")
-            zone.set_zone_type(None)
-            zone.set_widget_type(None)
-            zone.set_widget_qt_class(None)
-            zone.set_style_dev_info("")
+            legend_zone, field_zone = zone.split_v((1, 1))
+            legend_zone.apply_metadata(
+                zone_type="linha-legenda",
+                widget_type="legenda",
+                apply_base_style=False,
+            )
+            field_zone.apply_metadata(
+                zone_type="linha-campo",
+                widget_type="campo",
+            )
+            legend_zone.ly.setContentsMargins(0, 0, 0, 0)
+            field_zone.ly.setContentsMargins(0, 0, 0, 0)
+            legend_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            field_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
             label_text = f"PVP #{idx}"
             overlay = f"PrecosTaxas.Preco{idx}"
-            display_label = overlay if zone._overlay_active else label_text
-            lbl = QLabel(display_label, zone)
+            display_label = (
+                overlay if legend_zone._overlay_active else label_text
+            )
+            lbl = QLabel(display_label, legend_zone)
             lbl.setProperty("userLabel", label_text)
             lbl.setProperty("devLabel", overlay)
             match_font(lbl, self.edNome)
-            zone.add(lbl, 0)
+            legend_zone.add(lbl, 0)
+            legend_zone._labels.append(lbl)
             zone._labels.append(lbl)
             apply_label_style(lbl, alignment=AlignmentVariant.DEFAULT)
-            if zone._overlay_active:
+            if legend_zone._overlay_active:
                 apply_overlay_label_style(lbl)
 
-            val = QLineEdit("—", zone)
+            val = QLineEdit("—", field_zone)
             val.setFont(self.edNome.font())
             make_readonly_lineedit(val)
             val.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            zone.add(val, 0)
+            field_zone.add(val, 0)
             self.lbPVPs.append(val)
 
         family_labels_zone, family_values_zone = C1A2_familias_row.split_h((1, 3))

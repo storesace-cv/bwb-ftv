@@ -85,6 +85,19 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         assert combo_field_meta.get("widgetType") == "lista"
         assert combo_field_meta.get("widgetQtClass") == "QComboBoxes"
 
+        for idx in range(1, 6):
+            legend_meta = zones_metadata.get(zone_tag(f"pvps_col_{idx}_legend"))
+            assert legend_meta is not None
+            assert legend_meta.get("zoneType") == "linha-legenda"
+            assert legend_meta.get("widgetType") == "legenda"
+            assert legend_meta.get("widgetQtClass") == "QLabels"
+
+            field_meta = zones_metadata.get(zone_tag(f"pvps_col_{idx}_field"))
+            assert field_meta is not None
+            assert field_meta.get("zoneType") == "linha-campo"
+            assert field_meta.get("widgetType") == "campo"
+            assert field_meta.get("widgetQtClass") == "QLineEdits"
+
         expected_zone_types = {
             zone_tag("family_root"): "bloco-familias-combos",
             zone_tag("pvps_root"): "secao-pvps",
