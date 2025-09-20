@@ -14,6 +14,7 @@ from typing import Any, Sequence
 from PyQt5.QtCore import QEvent, QObject, Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
+    QApplication,
     QHBoxLayout,
     QLabel,
     QGridLayout,
@@ -163,6 +164,32 @@ class _OverlayMetadataClickFilter(QObject):
                         if hasattr(event, "accept"):
                             event.accept()
                         return True
+        elif (
+            event_type == QEvent.MouseButtonDblClick
+            and self._zone._overlay_active
+            and self._zone._metadata_tooltip_text
+        ):
+            widget = watched if isinstance(watched, QWidget) else None
+            if widget is not None:
+                QApplication.clipboard().setText(
+                    self._zone._metadata_tooltip_text
+                )
+                pos = getattr(event, "pos", lambda: None)()
+                global_pos = None
+                if pos is not None:
+                    pos_point = pos.toPoint() if hasattr(pos, "toPoint") else pos
+                    global_pos = widget.mapToGlobal(pos_point)
+                if global_pos is None and hasattr(event, "globalPos"):
+                    global_pos = event.globalPos()
+                if global_pos is not None:
+                    QToolTip.showText(
+                        global_pos,
+                        self._zone._metadata_tooltip_text,
+                        self._zone,
+                    )
+                if hasattr(event, "accept"):
+                    event.accept()
+                return True
         elif (
             event_type == QEvent.MouseButtonPress
             and self._zone._overlay_active
