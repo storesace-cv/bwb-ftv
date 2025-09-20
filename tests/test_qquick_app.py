@@ -64,6 +64,7 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         legend_meta = zones_metadata.get(legend_tag)
         assert legend_meta is not None
         assert legend_meta.get("zoneType") == "linha-legenda"
+        assert legend_meta.get("widgetType") == "etiqueta-c"
         assert legend_meta.get("widgetQtClass") == "QLabels"
 
         legend_zone = _find_zone(root, "general_ident_label_codigo")
@@ -72,7 +73,7 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         assert legend_zone.property("zoneType") == "linha-legenda"
         assert legend_zone.property("widgetQtClass") == "QLabels"
         overlay_metadata = legend_zone.property("overlayMetadata")
-        assert overlay_metadata == "linha-legenda | QLabels | legenda"
+        assert overlay_metadata == "linha-legenda | QLabels | etiqueta-c"
 
         combo_label_tags = [
             tag
@@ -106,7 +107,7 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
             family_label_meta = zones_metadata.get(family_label_tag)
             assert family_label_meta is not None
             assert family_label_meta.get("zoneType") == "linha-legenda"
-            assert family_label_meta.get("widgetType") == "legenda"
+            assert family_label_meta.get("widgetType") == "etiqueta-c"
             assert family_label_meta.get("widgetQtClass") == "QLabels"
 
             family_label_zone = _find_zone(root, family_label_tag)
@@ -134,7 +135,7 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
             legend_meta = zones_metadata.get(legend_tag)
             assert legend_meta is not None
             assert legend_meta.get("zoneType") == "linha-legenda"
-            assert legend_meta.get("widgetType") == "legenda"
+            assert legend_meta.get("widgetType") == "etiqueta-c"
             assert legend_meta.get("widgetQtClass") == "QLabels"
 
             legend_zone = _find_zone(root, legend_key)

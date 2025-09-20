@@ -857,7 +857,7 @@ class FTApp(QWidget):
         label_top, label_bottom = label_col.split_v((1, 1))
         label_top.apply_metadata(
             zone_type="linha-legenda",
-            widget_type="legenda",
+            widget_type="etiqueta-c",
             base_declarations=(
                 "border-radius: 12px;\n",
                 "padding: 6px;\n",
@@ -865,7 +865,7 @@ class FTApp(QWidget):
         )
         label_bottom.apply_metadata(
             zone_type="linha-legenda",
-            widget_type="legenda",
+            widget_type="etiqueta-c",
             base_declarations=(
                 "border-radius: 12px;\n",
                 "padding: 6px;\n",
@@ -1121,7 +1121,7 @@ class FTApp(QWidget):
             legend_zone, field_zone = column_zone.split_v((1, 1))
             legend_zone.apply_metadata(
                 zone_type="linha-legenda",
-                widget_type="legenda",
+                widget_type="etiqueta-c",
                 apply_base_style=False,
             )
             legend_zone.ly.setContentsMargins(0, 0, 0, 0)
@@ -1168,11 +1168,11 @@ class FTApp(QWidget):
         familia_label_zone, subfamilia_label_zone = family_labels_zone.split_v((1, 1))
         familia_label_zone.apply_metadata(
             zone_type="linha-legenda",
-            widget_type="legenda",
+            widget_type="etiqueta-c",
         )
         subfamilia_label_zone.apply_metadata(
             zone_type="linha-legenda",
-            widget_type="legenda",
+            widget_type="etiqueta-c",
         )
         family_labels_zone.set_label_alignment(AlignmentVariant.RIGHT)
 
@@ -1296,7 +1296,7 @@ class FTApp(QWidget):
             label_zone, field_zone = fc.split_v((1, 1))
             label_zone.apply_metadata(
                 zone_type="linha-legenda",
-                widget_type="legenda",
+                widget_type="etiqueta-c",
             )
             field_zone.apply_metadata(
                 zone_type="linha-campo",
@@ -1600,7 +1600,7 @@ class FTApp(QWidget):
         self.prep_previews: list[PrepImagePreview] = []
         gallery_slots = C6_gallery.split_h((1, 1, 1, 1))
         for slot in gallery_slots:
-            slot.apply_metadata(zone_type="slot-preparacao", widget_type="legenda")
+            slot.apply_metadata(zone_type="slot-preparacao", widget_type="etiqueta-c")
         for idx, slot in enumerate(gallery_slots, start=1):
             preview = PrepImagePreview(idx, self.service)
             slot.add(preview, 1)
