@@ -1194,6 +1194,23 @@ class FTApp(QWidget):
             zone_type="coluna-campos", widget_type="campo"
         )
 
+        (
+            self.zone_article_sheet_left_slot_1,
+            self.zone_article_sheet_left_slot_2,
+            self.zone_article_sheet_left_slot_3,
+        ) = self.zone_article_sheet_left.split_v((1, 1, 1))
+        self.zone_article_sheet_left_slots = (
+            self.zone_article_sheet_left_slot_1,
+            self.zone_article_sheet_left_slot_2,
+            self.zone_article_sheet_left_slot_3,
+        )
+        left_slot_spacing = self.zone_article_sheet_left.ly.spacing()
+        for slot in self.zone_article_sheet_left_slots:
+            slot.ly.setContentsMargins(0, 0, 0, 0)
+            slot.ly.setSpacing(left_slot_spacing)
+            slot.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            slot.apply_metadata(zone_type="coluna-campos", widget_type="campo")
+
         article_sheet_preview_container = QWidget(self.zone_article_sheet_right)
         article_sheet_preview_container.setObjectName(
             "article_sheet_preview_container"
