@@ -6,12 +6,12 @@
 #    - Blocos: [B1] Ficha do Artigo (inclui Família, Combos & PVPs),
 #      [B4] FICHA TÉCNICA, [B5] FOOD COST,
 #      [B6] PREPARAÇÃO, [B7] NUTRIÇÃO / ALERGÉNIOS.
-#      • PVPs passaram do bloco [B3] para `B1.C1.A.2.A.*` e partilham
-#        a mesma grelha que Família/Sub-família.
+#      • PVPs passaram do bloco [B3] para a mesma grelha de Família/
+#        Sub-família e mantêm etiquetas por coluna.
 #    - Célula raiz do bloco: Bn.C1 (ex.: B1.C1, B4.C1, B5.C1).
 #    - Divisão horizontal: sufixos .A (esq.) e .B (dir.).
 #    - Divisão vertical: sufixos .1 (topo) e .2 (base).
-#    - Subdivisões encadeiam-se mantendo a regra (ex.: B1.C1.A.2.B).
+#    - Subdivisões encadeiam-se mantendo a regra (ex.: B2.C1.B.1).
 #    - NÃO usar nomes ad hoc (ex.: C1.X, C1AA, C1AB).
 #
 # 2) Changelog: toda alteração documentada deve incluir data/hora
@@ -44,8 +44,8 @@
 #      ordenadas) com pré-seleção por FK do produto.
 #    • B2: grelha 50/10/10/14/16 + Código oculto; cálculo Total por linha
 #      quando necessário.
-#    • B1.C1.A.2.B.B: PVPs alinhados por coluna com etiqueta por cima
-#      e valor por baixo; leitura PVP1..2 de precos_taxas.
+#    • Secção de PVPs alinhada por coluna com etiqueta por cima e
+#      valor por baixo; leitura PVP1..2 de precos_taxas.
 #    • B6: editor de Preparação com toolbar simples; B7: Alergénios 2×N
 #      com persistência N–N.
 #    • Menu: QToolButton (InstantPopup) sem caret; Base de Dados /
