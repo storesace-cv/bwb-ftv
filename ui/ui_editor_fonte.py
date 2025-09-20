@@ -786,7 +786,7 @@ class FTApp(QWidget):
         self.edNome = QLineEdit()
         make_readonly_lineedit(self.edNome)
         self.edNome.setStyleSheet(FIELD_STYLE)
-        label_col, field_col = self.C1A1.split_h((0, 1))
+        label_col, field_col = self.C1A1.split_h((4, 8))
         label_col.apply_metadata(zone_type="coluna-legendas", widget_type="legenda")
         field_col.apply_metadata(zone_type="coluna-campos", widget_type="campo")
         field_col_margins = field_col.ly.contentsMargins()
@@ -797,6 +797,14 @@ class FTApp(QWidget):
             field_col_margins.bottom(),
         )
         label_top, label_bottom = label_col.split_v((1, 1))
+        for zone in (label_top, label_bottom):
+            zone_margins = zone.ly.contentsMargins()
+            zone.ly.setContentsMargins(
+                0,
+                zone_margins.top(),
+                0,
+                zone_margins.bottom(),
+            )
         label_top.apply_metadata(
             zone_type="linha-legenda",
             widget_type="etiqueta-c",
@@ -892,12 +900,12 @@ class FTApp(QWidget):
             level=C1A2_familias._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
         )
-        C1A2_familias_row_margins = C1A2_familias_row.ly.contentsMargins()
-        C1A2_familias_row.ly.setContentsMargins(
-            C1A2_familias_row_margins.left(),
-            0,
-            C1A2_familias_row_margins.right(),
-            C1A2_familias_row_margins.bottom(),
+        C1A2_familias_row.ly.setContentsMargins(0, 0, 0, 0)
+        C1A2_familias_row.set_zone_stylesheet(
+            layout.compose_stylesheet(
+                C1A2_familias_row,
+                "font-size: 1px; margin: 0px; padding: 0px;",
+            )
         )
         C1A2_familias_row.apply_overlays(True)
         C1A2_familias.add(C1A2_familias_row, 1)
@@ -912,6 +920,12 @@ class FTApp(QWidget):
             show_overlays=layout.DEV_OVERLAYS,
         )
         C1A2_familias_spacer.ly.setContentsMargins(0, 0, 0, 0)
+        C1A2_familias_spacer.set_zone_stylesheet(
+            layout.compose_stylesheet(
+                C1A2_familias_spacer,
+                "font-size: 1px; margin: 0px; padding: 0px;",
+            )
+        )
         C1A2_familias_spacer.apply_overlays(layout.DEV_OVERLAYS)
         C1A2_familias_spacer.ly.setAlignment(Qt.AlignLeft)
         C1A2_familias_spacer.setSizePolicy(
@@ -999,6 +1013,12 @@ class FTApp(QWidget):
             show_overlays=layout.DEV_OVERLAYS,
         )
         pvps_grid.ly.setContentsMargins(0, 0, 0, 0)
+        pvps_grid.set_zone_stylesheet(
+            layout.compose_stylesheet(
+                pvps_grid,
+                "font-size: 1px; margin: 0px; padding: 0px;",
+            )
+        )
         pvps_section.add(pvps_grid, 0)
 
         for idx in range(1, 6):
@@ -1057,11 +1077,34 @@ class FTApp(QWidget):
             field_zone.ly.addWidget(val, 0, Qt.AlignLeft | Qt.AlignVCenter)
             self.lbPVPs.append(val)
 
-        family_labels_zone, family_values_zone = C1A2_familias_row.split_h((1, 3))
+        family_labels_zone, family_values_zone = C1A2_familias_row.split_h((4, 8))
+        family_labels_zone.apply_metadata(
+            zone_type="coluna-legendas",
+            widget_type="legenda",
+        )
+        family_values_zone.apply_metadata(
+            zone_type="coluna-campos",
+            widget_type="campo",
+        )
+        family_values_margins = family_values_zone.ly.contentsMargins()
+        family_values_zone.ly.setContentsMargins(
+            3,
+            family_values_margins.top(),
+            3,
+            family_values_margins.bottom(),
+        )
 
         familia_values_zone, subfamilia_values_zone = family_values_zone.split_v((1, 1))
 
         familia_label_zone, subfamilia_label_zone = family_labels_zone.split_v((1, 1))
+        for zone in (familia_label_zone, subfamilia_label_zone):
+            zone_margins = zone.ly.contentsMargins()
+            zone.ly.setContentsMargins(
+                0,
+                zone_margins.top(),
+                0,
+                zone_margins.bottom(),
+            )
         familia_label_zone.apply_metadata(
             zone_type="linha-legenda",
             widget_type="etiqueta-c",
