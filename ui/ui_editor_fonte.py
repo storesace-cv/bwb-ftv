@@ -815,7 +815,12 @@ class FTApp(QWidget):
         for slot in self.zone_article_sheet_left_slots:
             slot.ly.setContentsMargins(0, 0, 0, 0)
             slot.ly.setSpacing(left_slot_spacing)
-            slot.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            slot.setSizePolicy(
+                QSizePolicy.Expanding,
+                QSizePolicy.Maximum
+                if slot is self.zone_article_sheet_left_slot_2
+                else QSizePolicy.Expanding,
+            )
             slot.apply_metadata(zone_type="coluna-campos", widget_type="campo")
 
         # --- Identificação e família (B2.C1.A.1) ---
@@ -1027,6 +1032,7 @@ class FTApp(QWidget):
             base_style_label=self.zone_article_sheet_left_slot_2.base_style_label,
         )
         self.zone_article_sheet_left_slot_2.add(info_zone, 0)
+        info_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
         info_zone.apply_metadata(
             zone_type="secao-informacao",
             widget_type="campo",
@@ -1037,6 +1043,8 @@ class FTApp(QWidget):
         info_legend_zone, info_field_zone = info_zone.split_v((1, 1))
         for zone in (info_legend_zone, info_field_zone):
             zone.ly.setContentsMargins(0, 0, 0, 0)
+
+        info_field_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
 
         info_legend_zone.apply_metadata(
             zone_type="linha-legenda",
