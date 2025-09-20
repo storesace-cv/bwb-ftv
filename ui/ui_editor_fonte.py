@@ -1302,6 +1302,10 @@ class FTApp(QWidget):
                 widget_type="legenda",
                 apply_base_style=False,
             )
+            # Garantir que os metadados exportados dos combos não herdem
+            # erroneamente o tipo "campo" do contêiner horizontal.
+            label_zone.set_widget_type("legenda")
+            label_zone.set_widget_qt_class("QLabels")
             label_zone.ly.setContentsMargins(0, 0, 0, 0)
             label_zone.ly.setSpacing(0)
             label_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)

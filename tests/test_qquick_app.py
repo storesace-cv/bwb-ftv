@@ -67,12 +67,19 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         overlay_metadata = legend_zone.property("overlayMetadata")
         assert overlay_metadata == "linha-legenda | QLabels | legenda"
 
-        combo_label_meta = zones_metadata.get(zone_tag("family_combo_label_col_1"))
+        combo_label_tags = [
+            zone_tag("family_combo_label_col_1"),
+            zone_tag("family_combo_label_col_2"),
+            zone_tag("family_combo_label_col_3"),
+        ]
+        for combo_label_tag in combo_label_tags:
+            combo_label_meta = zones_metadata.get(combo_label_tag)
+            assert combo_label_meta is not None
+            assert combo_label_meta.get("zoneType") == "combo-legenda"
+            assert combo_label_meta.get("widgetType") == "legenda"
+            assert combo_label_meta.get("widgetQtClass") == "QLabels"
+
         combo_field_meta = zones_metadata.get(zone_tag("family_combo_field_col_1"))
-        assert combo_label_meta is not None
-        assert combo_label_meta.get("zoneType") == "combo-legenda"
-        assert combo_label_meta.get("widgetType") == "legenda"
-        assert combo_label_meta.get("widgetQtClass") == "QLabels"
         assert combo_field_meta is not None
         assert combo_field_meta.get("zoneType") == "combo-lista"
         assert combo_field_meta.get("widgetType") == "lista"
