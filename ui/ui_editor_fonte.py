@@ -741,6 +741,14 @@ class FTApp(QWidget):
         )
         self.B1A1.ly.addWidget(self.B1A1A, 0)
         self.B1A1AA, self.B1A1AB = self.B1A1A.split_h((3, 1))
+        self.B1A1AAA, self.B1A1AAB = self.B1A1AA.split_v((1, 1))
+        for zone in (self.B1A1AAA, self.B1A1AAB):
+            zone.ly.setContentsMargins(0, 0, 0, 0)
+            current_policy = zone.sizePolicy()
+            zone.setSizePolicy(
+                QSizePolicy.Expanding,
+                current_policy.verticalPolicy(),
+            )
 
         # ---------------- B1 — Ficha do Artigo (B1.C1) ----------------
         self.C1 = Zone(
