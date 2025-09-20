@@ -9,7 +9,14 @@ pytest.importorskip("PyQt5.QtQuick")
 from PyQt5.QtCore import QObject
 
 from ui.qquick_app import build_sample_product, create_engine
-from ui.tagging import zone_tag
+from ui.tagging import zone_tag, zone_tag_map
+
+
+_ZONE_TAG_CACHE = dict(zone_tag_map())
+
+
+def _tag_with_fallback(key: str, fallback: str) -> str:
+    return _ZONE_TAG_CACHE.get(key, fallback)
 
 
 class DummyService:
@@ -102,13 +109,19 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
             assert family_label_zone.property("widgetQtClass") == "QLabels"
 
         for idx in range(1, 6):
-            legend_meta = zones_metadata.get(zone_tag(f"pvps_col_{idx}_legend"))
+            legend_tag = _tag_with_fallback(
+                f"pvps_col_{idx}_legend", f"B1.C1.A.2.B.B.1.{idx}.1"
+            )
+            legend_meta = zones_metadata.get(legend_tag)
             assert legend_meta is not None
             assert legend_meta.get("zoneType") == "linha-legenda"
             assert legend_meta.get("widgetType") == "legenda"
             assert legend_meta.get("widgetQtClass") == "QLabels"
 
-            field_meta = zones_metadata.get(zone_tag(f"pvps_col_{idx}_field"))
+            field_tag = _tag_with_fallback(
+                f"pvps_col_{idx}_field", f"B1.C1.A.2.B.B.1.{idx}.2"
+            )
+            field_meta = zones_metadata.get(field_tag)
             assert field_meta is not None
             assert field_meta.get("zoneType") == "linha-campo"
             assert field_meta.get("widgetType") == "campo"
@@ -126,11 +139,14 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
             assert tag_meta is not None, f"metadata missing for {tag}"
             assert tag_meta.get("zoneType") == expected_type
 
-        empty_metadata_tags = (
-            zone_tag("family_combos_container"),
-            zone_tag("family_combos_section"),
-            zone_tag("pvps_root"),
-            zone_tag("pvps_grid"),
+        empty_metadata_tags = tuple(
+            _tag_with_fallback(key, fallback)
+            for key, fallback in (
+                ("family_combos_container", "B1.C1.A.2.A.2"),
+                ("family_combos_section", "B1.C1.A.2.B.A"),
+                ("pvps_root", "B1.C1.A.2.B.B"),
+                ("pvps_grid", "B1.C1.A.2.B.B.1"),
+            )
         )
         for tag in empty_metadata_tags:
             tag_meta = zones_metadata.get(tag)

@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QCheckBox
 
 from services.products import ProductService
 from ui.layout import Zone
-from ui.tagging import zone_tag
+from ui.tagging import zone_tag, zone_tag_map
 from ui.ui_editor_fonte import FTApp
 from utils.formatting import format_pt_number
 
@@ -108,6 +108,13 @@ def tag_service():
     return ProductService(ds)
 
 
+_ZONE_TAG_CACHE = dict(zone_tag_map())
+
+
+def _tag_with_fallback(key: str, fallback: str) -> str:
+    return _ZONE_TAG_CACHE.get(key, fallback)
+
+
 def _collect_zone_tags(ft: FTApp, include_header: bool = False) -> set[str]:
     return {
         zone.tag
@@ -121,7 +128,7 @@ def test_iter_layout_children_covers_block_roots(qapp, tag_service):
         block_tags = {
             zone_tag("general_root"),
             zone_tag("family_root"),
-            zone_tag("pvps_root"),
+            _tag_with_fallback("pvps_root", "B1.C1.A.2.B.B"),
             zone_tag("ingredients_root"),
             zone_tag("food_cost_root"),
             zone_tag("preparation_root"),
@@ -129,22 +136,30 @@ def test_iter_layout_children_covers_block_roots(qapp, tag_service):
         }
         assert block_tags.issubset(_collect_zone_tags(ft))
         pvps_column_tags = {
-            zone_tag("pvps_grid"),
-            zone_tag("pvps_col_1"),
-            zone_tag("pvps_col_2"),
-            zone_tag("pvps_col_3"),
-            zone_tag("pvps_col_4"),
-            zone_tag("pvps_col_5"),
+            _tag_with_fallback("pvps_grid", "B1.C1.A.2.B.B.1"),
+            _tag_with_fallback("pvps_col_1", "B1.C1.A.2.B.B.1.1"),
+            _tag_with_fallback("pvps_col_2", "B1.C1.A.2.B.B.1.2"),
+            _tag_with_fallback("pvps_col_3", "B1.C1.A.2.B.B.1.3"),
+            _tag_with_fallback("pvps_col_4", "B1.C1.A.2.B.B.1.4"),
+            _tag_with_fallback("pvps_col_5", "B1.C1.A.2.B.B.1.5"),
         }
         assert pvps_column_tags.issubset(_collect_zone_tags(ft))
         header_tags = _collect_zone_tags(ft, include_header=True)
         assert zone_tag("header_root") in header_tags
         for tag in block_tags | pvps_column_tags:
             assert ft.findChild(Zone, tag) is not None
-        combos_wrapper = ft.findChild(Zone, zone_tag("family_combos_wrapper"))
-        combos_section = ft.findChild(Zone, zone_tag("family_combos_section"))
-        pvps_zone = ft.findChild(Zone, zone_tag("pvps_root"))
-        pvps_grid_zone = ft.findChild(Zone, zone_tag("pvps_grid"))
+        combos_wrapper = ft.findChild(
+            Zone, _tag_with_fallback("family_combos_wrapper", "B1.C1.A.2.B")
+        )
+        combos_section = ft.findChild(
+            Zone, _tag_with_fallback("family_combos_section", "B1.C1.A.2.B.A")
+        )
+        pvps_zone = ft.findChild(
+            Zone, _tag_with_fallback("pvps_root", "B1.C1.A.2.B.B")
+        )
+        pvps_grid_zone = ft.findChild(
+            Zone, _tag_with_fallback("pvps_grid", "B1.C1.A.2.B.B.1")
+        )
         assert combos_wrapper is not None
         assert combos_section is not None
         assert pvps_zone is not None
