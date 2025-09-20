@@ -92,7 +92,11 @@ def test_calculate_food_cost_logs_product(caplog):
 
 def test_get_product_info_builds_product_from_datastore():
     ds = MagicMock(spec=DataStore)
-    ds.get_produto_info.return_value = {"codigo": "P1", "produto": "Produto 1"}
+    ds.get_produto_info.return_value = {
+        "codigo": "P1",
+        "produto": "Produto 1",
+        "informacaoadicional": "Notas relevantes",
+    }
     ds.get_pvps.return_value = {"pvps": [10.0], "iva": None}
     ds.get_ingredientes.return_value = [
         {
@@ -121,6 +125,7 @@ def test_get_product_info_builds_product_from_datastore():
     assert product.name == "Produto 1"
     assert product.pvps == [10.0]
     assert len(product.ingredients) == 2
+    assert product.informacao_adicional == "Notas relevantes"
     assert product.ingredients[0].name == "Ing1"
     assert format_pt_number(product.ingredients[0].total) == format_pt_number(6.0)
     assert product.ingredients[1].name == "Ing2"

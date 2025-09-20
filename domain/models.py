@@ -36,6 +36,7 @@ class Product:
     name: str | None = None
     familia: str | None = None
     subfamilia: str | None = None
+    informacao_adicional: str | None = None
     tipo_artigo_cod: int | None = None
     validade_cod: int | None = None
     temperatura_cod: int | None = None

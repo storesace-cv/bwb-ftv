@@ -446,11 +446,31 @@ def get_product_info(ds: DataStore, codigo: str) -> Product:
 
     ingredients = [_row_to_ingredient(row, codigo) for row in ing_rows]
 
+    additional_info = None
+    if isinstance(info, dict):
+        normalized_keys: dict[str, Any] = {}
+        for key, value in info.items():
+            if isinstance(key, str):
+                normalized_keys[key.lower()] = value
+        for alias in (
+            "informacaoadicional",
+            "informacao_adicional",
+            "informacaoextra",
+            "informacaoadic",
+        ):
+            if alias in info:
+                additional_info = info.get(alias)
+                break
+            if alias in normalized_keys:
+                additional_info = normalized_keys.get(alias)
+                break
+
     return Product(
         code=info.get("codigo") or codigo,
         name=info.get("produto"),
         familia=info.get("familia"),
         subfamilia=info.get("subfamilia"),
+        informacao_adicional=additional_info,
         tipo_artigo_cod=info.get("tipoartigo"),
         validade_cod=info.get("validade"),
         temperatura_cod=info.get("temperatura"),

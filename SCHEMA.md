@@ -9,6 +9,7 @@
 | Produto | Nome do produto |
 | Familia | Família do produto |
 | SubFamilia | Subfamília |
+| InformacaoAdicional | Informação adicional do produto |
 | AfetaStk | Afeta stock |
 | Menu | Indicação de menu |
 | CodBarras | Código de barras |

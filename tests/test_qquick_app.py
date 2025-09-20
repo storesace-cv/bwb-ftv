@@ -99,21 +99,57 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         for combo_field_tag in combo_field_tags:
             assert zones_metadata.get(combo_field_tag) is None
 
-        family_label_tags = [
-            zone_tag("family_label_familia"),
-            zone_tag("family_label_subfamilia"),
+        family_label_keys = [
+            "family_label_familia",
+            "family_label_subfamilia",
         ]
-        for family_label_tag in family_label_tags:
+        for family_label_key in family_label_keys:
+            family_label_tag = zone_tag(family_label_key)
             family_label_meta = zones_metadata.get(family_label_tag)
             assert family_label_meta is not None
             assert family_label_meta.get("zoneType") == "linha-legenda"
             assert family_label_meta.get("widgetType") == "etiqueta-c"
             assert family_label_meta.get("widgetQtClass") == "QLabels"
 
-            family_label_zone = _find_zone(root, family_label_tag)
+            family_label_zone = _find_zone(root, family_label_key)
             assert family_label_zone is not None
             assert family_label_zone.property("zoneType") == "linha-legenda"
             assert family_label_zone.property("widgetQtClass") == "QLabels"
+
+        additional_section_tag = zone_tag("general_aux_additional_info_section")
+        additional_section_meta = zones_metadata.get(additional_section_tag)
+        assert additional_section_meta is not None
+        assert additional_section_meta.get("zoneType") == "secao-informacao"
+        assert additional_section_meta.get("widgetType") == "campo"
+        assert additional_section_meta.get("widgetQtClass") == "QLineEdits"
+
+        additional_legend_tag = zone_tag("general_aux_additional_info_legend")
+        additional_legend_meta = zones_metadata.get(additional_legend_tag)
+        assert additional_legend_meta is not None
+        assert additional_legend_meta.get("zoneType") == "linha-legenda"
+        assert additional_legend_meta.get("widgetType") == "etiqueta-c"
+        assert additional_legend_meta.get("widgetQtClass") == "QLabels"
+
+        additional_field_tag = zone_tag("general_aux_additional_info_field")
+        additional_field_meta = zones_metadata.get(additional_field_tag)
+        assert additional_field_meta is not None
+        assert additional_field_meta.get("zoneType") == "linha-campo"
+        assert additional_field_meta.get("widgetType") == "campo"
+        assert additional_field_meta.get("widgetQtClass") == "QLineEdits"
+
+        additional_legend_zone = _find_zone(
+            root, "general_aux_additional_info_legend"
+        )
+        assert additional_legend_zone is not None
+        assert additional_legend_zone.property("zoneType") == "linha-legenda"
+        assert additional_legend_zone.property("widgetQtClass") == "QLabels"
+
+        additional_field_zone = _find_zone(
+            root, "general_aux_additional_info_field"
+        )
+        assert additional_field_zone is not None
+        assert additional_field_zone.property("zoneType") == "linha-campo"
+        assert additional_field_zone.property("widgetQtClass") == "QLineEdits"
 
         pvps_root_tag = zone_tag("pvps_root")
         pvps_root_meta = zones_metadata.get(pvps_root_tag)

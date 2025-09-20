@@ -57,6 +57,7 @@ class TagAwareDataStore:
             "tipoartigo": 2,
             "validade": 3,
             "temperatura": 5,
+            "informacaoadicional": "Consumir fresco",
         }
 
     def get_pvps(self, codigo):
@@ -145,6 +146,7 @@ def test_load_record_populates_new_tag_widgets(qapp, tag_service):
         assert ft.cbTemp.currentText() == "Frio"
         assert ft.lbPVPs[0].text() == format_pt_number(12.5)
         assert ft.lbPVPs[1].text() == format_pt_number(9.75)
+        assert ft.lbInformacaoAdicional.text() == "Consumir fresco"
         checkboxes = ft._allergen_checkboxes
         assert 10 in checkboxes and 11 in checkboxes
         assert checkboxes[10].isChecked()
