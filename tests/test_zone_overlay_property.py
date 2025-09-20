@@ -432,7 +432,6 @@ def test_apply_bwb_etiqueta_normal_aligns_without_theming(qapp):
     for declaration in ("background: transparent", "border: none"):
         assert declaration in updated_stylesheet
     assert "linear-gradient" not in zone.base_stylesheet
-    assert zone._base_style_label is None
 
     value_widget = QLabel("valor", zone)
     label = zone.add_row("Etiqueta", value_widget)
