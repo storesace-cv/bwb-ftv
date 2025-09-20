@@ -72,6 +72,8 @@
 # 2025-09-18 23:41 — v3.100 — Família/Sub-família e combos extraídos de
 #    B1.D1 para o novo bloco [B2] com raiz B2.C1; alinhamento de tags
 #    atualizado nas verificações automáticas.
+# 2025-09-19 21:45 — v3.102 — Nomenclatura do bloco auxiliar B1.A1 alinhada
+#    com zonas canónicas e aliases partilhados.
 # 2025-09-19 10:45 — v3.101 — Família/Sub-família e combos reintegrados em
 #    B1.C1.A.*, preservando metadados de bloco e alinhamentos partilhados.
 
@@ -719,7 +721,7 @@ class FTApp(QWidget):
         self.B1.ly.setContentsMargins(0, 0, 0, 0)
 
         # ---------------- B1.A1 — zona auxiliar ----------------
-        self.B1A1 = Zone(
+        self.zone_general_aux_root = Zone(
             "B1.A1",
             self.B1,
             flow="v",
@@ -728,21 +730,32 @@ class FTApp(QWidget):
             level=self.B1._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
         )
-        self.B1.ly.addWidget(self.B1A1, 0)
+        self.B1.ly.addWidget(self.zone_general_aux_root, 0)
 
-        self.B1A1A = Zone(
+        self.zone_general_aux_stack = Zone(
             "B1.A1.A",
-            self.B1A1,
+            self.zone_general_aux_root,
             flow="v",
             margins=4,
             spacing=2,
-            level=self.B1A1._level + 1,
+            level=self.zone_general_aux_root._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
         )
-        self.B1A1.ly.addWidget(self.B1A1A, 0)
-        self.B1A1AA, self.B1A1AB = self.B1A1A.split_h((3, 1))
-        self.B1A1AAA, self.B1A1AAB, self.B1A1AAC = self.B1A1AA.split_v((1, 1, 1))
-        for zone in (self.B1A1AAA, self.B1A1AAB, self.B1A1AAC):
+        self.zone_general_aux_root.ly.addWidget(self.zone_general_aux_stack, 0)
+        (
+            self.zone_general_aux_primary_column,
+            self.zone_general_aux_preview_column,
+        ) = self.zone_general_aux_stack.split_h((3, 1))
+        (
+            self.zone_general_aux_identification_slot,
+            self.zone_general_aux_family_slot,
+            self.zone_general_aux_reserved_slot,
+        ) = self.zone_general_aux_primary_column.split_v((1, 1, 1))
+        for zone in (
+            self.zone_general_aux_identification_slot,
+            self.zone_general_aux_family_slot,
+            self.zone_general_aux_reserved_slot,
+        ):
             zone.ly.setContentsMargins(0, 0, 0, 0)
             current_policy = zone.sizePolicy()
             zone.setSizePolicy(
@@ -923,14 +936,16 @@ class FTApp(QWidget):
         field_top.ly.addWidget(self.edCodigo, 0, Qt.AlignLeft)
         field_bottom.ly.addWidget(self.edNome, 0)
 
-        codigo_aux_container = QWidget(self.B1A1AAA)
+        codigo_aux_container = QWidget(self.zone_general_aux_identification_slot)
         codigo_aux_container.setSizePolicy(
             QSizePolicy.Expanding, QSizePolicy.Fixed
         )
         codigo_aux_layout = QVBoxLayout(codigo_aux_container)
         codigo_aux_layout.setContentsMargins(0, 0, 0, 0)
-        codigo_aux_layout.setSpacing(self.B1A1AAA.ly.spacing())
-        self.B1A1AAA.add(codigo_aux_container, 0)
+        codigo_aux_layout.setSpacing(
+            self.zone_general_aux_identification_slot.ly.spacing()
+        )
+        self.zone_general_aux_identification_slot.add(codigo_aux_container, 0)
 
         def _relocate_ident_row(label_zone: Zone, field_zone: Zone) -> None:
             row_container = QWidget(codigo_aux_container)
@@ -939,7 +954,9 @@ class FTApp(QWidget):
             )
             row_layout = QHBoxLayout(row_container)
             row_layout.setContentsMargins(0, 0, 0, 0)
-            row_layout.setSpacing(self.B1A1AAA.ly.spacing())
+            row_layout.setSpacing(
+                self.zone_general_aux_identification_slot.ly.spacing()
+            )
 
             for zone, stretch in ((label_zone, 1), (field_zone, 4)):
                 parent_widget = zone.parentWidget()
@@ -966,7 +983,7 @@ class FTApp(QWidget):
         except Exception:
             init_code = None
         self.image_preview = ImagePreview(init_code, self.service)
-        self.B1A1AB.add(self.image_preview, 1)
+        self.zone_general_aux_preview_column.add(self.image_preview, 1)
 
         # ---------------- Família & Combos (B1.D1) ----------------
         D1_familias = Zone(
@@ -1214,7 +1231,9 @@ class FTApp(QWidget):
 
         self._family_label_zone = family_labels_zone
 
-        family_aux_parent = getattr(self, "B1A1AAB", None)
+        family_aux_parent = getattr(
+            self, "zone_general_aux_family_slot", None
+        )
         if isinstance(family_aux_parent, Zone):
             parent_widget = D1_familias_row.parentWidget()
             if parent_widget is not None:
