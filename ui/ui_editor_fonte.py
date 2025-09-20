@@ -1213,6 +1213,20 @@ class FTApp(QWidget):
         )
 
         self._family_label_zone = family_labels_zone
+
+        family_aux_parent = getattr(self, "B1A1AAB", None)
+        if isinstance(family_aux_parent, Zone):
+            parent_widget = D1_familias_row.parentWidget()
+            if parent_widget is not None:
+                parent_layout = parent_widget.layout()
+                if parent_layout is not None:
+                    parent_layout.removeWidget(D1_familias_row)
+            D1_familias_row.setParent(family_aux_parent)
+            family_aux_parent.add(D1_familias_row, 0)
+            D1_familias_row.setSizePolicy(
+                QSizePolicy.Expanding, QSizePolicy.Fixed
+            )
+
         self._refresh_family_label_column_widths()
 
         combo_zone_specs = (
