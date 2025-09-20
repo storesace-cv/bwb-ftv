@@ -797,6 +797,14 @@ class FTApp(QWidget):
             field_col_margins.bottom(),
         )
         label_top, label_bottom = label_col.split_v((1, 1))
+        for zone in (label_top, label_bottom):
+            zone_margins = zone.ly.contentsMargins()
+            zone.ly.setContentsMargins(
+                0,
+                zone_margins.top(),
+                0,
+                zone_margins.bottom(),
+            )
         label_top.apply_metadata(
             zone_type="linha-legenda",
             widget_type="etiqueta-c",
@@ -1073,6 +1081,14 @@ class FTApp(QWidget):
         familia_values_zone, subfamilia_values_zone = family_values_zone.split_v((1, 1))
 
         familia_label_zone, subfamilia_label_zone = family_labels_zone.split_v((1, 1))
+        for zone in (familia_label_zone, subfamilia_label_zone):
+            zone_margins = zone.ly.contentsMargins()
+            zone.ly.setContentsMargins(
+                0,
+                zone_margins.top(),
+                0,
+                zone_margins.bottom(),
+            )
         familia_label_zone.apply_metadata(
             zone_type="linha-legenda",
             widget_type="etiqueta-c",
