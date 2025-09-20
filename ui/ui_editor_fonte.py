@@ -1017,48 +1017,6 @@ class FTApp(QWidget):
 
         self._refresh_family_label_column_widths()
 
-        # --- Combos (B1.A1.A.3) ---
-        combo_container = QWidget(self.zone_general_aux_family_slot)
-        combo_container.setSizePolicy(
-            QSizePolicy.Expanding,
-            QSizePolicy.Fixed,
-        )
-        combo_layout = QHBoxLayout(combo_container)
-        combo_layout.setContentsMargins(0, 0, 0, 0)
-        combo_layout.setSpacing(family_row_spacing_value)
-        self.zone_general_aux_family_slot.ly.addWidget(combo_container, 0)
-
-        combo_zone_specs = (
-            ("Tipos Artigos", "cbTipos"),
-            ("Validade", "cbValidade"),
-            ("Temperaturas", "cbTemp"),
-        )
-        for label_text, attr_name in combo_zone_specs:
-            column = QWidget(combo_container)
-            column.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            column_layout = QVBoxLayout(column)
-            column_layout.setContentsMargins(0, 0, 0, 0)
-            column_layout.setSpacing(family_row_spacing_value)
-            label = QLabel(label_text, column)
-            label.setProperty("userLabel", label_text)
-            label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-            apply_label_style(label)
-            column_layout.addWidget(label, 0)
-
-            combo = QComboBox(column)
-            combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            combo.setStyleSheet(FIELD_STYLE)
-            column_layout.addWidget(combo, 0)
-            combo_layout.addWidget(column, 1)
-            setattr(self, attr_name, combo)
-
-        self.cbTipos: QComboBox
-        self.cbValidade: QComboBox
-        self.cbTemp: QComboBox
-        self.cbTipos.currentIndexChanged.connect(self._on_tipo_artigo_changed)
-        self.cbValidade.currentIndexChanged.connect(self._on_validade_changed)
-        self.cbTemp.currentIndexChanged.connect(self._on_temperatura_changed)
-
         # --- Informação adicional (B1.A1.A.3.C) ---
         info_zone = Zone(
             "B1.A1.A.3.C",
@@ -1092,6 +1050,7 @@ class FTApp(QWidget):
             widget_type="campo",
             apply_base_style=False,
         )
+        info_field_zone.ly.setSpacing(family_row_spacing_value)
 
         info_label_text = "INFORMAÇÃO ADICIONAL"
         info_label_overlay = "Produtos.InformacaoAdicional"
@@ -1110,6 +1069,48 @@ class FTApp(QWidget):
         info_legend_zone.ly.addWidget(info_label, 0, Qt.AlignVCenter)
         info_legend_zone._labels.append(info_label)
         info_zone._labels.append(info_label)
+
+        # --- Combos (B1.A1.A.3) ---
+        combo_container = QWidget(info_field_zone)
+        combo_container.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Fixed,
+        )
+        combo_layout = QHBoxLayout(combo_container)
+        combo_layout.setContentsMargins(0, 0, 0, 0)
+        combo_layout.setSpacing(family_row_spacing_value)
+        info_field_zone.ly.addWidget(combo_container, 0)
+
+        combo_zone_specs = (
+            ("Tipos Artigos", "cbTipos"),
+            ("Validade", "cbValidade"),
+            ("Temperaturas", "cbTemp"),
+        )
+        for label_text, attr_name in combo_zone_specs:
+            column = QWidget(combo_container)
+            column.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            column_layout = QVBoxLayout(column)
+            column_layout.setContentsMargins(0, 0, 0, 0)
+            column_layout.setSpacing(family_row_spacing_value)
+            label = QLabel(label_text, column)
+            label.setProperty("userLabel", label_text)
+            label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            apply_label_style(label)
+            column_layout.addWidget(label, 0)
+
+            combo = QComboBox(column)
+            combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            combo.setStyleSheet(FIELD_STYLE)
+            column_layout.addWidget(combo, 0)
+            combo_layout.addWidget(column, 1)
+            setattr(self, attr_name, combo)
+
+        self.cbTipos: QComboBox
+        self.cbValidade: QComboBox
+        self.cbTemp: QComboBox
+        self.cbTipos.currentIndexChanged.connect(self._on_tipo_artigo_changed)
+        self.cbValidade.currentIndexChanged.connect(self._on_validade_changed)
+        self.cbTemp.currentIndexChanged.connect(self._on_temperatura_changed)
 
         self.lbInformacaoAdicional = QLineEdit("", info_field_zone)
         make_readonly_lineedit(self.lbInformacaoAdicional)
