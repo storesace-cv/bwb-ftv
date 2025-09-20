@@ -923,6 +923,27 @@ class FTApp(QWidget):
         field_top.ly.addWidget(self.edCodigo, 0, Qt.AlignLeft)
         field_bottom.ly.addWidget(self.edNome, 0)
 
+        codigo_aux_container = QWidget(self.B1A1AAA)
+        codigo_aux_container.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Fixed
+        )
+        codigo_aux_layout = QHBoxLayout(codigo_aux_container)
+        codigo_aux_layout.setContentsMargins(0, 0, 0, 0)
+        codigo_aux_layout.setSpacing(self.B1A1AAA.ly.spacing())
+        self.B1A1AAA.add(codigo_aux_container, 0)
+
+        label_top_parent = label_top.parentWidget()
+        if label_top_parent is not None and label_top_parent.layout() is not None:
+            label_top_parent.layout().removeWidget(label_top)
+        label_top.setParent(codigo_aux_container)
+        codigo_aux_layout.addWidget(label_top, 4)
+
+        field_top_parent = field_top.parentWidget()
+        if field_top_parent is not None and field_top_parent.layout() is not None:
+            field_top_parent.layout().removeWidget(field_top)
+        field_top.setParent(codigo_aux_container)
+        codigo_aux_layout.addWidget(field_top, 8)
+
         scroll.verticalScrollBar().valueChanged.connect(
             self._toggle_header_on_scroll
         )
