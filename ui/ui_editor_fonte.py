@@ -764,7 +764,7 @@ class FTApp(QWidget):
             0,
         )
 
-        C1A, C1B = self.C1.split_h((3, 1))
+        C1A = self.C1
         C1A_margins = C1A.ly.contentsMargins()
         C1A.ly.setContentsMargins(
             C1A_margins.left(),
@@ -921,13 +921,13 @@ class FTApp(QWidget):
         self.edCodigo.textChanged.connect(self.headerEdCodigo.setText)
         self.edNome.textChanged.connect(self.headerEdNome.setText)
 
-        # B1.C1.B — preview de imagem
+        # B1.A1.A.B — preview de imagem
         try:
             init_code = self.service.codigo_at(self.cur_index)
         except Exception:
             init_code = None
         self.image_preview = ImagePreview(init_code, self.service)
-        C1B.add(self.image_preview, 1)
+        self.B1A1AB.add(self.image_preview, 1)
 
         # ---------------- Família & Combos (B1.D1) ----------------
         D1_familias = Zone(
