@@ -121,7 +121,7 @@ def _normalize_alignment(value: AlignmentVariant | str | None) -> AlignmentVaria
 
 _LABEL_ALIGNMENT_PROPERTY = "labelAlignmentVariant"
 _LINEEDIT_ALIGNMENT_PROPERTY = "lineEditAlignmentVariant"
-DEFAULT_TOOLTIP_DURATION_MS = 3000
+DEFAULT_TOOLTIP_DURATION_MS = 0
 
 
 def _get_widget_classes(widget: QWidget) -> list[str]:
