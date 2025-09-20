@@ -134,7 +134,6 @@ from .utilities import (
     apply_fcfilter_btn_style,
     apply_label_style,
     apply_overlay_label_style,
-    install_tooltip_copy_handler,
     make_readonly_lineedit,
     match_font,
 )
@@ -888,7 +887,6 @@ class FTApp(QWidget):
                 lbl.setStyleSheet("")
             zone.ly.addWidget(lbl, 0, Qt.AlignLeft | Qt.AlignVCenter)
             label_col._labels.append(lbl)
-            install_tooltip_copy_handler(lbl)
             return lbl
 
         _make_ident_label(label_top, "Código:", "Produtos.Codigo")
@@ -1155,7 +1153,6 @@ class FTApp(QWidget):
             apply_label_style(lbl, alignment=AlignmentVariant.DEFAULT)
             if zone._overlay_active:
                 apply_overlay_label_style(lbl)
-            install_tooltip_copy_handler(lbl)
 
             val = QLineEdit("—", zone)
             val.setFont(self.edNome.font())
@@ -1242,7 +1239,6 @@ class FTApp(QWidget):
             zone.ly.addWidget(lbl, 0, Qt.AlignLeft | Qt.AlignVCenter)
             zone._labels.append(lbl)
             family_labels_zone._labels.append(lbl)
-            install_tooltip_copy_handler(lbl)
             return lbl
 
         _make_family_label(familia_label_zone, "Família:", "Produtos.Familia")
@@ -1322,7 +1318,6 @@ class FTApp(QWidget):
             label_zone.ly.addWidget(label, 0, Qt.AlignHCenter | Qt.AlignVCenter)
             label_zone._labels.append(label)
             label_zone.sync_label_widths()
-            install_tooltip_copy_handler(label)
 
             combo = QComboBox(field_zone)
             combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -1403,7 +1398,6 @@ class FTApp(QWidget):
                 lbl.setToolTip(f"{user_label} — {dev_label}")
             else:
                 lbl.setToolTip("")
-            install_tooltip_copy_handler(lbl)
 
             val = QLineEdit("—", field_zone)
             make_readonly_lineedit(val)
@@ -1458,21 +1452,18 @@ class FTApp(QWidget):
         self.btFcostBom.setCheckable(True)
         apply_fcfilter_btn_style(self.btFcostBom, (198, 216, 112))
         self.btFcostBom.setToolTip(level_comments.get("Bom", ""))
-        install_tooltip_copy_handler(self.btFcostBom)
         fcB2.add(self.btFcostBom, 0)
 
         self.btFcostAceitavel = QPushButton("Aceitável")
         self.btFcostAceitavel.setCheckable(True)
         apply_fcfilter_btn_style(self.btFcostAceitavel, (248, 222, 126))
         self.btFcostAceitavel.setToolTip(level_comments.get("Aceitável", ""))
-        install_tooltip_copy_handler(self.btFcostAceitavel)
         fcB3.add(self.btFcostAceitavel, 0)
 
         self.btFcostMau = QPushButton("Mau")
         self.btFcostMau.setCheckable(True)
         apply_fcfilter_btn_style(self.btFcostMau, (255, 158, 145))
         self.btFcostMau.setToolTip(level_comments.get("Mau", ""))
-        install_tooltip_copy_handler(self.btFcostMau)
         fcB4.add(self.btFcostMau, 0)
 
         self.btFcostReset = QPushButton("Todos")
@@ -1494,7 +1485,6 @@ class FTApp(QWidget):
             """
         )
         self.btFcostReset.setToolTip("Remover filtro e mostrar todos os níveis")
-        install_tooltip_copy_handler(self.btFcostReset)
         fcB5.add(self.btFcostReset, 0)
 
         self.fcostFilterGroup = QButtonGroup(self)
@@ -1877,7 +1867,6 @@ class FTApp(QWidget):
                 if notas_txt:
                     tooltip_parts.append(notas_txt)
             cb.setToolTip("\n".join(tooltip_parts) if tooltip_parts else "")
-            install_tooltip_copy_handler(cb)
             cb.stateChanged.connect(
                 lambda state, key=key: self._on_allergen_state_changed(key, state)
             )

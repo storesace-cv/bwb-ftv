@@ -33,6 +33,19 @@ def _open_dialog(qtbot, repo, monkeypatch):
     return dlg, tbl, save_btn
 
 
+def test_tooltip_duration_is_indefinite(qtbot, monkeypatch):
+    with DataStore(db_path=":memory:") as ds:
+        dlg, tbl, _ = _open_dialog(qtbot, ds.fcost, monkeypatch)
+        try:
+            assert tbl.toolTipDuration() == 0
+            viewport = tbl.viewport()
+            assert viewport is not None
+            assert viewport.toolTipDuration() == 0
+        finally:
+            dlg.close()
+            dlg.deleteLater()
+
+
 def test_tooltips_display_repository_comments(qtbot, monkeypatch):
     with DataStore(db_path=":memory:") as ds:
         dlg, tbl, _ = _open_dialog(qtbot, ds.fcost, monkeypatch)

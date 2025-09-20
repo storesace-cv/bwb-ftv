@@ -28,7 +28,6 @@ from .utilities import (
     _normalize_alignment,
     apply_label_style,
     apply_overlay_label_style,
-    install_tooltip_copy_handler,
 )
 
 
@@ -753,7 +752,6 @@ class Zone(QWidget):
         self.ly.addWidget(row, 0)
         self._labels.append(lbl)
         self._rows.append((row, lbl, value_widget))
-        install_tooltip_copy_handler(lbl)
         if self._overlay_active and overlay_text is not None:
             lbl.setToolTip(self._build_label_tooltip(label_text, overlay_text))
         else:
