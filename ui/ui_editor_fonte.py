@@ -1027,14 +1027,21 @@ class FTApp(QWidget):
         )
         C1A2_familias.add(C1A2_familias_reserva, 2)
 
-        combos_pvp_container = QWidget(C1A2_familias_spacer)
-        combos_pvp_container.setObjectName("B1.C1.A.2.B")
+        combos_pvp_container = Zone(
+            "B1.C1.A.2.B",
+            C1A2_familias_spacer,
+            flow="v",
+            margins=C1A2_familias_row_margin_value,
+            spacing=C1A2_familias_row_spacing_value,
+            level=C1A2_familias_spacer._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+            widget_type="campo",
+        )
+        combos_pvp_container.ly.setContentsMargins(0, 0, 0, 0)
+        combos_pvp_container.apply_overlays(layout.DEV_OVERLAYS)
         combos_pvp_container.setSizePolicy(
             QSizePolicy.Expanding, QSizePolicy.Fixed
         )
-        combos_pvp_layout = QVBoxLayout(combos_pvp_container)
-        combos_pvp_layout.setContentsMargins(0, 0, 0, 0)
-        combos_pvp_layout.setSpacing(C1A2_familias_row_spacing_value)
         C1A2_familias_spacer.add(combos_pvp_container, 1)
 
         combos_section = QWidget(combos_pvp_container)
@@ -1043,15 +1050,26 @@ class FTApp(QWidget):
         combos_section_layout = QHBoxLayout(combos_section)
         combos_section_layout.setContentsMargins(0, 0, 0, 0)
         combos_section_layout.setSpacing(C1A2_familias_row_spacing_value)
-        combos_pvp_layout.addWidget(combos_section, 0)
+        combos_pvp_container.add(combos_section, 0)
 
-        pvps_section = QWidget(combos_pvp_container)
-        pvps_section.setObjectName("B1.C1.A.2.B.B")
+        pvps_section = Zone(
+            "B1.C1.A.2.B.B",
+            combos_pvp_container,
+            flow="v",
+            margins=C1A2_familias_row_margin_value,
+            spacing=C1A2_familias_row_spacing_value,
+            level=combos_pvp_container._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+            widget_type="campo",
+        )
+        pvps_section.apply_metadata(
+            zone_type="secao-pvps",
+            widget_type="campo",
+            apply_base_style=False,
+        )
+        pvps_section.ly.setContentsMargins(0, 0, 0, 0)
         pvps_section.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        pvps_section_layout = QVBoxLayout(pvps_section)
-        pvps_section_layout.setContentsMargins(0, 0, 0, 0)
-        pvps_section_layout.setSpacing(C1A2_familias_row_spacing_value)
-        combos_pvp_layout.addWidget(pvps_section, 0)
+        combos_pvp_container.add(pvps_section, 0)
 
         self.lbPVPs: list[QLineEdit] = []
 
@@ -1060,37 +1078,87 @@ class FTApp(QWidget):
         pvp_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         pvp_label.setStyleSheet("")
         match_font(pvp_label, self.edNome)
-        pvps_section_layout.addWidget(pvp_label, 0)
+        pvps_section.add(pvp_label, 0)
 
-        pvps_grid = QWidget(pvps_section)
-        pvps_grid.setObjectName("B1.C1.A.2.B.B.1")
-        pvps_grid_layout = QHBoxLayout(pvps_grid)
-        pvps_grid_layout.setContentsMargins(0, 0, 0, 0)
-        pvps_grid_layout.setSpacing(C1A2_familias_row_spacing_value)
-        pvps_section_layout.addWidget(pvps_grid, 0)
+        pvps_grid = Zone(
+            "B1.C1.A.2.B.B.1",
+            pvps_section,
+            flow="h",
+            margins=0,
+            spacing=C1A2_familias_row_spacing_value,
+            level=pvps_section._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+            widget_type="campo",
+        )
+        pvps_grid.apply_metadata(
+            zone_type="grade-pvps",
+            widget_type="campo",
+            apply_base_style=False,
+        )
+        pvps_grid.ly.setContentsMargins(0, 0, 0, 0)
+        pvps_section.add(pvps_grid, 0)
 
         for idx in range(1, 6):
-            column = QWidget(pvps_grid)
-            column.setObjectName(f"B1.C1.A.2.B.B.1.{idx}")
-            column.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            column_layout = QVBoxLayout(column)
-            column_layout.setContentsMargins(0, 0, 0, 0)
-            column_layout.setSpacing(2)
-            pvps_grid_layout.addWidget(column, 1)
+            column_zone = Zone(
+                f"B1.C1.A.2.B.B.1.{idx}",
+                pvps_grid,
+                flow="v",
+                margins=0,
+                spacing=2,
+                level=pvps_grid._level + 1,
+                show_overlays=layout.DEV_OVERLAYS,
+                widget_type="campo",
+            )
+            column_zone.apply_metadata(
+                zone_type="coluna-pvp",
+                widget_type="campo",
+                apply_base_style=False,
+            )
+            column_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            column_zone.ly.setContentsMargins(0, 0, 0, 0)
+            pvps_grid.add(column_zone, 1)
 
-            label_text = f"PVP #{idx}"
-            lbl = QLabel(label_text, column)
-            lbl.setProperty("userLabel", label_text)
+            legend_zone, field_zone = column_zone.split_v((1, 1))
+            legend_zone.apply_metadata(
+                zone_type="linha-legenda",
+                widget_type="legenda",
+                apply_base_style=False,
+            )
+            legend_zone.ly.setContentsMargins(0, 0, 0, 0)
+            field_zone.apply_metadata(
+                zone_type="linha-campo",
+                widget_type="campo",
+                apply_base_style=False,
+            )
+            field_zone.ly.setContentsMargins(0, 0, 0, 0)
+
+            user_label = f"PVP #{idx}"
+            dev_label = f"PrecosTaxas.Preco{idx}"
+            display_label = (
+                dev_label
+                if legend_zone._overlay_active and layout.DEV_OVERLAYS
+                else user_label
+            )
+            lbl = QLabel(display_label, legend_zone)
+            lbl.setProperty("userLabel", user_label)
+            lbl.setProperty("devLabel", dev_label)
             match_font(lbl, self.edNome)
-            apply_label_style(lbl, alignment=AlignmentVariant.DEFAULT)
-            column_layout.addWidget(lbl, 0, Qt.AlignLeft | Qt.AlignVCenter)
+            if legend_zone._overlay_active and layout.DEV_OVERLAYS:
+                apply_overlay_label_style(lbl)
+                lbl.setToolTip("")
+            else:
+                apply_label_style(lbl, alignment=AlignmentVariant.DEFAULT)
+                lbl.setToolTip(f"{user_label} — {dev_label}")
+            lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            legend_zone.add(lbl, 0)
+            legend_zone._labels.append(lbl)
 
-            val = QLineEdit("—", column)
+            val = QLineEdit("—", field_zone)
             val.setFont(self.edNome.font())
             make_readonly_lineedit(val)
             val.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            column_layout.addWidget(val, 0)
+            field_zone.ly.addWidget(val, 0, Qt.AlignLeft | Qt.AlignVCenter)
             self.lbPVPs.append(val)
 
         family_labels_zone, family_values_zone = C1A2_familias_row.split_h((1, 3))

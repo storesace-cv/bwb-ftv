@@ -114,14 +114,46 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
             assert family_label_zone.property("zoneType") == "linha-legenda"
             assert family_label_zone.property("widgetQtClass") == "QLabels"
 
-        for idx in range(1, 6):
-            legend_tag = _optional_tag(f"pvps_col_{idx}_legend")
-            if legend_tag:
-                assert zones_metadata.get(legend_tag) is None
+        pvps_root_tag = zone_tag("pvps_root")
+        pvps_root_meta = zones_metadata.get(pvps_root_tag)
+        assert pvps_root_meta is not None
+        assert pvps_root_meta.get("zoneType") == "secao-pvps"
+        assert pvps_root_meta.get("widgetType") == "campo"
+        assert pvps_root_meta.get("widgetQtClass") == "QLineEdits"
 
-            field_tag = _optional_tag(f"pvps_col_{idx}_field")
-            if field_tag:
-                assert zones_metadata.get(field_tag) is None
+        pvps_grid_tag = zone_tag("pvps_grid")
+        pvps_grid_meta = zones_metadata.get(pvps_grid_tag)
+        assert pvps_grid_meta is not None
+        assert pvps_grid_meta.get("zoneType") == "grade-pvps"
+        assert pvps_grid_meta.get("widgetType") == "campo"
+        assert pvps_grid_meta.get("widgetQtClass") == "QLineEdits"
+
+        for idx in range(1, 6):
+            legend_key = f"pvps_col_{idx}_legend"
+            legend_tag = zone_tag(legend_key)
+            legend_meta = zones_metadata.get(legend_tag)
+            assert legend_meta is not None
+            assert legend_meta.get("zoneType") == "linha-legenda"
+            assert legend_meta.get("widgetType") == "legenda"
+            assert legend_meta.get("widgetQtClass") == "QLabels"
+
+            legend_zone = _find_zone(root, legend_key)
+            assert legend_zone is not None
+            assert legend_zone.property("zoneType") == "linha-legenda"
+            assert legend_zone.property("widgetQtClass") == "QLabels"
+
+            field_key = f"pvps_col_{idx}_field"
+            field_tag = zone_tag(field_key)
+            field_meta = zones_metadata.get(field_tag)
+            assert field_meta is not None
+            assert field_meta.get("zoneType") == "linha-campo"
+            assert field_meta.get("widgetType") == "campo"
+            assert field_meta.get("widgetQtClass") == "QLineEdits"
+
+            field_zone = _find_zone(root, field_key)
+            assert field_zone is not None
+            assert field_zone.property("zoneType") == "linha-campo"
+            assert field_zone.property("widgetQtClass") == "QLineEdits"
 
         expected_zone_types = {
             zone_tag("family_root"): "bloco-familias-combos",
@@ -138,8 +170,6 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         optional_empty_metadata_tags = [
             _optional_tag("family_combos_container"),
             _optional_tag("family_combos_section"),
-            _optional_tag("pvps_root"),
-            _optional_tag("pvps_grid"),
         ]
         for tag in optional_empty_metadata_tags:
             if tag:
