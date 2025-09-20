@@ -137,7 +137,7 @@ class _OverlayMetadataClickFilter(QObject):
                         QToolTip.showText(
                             global_pos,
                             self._zone._metadata_tooltip_text,
-                            widget,
+                            self._zone,
                         )
                         if hasattr(event, "accept"):
                             event.accept()
@@ -155,7 +155,7 @@ class _OverlayMetadataClickFilter(QObject):
                     QToolTip.showText(
                         widget.mapToGlobal(pos_point),
                         self._zone._metadata_tooltip_text,
-                        widget,
+                        self._zone,
                     )
         return QObject.eventFilter(self, watched, event)
 
