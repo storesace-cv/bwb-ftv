@@ -16,7 +16,7 @@ def test_zone_label_right_click_keeps_clipboard(qapp, qtbot):
     )
     qtbot.addWidget(zone)
     dummy_field = QLineEdit()
-    label = zone.add_row("Etiqueta", dummy_field)
+    label = zone.add_row("Etiqueta-c", dummy_field)
     tooltip_text = "Informação de teste"
     label.setToolTip(tooltip_text)
     zone.show()
@@ -74,7 +74,7 @@ def test_overlay_tooltip_text_is_not_modified(qapp, qtbot):
         )
         qtbot.addWidget(zone)
         dummy_field = QLineEdit()
-        label = zone.add_row("Etiqueta", dummy_field)
+        label = zone.add_row("Etiqueta-c", dummy_field)
         tooltip_text = "Texto visível nas overlays"
         label.setToolTip(tooltip_text)
         zone.show()
