@@ -772,7 +772,26 @@ class FTApp(QWidget):
 
         C1A_cont_ly.addStretch(1)
 
-        # --- Família & combos (B1.D1) ---
+        # --- Combos & PVP (B1.E1) ---
+        self.E1 = Zone(
+            "B1.E1",
+            b1_container,
+            flow="v",
+            margins=4,
+            spacing=2,
+            level=self.C1._level,
+            show_overlays=layout.DEV_OVERLAYS,
+        )
+        E1_margins = self.E1.ly.contentsMargins()
+        self.E1.ly.setContentsMargins(
+            E1_margins.left(),
+            0,
+            E1_margins.right(),
+            0,
+        )
+        b1_layout.addWidget(self.E1, 0)
+
+        # --- Família (B1.D1) ---
         self.D1 = Zone(
             "B1.D1",
             b1_container,
@@ -921,29 +940,6 @@ class FTApp(QWidget):
         D1_familias_row.apply_overlays(True)
         D1_familias.add(D1_familias_row, 1)
 
-        D1_familias_spacer = Zone(
-            "B1.D1.A.2",
-            D1_familias,
-            flow="h",
-            margins=D1_familias_row_margin_value,
-            spacing=D1_familias_row_spacing_value,
-            level=D1_familias_row._level,
-            show_overlays=layout.DEV_OVERLAYS,
-        )
-        D1_familias_spacer.ly.setContentsMargins(0, 0, 0, 0)
-        D1_familias_spacer.set_zone_stylesheet(
-            layout.compose_stylesheet(
-                D1_familias_spacer,
-                "font-size: 1px; margin: 0px; padding: 0px;",
-            )
-        )
-        D1_familias_spacer.apply_overlays(layout.DEV_OVERLAYS)
-        D1_familias_spacer.ly.setAlignment(Qt.AlignLeft)
-        D1_familias_spacer.setSizePolicy(
-            QSizePolicy.Expanding, QSizePolicy.Expanding
-        )
-        D1_familias.add(D1_familias_spacer, 1)
-
         D1_familias_reserva = Zone(
             "B1.D1.A.3",
             D1_familias,
@@ -962,12 +958,12 @@ class FTApp(QWidget):
         D1_familias.add(D1_familias_reserva, 2)
 
         combos_pvp_container = Zone(
-            "B1.D1.B",
-            D1_familias_spacer,
+            "B1.E1.A",
+            self.E1,
             flow="v",
             margins=D1_familias_row_margin_value,
             spacing=D1_familias_row_spacing_value,
-            level=D1_familias_spacer._level + 1,
+            level=self.E1._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
         )
@@ -976,10 +972,10 @@ class FTApp(QWidget):
         combos_pvp_container.setSizePolicy(
             QSizePolicy.Expanding, QSizePolicy.Fixed
         )
-        D1_familias_spacer.add(combos_pvp_container, 1)
+        self.E1.add(combos_pvp_container, 1)
 
         combos_section = QWidget(combos_pvp_container)
-        combos_section.setObjectName("B1.D1.B.A")
+        combos_section.setObjectName("B1.E1.A.A")
         combos_section.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         combos_section_layout = QHBoxLayout(combos_section)
         combos_section_layout.setContentsMargins(0, 0, 0, 0)
@@ -987,7 +983,7 @@ class FTApp(QWidget):
         combos_pvp_container.add(combos_section, 0)
 
         pvps_section = Zone(
-            "B1.D1.B.B",
+            "B1.E1.A.B",
             combos_pvp_container,
             flow="v",
             margins=D1_familias_row_margin_value,
@@ -1015,7 +1011,7 @@ class FTApp(QWidget):
         pvps_section.add(pvp_label, 0)
 
         pvps_grid = Zone(
-            "B1.D1.B.B.1",
+            "B1.E1.A.B.1",
             pvps_section,
             flow="h",
             margins=0,
@@ -1034,7 +1030,7 @@ class FTApp(QWidget):
 
         for idx in range(1, 6):
             column_zone = Zone(
-                f"B1.D1.B.B.1.{idx}",
+                f"B1.E1.A.B.1.{idx}",
                 pvps_grid,
                 flow="v",
                 margins=0,
@@ -1151,9 +1147,9 @@ class FTApp(QWidget):
         self._refresh_family_label_column_widths()
 
         combo_zone_specs = (
-            ("B1.D1.B.A.1", "Tipos Artigos", "cbTipos"),
-            ("B1.D1.B.A.2", "Validade", "cbValidade"),
-            ("B1.D1.B.A.3", "Temperaturas", "cbTemp"),
+            ("B1.E1.A.A.1", "Tipos Artigos", "cbTipos"),
+            ("B1.E1.A.A.2", "Validade", "cbValidade"),
+            ("B1.E1.A.A.3", "Temperaturas", "cbTemp"),
         )
         for tag_prefix, label_text, attr_name in combo_zone_specs:
             column_widget = QWidget(combos_section)
