@@ -233,13 +233,13 @@ def test_classification_overlay_tags_hidden(qapp):
             "B1.A1.A.3",
             "B1.A1.A.3.1",
             "B1.A1.A.3.2",
-            "B1.A1.A.4",
             "B1.A1.4",
-            "B1.A1.A.4.1",
-            "B1.A1.A.4.2",
-            "B1.A1.A.4.3",
-            "B1.A1.A.4.4",
-            "B1.A1.A.4.5",
+            "B2.C1.A.3",
+            "B2.C1.A.3.1",
+            "B2.C1.A.3.2",
+            "B2.C1.A.3.3",
+            "B2.C1.A.3.4",
+            "B2.C1.A.3.5",
         ]
 
         for tag in target_tags:
@@ -312,10 +312,10 @@ def test_general_aux_reserved_slots_exist_and_hidden(qapp):
         zone = ft.findChild(Zone, "B1.A1.5")
         assert zone is None, "Zone B1.A1.5 should have been removed"
 
-        prices_zone = ft.findChild(Zone, "B1.A1.A.4")
-        assert prices_zone is not None, "Zone B1.A1.A.4 should exist"
-        assert not prices_zone.isHidden(), "Zone B1.A1.A.4 should be visible"
-        assert prices_zone.ly.count() > 0, "Zone B1.A1.A.4 should contain widgets"
+        prices_zone = ft.findChild(Zone, "B2.C1.A.3")
+        assert prices_zone is not None, "Zone B2.C1.A.3 should exist"
+        assert not prices_zone.isHidden(), "Zone B2.C1.A.3 should be visible"
+        assert prices_zone.ly.count() > 0, "Zone B2.C1.A.3 should contain widgets"
     finally:
         ft.close()
 
