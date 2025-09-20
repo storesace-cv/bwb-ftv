@@ -1,7 +1,7 @@
 import pytest
 from PyQt5.QtCore import QSize, Qt, QPoint
 from PyQt5.QtGui import QResizeEvent
-from PyQt5.QtWidgets import QFrame, QHBoxLayout
+from PyQt5.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout, QWidget
 from services.products import ProductService
 from ui import layout
 from ui.layout import Zone
@@ -178,9 +178,6 @@ def test_classification_overlay_tags_hidden(qapp):
             "B1.C1.A.2.A.1.B.2",
             "B1.C1.A.2.B",
             "B1.C1.A.2.B.A",
-            "B1.C1.A.2.B.A.1",
-            "B1.C1.A.2.B.A.2",
-            "B1.C1.A.2.B.A.3",
             "B1.C1.A.2.B.B",
             "B1.C1.A.2.B.B.1",
         ]
@@ -204,19 +201,15 @@ def test_classification_overlay_tags_hidden(qapp):
         assert isinstance(combos_section.ly, QHBoxLayout)
         assert combos_wrapper.parentWidget() is combos_container
         assert combos_section.parentWidget() is combos_wrapper
-
-        combo_columns = [
-            ft.findChild(Zone, zone_tag("family_combo_col_1")),
-            ft.findChild(Zone, zone_tag("family_combo_col_2")),
-            ft.findChild(Zone, zone_tag("family_combo_col_3")),
-        ]
-        assert all(column is not None for column in combo_columns)
-        for column in combo_columns:
-            parent_widget = column.parentWidget()
-            assert parent_widget is not None
-            parent_layout = parent_widget.layout()
-            assert isinstance(parent_layout, QHBoxLayout)
-            assert parent_widget is combos_section
+        column_widgets = []
+        for i in range(combos_section.ly.count()):
+            item = combos_section.ly.itemAt(i)
+            if item is None:
+                continue
+            widget = item.widget()
+            if widget and widget is not combos_section._tag_container:
+                column_widgets.append(widget)
+        assert len(column_widgets) == 3
 
         combo_label_zones = [
             ft.findChild(Zone, zone_tag("family_combo_label_col_1")),
@@ -230,6 +223,16 @@ def test_classification_overlay_tags_hidden(qapp):
         ]
         assert all(zone is not None for zone in combo_label_zones)
         assert all(zone is not None for zone in combo_field_zones)
+        for label_zone, field_zone in zip(combo_label_zones, combo_field_zones):
+            label_parent = label_zone.parentWidget()
+            field_parent = field_zone.parentWidget()
+            assert isinstance(label_parent, QWidget)
+            assert label_parent is field_parent
+            assert label_parent.parentWidget() is combos_section
+            parent_layout = label_parent.layout()
+            assert isinstance(parent_layout, QVBoxLayout)
+            assert parent_layout.indexOf(label_zone) != -1
+            assert parent_layout.indexOf(field_zone) != -1
         for label_zone in combo_label_zones:
             assert label_zone.widget_type == "legenda"
             assert label_zone.widget_qt_class == "QLabels"

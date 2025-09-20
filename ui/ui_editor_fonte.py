@@ -1272,37 +1272,55 @@ class FTApp(QWidget):
         self._family_label_zone = family_labels_zone
         self._refresh_family_label_column_widths()
 
-        (
-            C1A2_combo_tipo,
-            C1A2_combo_val,
-            C1A2_combo_temp,
-        ) = C1A2_combos_section.split_h((1, 1, 1))
         combo_zone_specs = (
-            (C1A2_combo_tipo, "Tipos Artigos", "cbTipos"),
-            (C1A2_combo_val, "Validade", "cbValidade"),
-            (C1A2_combo_temp, "Temperaturas", "cbTemp"),
+            ("B1.C1.A.2.B.A.1", "Tipos Artigos", "cbTipos"),
+            ("B1.C1.A.2.B.A.2", "Validade", "cbValidade"),
+            ("B1.C1.A.2.B.A.3", "Temperaturas", "cbTemp"),
         )
-        for zone, label_text, attr_name in combo_zone_specs:
-            zone.set_widget_type(None)
-            zone.set_widget_qt_class(None)
-            zone.ly.setContentsMargins(0, 0, 0, 0)
-            zone.ly.setSpacing(2)
-            zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        for tag_prefix, label_text, attr_name in combo_zone_specs:
+            column_widget = QWidget(C1A2_combos_section)
+            column_widget.setSizePolicy(
+                QSizePolicy.Expanding, QSizePolicy.Preferred
+            )
+            column_layout = QVBoxLayout(column_widget)
+            column_layout.setContentsMargins(0, 0, 0, 0)
+            column_layout.setSpacing(2)
+            C1A2_combos_section.ly.addWidget(column_widget, 1)
 
-            label_zone, field_zone = zone.split_v((1, 4))
+            label_zone = Zone(
+                f"{tag_prefix}.1",
+                column_widget,
+                flow="v",
+                margins=0,
+                spacing=0,
+                level=C1A2_combos_section._level + 1,
+                show_overlays=layout.DEV_OVERLAYS,
+                base_style_label=C1A2_combos_section.base_style_label,
+                widget_type=None,
+            )
             label_zone.apply_metadata(
                 zone_type="linha-legenda",
                 widget_type="legenda",
                 apply_base_style=False,
             )
-            # Garantir que os metadados exportados dos combos não herdem
-            # erroneamente o tipo "campo" do contêiner horizontal.
             label_zone.set_widget_type("legenda")
             label_zone.set_widget_qt_class("QLabels")
             label_zone.ly.setContentsMargins(0, 0, 0, 0)
             label_zone.ly.setSpacing(0)
             label_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            column_layout.addWidget(label_zone, 0)
 
+            field_zone = Zone(
+                f"{tag_prefix}.2",
+                column_widget,
+                flow="v",
+                margins=0,
+                spacing=0,
+                level=C1A2_combos_section._level + 1,
+                show_overlays=layout.DEV_OVERLAYS,
+                base_style_label=C1A2_combos_section.base_style_label,
+                widget_type=None,
+            )
             field_zone.apply_metadata(
                 zone_type="combo-lista",
                 widget_type="lista",
@@ -1310,6 +1328,7 @@ class FTApp(QWidget):
             field_zone.ly.setContentsMargins(0, 0, 0, 0)
             field_zone.ly.setSpacing(0)
             field_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            column_layout.addWidget(field_zone, 0)
 
             label = QLabel(label_text, label_zone)
             apply_label_style(label)

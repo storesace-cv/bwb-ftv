@@ -43,13 +43,10 @@ _ZONE_TAGS: Mapping[str, str] = {
     "family_value_subfamilia": "B1.C1.A.2.A.1.B.2",
     "family_combos_wrapper": "B1.C1.A.2.B",
     "family_combos_section": "B1.C1.A.2.B.A",
-    "family_combo_col_1": "B1.C1.A.2.B.A.1",
     "family_combo_label_col_1": "B1.C1.A.2.B.A.1.1",
     "family_combo_field_col_1": "B1.C1.A.2.B.A.1.2",
-    "family_combo_col_2": "B1.C1.A.2.B.A.2",
     "family_combo_label_col_2": "B1.C1.A.2.B.A.2.1",
     "family_combo_field_col_2": "B1.C1.A.2.B.A.2.2",
-    "family_combo_col_3": "B1.C1.A.2.B.A.3",
     "family_combo_label_col_3": "B1.C1.A.2.B.A.3.1",
     "family_combo_field_col_3": "B1.C1.A.2.B.A.3.2",
 
