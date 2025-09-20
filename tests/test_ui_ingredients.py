@@ -111,7 +111,7 @@ def test_identification_zone_has_embossed_bottom_border(qapp):
     service = ProductService(ds)
     ft = FTApp(service)
     try:
-        zone = ft.findChild(Zone, "B1.C1.A.1")
+        zone = ft.findChild(Zone, "B1.A1.A.1")
         assert zone is not None
         stylesheet = zone.base_stylesheet
         assert "border-bottom-width: 2px" in stylesheet
@@ -173,10 +173,10 @@ def test_toggle_overlay_updates_headers(qapp):
 
 
 def test_validate_tag_accepts_family_root(qapp):
-    assert layout.validate_tag("B1.D1")
-    zone = Zone("B1.D1")
+    assert layout.validate_tag("B1.A1.A.3")
+    zone = Zone("B1.A1.A.3")
     try:
-        assert zone.objectName() == "B1.D1"
+        assert zone.objectName() == "B1.A1.A.3"
     finally:
         zone.deleteLater()
 
@@ -194,10 +194,11 @@ def test_classification_overlay_tags_hidden(qapp):
         qapp.processEvents()
 
         target_tags = [
-            "B1.D1",
-            "B1.D1.A",
-            "B1.D1.A.1",
-            "B1.D1.A.3",
+            "B1.A1.A.3",
+            "B1.A1.A.3.C",
+            "B1.A1.A.3.C.1",
+            "B1.A1.A.3.C.2",
+            "B1.A1.A.3.C.3",
             "B1.A1.A.3.A",
             "B1.A1.A.3.A.1",
             "B1.A1.A.3.A.2",
