@@ -118,8 +118,32 @@ class _OverlayMetadataClickFilter(QObject):
         self._zone = zone
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:  # type: ignore[override]
-        if (
-            event.type() == QEvent.MouseButtonPress
+        event_type = event.type()
+        if event_type == QEvent.ToolTip:
+            if self._zone._overlay_active and self._zone._metadata_tooltip_text:
+                widget = watched if isinstance(watched, QWidget) else None
+                if widget is not None:
+                    global_pos = (
+                        event.globalPos()
+                        if hasattr(event, "globalPos")
+                        else None
+                    )
+                    if global_pos is None:
+                        pos = getattr(event, "pos", lambda: None)()
+                        if pos is not None:
+                            pos_point = pos.toPoint() if hasattr(pos, "toPoint") else pos
+                            global_pos = widget.mapToGlobal(pos_point)
+                    if global_pos is not None:
+                        QToolTip.showText(
+                            global_pos,
+                            self._zone._metadata_tooltip_text,
+                            widget,
+                        )
+                        if hasattr(event, "accept"):
+                            event.accept()
+                        return True
+        elif (
+            event_type == QEvent.MouseButtonPress
             and self._zone._overlay_active
             and self._zone._metadata_tooltip_text
         ):
