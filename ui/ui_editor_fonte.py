@@ -1165,6 +1165,14 @@ class FTApp(QWidget):
         familia_values_zone, subfamilia_values_zone = family_values_zone.split_v((1, 1))
 
         familia_label_zone, subfamilia_label_zone = family_labels_zone.split_v((1, 1))
+        familia_label_zone.apply_metadata(
+            zone_type="linha-legenda",
+            widget_type="legenda",
+        )
+        subfamilia_label_zone.apply_metadata(
+            zone_type="linha-legenda",
+            widget_type="legenda",
+        )
 
         def _make_family_label(zone: Zone, text: str, overlay: str) -> QLabel:
             display = overlay if zone._overlay_active and overlay else text

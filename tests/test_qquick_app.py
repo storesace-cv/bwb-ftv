@@ -85,6 +85,22 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         assert combo_field_meta.get("widgetType") == "lista"
         assert combo_field_meta.get("widgetQtClass") == "QComboBoxes"
 
+        family_label_tags = [
+            zone_tag("family_label_familia"),
+            zone_tag("family_label_subfamilia"),
+        ]
+        for family_label_tag in family_label_tags:
+            family_label_meta = zones_metadata.get(family_label_tag)
+            assert family_label_meta is not None
+            assert family_label_meta.get("zoneType") == "linha-legenda"
+            assert family_label_meta.get("widgetType") == "legenda"
+            assert family_label_meta.get("widgetQtClass") == "QLabels"
+
+            family_label_zone = _find_zone(root, family_label_tag)
+            assert family_label_zone is not None
+            assert family_label_zone.property("zoneType") == "linha-legenda"
+            assert family_label_zone.property("widgetQtClass") == "QLabels"
+
         for idx in range(1, 6):
             legend_meta = zones_metadata.get(zone_tag(f"pvps_col_{idx}_legend"))
             assert legend_meta is not None
