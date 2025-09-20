@@ -1017,43 +1017,39 @@ class FTApp(QWidget):
 
         self._refresh_family_label_column_widths()
 
-        # --- Combos (B1.A1.A.3.C) ---
-        self.zone_general_aux_combo_slot = Zone(
-            "B1.A1.A.3.C",
-            self.zone_general_aux_family_slot,
-            flow="v",
-            margins=(
-                self.zone_general_aux_family_slot.margin_h,
-                self.zone_general_aux_family_slot.margin_v,
-            ),
-            spacing=self.zone_general_aux_family_slot.ly.spacing(),
-            level=self.zone_general_aux_family_slot._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-            base_style_label=self.zone_general_aux_family_slot.base_style_label,
+        # --- Combos (B1.A1.A.3) ---
+        combo_container = QWidget(self.zone_general_aux_family_slot)
+        combo_container.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Fixed,
         )
-        self.zone_general_aux_combo_slot.ly.setContentsMargins(0, 0, 0, 0)
-        self.zone_general_aux_combo_slot.ly.setSpacing(2)
-        self.zone_general_aux_family_slot.add(self.zone_general_aux_combo_slot, 0)
+        combo_layout = QHBoxLayout(combo_container)
+        combo_layout.setContentsMargins(0, 0, 0, 0)
+        combo_layout.setSpacing(family_row_spacing_value)
+        self.zone_general_aux_family_slot.ly.addWidget(combo_container, 0)
 
         combo_zone_specs = (
             ("Tipos Artigos", "cbTipos"),
             ("Validade", "cbValidade"),
             ("Temperaturas", "cbTemp"),
         )
-        combo_columns = self.zone_general_aux_combo_slot.split_h((1, 1, 1))
-        for zone, (label_text, attr_name) in zip(combo_columns, combo_zone_specs):
-            zone.ly.setContentsMargins(0, 0, 0, 0)
-            zone.ly.setSpacing(2)
-            label = QLabel(label_text, zone)
+        for label_text, attr_name in combo_zone_specs:
+            column = QWidget(combo_container)
+            column.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            column_layout = QVBoxLayout(column)
+            column_layout.setContentsMargins(0, 0, 0, 0)
+            column_layout.setSpacing(family_row_spacing_value)
+            label = QLabel(label_text, column)
             label.setProperty("userLabel", label_text)
             label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             apply_label_style(label)
-            zone.add(label, 0)
+            column_layout.addWidget(label, 0)
 
-            combo = QComboBox(zone)
+            combo = QComboBox(column)
             combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             combo.setStyleSheet(FIELD_STYLE)
-            zone.ly.addWidget(combo, 0)
+            column_layout.addWidget(combo, 0)
+            combo_layout.addWidget(column, 1)
             setattr(self, attr_name, combo)
 
         self.cbTipos: QComboBox
