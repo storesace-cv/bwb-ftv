@@ -567,6 +567,9 @@ class Zone(QWidget):
             return
         if widget in self._overlay_metadata_targets:
             return
+        previous_flag = widget.testAttribute(Qt.WA_AlwaysShowToolTips)
+        widget.setProperty("_zoneOverlayPrevAlwaysShowToolTips", previous_flag)
+        widget.setAttribute(Qt.WA_AlwaysShowToolTips, True)
         widget.installEventFilter(self._metadata_click_filter)
         self._overlay_metadata_targets.add(widget)
         widget.destroyed.connect(  # type: ignore[union-attr]
@@ -583,6 +586,16 @@ class Zone(QWidget):
                 widget.removeEventFilter(self._metadata_click_filter)
             except RuntimeError:
                 # Widget may have been deleted while overlays were active.
+                pass
+            previous_flag = widget.property("_zoneOverlayPrevAlwaysShowToolTips")
+            widget.setProperty("_zoneOverlayPrevAlwaysShowToolTips", None)
+            try:
+                widget.setAttribute(
+                    Qt.WA_AlwaysShowToolTips, bool(previous_flag)
+                )
+            except Exception:
+                # Some QWidget subclasses may refuse attribute changes during
+                # teardown; ignore and continue cleanup.
                 pass
         self._overlay_metadata_targets.clear()
 
@@ -665,9 +678,8 @@ class Zone(QWidget):
             user_label = lbl.property("userLabel")
             dev_label = lbl.property("devLabel")
             lbl.setText(dev_label if active and dev_label else user_label)
-            lbl.setToolTip(
-                self._build_label_tooltip(user_label, dev_label) if active else ""
-            )
+            tooltip = self._build_label_tooltip(user_label, dev_label)
+            lbl.setToolTip("" if active else tooltip)
             font = QFont(lbl.font())
             previous_alignment = lbl.alignment()
             alignment_flag = self._label_alignment_flag()
@@ -776,10 +788,15 @@ class Zone(QWidget):
         self.ly.addWidget(row, 0)
         self._labels.append(lbl)
         self._rows.append((row, lbl, value_widget))
-        if self._overlay_active and overlay_text is not None:
-            lbl.setToolTip(self._build_label_tooltip(label_text, overlay_text))
-        else:
+        if self._overlay_active:
             lbl.setToolTip("")
+        else:
+            tooltip = (
+                self._build_label_tooltip(label_text, overlay_text)
+                if overlay_text is not None
+                else ""
+            )
+            lbl.setToolTip(tooltip)
         if self._overlay_active:
             self._register_overlay_metadata_target(row)
             self._register_overlay_metadata_target(lbl)
