@@ -20,6 +20,8 @@
 #
 # Changelog
 # ---------
+# 2025-09-21 11:20 — v3.108 — Inserida célula reservada B1.A1.A.2 e
+#    realinhados os separadores auxiliares para corresponder à nomenclatura.
 # 2025-09-21 10:30 — v3.107 — Slot reservado removido; combos de família
 #    reposicionados para B1.A1.A.B com grelha horizontal partilhada.
 # 2025-09-08 16:06 — v3.64 — Alinhamento de nomenclatura na secção de PVPs (C1)
@@ -795,9 +797,10 @@ class FTApp(QWidget):
         )
         (
             self.zone_general_aux_identification_slot,
+            self.zone_general_aux_secondary_slot,
             self.zone_general_aux_family_slot,
             self.zone_general_aux_prices_slot,
-        ) = self.zone_general_aux_stack.split_v((1, 1, 1))
+        ) = self.zone_general_aux_stack.split_v((1, 0, 1, 1))
         self.zone_general_aux_preview_image_slot = Zone(
             "B1.A1.E.1",
             self.zone_general_aux_preview_panel,
@@ -812,6 +815,7 @@ class FTApp(QWidget):
         )
         for zone in (
             self.zone_general_aux_identification_slot,
+            self.zone_general_aux_secondary_slot,
             self.zone_general_aux_family_slot,
             self.zone_general_aux_prices_slot,
         ):
@@ -821,6 +825,7 @@ class FTApp(QWidget):
                 QSizePolicy.Expanding,
                 current_policy.verticalPolicy(),
             )
+        self.zone_general_aux_secondary_slot.hide()
         for zone in (
             self.zone_general_aux_preview_image_slot,
         ):

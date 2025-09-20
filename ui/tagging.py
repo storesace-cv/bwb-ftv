@@ -25,6 +25,7 @@ _ZONE_TAGS: Mapping[str, str] = {
 
     # Identification (B1.A1.A.1)
     "general_aux_identification_slot": "B1.A1.A.1",
+    "general_aux_secondary_slot": "B1.A1.A.2",
     "general_ident_labels": "B1.A1.A.1.A",
     "general_ident_label_codigo": "B1.A1.A.1.A.1",
     "general_ident_label_nome": "B1.A1.A.1.A.2",
