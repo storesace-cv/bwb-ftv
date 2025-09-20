@@ -755,6 +755,47 @@ def test_zone_metadata_click_filter_triggers_tooltip(
     assert widget is zone
 
 
+def test_zone_metadata_double_click_copies_to_clipboard(
+    qapp, overlays_enabled, monkeypatch
+):
+    zone = layout.Zone(_block_prefix("general_root"), show_overlays=False)
+    zone.set_zone_type("secao")
+    zone.set_widget_type("campo")
+
+    zone.apply_overlays(True)
+
+    calls = []
+
+    def fake_show_text(pos, text, widget=None):
+        calls.append((pos, text, widget))
+
+    monkeypatch.setattr(layout.QToolTip, "showText", fake_show_text)
+
+    clipboard = qapp.clipboard()
+    previous_text = clipboard.text()
+    clipboard.setText("sentinela")
+
+    try:
+        event = QMouseEvent(
+            QEvent.MouseButtonDblClick,
+            QPointF(1.0, 1.0),
+            Qt.LeftButton,
+            Qt.LeftButton,
+            Qt.NoModifier,
+        )
+
+        qapp.sendEvent(zone, event)
+
+        assert clipboard.text() == zone._metadata_tooltip_text
+        assert event.isAccepted()
+        assert calls
+        _, text, widget = calls[-1]
+        assert text == zone._metadata_tooltip_text
+        assert widget is zone
+    finally:
+        clipboard.setText(previous_text)
+
+
 def test_zone_split_propagates_metadata(qapp):
     zone = layout.Zone(
         zone_tag("general_root"),
