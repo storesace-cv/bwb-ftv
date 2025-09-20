@@ -972,10 +972,10 @@ class Zone(QWidget):
         return tuple(zones)
 
 
-def apply_bwb_etiqueta_normal(zone: Zone) -> None:
-    """Align legacy etiqueta zones without injecting themed CSS."""
+def apply_bwb_etiqueta_c_normal(zone: Zone) -> None:
+    """Align etiqueta-c zones to the centered default without themed CSS."""
 
-    zone.set_label_alignment(AlignmentVariant.RIGHT)
+    zone.set_label_alignment(AlignmentVariant.CENTER)
     zone.ly.setContentsMargins(0, 0, 0, 0)
     stylesheet = zone.base_stylesheet
     selector = (

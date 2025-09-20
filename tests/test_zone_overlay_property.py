@@ -408,20 +408,20 @@ def test_apply_metadata_default_base_stylesheet_is_borderless(qapp):
     assert "border-radius" in zone.base_stylesheet
 
 
-def test_apply_bwb_etiqueta_normal_aligns_without_theming(qapp):
+def test_apply_bwb_etiqueta_c_normal_aligns_without_theming(qapp):
     zone = layout.Zone(zone_tag("allergens_root"), show_overlays=False)
     other_zone = layout.Zone(zone_tag("allergens_secondary"), show_overlays=False)
 
     original_stylesheet = zone.base_stylesheet
 
-    layout.apply_bwb_etiqueta_normal(zone)
+    layout.apply_bwb_etiqueta_c_normal(zone)
 
     margins = zone.ly.contentsMargins()
     assert margins.left() == 0
     assert margins.right() == 0
     assert margins.top() == 0
     assert margins.bottom() == 0
-    assert zone._label_alignment is AlignmentVariant.RIGHT
+    assert zone._label_alignment is AlignmentVariant.CENTER
 
     updated_stylesheet = zone.base_stylesheet
     assert zone.styleSheet() == updated_stylesheet
@@ -436,8 +436,8 @@ def test_apply_bwb_etiqueta_normal_aligns_without_theming(qapp):
     value_widget = QLabel("valor", zone)
     label = zone.add_row("Etiqueta", value_widget)
 
-    assert label.alignment() == Qt.AlignRight | Qt.AlignVCenter
-    assert label.property("labelAlignmentVariant") == AlignmentVariant.RIGHT.value
+    assert label.alignment() == Qt.AlignHCenter | Qt.AlignVCenter
+    assert label.property("labelAlignmentVariant") == AlignmentVariant.CENTER.value
 
     assert other_zone.base_stylesheet == other_zone.styleSheet()
 
