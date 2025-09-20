@@ -218,6 +218,27 @@ def test_classification_overlay_tags_hidden(qapp):
             assert isinstance(parent_layout, QHBoxLayout)
             assert parent_widget is combos_section
 
+        combo_label_zones = [
+            ft.findChild(Zone, zone_tag("family_combo_label_col_1")),
+            ft.findChild(Zone, zone_tag("family_combo_label_col_2")),
+            ft.findChild(Zone, zone_tag("family_combo_label_col_3")),
+        ]
+        combo_field_zones = [
+            ft.findChild(Zone, zone_tag("family_combo_field_col_1")),
+            ft.findChild(Zone, zone_tag("family_combo_field_col_2")),
+            ft.findChild(Zone, zone_tag("family_combo_field_col_3")),
+        ]
+        assert all(zone is not None for zone in combo_label_zones)
+        assert all(zone is not None for zone in combo_field_zones)
+        for label_zone in combo_label_zones:
+            assert label_zone.widget_type == "legenda"
+            assert label_zone.widget_qt_class == "QLabels"
+            assert label_zone.zone_type == "combo-legenda"
+        for field_zone in combo_field_zones:
+            assert field_zone.widget_type == "lista"
+            assert field_zone.widget_qt_class == "QComboBoxes"
+            assert field_zone.zone_type == "combo-lista"
+
         for tag in ("B1.C1.A.2.A.1.A.1", "B1.C1.A.2.A.1.A.2"):
             zone = ft.findChild(Zone, tag)
             assert zone is not None, f"Zone {tag} not found"
