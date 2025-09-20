@@ -113,6 +113,7 @@ from PyQt5.QtWidgets import (
     QFileDialog,
     QFrame,
     QStyle,
+    QComboBox,
 )
 from data.datastore import DataStore
 from services.products import ProductService, calculate_food_cost
@@ -136,7 +137,6 @@ from .utilities import (
     install_tooltip_copy_handler,
     make_readonly_lineedit,
     match_font,
-    stack_combo,
 )
 from .dialogs import (
     import_data,
@@ -1072,11 +1072,11 @@ class FTApp(QWidget):
             level=C1A2_combos_row._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
             base_style_label=C1A2_familias.base_style_label,
-            widget_type="campo",
+            widget_type=None,
         )
         C1A2_combos_section.apply_metadata(
             zone_type="secao-combos",
-            widget_type="campo",
+            widget_type=None,
             apply_base_style=False,
         )
         C1A2_combos_section.ly.setContentsMargins(0, 0, 0, 0)
@@ -1275,49 +1275,65 @@ class FTApp(QWidget):
         self._refresh_family_label_column_widths()
 
         (
-            w_tipos,
-            self.cbTipos,
-            tipos_label,
-        ) = stack_combo("Tipos Artigos")
-        (
-            w_val,
-            self.cbValidade,
-            validade_label,
-        ) = stack_combo("Validade")
-        (
-            w_temp,
-            self.cbTemp,
-            temp_label,
-        ) = stack_combo("Temperaturas")
-        (
             C1A2_combo_tipo,
             C1A2_combo_val,
             C1A2_combo_temp,
         ) = C1A2_combos_section.split_h((1, 1, 1))
-        for zone in (C1A2_combo_tipo, C1A2_combo_val, C1A2_combo_temp):
+        combo_zone_specs = (
+            (C1A2_combo_tipo, "Tipos Artigos", "cbTipos"),
+            (C1A2_combo_val, "Validade", "cbValidade"),
+            (C1A2_combo_temp, "Temperaturas", "cbTemp"),
+        )
+        for zone, label_text, attr_name in combo_zone_specs:
+            zone.set_widget_type(None)
+            zone.set_widget_qt_class(None)
             zone.apply_metadata(
                 zone_type="linha-combo",
-                widget_type="campo",
+                widget_type=None,
+                apply_base_style=False,
             )
             zone.ly.setContentsMargins(0, 0, 0, 0)
+            zone.ly.setSpacing(2)
             zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        C1A2_combo_tipo.add(w_tipos)
-        C1A2_combo_val.add(w_val)
-        C1A2_combo_temp.add(w_temp)
 
-        for zone, label in (
-            (C1A2_combo_tipo, tipos_label),
-            (C1A2_combo_val, validade_label),
-            (C1A2_combo_temp, temp_label),
-        ):
-            dynamic_names = {bytes(name) for name in label.dynamicPropertyNames()}
-            if b"userLabel" not in dynamic_names:
-                label.setProperty("userLabel", label.text())
-            if b"devLabel" not in dynamic_names:
-                label.setProperty("devLabel", None)
-            zone._labels.append(label)
+            label_zone, field_zone = zone.split_v((1, 4))
+            label_zone.apply_metadata(
+                zone_type="combo-legenda",
+                widget_type="legenda",
+                apply_base_style=False,
+            )
+            label_zone.ly.setContentsMargins(0, 0, 0, 0)
+            label_zone.ly.setSpacing(0)
+            label_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+            field_zone.apply_metadata(
+                zone_type="combo-lista",
+                widget_type="lista",
+            )
+            field_zone.ly.setContentsMargins(0, 0, 0, 0)
+            field_zone.ly.setSpacing(0)
+            field_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+            label = QLabel(label_text, label_zone)
+            apply_label_style(label)
+            label.setProperty("userLabel", label_text)
+            label.setProperty("devLabel", None)
+            if label_zone._overlay_active:
+                apply_overlay_label_style(label)
+            label_zone.ly.addWidget(label, 0, Qt.AlignHCenter | Qt.AlignVCenter)
+            label_zone._labels.append(label)
+            label_zone.sync_label_widths()
             install_tooltip_copy_handler(label)
-            zone.sync_label_widths()
+
+            combo = QComboBox(field_zone)
+            combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            combo.setStyleSheet(FIELD_STYLE)
+            field_zone.ly.addWidget(combo, 0)
+            setattr(self, attr_name, combo)
+
+        self.cbTipos: QComboBox
+        self.cbValidade: QComboBox
+        self.cbTemp: QComboBox
         self.cbTipos.currentIndexChanged.connect(self._on_tipo_artigo_changed)
         self.cbValidade.currentIndexChanged.connect(self._on_validade_changed)
         self.cbTemp.currentIndexChanged.connect(self._on_temperatura_changed)
