@@ -276,8 +276,10 @@ def test_classification_overlay_tags_hidden(qapp):
             assert margins.left() == 0
             assert margins.right() == 0
             assert zone._label_alignment is AlignmentVariant.RIGHT
-            assert zone._base_style_label is None
-            assert "linear-gradient" not in zone.base_stylesheet
+            stylesheet = zone.base_stylesheet
+            assert "border-radius: 12px" in stylesheet
+            assert "padding: 6px" in stylesheet
+            assert "linear-gradient" not in stylesheet
 
         ft._toggle_overlays()
     finally:

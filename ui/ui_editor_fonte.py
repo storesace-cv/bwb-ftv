@@ -858,12 +858,18 @@ class FTApp(QWidget):
         label_top.apply_metadata(
             zone_type="linha-legenda",
             widget_type="legenda",
-            apply_base_style=False,
+            base_declarations=(
+                "border-radius: 12px;\n",
+                "padding: 6px;\n",
+            ),
         )
         label_bottom.apply_metadata(
             zone_type="linha-legenda",
             widget_type="legenda",
-            apply_base_style=False,
+            base_declarations=(
+                "border-radius: 12px;\n",
+                "padding: 6px;\n",
+            ),
         )
         for zone in (label_top, label_bottom):
             zone.set_label_alignment(AlignmentVariant.RIGHT)
@@ -1139,7 +1145,10 @@ class FTApp(QWidget):
             legend_zone.apply_metadata(
                 zone_type="linha-legenda",
                 widget_type="legenda",
-                apply_base_style=False,
+                base_declarations=(
+                    "border-radius: 12px;\n",
+                    "padding: 6px;\n",
+                ),
             )
             field_zone.apply_metadata(
                 zone_type="linha-campo",
@@ -1223,14 +1232,20 @@ class FTApp(QWidget):
         familia_label_zone.apply_metadata(
             zone_type="linha-legenda",
             widget_type="legenda",
-            apply_base_style=False,
+            base_declarations=(
+                "border-radius: 12px;\n",
+                "padding: 6px;\n",
+            ),
         )
         familia_label_zone.set_label_alignment(AlignmentVariant.RIGHT)
         familia_label_zone.ly.setContentsMargins(0, 0, 0, 0)
         subfamilia_label_zone.apply_metadata(
             zone_type="linha-legenda",
             widget_type="legenda",
-            apply_base_style=False,
+            base_declarations=(
+                "border-radius: 12px;\n",
+                "padding: 6px;\n",
+            ),
         )
         subfamilia_label_zone.set_label_alignment(AlignmentVariant.RIGHT)
         subfamilia_label_zone.ly.setContentsMargins(0, 0, 0, 0)
@@ -1308,7 +1323,10 @@ class FTApp(QWidget):
             label_zone.apply_metadata(
                 zone_type="linha-legenda",
                 widget_type="legenda",
-                apply_base_style=False,
+                base_declarations=(
+                    "border-radius: 12px;\n",
+                    "padding: 6px;\n",
+                ),
             )
             label_zone.set_widget_type("legenda")
             label_zone.set_widget_qt_class("QLabels")
