@@ -1106,18 +1106,17 @@ class FTApp(QWidget):
             zone_type="linha-legenda",
             widget_type="legenda",
         )
+        family_labels_zone.set_label_alignment(AlignmentVariant.RIGHT)
 
         def _make_family_label(zone: Zone, text: str, overlay: str) -> QLabel:
             display = overlay if zone._overlay_active and overlay else text
             lbl = QLabel(display, zone)
-            lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             lbl.setProperty("userLabel", text)
             lbl.setProperty("devLabel", overlay)
+            apply_label_style(lbl, alignment=AlignmentVariant.RIGHT)
             if zone._overlay_active and overlay:
                 apply_overlay_label_style(lbl)
-            else:
-                lbl.setStyleSheet("")
-            zone.ly.addWidget(lbl, 0, Qt.AlignLeft | Qt.AlignVCenter)
+            zone.ly.addWidget(lbl, 0)
             zone._labels.append(lbl)
             family_labels_zone._labels.append(lbl)
             return lbl
