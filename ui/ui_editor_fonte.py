@@ -772,12 +772,20 @@ class FTApp(QWidget):
             "B2.C1",
             self,
             flow="v",
+            margins=2,
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
         )
-        self.C2.apply_metadata(zone_type="secao-ficha-artigo", widget_type="campo")
+        self.C2.apply_metadata(
+            zone_type="secao-ficha-artigo",
+            widget_type="campo",
+            base_declarations=(
+                "border-radius: 12px;\n",
+                "padding: 2px;\n",
+            ),
+        )
         self.C2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.C2.ly.setContentsMargins(0, 0, 0, 0)
+        self.C2.ly.setContentsMargins(2, 2, 2, 2)
 
         (
             self.zone_article_sheet_left,
