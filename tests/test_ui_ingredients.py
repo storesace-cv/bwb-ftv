@@ -172,6 +172,15 @@ def test_toggle_overlay_updates_headers(qapp):
     ft.close()
 
 
+def test_validate_tag_accepts_family_root(qapp):
+    assert layout.validate_tag("B1.D1")
+    zone = Zone("B1.D1")
+    try:
+        assert zone.objectName() == "B1.D1"
+    finally:
+        zone.deleteLater()
+
+
 def test_classification_overlay_tags_hidden(qapp):
     original = layout.DEV_OVERLAYS
     layout.DEV_OVERLAYS = False
