@@ -919,42 +919,6 @@ class FTApp(QWidget):
         self.image_preview = ImagePreview(init_code, self.service)
         self.zone_general_aux_preview_image_slot.add(self.image_preview, 1)
 
-        # --- Combos (B1.A1.4) ---
-        self.zone_general_aux_combo_slot = self.zone_general_aux_reserved_slot_4
-        self.zone_general_aux_combo_slot.show()
-        self.zone_general_aux_combo_slot.ly.setContentsMargins(0, 0, 0, 0)
-        self.zone_general_aux_combo_slot.ly.setSpacing(
-            self.zone_general_aux_family_slot.ly.spacing()
-        )
-
-        combo_zone_specs = (
-            ("Tipos Artigos", "cbTipos"),
-            ("Validade", "cbValidade"),
-            ("Temperaturas", "cbTemp"),
-        )
-        combo_columns = self.zone_general_aux_combo_slot.split_h((1, 1, 1))
-        for zone, (label_text, attr_name) in zip(combo_columns, combo_zone_specs):
-            zone.ly.setContentsMargins(0, 0, 0, 0)
-            zone.ly.setSpacing(2)
-            label = QLabel(label_text, zone)
-            label.setProperty("userLabel", label_text)
-            label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-            apply_label_style(label)
-            zone.add(label, 0)
-
-            combo = QComboBox(zone)
-            combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            combo.setStyleSheet(FIELD_STYLE)
-            zone.ly.addWidget(combo, 0)
-            setattr(self, attr_name, combo)
-
-        self.cbTipos: QComboBox
-        self.cbValidade: QComboBox
-        self.cbTemp: QComboBox
-        self.cbTipos.currentIndexChanged.connect(self._on_tipo_artigo_changed)
-        self.cbValidade.currentIndexChanged.connect(self._on_validade_changed)
-        self.cbTemp.currentIndexChanged.connect(self._on_temperatura_changed)
-
         family_row_margin_value = 4
         family_row_spacing_value = 2
 
@@ -1052,6 +1016,52 @@ class FTApp(QWidget):
         self._family_label_zone = family_labels_zone
 
         self._refresh_family_label_column_widths()
+
+        # --- Combos (B1.A1.A.3.C) ---
+        self.zone_general_aux_combo_slot = Zone(
+            "B1.A1.A.3.C",
+            self.zone_general_aux_family_slot,
+            flow="v",
+            margins=(
+                self.zone_general_aux_family_slot.margin_h,
+                self.zone_general_aux_family_slot.margin_v,
+            ),
+            spacing=self.zone_general_aux_family_slot.ly.spacing(),
+            level=self.zone_general_aux_family_slot._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+            base_style_label=self.zone_general_aux_family_slot.base_style_label,
+        )
+        self.zone_general_aux_combo_slot.ly.setContentsMargins(0, 0, 0, 0)
+        self.zone_general_aux_combo_slot.ly.setSpacing(2)
+        self.zone_general_aux_family_slot.add(self.zone_general_aux_combo_slot, 0)
+
+        combo_zone_specs = (
+            ("Tipos Artigos", "cbTipos"),
+            ("Validade", "cbValidade"),
+            ("Temperaturas", "cbTemp"),
+        )
+        combo_columns = self.zone_general_aux_combo_slot.split_h((1, 1, 1))
+        for zone, (label_text, attr_name) in zip(combo_columns, combo_zone_specs):
+            zone.ly.setContentsMargins(0, 0, 0, 0)
+            zone.ly.setSpacing(2)
+            label = QLabel(label_text, zone)
+            label.setProperty("userLabel", label_text)
+            label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            apply_label_style(label)
+            zone.add(label, 0)
+
+            combo = QComboBox(zone)
+            combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            combo.setStyleSheet(FIELD_STYLE)
+            zone.ly.addWidget(combo, 0)
+            setattr(self, attr_name, combo)
+
+        self.cbTipos: QComboBox
+        self.cbValidade: QComboBox
+        self.cbTemp: QComboBox
+        self.cbTipos.currentIndexChanged.connect(self._on_tipo_artigo_changed)
+        self.cbValidade.currentIndexChanged.connect(self._on_validade_changed)
+        self.cbTemp.currentIndexChanged.connect(self._on_temperatura_changed)
 
         # --- PVPs (B1.A1.5) ---
         pvps_section = self.zone_general_aux_reserved_slot_5

@@ -201,11 +201,12 @@ def test_classification_overlay_tags_hidden(qapp):
             "B1.A1.A.3.B",
             "B1.A1.A.3.B.1",
             "B1.A1.A.3.B.2",
+            "B1.A1.A.3.C",
+            "B1.A1.A.3.C.1",
+            "B1.A1.A.3.C.2",
+            "B1.A1.A.3.C.3",
             "B1.A1.A.4",
             "B1.A1.4",
-            "B1.A1.4.1",
-            "B1.A1.4.2",
-            "B1.A1.4.3",
             "B1.A1.5",
             "B1.A1.5.1",
         ]
@@ -264,11 +265,15 @@ def test_general_aux_reserved_slots_exist_and_hidden(qapp):
             assert zone.isHidden(), f"Zone {tag} should be hidden by default"
             assert zone.ly.count() == 0, f"Zone {tag} should start empty"
 
-        for tag in ("B1.A1.4", "B1.A1.5"):
-            zone = ft.findChild(Zone, tag)
-            assert zone is not None, f"Zone {tag} should exist"
-            assert not zone.isHidden(), f"Zone {tag} should be visible"
-            assert zone.ly.count() > 0, f"Zone {tag} should contain widgets"
+        zone = ft.findChild(Zone, "B1.A1.4")
+        assert zone is not None, "Zone B1.A1.4 should exist"
+        assert zone.isHidden(), "Zone B1.A1.4 should remain hidden"
+        assert zone.ly.count() == 0, "Zone B1.A1.4 should no longer contain widgets"
+
+        zone = ft.findChild(Zone, "B1.A1.5")
+        assert zone is not None, "Zone B1.A1.5 should exist"
+        assert not zone.isHidden(), "Zone B1.A1.5 should be visible"
+        assert zone.ly.count() > 0, "Zone B1.A1.5 should contain widgets"
     finally:
         ft.close()
 
