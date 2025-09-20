@@ -20,6 +20,8 @@
 #
 # Changelog
 # ---------
+# 2025-09-21 10:30 — v3.107 — Slot reservado removido; combos de família
+#    reposicionados para B1.A1.A.B com grelha horizontal partilhada.
 # 2025-09-08 16:06 — v3.64 — Alinhamento de nomenclatura na secção de PVPs (C1)
 #    & reforço de comentários; split vertical em C1.A.2 com dados no topo;
 #    Custo Total = soma da coluna "Total".
@@ -749,12 +751,24 @@ class FTApp(QWidget):
         (
             self.zone_general_aux_identification_slot,
             self.zone_general_aux_family_slot,
-            self.zone_general_aux_reserved_slot,
-        ) = self.zone_general_aux_primary_column.split_v((1, 1, 1))
+        ) = self.zone_general_aux_primary_column.split_v((1, 1))
+        (
+            self.zone_general_aux_preview_image_slot,
+            self.zone_general_aux_combo_slot,
+        ) = self.zone_general_aux_preview_column.split_v((3, 2))
         for zone in (
             self.zone_general_aux_identification_slot,
             self.zone_general_aux_family_slot,
-            self.zone_general_aux_reserved_slot,
+        ):
+            zone.ly.setContentsMargins(0, 0, 0, 0)
+            current_policy = zone.sizePolicy()
+            zone.setSizePolicy(
+                QSizePolicy.Expanding,
+                current_policy.verticalPolicy(),
+            )
+        for zone in (
+            self.zone_general_aux_preview_image_slot,
+            self.zone_general_aux_combo_slot,
         ):
             zone.ly.setContentsMargins(0, 0, 0, 0)
             current_policy = zone.sizePolicy()
@@ -983,7 +997,52 @@ class FTApp(QWidget):
         except Exception:
             init_code = None
         self.image_preview = ImagePreview(init_code, self.service)
-        self.zone_general_aux_preview_column.add(self.image_preview, 1)
+        self.zone_general_aux_preview_image_slot.add(self.image_preview, 1)
+
+        combos_section = QWidget(self.zone_general_aux_combo_slot)
+        combos_section.setObjectName("B1.A1.A.B.2")
+        combos_section.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        combos_section_layout = QHBoxLayout(combos_section)
+        combos_section_layout.setContentsMargins(0, 0, 0, 0)
+        combos_section_layout.setSpacing(
+            self.zone_general_aux_combo_slot.ly.spacing()
+        )
+        self.zone_general_aux_combo_slot.add(combos_section, 0)
+
+        combo_zone_specs = (
+            ("B1.A1.A.B.2.1", "Tipos Artigos", "cbTipos"),
+            ("B1.A1.A.B.2.2", "Validade", "cbValidade"),
+            ("B1.A1.A.B.2.3", "Temperaturas", "cbTemp"),
+        )
+        for tag_prefix, label_text, attr_name in combo_zone_specs:
+            column_widget = QWidget(combos_section)
+            column_widget.setObjectName(tag_prefix)
+            column_widget.setSizePolicy(
+                QSizePolicy.Expanding, QSizePolicy.Preferred
+            )
+            column_layout = QVBoxLayout(column_widget)
+            column_layout.setContentsMargins(0, 0, 0, 0)
+            column_layout.setSpacing(2)
+            combos_section_layout.addWidget(column_widget, 1)
+
+            label = QLabel(label_text, column_widget)
+            label.setProperty("userLabel", label_text)
+            label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            apply_label_style(label)
+            column_layout.addWidget(label, 0)
+
+            combo = QComboBox(column_widget)
+            combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            combo.setStyleSheet(FIELD_STYLE)
+            column_layout.addWidget(combo, 0)
+            setattr(self, attr_name, combo)
+
+        self.cbTipos: QComboBox
+        self.cbValidade: QComboBox
+        self.cbTemp: QComboBox
+        self.cbTipos.currentIndexChanged.connect(self._on_tipo_artigo_changed)
+        self.cbValidade.currentIndexChanged.connect(self._on_validade_changed)
+        self.cbTemp.currentIndexChanged.connect(self._on_temperatura_changed)
 
         # ---------------- Família & Combos (B1.D1) ----------------
         D1_familias = Zone(
@@ -1043,7 +1102,7 @@ class FTApp(QWidget):
         )
         D1_familias.add(D1_familias_reserva, 2)
 
-        combos_pvp_container = Zone(
+        pvps_container = Zone(
             "B1.E1.A",
             self.E1,
             flow="v",
@@ -1053,28 +1112,20 @@ class FTApp(QWidget):
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
         )
-        combos_pvp_container.ly.setContentsMargins(0, 0, 0, 0)
-        combos_pvp_container.apply_overlays(layout.DEV_OVERLAYS)
-        combos_pvp_container.setSizePolicy(
+        pvps_container.ly.setContentsMargins(0, 0, 0, 0)
+        pvps_container.apply_overlays(layout.DEV_OVERLAYS)
+        pvps_container.setSizePolicy(
             QSizePolicy.Expanding, QSizePolicy.Fixed
         )
-        self.E1.add(combos_pvp_container, 1)
-
-        combos_section = QWidget(combos_pvp_container)
-        combos_section.setObjectName("B1.E1.A.A")
-        combos_section.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        combos_section_layout = QHBoxLayout(combos_section)
-        combos_section_layout.setContentsMargins(0, 0, 0, 0)
-        combos_section_layout.setSpacing(D1_familias_row_spacing_value)
-        combos_pvp_container.add(combos_section, 0)
+        self.E1.add(pvps_container, 1)
 
         pvps_section = Zone(
             "B1.E1.A.B",
-            combos_pvp_container,
+            pvps_container,
             flow="v",
             margins=D1_familias_row_margin_value,
             spacing=D1_familias_row_spacing_value,
-            level=combos_pvp_container._level + 1,
+            level=pvps_container._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
             widget_type="campo",
         )
@@ -1085,7 +1136,7 @@ class FTApp(QWidget):
         )
         pvps_section.ly.setContentsMargins(0, 0, 0, 0)
         pvps_section.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        combos_pvp_container.add(pvps_section, 0)
+        pvps_container.add(pvps_section, 0)
 
         self.lbPVPs: list[QLineEdit] = []
 
@@ -1247,41 +1298,6 @@ class FTApp(QWidget):
             )
 
         self._refresh_family_label_column_widths()
-
-        combo_zone_specs = (
-            ("B1.E1.A.A.1", "Tipos Artigos", "cbTipos"),
-            ("B1.E1.A.A.2", "Validade", "cbValidade"),
-            ("B1.E1.A.A.3", "Temperaturas", "cbTemp"),
-        )
-        for tag_prefix, label_text, attr_name in combo_zone_specs:
-            column_widget = QWidget(combos_section)
-            column_widget.setObjectName(tag_prefix)
-            column_widget.setSizePolicy(
-                QSizePolicy.Expanding, QSizePolicy.Preferred
-            )
-            column_layout = QVBoxLayout(column_widget)
-            column_layout.setContentsMargins(0, 0, 0, 0)
-            column_layout.setSpacing(2)
-            combos_section_layout.addWidget(column_widget, 1)
-
-            label = QLabel(label_text, column_widget)
-            label.setProperty("userLabel", label_text)
-            label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-            apply_label_style(label)
-            column_layout.addWidget(label, 0)
-
-            combo = QComboBox(column_widget)
-            combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            combo.setStyleSheet(FIELD_STYLE)
-            column_layout.addWidget(combo, 0)
-            setattr(self, attr_name, combo)
-
-        self.cbTipos: QComboBox
-        self.cbValidade: QComboBox
-        self.cbTemp: QComboBox
-        self.cbTipos.currentIndexChanged.connect(self._on_tipo_artigo_changed)
-        self.cbValidade.currentIndexChanged.connect(self._on_validade_changed)
-        self.cbTemp.currentIndexChanged.connect(self._on_temperatura_changed)
 
         # ---------------- B5 — FOOD COST (B5.C1) ----------------
         self.C5 = Zone(
