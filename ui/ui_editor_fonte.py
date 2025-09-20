@@ -1796,11 +1796,6 @@ class FTApp(QWidget):
             QKeySequence("Ctrl+S"), self, activated=lambda: self._save_prep(force=True)
         )
 
-        for zone in self._iter_layout_children(Zone, include_header=True):
-            zone.set_zone_type(None)
-            zone.set_widget_type(None)
-            zone.set_widget_qt_class(None)
-            zone.set_style_dev_info("")
 
     def _toggle_header_on_scroll(self, value: int):
         header = getattr(self, "header", None)
