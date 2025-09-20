@@ -131,7 +131,7 @@ def test_legend_labels_use_expanding_horizontal_policy(qapp):
     service = ProductService(ds)
     ft = FTApp(service)
     try:
-        legend_tags = ["B1.A1.A.1.A.1", "B1.A1.A.2.A.1", "B1.A1.A.3.1"]
+        legend_tags = ["B1.A1.A.1.A.1", "B1.A1.A.2.A.1", "B2.C1.A.2.1"]
         for tag in legend_tags:
             zone = ft.findChild(Zone, tag)
             assert zone is not None, f"Zone {tag} not found"
@@ -230,9 +230,9 @@ def test_classification_overlay_tags_hidden(qapp):
             "B1.A1.A.2.B",
             "B1.A1.A.2.B.1",
             "B1.A1.A.2.B.2",
-            "B1.A1.A.3",
-            "B1.A1.A.3.1",
-            "B1.A1.A.3.2",
+            "B2.C1.A.2",
+            "B2.C1.A.2.1",
+            "B2.C1.A.2.2",
             "B1.A1.4",
             "B2.C1.A.3",
             "B2.C1.A.3.1",
