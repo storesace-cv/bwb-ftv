@@ -1451,19 +1451,16 @@ class FTApp(QWidget):
         self.btFcostBom = QPushButton("Bom")
         self.btFcostBom.setCheckable(True)
         apply_fcfilter_btn_style(self.btFcostBom, (198, 216, 112))
-        self.btFcostBom.setToolTip(level_comments.get("Bom", ""))
         fcB2.add(self.btFcostBom, 0)
 
         self.btFcostAceitavel = QPushButton("Aceitável")
         self.btFcostAceitavel.setCheckable(True)
         apply_fcfilter_btn_style(self.btFcostAceitavel, (248, 222, 126))
-        self.btFcostAceitavel.setToolTip(level_comments.get("Aceitável", ""))
         fcB3.add(self.btFcostAceitavel, 0)
 
         self.btFcostMau = QPushButton("Mau")
         self.btFcostMau.setCheckable(True)
         apply_fcfilter_btn_style(self.btFcostMau, (255, 158, 145))
-        self.btFcostMau.setToolTip(level_comments.get("Mau", ""))
         fcB4.add(self.btFcostMau, 0)
 
         self.btFcostReset = QPushButton("Todos")
@@ -1484,7 +1481,6 @@ class FTApp(QWidget):
             }
             """
         )
-        self.btFcostReset.setToolTip("Remover filtro e mostrar todos os níveis")
         fcB5.add(self.btFcostReset, 0)
 
         self.fcostFilterGroup = QButtonGroup(self)
@@ -1496,6 +1492,30 @@ class FTApp(QWidget):
             self._on_fcost_filter_selected
         )
         self.btFcostReset.clicked.connect(self._on_fcost_filter_reset)
+
+        self._fcost_tooltip_entries = [
+            (
+                self.btFcostBom,
+                fcB2,
+                level_comments.get("Bom", ""),
+            ),
+            (
+                self.btFcostAceitavel,
+                fcB3,
+                level_comments.get("Aceitável", ""),
+            ),
+            (
+                self.btFcostMau,
+                fcB4,
+                level_comments.get("Mau", ""),
+            ),
+            (
+                self.btFcostReset,
+                fcB5,
+                "Remover filtro e mostrar todos os níveis",
+            ),
+        ]
+        self._refresh_fcost_tooltips()
 
         # ---------------- B4 — Ficha Técnica (B4.C1) ----------------
         self.C4 = Zone(
@@ -2476,6 +2496,23 @@ class FTApp(QWidget):
             if header is not None:
                 yield from header.findChildren(widget_type)
 
+    def _refresh_fcost_tooltips(self) -> None:
+        """Update Food Cost filter tooltips according to overlay state."""
+
+        entries = getattr(self, "_fcost_tooltip_entries", None)
+        if not entries:
+            return
+
+        overlays_enabled = bool(layout.DEV_OVERLAYS)
+        for button, zone, tooltip_text in entries:
+            if button is None:
+                continue
+            zone_overlay_active = bool(getattr(zone, "_overlay_active", False))
+            if overlays_enabled and zone_overlay_active:
+                button.setToolTip("")
+            else:
+                button.setToolTip(tooltip_text or "")
+
     def _toggle_overlays(self):
         layout.DEV_OVERLAYS = not layout.DEV_OVERLAYS
         if hasattr(self, "searchContainer") and isinstance(self.searchContainer, Zone):
@@ -2513,6 +2550,7 @@ class FTApp(QWidget):
             self.ingModel, overlays=layout.DEV_OVERLAYS
         )
         self._refresh_family_label_column_widths()
+        self._refresh_fcost_tooltips()
 
     def _toggle_overlays_btn(self):
         self._toggle_overlays()
