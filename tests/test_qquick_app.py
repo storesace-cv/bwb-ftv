@@ -197,6 +197,18 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         assert article_sheet_left_meta.get("zoneType") == "coluna-campos"
         assert article_sheet_left_meta.get("widgetType") == "campo"
 
+        slot_keys = [
+            "article_sheet_left_slot_1",
+            "article_sheet_left_slot_2",
+            "article_sheet_left_slot_3",
+        ]
+        for slot_key in slot_keys:
+            slot_tag = zone_tag(slot_key)
+            slot_meta = zones_metadata.get(slot_tag)
+            assert slot_meta is not None
+            assert slot_meta.get("zoneType") == "coluna-campos"
+            assert slot_meta.get("widgetType") == "campo"
+
         article_sheet_right_tag = zone_tag("article_sheet_right")
         article_sheet_right_meta = zones_metadata.get(article_sheet_right_tag)
         assert article_sheet_right_meta is not None
@@ -214,6 +226,11 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         article_sheet_left_zone = _find_zone(root, "article_sheet_left")
         assert article_sheet_left_zone is not None
         assert article_sheet_left_zone.property("zoneType") == "coluna-campos"
+
+        for slot_key in slot_keys:
+            slot_zone = _find_zone(root, slot_key)
+            assert slot_zone is not None
+            assert slot_zone.property("zoneType") == "coluna-campos"
 
         article_sheet_right_zone = _find_zone(root, "article_sheet_right")
         assert article_sheet_right_zone is not None

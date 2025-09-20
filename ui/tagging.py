@@ -79,6 +79,9 @@ _ZONE_TAGS: Mapping[str, str] = {
     # --- [B2] Ficha de Artigo (secção complementar) ---------------------
     "article_sheet_root": "B2.C1",
     "article_sheet_left": "B2.C1.A",
+    "article_sheet_left_slot_1": "B2.C1.A.1",
+    "article_sheet_left_slot_2": "B2.C1.A.2",
+    "article_sheet_left_slot_3": "B2.C1.A.3",
     "article_sheet_right": "B2.C1.B",
 
     # --- Simplified viewer aliases (other blocks) -----------------------

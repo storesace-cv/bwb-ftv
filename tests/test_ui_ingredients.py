@@ -163,6 +163,30 @@ def test_load_record_uses_componente_nome_when_only_key(qapp):
     layout.DEV_OVERLAYS = original
 
 
+def test_article_sheet_left_slots_expand_full_width(qapp):
+    ds = StubDataStore()
+    service = ProductService(ds)
+    ft = FTApp(service)
+    try:
+        parent_zone = ft.findChild(Zone, "B2.C1.A")
+        assert parent_zone is not None
+
+        slot_tags = ["B2.C1.A.1", "B2.C1.A.2", "B2.C1.A.3"]
+        slots = []
+        for tag in slot_tags:
+            zone = ft.findChild(Zone, tag)
+            assert zone is not None, f"Expected zone {tag} to exist"
+            assert zone.parent() is parent_zone
+            assert zone.sizePolicy().horizontalPolicy() == QSizePolicy.Expanding
+            assert zone.sizePolicy().verticalPolicy() == QSizePolicy.Expanding
+            slots.append(zone)
+
+        # All slots should share the same layout container as siblings
+        assert all(slot.parent() is parent_zone for slot in slots)
+    finally:
+        ft.close()
+
+
 def test_toggle_overlay_updates_headers(qapp):
     ds = StubDataStore()
     service = ProductService(ds)
