@@ -1397,9 +1397,9 @@ class FTApp(QWidget):
             apply_label_style(lbl, alignment=AlignmentVariant.DEFAULT)
             if label_zone._overlay_active and layout.DEV_OVERLAYS:
                 apply_overlay_label_style(lbl)
-                lbl.setToolTip(f"{user_label} — {dev_label}")
-            else:
                 lbl.setToolTip("")
+            else:
+                lbl.setToolTip(f"{user_label} — {dev_label}")
 
             val = QLineEdit("—", field_zone)
             make_readonly_lineedit(val)
