@@ -591,22 +591,11 @@ class FTApp(QWidget):
             self,
             flow="v",
             show_overlays=layout.DEV_OVERLAYS,
-            widget_type="campo",
-        )
-        self.searchContainer.apply_metadata(
-            zone_type="barra-pesquisa",
-            widget_type="campo",
         )
         self.searchContainer.setVisible(False)
         self.searchLeftZone, self.searchCenterZone, self.searchRightZone = (
             self.searchContainer.split_h((1, 1, 1))
         )
-        for zone in (
-            self.searchLeftZone,
-            self.searchCenterZone,
-            self.searchRightZone,
-        ):
-            zone.apply_metadata(zone_type="barra-pesquisa", widget_type="campo")
 
         search_left_widget = QWidget(self.searchLeftZone)
         search_left_layout = QGridLayout(search_left_widget)
@@ -725,16 +714,6 @@ class FTApp(QWidget):
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
             spacing=2,
-            widget_type="campo",
-        )
-        self.C1.apply_metadata(
-            zone_type="bloco-dados-gerais",
-            widget_type="campo",
-            base_declarations=(
-                "border-radius: 12px;\n"
-                "padding: 6px;\n"
-                "padding-bottom: 0;\n"
-            ),
         )
         C1_margins = self.C1.ly.contentsMargins()
         self.C1.ly.setContentsMargins(
@@ -746,15 +725,6 @@ class FTApp(QWidget):
         page_ly.addWidget(self._section_box("[B1] - FICHA DO ARTIGO", self.C1), 0)
 
         C1A, C1B = self.C1.split_h((3, 1))
-        C1A.apply_metadata(
-            zone_type="coluna-principal",
-            widget_type="campo",
-            base_declarations=(
-                "border-radius: 12px;\n"
-                "padding: 6px;\n"
-                "padding-bottom: 0;\n"
-            ),
-        )
         C1A_margins = C1A.ly.contentsMargins()
         C1A.ly.setContentsMargins(
             C1A_margins.left(),
@@ -762,7 +732,6 @@ class FTApp(QWidget):
             C1A_margins.right(),
             0,
         )
-        C1B.apply_metadata(zone_type="coluna-imagem", widget_type="legenda")
 
         C1A_cont = QWidget(C1A)
         C1A_cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -781,22 +750,6 @@ class FTApp(QWidget):
             spacing=C1A_section_spacing,
             level=C1A._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
-            widget_type="campo",
-        )
-        self.C1A1.apply_metadata(
-            zone_type="secao-identificacao",
-            widget_type="campo",
-            base_style_label="identificacao-embossed",
-            base_declarations=(
-                "border-radius: 12px;\n"
-                "padding: 6px;\n"
-                "padding-bottom: 0;\n"
-                "border: none;\n"
-                "border-bottom-width: 2px;\n"
-                "border-bottom-style: groove;\n"
-                "border-bottom-color: #c7ccd8;\n"
-                "border-bottom: 2px groove #f7f9fc;\n"
-            ),
         )
         C1A1_margins = self.C1A1.ly.contentsMargins()
         self.C1A1.ly.setContentsMargins(
@@ -816,17 +769,6 @@ class FTApp(QWidget):
             spacing=2,
             level=C1A._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
-            widget_type="campo",
-        )
-        self.C1A2.apply_metadata(
-            zone_type="bloco-familias-combos",
-            widget_type="campo",
-            base_declarations=(
-                "border-radius: 12px;\n"
-                "padding: 6px;\n"
-                "padding-top: 0;\n"
-                "padding-bottom: 0;\n"
-            ),
         )
         C1A2_margins = self.C1A2.ly.contentsMargins()
         self.C1A2.ly.setContentsMargins(
@@ -929,22 +871,6 @@ class FTApp(QWidget):
             level=self.C1A2._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
             base_style_label=self.C1A2.base_style_label,
-            widget_type="campo",
-        )
-        C1A2_familias.apply_metadata(
-            zone_type="secao-familias",
-            widget_type="campo",
-            base_declarations=(
-                "border-radius: 12px;\n"
-                "padding: 6px;\n"
-                "padding-top: 0;\n"
-                "padding-bottom: 0;\n"
-                "border: none;\n"
-                "border-bottom-width: 2px;\n"
-                "border-bottom-style: groove;\n"
-                "border-bottom-color: #c7ccd8;\n"
-                "border-bottom: 2px groove #f7f9fc;\n"
-            ),
         )
         C1A2_familias_margins = C1A2_familias.ly.contentsMargins()
         C1A2_familias.ly.setContentsMargins(
@@ -965,16 +891,6 @@ class FTApp(QWidget):
             spacing=C1A2_familias_row_spacing_value,
             level=C1A2_familias._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
-            widget_type="campo",
-        )
-        C1A2_familias_row.apply_metadata(
-            zone_type="linha-familias",
-            widget_type="campo",
-            base_declarations=(
-                "border-radius: 12px;\n"
-                "padding: 6px;\n"
-                "padding-top: 0;\n"
-            ),
         )
         C1A2_familias_row_margins = C1A2_familias_row.ly.contentsMargins()
         C1A2_familias_row.ly.setContentsMargins(
@@ -1012,12 +928,6 @@ class FTApp(QWidget):
             level=C1A2_familias_row._level,
             show_overlays=layout.DEV_OVERLAYS,
             base_style_label=C1A2_familias.base_style_label,
-            widget_type="campo",
-        )
-        C1A2_familias_reserva.apply_metadata(
-            zone_type="secao-familias",
-            widget_type="campo",
-            apply_base_style=False,
         )
         C1A2_familias_reserva.ly.setContentsMargins(0, 0, 0, 0)
         C1A2_familias_reserva.apply_overlays(layout.DEV_OVERLAYS)
@@ -1087,12 +997,6 @@ class FTApp(QWidget):
             spacing=C1A2_familias_row_spacing_value,
             level=pvps_section._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
-            widget_type="campo",
-        )
-        pvps_grid.apply_metadata(
-            zone_type="grade-pvps",
-            widget_type="campo",
-            apply_base_style=False,
         )
         pvps_grid.ly.setContentsMargins(0, 0, 0, 0)
         pvps_section.add(pvps_grid, 0)
@@ -1106,12 +1010,6 @@ class FTApp(QWidget):
                 spacing=2,
                 level=pvps_grid._level + 1,
                 show_overlays=layout.DEV_OVERLAYS,
-                widget_type="campo",
-            )
-            column_zone.apply_metadata(
-                zone_type="coluna-pvp",
-                widget_type="campo",
-                apply_base_style=False,
             )
             column_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             column_zone.ly.setContentsMargins(0, 0, 0, 0)
@@ -1256,11 +1154,6 @@ class FTApp(QWidget):
             flow="v",
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
-            widget_type="campo",
-        )
-        self.C5.apply_metadata(
-            zone_type="bloco-food-cost",
-            widget_type="campo",
         )
         page_ly.addWidget(self._section_box("[B5] - FOOD COST", self.C5), 0)
 
@@ -1270,9 +1163,7 @@ class FTApp(QWidget):
             flow="v",
             level=1,
             show_overlays=layout.DEV_OVERLAYS,
-            widget_type="campo",
         )
-        C5A.apply_metadata(zone_type="secao-food-cost", widget_type="campo")
         self.C5.add(C5A, 1)
         C5AA = Zone(
             "B5.C1.A.A",
@@ -1280,14 +1171,10 @@ class FTApp(QWidget):
             flow="h",
             level=2,
             show_overlays=layout.DEV_OVERLAYS,
-            widget_type="campo",
         )
-        C5AA.apply_metadata(zone_type="grade-food-cost", widget_type="campo")
         C5AA.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         C5A.add(C5AA, 0)
         fc1, fc2, fc3, fc4, fc5 = C5AA.split_h((1, 1, 1, 1, 1))
-        for zone in (fc1, fc2, fc3, fc4, fc5):
-            zone.apply_metadata(zone_type="coluna-food-cost", widget_type="campo")
 
         self.lbFoodCosts: list[QLineEdit] = []
         for idx, fc in enumerate((fc1, fc2, fc3, fc4, fc5), start=1):
@@ -1329,17 +1216,10 @@ class FTApp(QWidget):
             flow="h",
             level=2,
             show_overlays=layout.DEV_OVERLAYS,
-            widget_type="botão",
-        )
-        C5AB.apply_metadata(
-            zone_type="secao-filtros-food-cost",
-            widget_type="botão",
         )
         C5AB.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         C5A.add(C5AB, 0)
         fcB1, fcB2, fcB3, fcB4, fcB5 = C5AB.split_h((1, 1, 1, 1, 1))
-        for zone in (fcB1, fcB2, fcB3, fcB4, fcB5):
-            zone.apply_metadata(zone_type="coluna-botoes", widget_type="botão")
 
         level_comments: dict[str, str] = {}
         repo = getattr(self.ds, "fcost", None)
@@ -1441,11 +1321,6 @@ class FTApp(QWidget):
             flow="v",
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
-            widget_type="tabela",
-        )
-        self.C4.apply_metadata(
-            zone_type="bloco-ingredientes",
-            widget_type="tabela",
         )
         page_ly.addWidget(self._section_box("[B4] - FICHA TÉCNICA", self.C4), 0)
 
@@ -1453,10 +1328,6 @@ class FTApp(QWidget):
         C4_ing_zone.apply_metadata(
             zone_type="secao-tabela-ingredientes",
             widget_type="tabela",
-        )
-        C4_totals_zone.apply_metadata(
-            zone_type="secao-totais",
-            widget_type="campo",
         )
 
         self.ingModel = build_fichas_tecnicas_model(
@@ -1577,11 +1448,6 @@ class FTApp(QWidget):
             flow="v",
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
-            widget_type="editor",
-        )
-        self.C6.apply_metadata(
-            zone_type="bloco-preparacao",
-            widget_type="editor",
         )
         page_ly.addWidget(self._section_box("[B6] - PREPARAÇÃO", self.C6), 1)
 
@@ -1590,10 +1456,7 @@ class FTApp(QWidget):
             zone_type="secao-texto-preparacao",
             widget_type="editor",
         )
-        C6_gallery.apply_metadata(
-            zone_type="galeria-preparacao",
-            widget_type="legenda",
-        )
+        C6_gallery.apply_overlays(layout.DEV_OVERLAYS)
 
         self.prep_previews: list[PrepImagePreview] = []
         gallery_slots = C6_gallery.split_h((1, 1, 1, 1))
