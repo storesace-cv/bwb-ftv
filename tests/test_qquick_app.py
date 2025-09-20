@@ -47,7 +47,7 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         assert codigo_zone is not None
         assert codigo_zone.property("displayValue") == "FT-42"
         assert codigo_zone.property("overlayActive") is True
-        assert codigo_zone.property("zoneType") == "bloco-dados-gerais"
+        assert not codigo_zone.property("zoneType")
 
         overlay.showOverlays = False
         qapp.processEvents()
@@ -156,17 +156,21 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
             assert field_zone.property("zoneType") == "linha-campo"
             assert field_zone.property("widgetQtClass") == "QLineEdits"
 
-        expected_zone_types = {
-            zone_tag("family_root"): "bloco-familias-combos",
-            zone_tag("ingredients_root"): "bloco-ingredientes",
-            zone_tag("food_cost_root"): "bloco-food-cost",
-            zone_tag("preparation_root"): "bloco-preparacao",
-            zone_tag("allergens_root"): "bloco-alergenios",
-        }
-        for tag, expected_type in expected_zone_types.items():
-            tag_meta = zones_metadata.get(tag)
-            assert tag_meta is not None, f"metadata missing for {tag}"
-            assert tag_meta.get("zoneType") == expected_type
+        allergens_tag = zone_tag("allergens_root")
+        allergens_meta = zones_metadata.get(allergens_tag)
+        assert allergens_meta is not None, "metadata missing for allergens_root"
+        assert allergens_meta.get("zoneType") == "bloco-alergenios"
+        assert allergens_meta.get("widgetType") == "caixa de seleção"
+        assert allergens_meta.get("widgetQtClass") == "QCheckBoxes"
+
+        missing_metadata_tags = [
+            zone_tag("family_root"),
+            zone_tag("ingredients_root"),
+            zone_tag("food_cost_root"),
+            zone_tag("preparation_root"),
+        ]
+        for tag in missing_metadata_tags:
+            assert zones_metadata.get(tag) is None
 
         optional_empty_metadata_tags = [
             _optional_tag("family_combos_container"),
