@@ -50,8 +50,8 @@ _ZONE_TAGS: Mapping[str, str] = {
 
     # Prices & preview columns
     "general_aux_prices_slot": "B1.A1.A.4",
-    "general_aux_preview": "B1.A1.E",
-    "general_aux_preview_image": "B1.A1.E.1",
+    "general_aux_preview": "B2.C1.B",
+    "general_aux_preview_image": "B2.C1.B",
 
     # Reserved/auxiliary slots off the root
     "general_aux_reserved_slot_2": "B1.A1.2",

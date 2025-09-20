@@ -755,19 +755,7 @@ class FTApp(QWidget):
         )
         self.zone_general_aux_stack.ly.setSpacing(2)
 
-        self.zone_general_aux_preview_panel = Zone(
-            "B1.A1.E",
-            aux_columns,
-            flow="v",
-            margins=self.zone_general_aux_root._margin_spec,
-            spacing=self.zone_general_aux_root.ly.spacing(),
-            level=self.zone_general_aux_root._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-        )
-        self.zone_general_aux_preview_panel.ly.setSpacing(2)
-
-        aux_columns_ly.addWidget(self.zone_general_aux_stack, 12)
-        aux_columns_ly.addWidget(self.zone_general_aux_preview_panel, 4)
+        aux_columns_ly.addWidget(self.zone_general_aux_stack, 1)
         self.zone_general_aux_root.add(aux_columns, 1)
 
         def _create_general_aux_reserved_slot(tag: str) -> Zone:
@@ -800,32 +788,11 @@ class FTApp(QWidget):
             self.zone_general_aux_secondary_slot,
             self.zone_general_aux_prices_slot,
         ) = self.zone_general_aux_stack.split_v((1, 1, 0, 1))
-        self.zone_general_aux_preview_image_slot = Zone(
-            "B1.A1.E.1",
-            self.zone_general_aux_preview_panel,
-            flow="v",
-            margins=4,
-            spacing=2,
-            level=self.zone_general_aux_preview_panel._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-        )
-        self.zone_general_aux_preview_panel.add(
-            self.zone_general_aux_preview_image_slot, 1
-        )
         for zone in (
             self.zone_general_aux_identification_slot,
             self.zone_general_aux_family_slot,
             self.zone_general_aux_secondary_slot,
             self.zone_general_aux_prices_slot,
-        ):
-            zone.ly.setContentsMargins(0, 0, 0, 0)
-            current_policy = zone.sizePolicy()
-            zone.setSizePolicy(
-                QSizePolicy.Expanding,
-                current_policy.verticalPolicy(),
-            )
-        for zone in (
-            self.zone_general_aux_preview_image_slot,
         ):
             zone.ly.setContentsMargins(0, 0, 0, 0)
             current_policy = zone.sizePolicy()
@@ -913,14 +880,6 @@ class FTApp(QWidget):
         )
         self.edCodigo.textChanged.connect(self.headerEdCodigo.setText)
         self.edNome.textChanged.connect(self.headerEdNome.setText)
-
-        # B1.A1.E.1 — preview de imagem
-        try:
-            init_code = self.service.codigo_at(self.cur_index)
-        except Exception:
-            init_code = None
-        self.image_preview = ImagePreview(init_code, self.service)
-        self.zone_general_aux_preview_image_slot.add(self.image_preview, 1)
 
         family_row_margin_value = 4
         family_row_spacing_value = 2
@@ -1234,6 +1193,28 @@ class FTApp(QWidget):
         self.zone_article_sheet_right.apply_metadata(
             zone_type="coluna-campos", widget_type="campo"
         )
+
+        article_sheet_preview_container = QWidget(self.zone_article_sheet_right)
+        article_sheet_preview_container.setObjectName(
+            "article_sheet_preview_container"
+        )
+        article_sheet_preview_container.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Expanding
+        )
+        article_sheet_preview_layout = QVBoxLayout(
+            article_sheet_preview_container
+        )
+        article_sheet_preview_layout.setContentsMargins(4, 4, 4, 4)
+        article_sheet_preview_layout.setSpacing(2)
+        self.zone_article_sheet_right.add(article_sheet_preview_container, 1)
+
+        # B2.C1.B — preview de imagem
+        try:
+            init_code = self.service.codigo_at(self.cur_index)
+        except Exception:
+            init_code = None
+        self.image_preview = ImagePreview(init_code, self.service)
+        article_sheet_preview_layout.addWidget(self.image_preview, 1)
 
         page_ly.addWidget(
             self._section_box("[B2] - FICHA DE ARTIGO", self.C2),
