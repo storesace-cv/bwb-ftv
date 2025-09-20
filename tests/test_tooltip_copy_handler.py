@@ -12,7 +12,7 @@ def test_zone_label_right_click_keeps_clipboard(qapp, qtbot):
         zone_tag("general_root"),
         show_overlays=False,
         theme_name="bwb-style-1",
-        widget_type="legenda",
+        widget_type="legenda-c",
     )
     qtbot.addWidget(zone)
     dummy_field = QLineEdit()
@@ -70,7 +70,7 @@ def test_overlay_tooltip_text_is_not_modified(qapp, qtbot):
             zone_tag("general_root"),
             show_overlays=True,
             theme_name="bwb-style-1",
-            widget_type="legenda",
+            widget_type="legenda-c",
         )
         qtbot.addWidget(zone)
         dummy_field = QLineEdit()

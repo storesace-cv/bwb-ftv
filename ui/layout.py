@@ -215,6 +215,7 @@ class Zone(QWidget):
     _WIDGET_QT_CLASS_MAP = {
         "campo": "QLineEdits",
         "legenda": "QLabels",
+        "legenda-c": "QLabels",
         "lista": "QComboBoxes",
         "tabela": "QTableViews",
         "botão": "QPushButtons",
@@ -465,7 +466,7 @@ class Zone(QWidget):
         effective_zone_type = zone_type if zone_type is not None else self.zone_type
         self._configure_legend_label_policy(
             effective_zone_type == "linha-legenda"
-            and effective_widget_type == "legenda"
+            and effective_widget_type in {"legenda", "legenda-c"}
         )
         info = style_dev_info if style_dev_info is not None else self.objectName()
         self.set_style_dev_info(info)
