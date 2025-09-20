@@ -973,8 +973,10 @@ class Zone(QWidget):
 
 
 def apply_bwb_etiqueta_c_normal(zone: Zone) -> None:
-    """Align etiqueta-c zones to the centered default without themed CSS."""
+    """Apply the etiqueta-c default: centered labels with stripped spacing CSS."""
 
+    # etiqueta-c zones now default to centered labels while keeping the
+    # zero-margin/padding cleanup required by their legacy stylesheet.
     zone.set_label_alignment(AlignmentVariant.CENTER)
     zone.ly.setContentsMargins(0, 0, 0, 0)
     stylesheet = zone.base_stylesheet
