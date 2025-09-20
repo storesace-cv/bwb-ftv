@@ -116,7 +116,7 @@ def test_identification_zone_has_embossed_bottom_border(qapp):
     service = ProductService(ds)
     ft = FTApp(service)
     try:
-        zone = ft.findChild(Zone, "B1.A1.A.1")
+        zone = ft.findChild(Zone, "B2.C1.A.1.1")
         assert zone is not None
         stylesheet = zone.base_stylesheet
         assert "border-bottom-width: 2px" in stylesheet
@@ -131,7 +131,7 @@ def test_legend_labels_use_expanding_horizontal_policy(qapp):
     service = ProductService(ds)
     ft = FTApp(service)
     try:
-        legend_tags = ["B1.A1.A.1.A.1", "B1.A1.A.2.A.1", "B2.C1.A.2.1"]
+        legend_tags = ["B2.C1.A.1.1.A.1", "B2.C1.A.1.2.A.1", "B2.C1.A.2.1"]
         for tag in legend_tags:
             zone = ft.findChild(Zone, tag)
             assert zone is not None, f"Zone {tag} not found"
