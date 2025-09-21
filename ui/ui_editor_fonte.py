@@ -682,8 +682,6 @@ class FTApp(QWidget):
         make_readonly_lineedit(self.headerEdNome)
         self.headerEdNome.setStyleSheet(FIELD_STYLE)
         header_nome_font = QFont(self.headerEdNome.font())
-        header_nome_font.setPixelSize(16)
-        header_nome_font.setBold(True)
         self.headerEdNome.setFont(header_nome_font)
         self.headerEdNome.setFixedHeight(self.headerEdNome.sizeHint().height())
         self.headerEdNome.updateGeometry()
