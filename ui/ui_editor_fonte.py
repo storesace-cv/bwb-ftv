@@ -1019,7 +1019,7 @@ class FTApp(QWidget):
             legend_zone, field_zone = column_zone.split_v((1, 1))
             legend_zone.apply_metadata(
                 zone_type="linha-legenda",
-                widget_type="legenda",
+                widget_type="legenda-c",
                 apply_base_style=False,
             )
             legend_zone.ly.setContentsMargins(0, 0, 0, 0)
