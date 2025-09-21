@@ -869,7 +869,7 @@ class FTApp(QWidget):
             self._toggle_header_on_scroll
         )
         self.edCodigo.textChanged.connect(self.headerEdCodigo.setText)
-        self.edNome.textChanged.connect(self.headerEdNome.setText)
+        self.edNome.textChanged.connect(self._sync_header_nome)
 
         family_row_margin_value = 4
         family_row_spacing_value = 2
@@ -1661,6 +1661,17 @@ class FTApp(QWidget):
         )
 
 
+    def _sync_header_nome(self, text: str | None = None) -> None:
+        header_nome = getattr(self, "headerEdNome", None)
+        nome_field = getattr(self, "edNome", None)
+        if header_nome is None or nome_field is None:
+            return
+        if text is None:
+            text = nome_field.text()
+        header_nome.setText(text or "")
+        header_nome.setCursorPosition(0)
+
+
     def _toggle_header_on_scroll(self, value: int):
         del value  # a mudança de visibilidade não depende do valor numérico.
         header = getattr(self, "header", None)
@@ -2098,6 +2109,7 @@ class FTApp(QWidget):
 
             self.edCodigo.setText(product.code or "")
             self.edNome.setText(product.name or "")
+            self._sync_header_nome()
             self.lbFamiliaVal.setText(product.familia or "")
             self.lbSubFamiliaVal.setText(product.subfamilia or "")
             self.lbInformacaoAdicional.setText(
