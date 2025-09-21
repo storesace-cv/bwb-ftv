@@ -296,6 +296,7 @@ class ZoneMetadata:
     widget_type: str | None = None
     widget_qt_class: str | None = None
     base_style_label: str | None = None
+    style_dev_info: str | None = None
     margin_h: int | None = None
     margin_v: int | None = None
     overlays_active: bool = False
@@ -310,6 +311,7 @@ class ZoneMetadata:
             "widgetType": self.widget_type,
             "widgetQtClass": self.widget_qt_class,
             "baseStyleLabel": self.base_style_label,
+            "styleDevInfo": self.style_dev_info,
             "marginH": self.margin_h,
             "marginV": self.margin_v,
             "overlaysActive": self.overlays_active,
@@ -596,6 +598,8 @@ class Zone(QWidget):
             or snapshot.get("widget_qt_class"),
             base_style_label=self.base_style_label
             or snapshot.get("base_style_label"),
+            style_dev_info=self._style_dev_info
+            or snapshot.get("style_dev_info"),
             margin_h=self.margin_h,
             margin_v=self.margin_v,
             overlays_active=self.overlays_active,

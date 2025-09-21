@@ -19,10 +19,11 @@ Item {
     property string widgetType: metadata && metadata.widgetType ? metadata.widgetType : ""
     property string widgetQtClass: metadata && metadata.widgetQtClass ? metadata.widgetQtClass : ""
     property string baseStyleLabel: metadata && metadata.baseStyleLabel ? metadata.baseStyleLabel : ""
+    property string styleDevInfo: metadata && metadata.styleDevInfo ? metadata.styleDevInfo : ""
     property bool showOverlays: false
     property string metadataKey: ""
     property string overlayMetadata: {
-        var values = [zoneType, widgetQtClass, widgetType, baseStyleLabel]
+        var values = [zoneType, widgetQtClass, widgetType, baseStyleLabel, styleDevInfo]
                 .filter(function(value) {
                     return value && value.length > 0;
                 });
@@ -36,6 +37,7 @@ Item {
         lines.push("Zone type: " + (zoneType || ""));
         lines.push("Widget type: " + (widgetType || ""));
         lines.push("Widget Qt class: " + (widgetQtClass || ""));
+        lines.push("Style dev info: " + (styleDevInfo || ""));
         lines.push("Metadata key: " + (metadataKey || ""));
 
         var productSummary = "";
