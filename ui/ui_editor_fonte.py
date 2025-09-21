@@ -1476,13 +1476,8 @@ class FTApp(QWidget):
         self.tbIng.setEditTriggers(QTableView.DoubleClicked | QTableView.EditKeyPressed)
         C4_ing_zone.add(self.tbIng, 1)
         nome_font = QFont(self.edNome.font())
-        nome_point_size_f = nome_font.pointSizeF()
-        if nome_point_size_f > 0:
-            nome_font.setPointSizeF(nome_point_size_f * 2)
-        else:
-            nome_point_size = nome_font.pointSize()
-            if nome_point_size > 0:
-                nome_font.setPointSize(nome_point_size * 2)
+        nome_font.setPixelSize(20)
+        nome_font.setBold(True)
         self.edNome.setFont(nome_font)
         self.edNome.setFixedHeight(self.edNome.sizeHint().height())
         self.edNome.updateGeometry()
