@@ -187,6 +187,7 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
             "article_sheet_left_slot_1",
             "article_sheet_left_slot_2",
             "article_sheet_left_slot_3",
+            "article_sheet_left_slot_4",
         ]
         for slot_key in slot_keys:
             slot_tag = zone_tag(slot_key)

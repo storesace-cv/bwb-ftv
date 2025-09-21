@@ -76,6 +76,7 @@ _ZONE_TAGS: Mapping[str, str] = {
     "article_sheet_left_slot_1": "B1.C1.A.1",
     "article_sheet_left_slot_2": "B1.C1.A.2",
     "article_sheet_left_slot_3": "B1.C1.A.3",
+    "article_sheet_left_slot_4": "B1.C1.A.4",
     "article_sheet_right": "B1.C1.B",
 
     # --- Simplified viewer aliases (other blocks) -----------------------

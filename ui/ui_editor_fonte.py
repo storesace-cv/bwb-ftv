@@ -752,11 +752,13 @@ class FTApp(QWidget):
             self.zone_article_sheet_left_slot_1,
             self.zone_article_sheet_left_slot_2,
             self.zone_article_sheet_left_slot_3,
-        ) = self.zone_article_sheet_left.split_v((1, 1, 1))
+            self.zone_article_sheet_left_slot_4,
+        ) = self.zone_article_sheet_left.split_v((1, 1, 1, 1))
         self.zone_article_sheet_left_slots = (
             self.zone_article_sheet_left_slot_1,
             self.zone_article_sheet_left_slot_2,
             self.zone_article_sheet_left_slot_3,
+            self.zone_article_sheet_left_slot_4,
         )
         left_slot_spacing = self.zone_article_sheet_left.ly.spacing()
         for slot in self.zone_article_sheet_left_slots:
