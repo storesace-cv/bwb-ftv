@@ -770,6 +770,8 @@ class FTApp(QWidget):
         # --- Identificação e família (B1.C1.A.1) ---
         self.zone_general_aux_stack = self.zone_article_sheet_left_slot_1
         self.zone_general_aux_stack.ly.setSpacing(2)
+        # Alias explícito para o widget que ancora o cabeçalho flutuante.
+        self._header_scroll_anchor = self.zone_general_aux_stack
 
         (
             self.zone_general_aux_identification_slot,
@@ -1660,11 +1662,13 @@ class FTApp(QWidget):
 
 
     def _toggle_header_on_scroll(self, value: int):
+        del value  # a mudança de visibilidade não depende do valor numérico.
         header = getattr(self, "header", None)
-        zone = getattr(self, "C1A1", None)
-        if not header or not getattr(self, "scroll", None) or zone is None:
+        scroll = getattr(self, "scroll", None)
+        zone = getattr(self, "_header_scroll_anchor", None)
+        if not header or scroll is None or zone is None:
             return
-        viewport = self.scroll.viewport()
+        viewport = scroll.viewport()
         top_left = zone.mapTo(viewport, QPoint(0, 0))
         should_show = top_left.y() < 0
         if should_show and not header.isVisible():
