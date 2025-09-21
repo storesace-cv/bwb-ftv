@@ -1036,15 +1036,16 @@ class FTApp(QWidget):
             label = QLabel(label_text, legend_zone)
             label.setProperty("userLabel", label_text)
             label.setProperty("devLabel", label_text)
-            label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             match_font(label, self.edNome)
             if legend_zone._overlay_active and layout.DEV_OVERLAYS:
+                apply_label_style(label, alignment=AlignmentVariant.DEFAULT)
                 apply_overlay_label_style(label)
                 label.setToolTip("")
             else:
-                apply_label_style(label)
+                apply_label_style(label, alignment=AlignmentVariant.DEFAULT)
                 label.setToolTip(label_text)
-            legend_zone.ly.addWidget(label, 0, Qt.AlignCenter)
+            legend_zone.add(label, 0)
+            legend_zone._labels.append(label)
 
             combo = QComboBox(field_zone)
             combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
