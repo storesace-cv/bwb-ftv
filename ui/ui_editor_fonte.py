@@ -687,12 +687,6 @@ class FTApp(QWidget):
         make_readonly_lineedit(self.headerEdNome)
         self.headerEdNome.setStyleSheet(FIELD_STYLE)
         self.headerEdNome.setObjectName("headerNomeCampo")
-        header_nome_font = QFont(self.headerEdNome.font())
-        header_nome_font.setBold(True)
-        header_nome_font.setPixelSize(20)
-        self.headerEdNome.setFont(header_nome_font)
-        self.headerEdNome.setFixedHeight(self.headerEdNome.sizeHint().height())
-        self.headerEdNome.updateGeometry()
         self.headerC1A.add_row(
             "Código:",
             self.headerEdCodigo,
@@ -1488,6 +1482,8 @@ class FTApp(QWidget):
         self.edNome.setFixedHeight(self.edNome.sizeHint().height())
         self.edNome.updateGeometry()
 
+        header_nome_font = QFont(nome_font)
+        self.headerEdNome.setFont(header_nome_font)
         self.headerEdNome.setFixedHeight(self.headerEdNome.sizeHint().height())
         self.headerEdNome.updateGeometry()
 
