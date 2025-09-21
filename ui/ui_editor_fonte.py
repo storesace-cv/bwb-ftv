@@ -1131,7 +1131,6 @@ class FTApp(QWidget):
             else:
                 apply_label_style(lbl, alignment=AlignmentVariant.DEFAULT)
                 lbl.setToolTip(f"{user_label} — {dev_label}")
-            lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             legend_zone.add(lbl, 0)
             legend_zone._labels.append(lbl)
 
