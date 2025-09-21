@@ -158,7 +158,6 @@ APP_TITLE = "Fichas Técnicas Valorizadas"
 
 APP_STYLESHEET = (
     "QWidget {\n"
-    "    font-size: 12px;\n"
     "    color: #1d1f23;\n"
     "}\n"
     "QMainWindow {\n"
@@ -682,6 +681,12 @@ class FTApp(QWidget):
         self.headerEdNome = QLineEdit()
         make_readonly_lineedit(self.headerEdNome)
         self.headerEdNome.setStyleSheet(FIELD_STYLE)
+        header_nome_font = QFont(self.headerEdNome.font())
+        header_nome_font.setPixelSize(16)
+        header_nome_font.setBold(True)
+        self.headerEdNome.setFont(header_nome_font)
+        self.headerEdNome.setFixedHeight(self.headerEdNome.sizeHint().height())
+        self.headerEdNome.updateGeometry()
         self.headerC1A.add_row(
             "Código:",
             self.headerEdCodigo,
@@ -1470,26 +1475,12 @@ class FTApp(QWidget):
         self.tbIng.setEditTriggers(QTableView.DoubleClicked | QTableView.EditKeyPressed)
         C4_ing_zone.add(self.tbIng, 1)
         nome_font = QFont(self.edNome.font())
-        nome_point_size_f = nome_font.pointSizeF()
-        if nome_point_size_f > 0:
-            nome_font.setPointSizeF(nome_point_size_f * 2)
-        else:
-            nome_point_size = nome_font.pointSize()
-            if nome_point_size > 0:
-                nome_font.setPointSize(nome_point_size * 2)
+        nome_font.setPixelSize(20)
+        nome_font.setBold(True)
         self.edNome.setFont(nome_font)
         self.edNome.setFixedHeight(self.edNome.sizeHint().height())
         self.edNome.updateGeometry()
 
-        header_nome_font = QFont(self.headerEdNome.font())
-        header_point_size_f = header_nome_font.pointSizeF()
-        if header_point_size_f > 0:
-            header_nome_font.setPointSizeF(header_point_size_f * 2)
-        else:
-            header_point_size = header_nome_font.pointSize()
-            if header_point_size > 0:
-                header_nome_font.setPointSize(header_point_size * 2)
-        self.headerEdNome.setFont(header_nome_font)
         self.headerEdNome.setFixedHeight(self.headerEdNome.sizeHint().height())
         self.headerEdNome.updateGeometry()
 
