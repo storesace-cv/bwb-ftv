@@ -1257,6 +1257,7 @@ class FTApp(QWidget):
             )
             lbl = QLabel(display_text, label_zone)
             lbl.setProperty("userLabel", user_label)
+            lbl.setProperty("userLabelDisplay", user_label.upper())
             lbl.setProperty("devLabel", dev_label)
             label_zone.add(lbl, 0)
             label_zone._labels.append(lbl)
@@ -2400,9 +2401,13 @@ class FTApp(QWidget):
                 z.apply_overlays(layout.DEV_OVERLAYS)
         for lbl in self._iter_layout_children(QLabel, include_header=True):
             user_lbl = lbl.property("userLabel")
+            user_display_lbl = lbl.property("userLabelDisplay")
             dev_lbl = lbl.property("devLabel")
             if user_lbl is not None and dev_lbl is not None:
-                lbl.setText(dev_lbl if layout.DEV_OVERLAYS else user_lbl)
+                if layout.DEV_OVERLAYS:
+                    lbl.setText(dev_lbl)
+                else:
+                    lbl.setText(user_display_lbl or user_lbl)
         for box in self._iter_layout_children(QGroupBox, include_header=True):
             user_title = box.property("userTitle")
             dev_title = box.property("devTitle")
