@@ -1033,7 +1033,8 @@ class FTApp(QWidget):
             field_zone.ly.setContentsMargins(0, 0, 0, 0)
             field_zone.ly.setSpacing(0)
 
-            label = QLabel(label_text, legend_zone)
+            display_text = label_text.upper()
+            label = QLabel(display_text, legend_zone)
             label.setProperty("userLabel", label_text)
             label.setProperty("devLabel", label_text)
             match_font(label, self.edNome)
@@ -1122,7 +1123,8 @@ class FTApp(QWidget):
                 if legend_zone._overlay_active and layout.DEV_OVERLAYS
                 else user_label
             )
-            lbl = QLabel(display_label, legend_zone)
+            display_text = display_label.upper()
+            lbl = QLabel(display_text, legend_zone)
             lbl.setProperty("userLabel", user_label)
             lbl.setProperty("devLabel", dev_label)
             match_font(lbl, self.edNome)
