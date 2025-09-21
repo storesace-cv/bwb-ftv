@@ -45,7 +45,6 @@ _ZONE_TAGS: Mapping[str, str] = {
     "family_value_familia": "B2.C1.A.1.2.B.1",
     "family_value_subfamilia": "B2.C1.A.1.2.B.2",
     "general_aux_additional_info_section": "B2.C1.A.2",
-    "general_aux_additional_info_legend": "B2.C1.A.2.1",
     "general_aux_additional_info_field": "B2.C1.A.2.2",
 
     # Prices & preview columns
