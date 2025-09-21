@@ -831,7 +831,7 @@ class FTApp(QWidget):
             field_zone.apply_metadata(zone_type="linha-campo", widget_type="campo")
 
         def _make_ident_label(zone: Zone, text: str, overlay: str) -> QLabel:
-            display = overlay if zone._overlay_active and overlay else text
+            display = overlay if zone._overlay_active and overlay else text.upper()
             lbl = QLabel(display, zone)
             lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             lbl.setProperty("userLabel", text)
@@ -918,7 +918,7 @@ class FTApp(QWidget):
         family_labels_zone.set_label_alignment(AlignmentVariant.RIGHT)
 
         def _make_family_label(zone: Zone, text: str, overlay: str) -> QLabel:
-            display = overlay if zone._overlay_active and overlay else text
+            display = overlay if zone._overlay_active and overlay else text.upper()
             lbl = QLabel(display, zone)
             lbl.setProperty("userLabel", text)
             lbl.setProperty("devLabel", overlay)
