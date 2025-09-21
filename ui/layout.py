@@ -959,7 +959,7 @@ class Zone(QWidget):
             except Exception:
                 pass
         grid.addWidget(lbl, 0, 0, alignment=self._label_alignment_flag())
-        grid.addWidget(value_widget, 0, 1, alignment=Qt.AlignLeft | Qt.AlignVCenter)
+        grid.addWidget(value_widget, 0, 1, alignment=Qt.AlignVCenter)
         self.ly.addWidget(row, 0)
         self._labels.append(lbl)
         self._rows.append((row, lbl, value_widget))
