@@ -1040,41 +1040,26 @@ class FTApp(QWidget):
             base_style_label=self.zone_article_sheet_left_slot_2.base_style_label,
         )
 
-        info_legend_zone, info_field_zone = info_zone.split_v((1, 1))
-        for zone in (info_legend_zone, info_field_zone):
-            zone.ly.setContentsMargins(0, 0, 0, 0)
+        info_zone.ly.setSpacing(family_row_spacing_value)
 
-        info_field_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
-
-        info_legend_zone.apply_metadata(
-            zone_type="linha-legenda",
-            widget_type="etiqueta-c",
-            apply_base_style=False,
+        info_field_zone = Zone(
+            "B2.C1.A.2.2",
+            info_zone,
+            flow="v",
+            margins=(0, 0),
+            spacing=family_row_spacing_value,
+            level=info_zone.level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+            base_style_label=info_zone.base_style_label,
         )
+        info_field_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
         info_field_zone.apply_metadata(
             zone_type="linha-campo",
             widget_type="campo",
             apply_base_style=False,
         )
-        info_field_zone.ly.setSpacing(family_row_spacing_value)
-
-        info_label_text = "INFORMAÇÃO ADICIONAL"
-        info_label_overlay = "Produtos.InformacaoAdicional"
-        info_label = QLabel(
-            info_label_overlay
-            if info_legend_zone._overlay_active and info_label_overlay
-            else info_label_text,
-            info_legend_zone,
-        )
-        info_label.setProperty("userLabel", info_label_text)
-        info_label.setProperty("devLabel", info_label_overlay)
-        info_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        info_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        info_label.setStyleSheet("")
-        match_font(info_label, self.edNome)
-        info_legend_zone.ly.addWidget(info_label, 0, Qt.AlignVCenter)
-        info_legend_zone._labels.append(info_label)
-        info_zone._labels.append(info_label)
+        info_field_zone.ly.setContentsMargins(0, 0, 0, 0)
+        info_zone.add(info_field_zone, 0)
 
         combo_container = QWidget(info_field_zone)
         combo_container.setSizePolicy(
