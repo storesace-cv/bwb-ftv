@@ -977,7 +977,11 @@ def test_food_cost_overlay_label_tooltip(qapp, overlays_enabled):
         assert len(labels) == 1
         food_cost_label = labels[0]
         assert food_cost_label.text() == "FoodCost.Nivel1"
+        assert food_cost_label.toolTip() == ""
+        ft._toggle_overlays()
+        assert food_cost_label.text() == "FOOD COST #1"
         assert food_cost_label.toolTip() == "Food Cost #1 — FoodCost.Nivel1"
+        ft._toggle_overlays()
     finally:
         ft.close()
 
