@@ -148,22 +148,58 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         additional_section_meta = zones_metadata.get(additional_section_tag)
         assert additional_section_meta is not None
         assert additional_section_meta.get("zoneType") == "secao-informacao"
-        assert additional_section_meta.get("widgetType") == "campo"
-        assert additional_section_meta.get("widgetQtClass") == "QLineEdits"
+        assert additional_section_meta.get("widgetType") is None
+        assert additional_section_meta.get("widgetQtClass") is None
 
         additional_field_tag = zone_tag("general_aux_additional_info_field")
         additional_field_meta = zones_metadata.get(additional_field_tag)
         assert additional_field_meta is not None
         assert additional_field_meta.get("zoneType") == "linha-campo"
-        assert additional_field_meta.get("widgetType") == "campo"
-        assert additional_field_meta.get("widgetQtClass") == "QLineEdits"
+        assert additional_field_meta.get("widgetType") is None
+        assert additional_field_meta.get("widgetQtClass") is None
 
         additional_field_zone = _find_zone(
             root, "general_aux_additional_info_field"
         )
         assert additional_field_zone is not None
         assert additional_field_zone.property("zoneType") == "linha-campo"
-        assert additional_field_zone.property("widgetQtClass") == "QLineEdits"
+        assert additional_field_zone.property("widgetQtClass") is None
+
+        additional_label_keys = [
+            "general_aux_additional_info_label_tipos",
+            "general_aux_additional_info_label_validade",
+            "general_aux_additional_info_label_temperaturas",
+        ]
+        for label_key in additional_label_keys:
+            label_tag = zone_tag(label_key)
+            label_meta = zones_metadata.get(label_tag)
+            assert label_meta is not None
+            assert label_meta.get("zoneType") == "linha-legenda"
+            assert label_meta.get("widgetType") == "legenda"
+            assert label_meta.get("widgetQtClass") == "QLabels"
+
+            label_zone = _find_zone(root, label_key)
+            assert label_zone is not None
+            assert label_zone.property("zoneType") == "linha-legenda"
+            assert label_zone.property("widgetQtClass") == "QLabels"
+
+        additional_combo_keys = [
+            "general_aux_additional_info_combo_tipos",
+            "general_aux_additional_info_combo_validade",
+            "general_aux_additional_info_combo_temperaturas",
+        ]
+        for combo_key in additional_combo_keys:
+            combo_tag = zone_tag(combo_key)
+            combo_meta = zones_metadata.get(combo_tag)
+            assert combo_meta is not None
+            assert combo_meta.get("zoneType") == "linha-campo"
+            assert combo_meta.get("widgetType") == "lista"
+            assert combo_meta.get("widgetQtClass") == "QComboBoxes"
+
+            combo_zone = _find_zone(root, combo_key)
+            assert combo_zone is not None
+            assert combo_zone.property("zoneType") == "linha-campo"
+            assert combo_zone.property("widgetQtClass") == "QComboBoxes"
 
         article_sheet_root_tag = zone_tag("article_sheet_root")
         article_sheet_root_meta = zones_metadata.get(article_sheet_root_tag)
