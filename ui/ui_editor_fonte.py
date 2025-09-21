@@ -795,6 +795,19 @@ class FTApp(QWidget):
                 current_policy.verticalPolicy(),
             )
 
+        self.zone_general_aux_identification_slot.apply_metadata(
+            zone_type="coluna-campos",
+            widget_type="campo",
+            base_declarations=(
+                *layout._DEFAULT_ZONE_BASE_DECLARATIONS,
+                "padding: 6px;\n",
+                "padding-bottom: 8px;\n",
+                "border-bottom-width: 2px;\n",
+                "border-bottom-style: groove;\n",
+                "border-bottom: 2px groove #f7f9fc;\n",
+            ),
+        )
+
         self.edCodigo = QLineEdit()
         make_readonly_lineedit(self.edCodigo)
         self.edCodigo.setStyleSheet(FIELD_STYLE)
