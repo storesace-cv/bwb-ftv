@@ -1250,8 +1250,12 @@ class FTApp(QWidget):
 
             user_label = f"Food Cost #{idx}"
             dev_label = f"FoodCost.Nivel{idx}"
-            display_label = dev_label if label_zone._overlay_active else user_label
-            lbl = QLabel(display_label, label_zone)
+            display_text = (
+                dev_label
+                if label_zone._overlay_active and layout.DEV_OVERLAYS
+                else user_label.upper()
+            )
+            lbl = QLabel(display_text, label_zone)
             lbl.setProperty("userLabel", user_label)
             lbl.setProperty("devLabel", dev_label)
             label_zone.add(lbl, 0)
