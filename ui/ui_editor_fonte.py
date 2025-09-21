@@ -805,6 +805,8 @@ class FTApp(QWidget):
                 "border-bottom-width: 2px;\n",
                 "border-bottom-style: groove;\n",
                 "border-bottom: 2px groove #f7f9fc;\n",
+                "margin-top: 4px;\n",
+                "margin-bottom: 8px;\n",
             ),
         )
 
