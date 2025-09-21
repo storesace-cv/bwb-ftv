@@ -764,12 +764,7 @@ class FTApp(QWidget):
         for slot in self.zone_article_sheet_left_slots:
             slot.ly.setContentsMargins(0, 0, 0, 0)
             slot.ly.setSpacing(left_slot_spacing)
-            slot.setSizePolicy(
-                QSizePolicy.Expanding,
-                QSizePolicy.Maximum
-                if slot is self.zone_article_sheet_left_slot_2
-                else QSizePolicy.Expanding,
-            )
+            slot.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             slot.apply_metadata(zone_type="coluna-campos", widget_type="campo")
 
         # --- Identificação e família (B1.C1.A.1) ---
@@ -981,7 +976,7 @@ class FTApp(QWidget):
             base_style_label=self.zone_article_sheet_left_slot_2.base_style_label,
         )
         self.zone_article_sheet_left_slot_2.add(info_zone, 0)
-        info_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
+        info_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         info_zone.apply_metadata(
             zone_type="secao-informacao",
             widget_type="campo",
@@ -1001,7 +996,7 @@ class FTApp(QWidget):
             show_overlays=layout.DEV_OVERLAYS,
             base_style_label=info_zone.base_style_label,
         )
-        info_field_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
+        info_field_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         info_field_zone.apply_metadata(
             zone_type="linha-campo",
             widget_type="campo",
@@ -1013,7 +1008,7 @@ class FTApp(QWidget):
         combo_container = QWidget(info_field_zone)
         combo_container.setSizePolicy(
             QSizePolicy.Expanding,
-            QSizePolicy.Fixed,
+            QSizePolicy.Expanding,
         )
         combo_layout = QHBoxLayout(combo_container)
         combo_layout.setContentsMargins(0, 0, 0, 0)
@@ -1027,7 +1022,7 @@ class FTApp(QWidget):
         )
         for label_text, attr_name in combo_zone_specs:
             column = QWidget(combo_container)
-            column.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            column.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             column_layout = QVBoxLayout(column)
             column_layout.setContentsMargins(0, 0, 0, 0)
             column_layout.setSpacing(family_row_spacing_value)
@@ -1038,7 +1033,7 @@ class FTApp(QWidget):
             column_layout.addWidget(label, 0)
 
             combo = QComboBox(column)
-            combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             combo.setStyleSheet(FIELD_STYLE)
             column_layout.addWidget(combo, 0)
             combo_layout.addWidget(column, 1)
@@ -1056,7 +1051,7 @@ class FTApp(QWidget):
         self.lbInformacaoAdicional.setStyleSheet(FIELD_STYLE)
         self.lbInformacaoAdicional.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.lbInformacaoAdicional.setSizePolicy(
-            QSizePolicy.Expanding, QSizePolicy.Fixed
+            QSizePolicy.Expanding, QSizePolicy.Expanding
         )
         self.lbInformacaoAdicional.setFont(self.edNome.font())
         info_field_zone.ly.addWidget(self.lbInformacaoAdicional, 0, Qt.AlignVCenter)
@@ -1077,13 +1072,13 @@ class FTApp(QWidget):
             widget_type="campo",
             apply_base_style=False,
         )
-        pvps_section.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        pvps_section.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         self.lbPVPs: list[QLineEdit] = []
 
         pvp_label = QLabel("PREÇOS DE VENDA", pvps_section)
         pvp_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        pvp_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        pvp_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         pvp_label.setStyleSheet("")
         match_font(pvp_label, self.edNome)
         pvps_section.add(pvp_label, 0)
@@ -1091,7 +1086,7 @@ class FTApp(QWidget):
         pvps_columns = pvps_section.split_h((1, 1, 1, 1, 1))
 
         for idx, column_zone in enumerate(pvps_columns, start=1):
-            column_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            column_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             column_zone.ly.setContentsMargins(0, 0, 0, 0)
             column_zone.ly.setSpacing(2)
             column_zone.apply_metadata(
@@ -1138,7 +1133,7 @@ class FTApp(QWidget):
             val.setFont(self.edNome.font())
             make_readonly_lineedit(val)
             val.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-            val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             field_zone.ly.addWidget(val, 0, Qt.AlignLeft | Qt.AlignVCenter)
             self.lbPVPs.append(val)
 
