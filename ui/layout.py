@@ -846,7 +846,11 @@ class Zone(QWidget):
         for lbl in self._labels:
             user_label = lbl.property("userLabel")
             dev_label = lbl.property("devLabel")
-            lbl.setText(dev_label if active and dev_label else user_label)
+            user_display = lbl.property("userLabelDisplay")
+            if not isinstance(user_display, str) or not user_display:
+                user_display = user_label
+            display_text = dev_label if active and dev_label else user_display
+            lbl.setText(display_text)
             tooltip = self._build_label_tooltip(user_label, dev_label)
             lbl.setToolTip("" if active else tooltip)
             font = QFont(lbl.font())
@@ -917,10 +921,11 @@ class Zone(QWidget):
         grid.setHorizontalSpacing(12)
         grid.setVerticalSpacing(min(vspacing, 5))
         grid.setColumnStretch(1, 1)
+        user_display = label_text.upper()
         display = (
             overlay_text
             if (self._overlay_active and overlay_text is not None)
-            else label_text
+            else user_display
         )
         lbl = QLabel(display, row)
         debug_extra = (
@@ -937,6 +942,7 @@ class Zone(QWidget):
             apply_label_style(lbl, debug_extra, alignment=self._label_alignment)
         lbl.setProperty("userLabel", label_text)
         lbl.setProperty("devLabel", overlay_text)
+        lbl.setProperty("userLabelDisplay", user_display)
         if label_minw is not None:
             lbl.setProperty("labelMinimumWidth", int(label_minw))
             lbl.setFixedWidth(label_minw)

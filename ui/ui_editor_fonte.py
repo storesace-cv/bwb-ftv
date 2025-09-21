@@ -843,7 +843,10 @@ class FTApp(QWidget):
                 lbl.setText(overlay)
             else:
                 lbl.setStyleSheet("")
-                lbl.setText(text)
+                display_text = lbl.property("userLabelDisplay") or text
+                if not isinstance(display_text, str):
+                    display_text = text
+                lbl.setText(display_text)
             zone.ly.addWidget(lbl, 0, Qt.AlignRight | Qt.AlignVCenter)
             label_col._labels.append(lbl)
             return lbl
@@ -933,7 +936,10 @@ class FTApp(QWidget):
                 apply_overlay_label_style(lbl)
                 lbl.setText(overlay)
             else:
-                lbl.setText(text)
+                display_text = lbl.property("userLabelDisplay") or text
+                if not isinstance(display_text, str):
+                    display_text = text
+                lbl.setText(display_text)
             zone.ly.addWidget(lbl, 0)
             zone._labels.append(lbl)
             family_labels_zone._labels.append(lbl)
