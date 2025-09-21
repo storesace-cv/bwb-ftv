@@ -979,7 +979,6 @@ class FTApp(QWidget):
         info_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         info_zone.apply_metadata(
             zone_type="secao-informacao",
-            widget_type="campo",
             apply_base_style=False,
             base_style_label=self.zone_article_sheet_left_slot_2.base_style_label,
         )
@@ -999,44 +998,58 @@ class FTApp(QWidget):
         info_field_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         info_field_zone.apply_metadata(
             zone_type="linha-campo",
-            widget_type="campo",
             apply_base_style=False,
         )
         info_field_zone.ly.setContentsMargins(0, 0, 0, 0)
         info_zone.add(info_field_zone, 0)
 
-        combo_container = QWidget(info_field_zone)
-        combo_container.setSizePolicy(
-            QSizePolicy.Expanding,
-            QSizePolicy.Expanding,
-        )
-        combo_layout = QHBoxLayout(combo_container)
-        combo_layout.setContentsMargins(0, 0, 0, 0)
-        combo_layout.setSpacing(family_row_spacing_value)
-        info_field_zone.ly.addWidget(combo_container, 0)
+        combo_columns = info_field_zone.split_h((1, 1, 1))
 
         combo_zone_specs = (
-            ("Tipos Artigos", "cbTipos"),
-            ("Validade", "cbValidade"),
-            ("Temperaturas", "cbTemp"),
+            (combo_columns[0], "Tipos Artigos", "cbTipos"),
+            (combo_columns[1], "Validade", "cbValidade"),
+            (combo_columns[2], "Temperaturas", "cbTemp"),
         )
-        for label_text, attr_name in combo_zone_specs:
-            column = QWidget(combo_container)
-            column.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-            column_layout = QVBoxLayout(column)
-            column_layout.setContentsMargins(0, 0, 0, 0)
-            column_layout.setSpacing(family_row_spacing_value)
-            label = QLabel(label_text, column)
-            label.setProperty("userLabel", label_text)
-            label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-            apply_label_style(label)
-            column_layout.addWidget(label, 0)
 
-            combo = QComboBox(column)
+        for column_zone, label_text, attr_name in combo_zone_specs:
+            column_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            column_zone.ly.setContentsMargins(0, 0, 0, 0)
+            column_zone.ly.setSpacing(family_row_spacing_value)
+
+            legend_zone, field_zone = column_zone.split_v((1, 1))
+            legend_zone.apply_metadata(
+                zone_type="linha-legenda",
+                widget_type="legenda",
+                apply_base_style=False,
+            )
+            legend_zone.ly.setContentsMargins(0, 0, 0, 0)
+            legend_zone.ly.setSpacing(0)
+
+            field_zone.apply_metadata(
+                zone_type="linha-campo",
+                widget_type="lista",
+                apply_base_style=False,
+            )
+            field_zone.ly.setContentsMargins(0, 0, 0, 0)
+            field_zone.ly.setSpacing(0)
+
+            label = QLabel(label_text, legend_zone)
+            label.setProperty("userLabel", label_text)
+            label.setProperty("devLabel", label_text)
+            label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            match_font(label, self.edNome)
+            if legend_zone._overlay_active and layout.DEV_OVERLAYS:
+                apply_overlay_label_style(label)
+                label.setToolTip("")
+            else:
+                apply_label_style(label)
+                label.setToolTip(label_text)
+            legend_zone.ly.addWidget(label, 0, Qt.AlignCenter)
+
+            combo = QComboBox(field_zone)
             combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             combo.setStyleSheet(FIELD_STYLE)
-            column_layout.addWidget(combo, 0)
-            combo_layout.addWidget(column, 1)
+            field_zone.ly.addWidget(combo, 0)
             setattr(self, attr_name, combo)
 
         self.cbTipos: QComboBox

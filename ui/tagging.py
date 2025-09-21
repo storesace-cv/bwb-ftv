@@ -46,6 +46,12 @@ _ZONE_TAGS: Mapping[str, str] = {
     "family_value_subfamilia": "B1.C1.A.1.2.B.2",
     "general_aux_additional_info_section": "B1.C1.A.2",
     "general_aux_additional_info_field": "B1.C1.A.2.2",
+    "general_aux_additional_info_label_tipos": "B1.C1.A.2.2.A.1",
+    "general_aux_additional_info_combo_tipos": "B1.C1.A.2.2.A.2",
+    "general_aux_additional_info_label_validade": "B1.C1.A.2.2.B.1",
+    "general_aux_additional_info_combo_validade": "B1.C1.A.2.2.B.2",
+    "general_aux_additional_info_label_temperaturas": "B1.C1.A.2.2.C.1",
+    "general_aux_additional_info_combo_temperaturas": "B1.C1.A.2.2.C.2",
 
     # Prices & preview columns
     "general_aux_prices_slot": "B1.C1.A.3",
