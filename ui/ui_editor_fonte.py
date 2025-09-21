@@ -879,7 +879,7 @@ class FTApp(QWidget):
         self.zone_general_aux_family_slot.add(family_row_container, 0)
 
         family_labels_zone = Zone(
-            "B1.C1.A.1.2.A",
+            "B1.C1.A.1.1.C",
             family_row_container,
             flow="v",
             margins=family_row_margin_value,
@@ -889,7 +889,7 @@ class FTApp(QWidget):
             base_style_label=self.zone_general_aux_family_slot.base_style_label,
         )
         family_values_zone = Zone(
-            "B1.C1.A.1.2.B",
+            "B1.C1.A.1.1.D",
             family_row_container,
             flow="v",
             margins=family_row_margin_value,
