@@ -677,7 +677,7 @@ class Zone(QWidget):
             if value:
                 entries.append(f"{label}: {value}")
 
-        _append("tag", self.tag)
+        _append("TAG", self.tag)
         _append("zoneType", _resolve("_zone_type", "zone_type"))
         _append("widgetType", _resolve("_widget_type", "widget_type"))
         _append("widgetQtClass", _resolve("_widget_qt_class", "widget_qt_class"))
