@@ -714,69 +714,16 @@ class FTApp(QWidget):
         root.addWidget(scroll, 1)
         self._update_page_width()
 
+        # ---------------- B1 — Ficha de Artigo (B1.C1) ----------------
         self.B1 = Zone(
-            "B1",
-            self,
-            flow="v",
-            margins=0,
-            spacing=6,
-            level=0,
-            show_overlays=layout.DEV_OVERLAYS,
-        )
-        self.B1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        self.B1.ly.setContentsMargins(0, 0, 0, 0)
-
-        # ---------------- B1.A1 — zona auxiliar ----------------
-        self.zone_general_aux_root = Zone(
-            "B1.A1",
-            self.B1,
-            flow="v",
-            margins=4,
-            spacing=4,
-            level=self.B1._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-        )
-        self.B1.ly.addWidget(self.zone_general_aux_root, 0)
-
-        def _create_general_aux_reserved_slot(tag: str) -> Zone:
-            slot = Zone(
-                tag,
-                self.zone_general_aux_root,
-                flow="v",
-                margins=self.zone_general_aux_root._margin_spec,
-                spacing=self.zone_general_aux_root.ly.spacing(),
-                level=self.zone_general_aux_root._level + 1,
-                show_overlays=layout.DEV_OVERLAYS,
-            )
-            slot.ly.setContentsMargins(0, 0, 0, 0)
-            slot.hide()
-            self.zone_general_aux_root.add(slot, 0)
-            return slot
-
-        self.zone_general_aux_reserved_slot_2 = _create_general_aux_reserved_slot(
-            "B1.A1.2"
-        )
-        self.zone_general_aux_reserved_slot_3 = _create_general_aux_reserved_slot(
-            "B1.A1.3"
-        )
-        self.zone_general_aux_reserved_slot_4 = _create_general_aux_reserved_slot(
-            "B1.A1.4"
-        )
-        # ---------------- B1 — Ficha do Artigo ----------------
-        page_ly.addWidget(
-            self._section_box("[B1] - FICHA DO ARTIGO", self.B1),
-            0,
-        )
-        # ---------------- B2 — Ficha de Artigo (B2.C1) ----------------
-        self.C2 = Zone(
-            "B2.C1",
+            "B1.C1",
             self,
             flow="v",
             margins=2,
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
         )
-        self.C2.apply_metadata(
+        self.B1.apply_metadata(
             zone_type="secao-ficha-artigo",
             widget_type="campo",
             base_declarations=(
@@ -784,13 +731,13 @@ class FTApp(QWidget):
                 "padding: 2px;\n",
             ),
         )
-        self.C2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.C2.ly.setContentsMargins(2, 2, 2, 2)
+        self.B1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.B1.ly.setContentsMargins(2, 2, 2, 2)
 
         (
             self.zone_article_sheet_left,
             self.zone_article_sheet_right,
-        ) = self.C2.split_h((2, 1))
+        ) = self.B1.split_h((2, 1))
         for zone in (self.zone_article_sheet_left, self.zone_article_sheet_right):
             zone.ly.setContentsMargins(0, 0, 0, 0)
             zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -823,7 +770,7 @@ class FTApp(QWidget):
             )
             slot.apply_metadata(zone_type="coluna-campos", widget_type="campo")
 
-        # --- Identificação e família (B2.C1.A.1) ---
+        # --- Identificação e família (B1.C1.A.1) ---
         self.zone_general_aux_stack = self.zone_article_sheet_left_slot_1
         self.zone_general_aux_stack.ly.setSpacing(2)
 
@@ -931,7 +878,7 @@ class FTApp(QWidget):
         self.zone_general_aux_family_slot.add(family_row_container, 0)
 
         family_labels_zone = Zone(
-            "B2.C1.A.1.2.A",
+            "B1.C1.A.1.2.A",
             family_row_container,
             flow="v",
             margins=family_row_margin_value,
@@ -941,7 +888,7 @@ class FTApp(QWidget):
             base_style_label=self.zone_general_aux_family_slot.base_style_label,
         )
         family_values_zone = Zone(
-            "B2.C1.A.1.2.B",
+            "B1.C1.A.1.2.B",
             family_row_container,
             flow="v",
             margins=family_row_margin_value,
@@ -1020,9 +967,9 @@ class FTApp(QWidget):
             family_row_spacing_value
         )
 
-        # --- Informação adicional (B2.C1.A.2) ---
+        # --- Informação adicional (B1.C1.A.2) ---
         info_zone = Zone(
-            "B2.C1.A.2",
+            "B1.C1.A.2",
             self.zone_article_sheet_left_slot_2,
             flow="v",
             margins=family_row_margin_value,
@@ -1043,7 +990,7 @@ class FTApp(QWidget):
         info_zone.ly.setSpacing(family_row_spacing_value)
 
         info_field_zone = Zone(
-            "B2.C1.A.2.2",
+            "B1.C1.A.2.2",
             info_zone,
             flow="v",
             margins=(0, 0),
@@ -1112,7 +1059,7 @@ class FTApp(QWidget):
         self.lbInformacaoAdicional.setFont(self.edNome.font())
         info_field_zone.ly.addWidget(self.lbInformacaoAdicional, 0, Qt.AlignVCenter)
 
-        # --- PVPs (B2.C1.A.3) ---
+        # --- PVPs (B1.C1.A.3) ---
         pvps_section = self.zone_article_sheet_left_slot_3
         self.zone_general_aux_prices_slot = pvps_section
         pvps_section.show()
@@ -1207,7 +1154,7 @@ class FTApp(QWidget):
         article_sheet_preview_layout.setSpacing(2)
         self.zone_article_sheet_right.add(article_sheet_preview_container, 1)
 
-        # B2.C1.B — preview de imagem
+        # B1.C1.B — preview de imagem
         try:
             init_code = self.service.codigo_at(self.cur_index)
         except Exception:
@@ -1216,7 +1163,7 @@ class FTApp(QWidget):
         article_sheet_preview_layout.addWidget(self.image_preview, 1)
 
         page_ly.addWidget(
-            self._section_box("[B2] - FICHA DE ARTIGO", self.C2),
+            self._section_box("[B1] - FICHA DE ARTIGO", self.B1),
             0,
         )
 
