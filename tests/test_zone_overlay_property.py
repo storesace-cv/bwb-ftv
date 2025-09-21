@@ -126,7 +126,7 @@ def _expected_metadata_lines(
             return value
         return snapshot.get(key)
 
-    lines = [f"tag: {zone.tag}"]
+    lines = [f"TAG: {zone.tag}"]
 
     resolved_zone_type = _resolve("_zone_type", "zone_type", zone_type)
     if resolved_zone_type:
@@ -702,7 +702,7 @@ def test_zone_style_label_includes_all_segments(qapp, overlays_enabled):
 
     expected_lines = _expected_metadata_lines(zone)
     assert expected_lines == [
-        f"tag: {zone.tag}",
+        f"TAG: {zone.tag}",
         "zoneType: secao-teste",
         "widgetType: campo",
         "widgetQtClass: QLineEdits",
@@ -728,7 +728,7 @@ def test_zone_style_label_skips_missing_segments(qapp, overlays_enabled):
         zone, base_style_label=style_label
     )
     assert expected_with_zone_type == [
-        f"tag: {zone.tag}",
+        f"TAG: {zone.tag}",
         "zoneType: secao-teste",
         "baseStyleLabel: estilo-base",
     ]
@@ -741,7 +741,7 @@ def test_zone_style_label_skips_missing_segments(qapp, overlays_enabled):
         zone, base_style_label=style_label, widget_type="campo"
     )
     assert expected_with_widget_type == [
-        f"tag: {zone.tag}",
+        f"TAG: {zone.tag}",
         "widgetType: campo",
         "baseStyleLabel: estilo-base",
     ]
