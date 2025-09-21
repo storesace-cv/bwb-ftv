@@ -161,6 +161,10 @@ APP_STYLESHEET = (
     "    font-size: 12px;\n"
     "    color: #1d1f23;\n"
     "}\n"
+    "#headerNomeCampo, #identificacaoNomeCampo {\n"
+    "    font-size: 20px;\n"
+    "    font-weight: 600;\n"
+    "}\n"
     "QMainWindow {\n"
     "    background-color: #f6f7fb;\n"
     "}\n"
@@ -682,6 +686,7 @@ class FTApp(QWidget):
         self.headerEdNome = QLineEdit()
         make_readonly_lineedit(self.headerEdNome)
         self.headerEdNome.setStyleSheet(FIELD_STYLE)
+        self.headerEdNome.setObjectName("headerNomeCampo")
         header_nome_font = QFont(self.headerEdNome.font())
         header_nome_font.setBold(True)
         header_nome_font.setPixelSize(20)
@@ -802,6 +807,7 @@ class FTApp(QWidget):
         self.edNome = QLineEdit()
         make_readonly_lineedit(self.edNome)
         self.edNome.setStyleSheet(FIELD_STYLE)
+        self.edNome.setObjectName("identificacaoNomeCampo")
 
         label_col, field_col = self.zone_general_aux_identification_slot.split_h((1, 4))
         label_col.apply_metadata(zone_type="coluna-legendas", widget_type="legenda")
