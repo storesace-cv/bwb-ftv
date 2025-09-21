@@ -831,9 +831,6 @@ class FTApp(QWidget):
             field_zone.apply_metadata(zone_type="linha-campo", widget_type="campo")
 
         def _make_ident_label(zone: Zone, text: str, overlay: str) -> QLabel:
-            overlay_active = zone._overlay_active and bool(overlay) and layout.DEV_OVERLAYS
-            display_text = overlay if overlay_active else text.upper()
-            lbl = QLabel(display_text, zone)
             lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             lbl.setProperty("userLabel", text)
             lbl.setProperty("devLabel", overlay)
@@ -920,9 +917,6 @@ class FTApp(QWidget):
         family_labels_zone.set_label_alignment(AlignmentVariant.RIGHT)
 
         def _make_family_label(zone: Zone, text: str, overlay: str) -> QLabel:
-            overlay_active = zone._overlay_active and bool(overlay) and layout.DEV_OVERLAYS
-            display_text = overlay if overlay_active else text.upper()
-            lbl = QLabel(display_text, zone)
             lbl.setProperty("userLabel", text)
             lbl.setProperty("devLabel", overlay)
             lbl.setProperty("userLabelDisplay", text.upper())
@@ -1254,10 +1248,9 @@ class FTApp(QWidget):
 
             user_label = f"Food Cost #{idx}"
             dev_label = f"FoodCost.Nivel{idx}"
-            overlay_active = label_zone._overlay_active and layout.DEV_OVERLAYS
-            display_text = dev_label if overlay_active else user_label.upper()
             lbl = QLabel(display_text, label_zone)
             lbl.setProperty("userLabel", user_label)
+            lbl.setProperty("userLabelDisplay", user_label.upper())
             lbl.setProperty("devLabel", dev_label)
             lbl.setProperty("userLabelDisplay", user_label.upper())
             label_zone.add(lbl, 0)
@@ -2402,16 +2395,8 @@ class FTApp(QWidget):
                 z.apply_overlays(layout.DEV_OVERLAYS)
         for lbl in self._iter_layout_children(QLabel, include_header=True):
             user_lbl = lbl.property("userLabel")
+            user_display_lbl = lbl.property("userLabelDisplay")
             dev_lbl = lbl.property("devLabel")
-            if user_lbl is None or dev_lbl is None:
-                continue
-
-            if layout.DEV_OVERLAYS:
-                lbl.setProperty("userLabelDisplay", lbl.text())
-                lbl.setText(dev_lbl)
-            else:
-                display_lbl = lbl.property("userLabelDisplay") or user_lbl
-                lbl.setText(display_lbl)
         for box in self._iter_layout_children(QGroupBox, include_header=True):
             user_title = box.property("userTitle")
             dev_title = box.property("devTitle")
