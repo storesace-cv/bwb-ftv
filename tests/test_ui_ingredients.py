@@ -6,6 +6,7 @@ from services.products import ProductService
 from ui import layout
 from ui.layout import Zone
 from ui.utilities import AlignmentVariant
+from ui.tagging import zone_tag
 from ui.models import build_fichas_tecnicas_model
 from ui.ui_editor_fonte import FTApp, ImagePreview
 from domain import FichaTecnica
@@ -116,7 +117,7 @@ def test_identification_zone_has_embossed_bottom_border(qapp):
     service = ProductService(ds)
     ft = FTApp(service)
     try:
-        zone = ft.findChild(Zone, "B2.C1.A.1.1")
+        zone = ft.findChild(Zone, "B1.C1.A.1.1")
         assert zone is not None
         stylesheet = zone.base_stylesheet
         assert "border-bottom-width: 2px" in stylesheet
@@ -131,7 +132,7 @@ def test_legend_labels_use_expanding_horizontal_policy(qapp):
     service = ProductService(ds)
     ft = FTApp(service)
     try:
-        legend_tags = ["B2.C1.A.1.1.A.1", "B2.C1.A.1.2.A.1"]
+        legend_tags = ["B1.C1.A.1.1.A.1", "B1.C1.A.1.2.A.1"]
         for tag in legend_tags:
             zone = ft.findChild(Zone, tag)
             assert zone is not None, f"Zone {tag} not found"
@@ -168,10 +169,10 @@ def test_article_sheet_left_slots_expand_full_width(qapp):
     service = ProductService(ds)
     ft = FTApp(service)
     try:
-        parent_zone = ft.findChild(Zone, "B2.C1.A")
+        parent_zone = ft.findChild(Zone, "B1.C1.A")
         assert parent_zone is not None
 
-        slot_tags = ["B2.C1.A.1", "B2.C1.A.2", "B2.C1.A.3"]
+        slot_tags = ["B1.C1.A.1", "B1.C1.A.2", "B1.C1.A.3"]
         slots = []
         for tag in slot_tags:
             zone = ft.findChild(Zone, tag)
@@ -202,10 +203,10 @@ def test_toggle_overlay_updates_headers(qapp):
 
 
 def test_validate_tag_accepts_family_root(qapp):
-    assert layout.validate_tag("B1.A1.A.2")
-    zone = Zone("B1.A1.A.2")
+    assert layout.validate_tag("B1.C1.A.2")
+    zone = Zone("B1.C1.A.2")
     try:
-        assert zone.objectName() == "B1.A1.A.2"
+        assert zone.objectName() == "B1.C1.A.2"
     finally:
         zone.deleteLater()
 
@@ -222,25 +223,23 @@ def test_classification_overlay_tags_hidden(qapp):
         ft._toggle_overlays()
         qapp.processEvents()
 
-        target_tags = [
-            "B1.A1.A.2",
-            "B1.A1.A.2.A",
-            "B1.A1.A.2.A.1",
-            "B1.A1.A.2.A.2",
-            "B1.A1.A.2.B",
-            "B1.A1.A.2.B.1",
-            "B1.A1.A.2.B.2",
-            "B2.C1.A.2",
-            "B2.C1.A.2.1",
-            "B2.C1.A.2.2",
-            "B1.A1.4",
-            "B2.C1.A.3",
-            "B2.C1.A.3.1",
-            "B2.C1.A.3.2",
-            "B2.C1.A.3.3",
-            "B2.C1.A.3.4",
-            "B2.C1.A.3.5",
+        target_keys = [
+            "general_aux_identification_slot",
+            "general_aux_family_slot",
+            "family_labels_column",
+            "family_values_column",
+            "general_aux_additional_info_section",
+            "general_aux_additional_info_field",
+            "general_aux_prices_slot",
         ]
+        pvps_keys = [
+            "pvps_col_1",
+            "pvps_col_2",
+            "pvps_col_3",
+            "pvps_col_4",
+            "pvps_col_5",
+        ]
+        target_tags = [zone_tag(key) for key in (*target_keys, *pvps_keys)]
 
         for tag in target_tags:
             zone = ft.findChild(Zone, tag)
@@ -248,7 +247,8 @@ def test_classification_overlay_tags_hidden(qapp):
             assert zone._style_lbl.isHidden()
             assert zone._style_lbl.text() == ""
 
-        for tag in ("B1.A1.A.2.A.1", "B1.A1.A.2.A.2"):
+        for key in ("family_label_familia", "family_label_subfamilia"):
+            tag = zone_tag(key)
             zone = ft.findChild(Zone, tag)
             assert zone is not None, f"Zone {tag} not found"
             margins = zone.ly.contentsMargins()
@@ -282,40 +282,31 @@ def test_general_aux_additional_slots_created(qapp):
         preview_zone = ft.findChild(Zone, "B1.A1.E")
         assert preview_zone is None, "Legacy preview zone B1.A1.E should be removed"
 
-        right_zone = ft.findChild(Zone, "B2.C1.B")
-        assert right_zone is not None, "Expected preview column B2.C1.B to exist"
+        right_zone = ft.findChild(Zone, "B1.C1.B")
+        assert right_zone is not None, "Expected preview column B1.C1.B to exist"
 
         preview_widget = right_zone.findChild(ImagePreview)
-        assert preview_widget is not None, "ImagePreview should reside in B2.C1.B"
+        assert preview_widget is not None, "ImagePreview should reside in B1.C1.B"
         assert preview_widget is ft.image_preview
         assert right_zone.isAncestorOf(ft.image_preview)
     finally:
         ft.close()
 
 
-def test_general_aux_reserved_slots_exist_and_hidden(qapp):
+def test_general_aux_reserved_slots_removed(qapp):
     ds = StubDataStore()
     service = ProductService(ds)
     ft = FTApp(service)
     try:
-        for tag in ("B1.A1.2", "B1.A1.3"):
+        removed_tags = ("B1.A1.2", "B1.A1.3", "B1.A1.4", "B1.A1.5")
+        for tag in removed_tags:
             zone = ft.findChild(Zone, tag)
-            assert zone is not None, f"Zone {tag} should exist"
-            assert zone.isHidden(), f"Zone {tag} should be hidden by default"
-            assert zone.ly.count() == 0, f"Zone {tag} should start empty"
+            assert zone is None, f"Zone {tag} should have been removed"
 
-        zone = ft.findChild(Zone, "B1.A1.4")
-        assert zone is not None, "Zone B1.A1.4 should exist"
-        assert zone.isHidden(), "Zone B1.A1.4 should remain hidden"
-        assert zone.ly.count() == 0, "Zone B1.A1.4 should no longer contain widgets"
-
-        zone = ft.findChild(Zone, "B1.A1.5")
-        assert zone is None, "Zone B1.A1.5 should have been removed"
-
-        prices_zone = ft.findChild(Zone, "B2.C1.A.3")
-        assert prices_zone is not None, "Zone B2.C1.A.3 should exist"
-        assert not prices_zone.isHidden(), "Zone B2.C1.A.3 should be visible"
-        assert prices_zone.ly.count() > 0, "Zone B2.C1.A.3 should contain widgets"
+        prices_zone = ft.findChild(Zone, "B1.C1.A.3")
+        assert prices_zone is not None, "Zone B1.C1.A.3 should exist"
+        assert not prices_zone.isHidden(), "Zone B1.C1.A.3 should be visible"
+        assert prices_zone.ly.count() > 0, "Zone B1.C1.A.3 should contain widgets"
     finally:
         ft.close()
 
@@ -328,11 +319,11 @@ def test_article_sheet_zones_use_two_to_one_ratio(qapp):
         ft.show()
         qapp.processEvents()
 
-        root_zone = ft.findChild(Zone, "B2.C1")
-        assert root_zone is not None, "Expected article sheet root zone B2.C1"
+        root_zone = ft.findChild(Zone, "B1.C1")
+        assert root_zone is not None, "Expected article sheet root zone B1.C1"
 
-        left_zone = ft.findChild(Zone, "B2.C1.A")
-        right_zone = ft.findChild(Zone, "B2.C1.B")
+        left_zone = ft.findChild(Zone, "B1.C1.A")
+        right_zone = ft.findChild(Zone, "B1.C1.B")
         assert left_zone is not None, "Expected article sheet left zone"
         assert right_zone is not None, "Expected article sheet right zone"
 
@@ -371,8 +362,8 @@ def test_identification_and_family_label_columns_expand_with_long_text(qapp):
         ft.show()
         qapp.processEvents()
 
-        ident_zone = ft.findChild(Zone, "B1.A1.A.1.A")
-        family_zone = ft.findChild(Zone, "B1.A1.A.2.A")
+        ident_zone = ft.findChild(Zone, "B1.C1.A.1.1.A")
+        family_zone = ft.findChild(Zone, "B1.C1.A.1.2.A")
 
         assert ident_zone is not None
         assert family_zone is not None
@@ -412,7 +403,7 @@ def test_family_caption_zone_keeps_padding_gap(qapp):
         ft._refresh_family_label_column_widths()
         qapp.processEvents()
 
-        caption_zone = ft.findChild(Zone, "B1.A1.A.1.A.1")
+        caption_zone = ft.findChild(Zone, "B1.C1.A.1.1.A.1")
         assert caption_zone is not None
         assert caption_zone._labels, "expected caption label in zone"
 
