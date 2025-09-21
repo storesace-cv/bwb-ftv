@@ -172,14 +172,17 @@ def test_article_sheet_left_slots_expand_full_width(qapp):
         parent_zone = ft.findChild(Zone, "B1.C1.A")
         assert parent_zone is not None
 
-        slot_tags = ["B1.C1.A.1", "B1.C1.A.2", "B1.C1.A.3"]
+        slot_tags = ["B1.C1.A.1", "B1.C1.A.2", "B1.C1.A.3", "B1.C1.A.4"]
         slots = []
         for tag in slot_tags:
             zone = ft.findChild(Zone, tag)
             assert zone is not None, f"Expected zone {tag} to exist"
             assert zone.parent() is parent_zone
             assert zone.sizePolicy().horizontalPolicy() == QSizePolicy.Expanding
-            assert zone.sizePolicy().verticalPolicy() == QSizePolicy.Expanding
+            expected_vertical_policy = (
+                QSizePolicy.Maximum if tag.endswith(".2") else QSizePolicy.Expanding
+            )
+            assert zone.sizePolicy().verticalPolicy() == expected_vertical_policy
             slots.append(zone)
 
         # All slots should share the same layout container as siblings
