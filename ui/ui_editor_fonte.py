@@ -831,12 +831,11 @@ class FTApp(QWidget):
             field_zone.apply_metadata(zone_type="linha-campo", widget_type="campo")
 
         def _make_ident_label(zone: Zone, text: str, overlay: str) -> QLabel:
-            display = overlay if zone._overlay_active and overlay else text.upper()
-            lbl = QLabel(display, zone)
             lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             lbl.setProperty("userLabel", text)
             lbl.setProperty("devLabel", overlay)
-            if zone._overlay_active and overlay:
+            lbl.setProperty("userLabelDisplay", text.upper())
+            if overlay_active:
                 apply_overlay_label_style(lbl)
             else:
                 lbl.setStyleSheet("")
@@ -918,12 +917,11 @@ class FTApp(QWidget):
         family_labels_zone.set_label_alignment(AlignmentVariant.RIGHT)
 
         def _make_family_label(zone: Zone, text: str, overlay: str) -> QLabel:
-            display = overlay if zone._overlay_active and overlay else text.upper()
-            lbl = QLabel(display, zone)
             lbl.setProperty("userLabel", text)
             lbl.setProperty("devLabel", overlay)
+            lbl.setProperty("userLabelDisplay", text.upper())
             apply_label_style(lbl, alignment=AlignmentVariant.RIGHT)
-            if zone._overlay_active and overlay:
+            if overlay_active:
                 apply_overlay_label_style(lbl)
             zone.ly.addWidget(lbl, 0)
             zone._labels.append(lbl)
@@ -1250,19 +1248,15 @@ class FTApp(QWidget):
 
             user_label = f"Food Cost #{idx}"
             dev_label = f"FoodCost.Nivel{idx}"
-            display_text = (
-                dev_label
-                if label_zone._overlay_active and layout.DEV_OVERLAYS
-                else user_label.upper()
-            )
             lbl = QLabel(display_text, label_zone)
             lbl.setProperty("userLabel", user_label)
             lbl.setProperty("userLabelDisplay", user_label.upper())
             lbl.setProperty("devLabel", dev_label)
+            lbl.setProperty("userLabelDisplay", user_label.upper())
             label_zone.add(lbl, 0)
             label_zone._labels.append(lbl)
             apply_label_style(lbl, alignment=AlignmentVariant.DEFAULT)
-            if label_zone._overlay_active and layout.DEV_OVERLAYS:
+            if overlay_active:
                 apply_overlay_label_style(lbl)
                 lbl.setToolTip("")
             else:
@@ -2403,11 +2397,6 @@ class FTApp(QWidget):
             user_lbl = lbl.property("userLabel")
             user_display_lbl = lbl.property("userLabelDisplay")
             dev_lbl = lbl.property("devLabel")
-            if user_lbl is not None and dev_lbl is not None:
-                if layout.DEV_OVERLAYS:
-                    lbl.setText(dev_lbl)
-                else:
-                    lbl.setText(user_display_lbl or user_lbl)
         for box in self._iter_layout_children(QGroupBox, include_header=True):
             user_title = box.property("userTitle")
             dev_title = box.property("devTitle")
