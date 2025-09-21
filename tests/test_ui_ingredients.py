@@ -1,7 +1,7 @@
 import pytest
 from PyQt5.QtCore import QSize, Qt, QPoint
 from PyQt5.QtGui import QResizeEvent
-from PyQt5.QtWidgets import QFrame, QSizePolicy, QHBoxLayout, QVBoxLayout
+from PyQt5.QtWidgets import QFrame, QSizePolicy, QHBoxLayout, QVBoxLayout, QLabel
 from services.products import ProductService
 from ui import layout
 from ui.layout import Zone
@@ -193,6 +193,23 @@ def test_article_sheet_left_slots_expand_full_width(qapp):
         assert all(idx != -1 for idx in indices)
         stretches = [layout.stretch(idx) for idx in indices]
         assert all(stretch == 1 for stretch in stretches)
+    finally:
+        ft.close()
+
+
+def test_pvps_zone_is_visible_without_legend_label(qapp):
+    ds = StubDataStore()
+    service = ProductService(ds)
+    ft = FTApp(service)
+    try:
+        zone = ft.findChild(Zone, "B1.C1.A.3")
+        assert zone is not None, "Expected zone B1.C1.A.3 to exist"
+        assert not zone.isHidden(), "Zone B1.C1.A.3 should remain visible"
+
+        labels = zone.findChildren(QLabel)
+        assert all(
+            label.text() != "PREÇOS DE VENDA" for label in labels
+        ), "Zone B1.C1.A.3 should not contain the 'PREÇOS DE VENDA' legend"
     finally:
         ft.close()
 
