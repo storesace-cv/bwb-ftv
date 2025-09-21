@@ -1003,7 +1003,37 @@ class FTApp(QWidget):
         info_field_zone.ly.setContentsMargins(0, 0, 0, 0)
         info_zone.add(info_field_zone, 0)
 
-        combo_columns = info_field_zone.split_h((1, 1, 1))
+        combo_container = QWidget(info_field_zone)
+        combo_container.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Expanding
+        )
+        combo_container_layout = QHBoxLayout(combo_container)
+        combo_container_layout.setContentsMargins(0, 0, 0, 0)
+        combo_container_layout.setSpacing(info_field_zone.ly.spacing())
+        info_field_zone.add(combo_container, 1)
+
+        combo_columns: list[Zone] = []
+        for suffix in ("A", "B", "C"):
+            column_zone = Zone(
+                f"{info_field_zone.tag}.{suffix}",
+                combo_container,
+                flow="v",
+                margins=(0, 0),
+                spacing=family_row_spacing_value,
+                level=info_field_zone.level + 1,
+                show_overlays=layout.DEV_OVERLAYS,
+                base_style_label=info_field_zone.base_style_label,
+                widget_type=info_field_zone.widget_type,
+                zone_type=info_field_zone.zone_type,
+            )
+            column_zone.apply_metadata(apply_base_style=False)
+            column_zone.setSizePolicy(
+                QSizePolicy.Expanding, QSizePolicy.Expanding
+            )
+            column_zone.ly.setContentsMargins(0, 0, 0, 0)
+            column_zone.ly.setSpacing(family_row_spacing_value)
+            combo_container_layout.addWidget(column_zone, 1)
+            combo_columns.append(column_zone)
 
         combo_zone_specs = (
             (combo_columns[0], "Tipos Artigos", "cbTipos"),
@@ -1021,6 +1051,7 @@ class FTApp(QWidget):
                 zone_type="linha-legenda",
                 widget_type="legenda-c",
                 apply_base_style=False,
+                style_dev_info=legend_zone.objectName(),
             )
             legend_zone.ly.setContentsMargins(0, 0, 0, 0)
             legend_zone.ly.setSpacing(0)
@@ -1029,6 +1060,7 @@ class FTApp(QWidget):
                 zone_type="linha-campo",
                 widget_type="lista",
                 apply_base_style=False,
+                style_dev_info=field_zone.objectName(),
             )
             field_zone.ly.setContentsMargins(0, 0, 0, 0)
             field_zone.ly.setSpacing(0)
