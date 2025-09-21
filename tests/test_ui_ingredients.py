@@ -132,7 +132,7 @@ def test_legend_labels_use_expanding_horizontal_policy(qapp):
     service = ProductService(ds)
     ft = FTApp(service)
     try:
-        legend_tags = ["B1.C1.A.1.1.A.1", "B1.C1.A.1.2.A.1"]
+        legend_tags = ["B1.C1.A.1.1.A.1", "B1.C1.A.1.1.C.1"]
         for tag in legend_tags:
             zone = ft.findChild(Zone, tag)
             assert zone is not None, f"Zone {tag} not found"
@@ -389,7 +389,7 @@ def test_identification_and_family_label_columns_expand_with_long_text(qapp):
         qapp.processEvents()
 
         ident_zone = ft.findChild(Zone, "B1.C1.A.1.1.A")
-        family_zone = ft.findChild(Zone, "B1.C1.A.1.2.A")
+        family_zone = ft.findChild(Zone, "B1.C1.A.1.1.C")
 
         assert ident_zone is not None
         assert family_zone is not None
