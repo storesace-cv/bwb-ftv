@@ -1076,13 +1076,6 @@ class FTApp(QWidget):
 
         self.lbPVPs: list[QLineEdit] = []
 
-        pvp_label = QLabel("PREÇOS DE VENDA", pvps_section)
-        pvp_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        pvp_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        pvp_label.setStyleSheet("")
-        match_font(pvp_label, self.edNome)
-        pvps_section.add(pvp_label, 0)
-
         pvps_columns = pvps_section.split_h((1, 1, 1, 1, 1))
 
         for idx, column_zone in enumerate(pvps_columns, start=1):
