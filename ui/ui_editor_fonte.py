@@ -1262,22 +1262,23 @@ class FTApp(QWidget):
                 zone_type="linha-campo",
                 widget_type="campo",
             )
-
             user_label = f"Food Cost #{idx}"
             dev_label = f"FoodCost.Nivel{idx}"
+            overlay_active = bool(label_zone._overlay_active and layout.DEV_OVERLAYS)
+            display_label = dev_label if overlay_active else user_label
+            display_text = display_label if overlay_active else display_label.upper()
             lbl = QLabel(display_text, label_zone)
             lbl.setProperty("userLabel", user_label)
             lbl.setProperty("userLabelDisplay", user_label.upper())
             lbl.setProperty("devLabel", dev_label)
-            lbl.setProperty("userLabelDisplay", user_label.upper())
-            label_zone.add(lbl, 0)
-            label_zone._labels.append(lbl)
             apply_label_style(lbl, alignment=AlignmentVariant.DEFAULT)
             if overlay_active:
                 apply_overlay_label_style(lbl)
                 lbl.setToolTip("")
             else:
                 lbl.setToolTip(f"{user_label} — {dev_label}")
+            label_zone.add(lbl, 0)
+            label_zone._labels.append(lbl)
 
             val = QLineEdit("—", field_zone)
             make_readonly_lineedit(val)
