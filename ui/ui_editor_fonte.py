@@ -1126,6 +1126,9 @@ class FTApp(QWidget):
             lbl.setProperty("devLabel", dev_label)
             match_font(lbl, self.edNome)
             if legend_zone._overlay_active and layout.DEV_OVERLAYS:
+                # Ensure the etiqueta inherits the centred alignment from the zone
+                # before overlay styling clears the base stylesheet.
+                apply_label_style(lbl, alignment=AlignmentVariant.DEFAULT)
                 apply_overlay_label_style(lbl)
                 lbl.setToolTip("")
             else:
