@@ -1,7 +1,7 @@
 import pytest
 from PyQt5.QtCore import QSize, Qt, QPoint
 from PyQt5.QtGui import QResizeEvent
-from PyQt5.QtWidgets import QFrame, QSizePolicy, QHBoxLayout
+from PyQt5.QtWidgets import QFrame, QSizePolicy, QHBoxLayout, QVBoxLayout
 from services.products import ProductService
 from ui import layout
 from ui.layout import Zone
@@ -179,14 +179,20 @@ def test_article_sheet_left_slots_expand_full_width(qapp):
             assert zone is not None, f"Expected zone {tag} to exist"
             assert zone.parent() is parent_zone
             assert zone.sizePolicy().horizontalPolicy() == QSizePolicy.Expanding
-            expected_vertical_policy = (
-                QSizePolicy.Maximum if tag.endswith(".2") else QSizePolicy.Expanding
-            )
-            assert zone.sizePolicy().verticalPolicy() == expected_vertical_policy
+            assert zone.sizePolicy().verticalPolicy() == QSizePolicy.Expanding
             slots.append(zone)
 
         # All slots should share the same layout container as siblings
         assert all(slot.parent() is parent_zone for slot in slots)
+
+        # Slots originate from a split_v call with equal ratios (25% each)
+        shared_parent = slots[0].parentWidget()
+        layout = shared_parent.layout()
+        assert isinstance(layout, QVBoxLayout)
+        indices = [layout.indexOf(slot) for slot in slots]
+        assert all(idx != -1 for idx in indices)
+        stretches = [layout.stretch(idx) for idx in indices]
+        assert all(stretch == 1 for stretch in stretches)
     finally:
         ft.close()
 
