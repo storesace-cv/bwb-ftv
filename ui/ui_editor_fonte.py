@@ -830,15 +830,20 @@ class FTApp(QWidget):
             field_zone.ly.setContentsMargins(0, 0, 0, 0)
             field_zone.apply_metadata(zone_type="linha-campo", widget_type="campo")
 
+        overlay_active = bool(getattr(label_col, "_overlay_active", False))
+
         def _make_ident_label(zone: Zone, text: str, overlay: str) -> QLabel:
+            lbl = QLabel(zone)
             lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             lbl.setProperty("userLabel", text)
             lbl.setProperty("devLabel", overlay)
             lbl.setProperty("userLabelDisplay", text.upper())
             if overlay_active:
                 apply_overlay_label_style(lbl)
+                lbl.setText(overlay)
             else:
                 lbl.setStyleSheet("")
+                lbl.setText(text)
             zone.ly.addWidget(lbl, 0, Qt.AlignRight | Qt.AlignVCenter)
             label_col._labels.append(lbl)
             return lbl
@@ -916,13 +921,19 @@ class FTApp(QWidget):
             )
         family_labels_zone.set_label_alignment(AlignmentVariant.RIGHT)
 
+        overlay_active = bool(getattr(family_labels_zone, "_overlay_active", False))
+
         def _make_family_label(zone: Zone, text: str, overlay: str) -> QLabel:
+            lbl = QLabel(zone)
             lbl.setProperty("userLabel", text)
             lbl.setProperty("devLabel", overlay)
             lbl.setProperty("userLabelDisplay", text.upper())
             apply_label_style(lbl, alignment=AlignmentVariant.RIGHT)
             if overlay_active:
                 apply_overlay_label_style(lbl)
+                lbl.setText(overlay)
+            else:
+                lbl.setText(text)
             zone.ly.addWidget(lbl, 0)
             zone._labels.append(lbl)
             family_labels_zone._labels.append(lbl)
