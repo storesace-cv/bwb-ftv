@@ -179,7 +179,7 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
             label_meta = zones_metadata.get(label_tag)
             assert label_meta is not None
             assert label_meta.get("zoneType") == "linha-legenda"
-            assert label_meta.get("widgetType") == "legenda"
+            assert label_meta.get("widgetType") == "legenda-c"
             assert label_meta.get("widgetQtClass") == "QLabels"
             assert label_meta.get("styleDevInfo") == label_tag
 
