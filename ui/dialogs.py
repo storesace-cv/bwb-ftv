@@ -51,9 +51,12 @@ def update_data(parent, service, load_record, cur_index):
         )
         return
     try:
-        service.update_from_excel()
+        report_path = service.update_from_excel()
         load_record(cur_index)
-        QMessageBox.information(parent, "Atualizar Dados", "Atualização concluída.")
+        message = "Atualização concluída."
+        if report_path:
+            message += f"\nRelatório: {report_path}"
+        QMessageBox.information(parent, "Atualizar Dados", message)
     except Exception as exc:  # pragma: no cover - UI feedback only
         logger.exception("Update failed", exc_info=exc)
         QMessageBox.critical(parent, "Atualizar Dados", f"Falha na atualização: {exc}")

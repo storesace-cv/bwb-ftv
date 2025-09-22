@@ -36,6 +36,15 @@ def imports_dir():
     shutil.rmtree(base, ignore_errors=True)
 
 
+@pytest.fixture
+def logs_dir():
+    base = get_project_root() / "logs"
+    if base.exists():
+        shutil.rmtree(base)
+    yield base
+    shutil.rmtree(base, ignore_errors=True)
+
+
 def _write_base_files(
     base_dir, products=None, code_header="Codigo", prices=None
 ):
@@ -226,6 +235,109 @@ def test_update_stores_files_in_uploads(ds, imports_dir):
     for name in expected:
         assert name in names
         assert not (imports_dir / name).exists()
+
+
+def test_update_from_excel_generates_report(ds, imports_dir, logs_dir):
+    ds.conn.execute(
+        "INSERT INTO Produtos (Codigo, Produto, TipoVenda, Preco1G) "
+        "VALUES ('P1', 'Produto 1', 1, 10)"
+    )
+    ds.conn.execute(
+        "INSERT INTO FichasTecnicas "
+        "(ProdutoCodigo, ComponenteCodigo, ComponenteNome, Qtd, Unidade, Ppu, Preco, Ordem) "
+        "VALUES ('P1', 'I1', 'Ingrediente 1', 1, 'Kg', 2, 2, 1)"
+    )
+    ds.conn.execute(
+        "INSERT INTO PrecosTaxas (Codigo, Preco1, Loja) VALUES ('P1', 10, '1')"
+    )
+    ds.reload_ids()
+
+    prod_wb = Workbook()
+    ws = prod_wb.active
+    ws.append(["Codigo", "Produto", "TipoVenda", "Preco1G"])
+    ws.append(["P1", "Produto 1 Atualizado", 1, 15])
+    ws.append(["P2", "Produto 2", 1, 20])
+    prod_wb.save(imports_dir / "Produtos_Base.xlsx")
+
+    ft_wb = Workbook()
+    ws = ft_wb.active
+    ws.append(
+        [
+            "familia_subfamilia",
+            "produto_codigo",
+            "produto_nome",
+            "componente_codigo",
+            "componente_nome",
+            "Qtd",
+            "Unidade",
+            "Ppu",
+            "Preco",
+            "Peso",
+            "Ordem",
+        ]
+    )
+    ws.append([None, "P1", "Produto 1 Atualizado", "I1", "Ingrediente 1", 2, "Kg", 3, 6, None, 1])
+    ws.append([None, None, None, "I2", "Ingrediente 2", 1, "Un", None, None, None, 2])
+    ft_wb.save(imports_dir / "FichasTecnicas_base.xlsx")
+
+    prec_wb = Workbook()
+    ws = prec_wb.active
+    ws.append(["Codigo", "Preco1", "Preco2", "Preco3", "Preco4", "Preco5"])
+    ws.append(["P1", 12, None, None, None, None])
+    ws.append(["P2", 22, None, None, None, None])
+    prec_wb.save(imports_dir / "PreçosTaxas_base.xlsx")
+
+    svc = ProductService(ds)
+    report_path = svc.update_from_excel()
+
+    assert report_path is not None
+    assert report_path.exists()
+    assert report_path.parent == logs_dir
+
+    wb = load_workbook(report_path)
+    ws = wb.active
+    rows = list(ws.iter_rows(values_only=True))
+    wb.close()
+
+    assert rows[0] == (
+        "Tipo",
+        "Tabela",
+        "Produto",
+        "Componente",
+        "Nome Componente",
+        "Alterações",
+    )
+
+    def _find(tipo, tabela, produto, componente=None):
+        for row in rows[1:]:
+            if row[0] == tipo and row[1] == tabela and row[2] == produto:
+                if componente is None or row[3] == componente:
+                    return row
+        return None
+
+    produto_update = _find("Atualização de Registo", "Produtos", "P1")
+    assert produto_update is not None
+    assert "Produto 1 -> Produto 1 Atualizado" in (produto_update[5] or "")
+
+    novo_produto = _find("Novo Registo", "Produtos", "P2")
+    assert novo_produto is not None
+    assert "Codigo: P2" in (novo_produto[5] or "")
+
+    ingrediente_update = _find("Atualização de Ingrediente", "FichasTecnicas", "P1", "I1")
+    assert ingrediente_update is not None
+    assert "Qtd: 1 -> 2" in (ingrediente_update[5] or "")
+
+    novo_ingrediente = _find("Novo Ingrediente", "FichasTecnicas", "P1", "I2")
+    assert novo_ingrediente is not None
+    assert "ComponenteNome: Ingrediente 2" in (novo_ingrediente[5] or "")
+
+    preco_update = _find("Atualização de Registo", "PrecosTaxas", "P1")
+    assert preco_update is not None
+    assert "Preco1: 10 -> 12" in (preco_update[5] or "")
+
+    novo_preco = _find("Novo Registo", "PrecosTaxas", "P2")
+    assert novo_preco is not None
+    assert "Codigo: P2" in (novo_preco[5] or "")
 
 
 def test_import_from_excel_uses_produto_codigo(ds, imports_dir):
