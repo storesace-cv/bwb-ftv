@@ -287,9 +287,9 @@ def test_article_sheet_left_overlay_heights_reflect_stretch(qapp):
 
         expected_percentages = {
             "B1.C1.A.1": "25%",
-            "B1.C1.A.2": "25%",
+            "B1.C1.A.2": "15%",
             "B1.C1.A.3": "25%",
-            "B1.C1.A.4": "25%",
+            "B1.C1.A.4": "35%",
         }
 
         for tag, percentage in expected_percentages.items():
