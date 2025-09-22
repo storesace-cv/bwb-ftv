@@ -1013,8 +1013,13 @@ class FTApp(QWidget):
         info_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         info_zone.apply_metadata(
             zone_type="secao-informacao",
-            apply_base_style=False,
             base_style_label=self.zone_article_sheet_left_slot_2.base_style_label,
+            base_declarations=(
+                *layout._DEFAULT_ZONE_BASE_DECLARATIONS,
+                "border-bottom-width: 2px;\n",
+                "border-bottom-style: groove;\n",
+                "border-bottom: 2px groove #f7f9fc;\n",
+            ),
         )
 
         info_zone.ly.setSpacing(family_row_spacing_value)
