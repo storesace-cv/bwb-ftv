@@ -15,8 +15,15 @@ def _db_path() -> Path:
     return get_project_root() / "databases" / "ftv.db"
 
 
-def create_backup() -> Path:
+def create_backup(*, prefix: str | None = None) -> Path:
     """Create a timestamped backup of ``ftv.db``.
+
+    Parameters
+    ----------
+    prefix
+        Optional filename prefix. When provided, backups are stored as
+        ``<prefix><timestamp>.db``. Otherwise, the legacy
+        ``ftv.<timestamp>.db`` pattern is used.
 
     Returns
     -------
@@ -32,7 +39,10 @@ def create_backup() -> Path:
     backups_dir.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    backup_name = f"{db_path.stem}.{timestamp}{db_path.suffix}"
+    if prefix:
+        backup_name = f"{prefix}{timestamp}{db_path.suffix}"
+    else:
+        backup_name = f"{db_path.stem}.{timestamp}{db_path.suffix}"
     backup_path = backups_dir / backup_name
 
     shutil.copy2(db_path, backup_path)

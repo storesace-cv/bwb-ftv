@@ -25,6 +25,9 @@ from utils.formatting import parse_decimal
 logger = logging.getLogger(__name__)
 
 
+BACKUP_PREFIX_FOR_UPDATES = "ftv-actualizacao-"
+
+
 # Historical header aliases have been removed. Imports now rely on
 # spreadsheets using the canonical column names directly.
 
@@ -444,7 +447,7 @@ class ProductService:
                         exc_info=True,
                     )
             try:
-                create_backup()
+                create_backup(prefix=BACKUP_PREFIX_FOR_UPDATES)
             except Exception as exc:
                 logger.exception(
                     "[ProductService] Falha ao criar backup antes da atualização: %s",

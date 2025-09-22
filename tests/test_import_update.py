@@ -243,15 +243,15 @@ def test_update_stores_files_in_uploads(ds, imports_dir):
 def test_update_from_excel_attempts_backup_before_update(monkeypatch, ds):
     svc = ProductService(ds)
     monkeypatch.setattr(ProductService, "_should_create_backup", lambda self: True)
-    calls: list[str] = []
+    calls: list[tuple[str, str | None]] = []
 
-    def fake_backup() -> Path:
-        calls.append("backup")
+    def fake_backup(*, prefix=None) -> Path:
+        calls.append(("backup", prefix))
         return Path("dummy-backup.db")
 
     def fake_update(datastore) -> Path:
         assert datastore is ds
-        calls.append("update")
+        calls.append(("update", None))
         return Path("dummy-report.xlsx")
 
     monkeypatch.setattr(products, "create_backup", fake_backup)
@@ -260,7 +260,7 @@ def test_update_from_excel_attempts_backup_before_update(monkeypatch, ds):
     result = svc.update_from_excel()
 
     assert result == Path("dummy-report.xlsx")
-    assert calls == ["backup", "update"]
+    assert calls == [("backup", "ftv-actualizacao-"), ("update", None)]
 
 
 def test_update_from_excel_aborts_when_backup_fails(monkeypatch, ds):
@@ -268,7 +268,8 @@ def test_update_from_excel_aborts_when_backup_fails(monkeypatch, ds):
     monkeypatch.setattr(ProductService, "_should_create_backup", lambda self: True)
     called = {"update": False}
 
-    def fake_backup() -> Path:
+    def fake_backup(*, prefix=None) -> Path:
+        assert prefix == "ftv-actualizacao-"
         raise RuntimeError("backup falhou")
 
     def fake_update(datastore):

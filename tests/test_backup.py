@@ -20,3 +20,18 @@ def test_create_backup(tmp_path, monkeypatch):
     _, timestamp_str = backup_path.stem.split(".")
     assert len(timestamp_str) == 15
     datetime.strptime(timestamp_str, "%Y%m%d_%H%M%S")
+
+
+def test_create_backup_with_prefix(tmp_path, monkeypatch):
+    monkeypatch.setattr(backup_module, "get_project_root", lambda: tmp_path)
+    databases_dir = tmp_path / "databases"
+    databases_dir.mkdir()
+    db_file = databases_dir / "ftv.db"
+    db_file.write_text("dummy data", encoding="utf-8")
+
+    backup_path = create_backup(prefix="ftv-actualizacao-")
+
+    assert backup_path.exists()
+    assert backup_path.parent == databases_dir / "backups"
+    assert backup_path.name.startswith("ftv-actualizacao-")
+    assert backup_path.suffix == ".db"
