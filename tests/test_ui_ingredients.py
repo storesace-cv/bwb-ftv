@@ -139,6 +139,9 @@ def test_family_zone_has_top_margin_spacing(qapp):
         assert zone is not None
         margins = zone.ly.contentsMargins()
         assert margins.top() == 8
+        stylesheet = zone.base_stylesheet
+        assert "border-radius: 12px" in stylesheet
+        assert "padding: 6px" in stylesheet
     finally:
         ft.close()
 
