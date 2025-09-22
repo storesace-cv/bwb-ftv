@@ -6,7 +6,12 @@ from openpyxl import Workbook, load_workbook
 
 from data.datastore import DataStore
 import services.products as products
-from services.products import ProductService, _update_from_excel, _import_single_excel
+from services.products import (
+    ProductService,
+    _import_single_excel,
+    _ingredient_key,
+    _update_from_excel,
+)
 from utils.paths import get_project_root
 
 PRODUCTS_FILE = products.IMPORT_FILE_BASENAMES["Produtos"]
@@ -407,6 +412,34 @@ def test_update_from_excel_uses_produto_codigo(ds, imports_dir):
     pvps = ds.get_pvps("P1")
     assert pvps["pvps"][0] == 3.0
     assert len(pvps["pvps"]) == 5
+
+
+def test_ingredient_key_normalizes_codes():
+    row = {
+        "ProdutoCodigo": " P1 ",
+        "ComponenteCodigo": " C1 ",
+        "ComponenteNome": " Ingrediente 1 ",
+        "Ordem": " 1 ",
+    }
+
+    assert _ingredient_key(row) == ("P1", "C1")
+
+
+def test_ingredient_key_uses_fallback_when_code_missing():
+    row = {
+        "ProdutoCodigo": "P2",
+        "ComponenteCodigo": "  ",
+        "ComponenteNome": " Açúcar ",
+        "Ordem": " 02 ",
+    }
+
+    key = _ingredient_key(row)
+
+    assert key[0] == "P2"
+    assert isinstance(key[1], tuple)
+    assert key[1][0] == "__fallback__"
+    assert key[1][1] == "Açúcar"
+    assert key[1][2] == "2"
 
 
 def test_import_from_excel_skips_rows_without_codigo(ds, imports_dir):

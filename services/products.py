@@ -6,7 +6,7 @@ import inspect
 import logging
 import sqlite3
 from pathlib import Path
-from typing import Any, Iterable, Iterator
+from typing import Any, Iterable, Iterator, Mapping
 import unicodedata
 import re
 import time
@@ -77,6 +77,59 @@ def _is_blank(value: Any) -> bool:
     if isinstance(value, str):
         return not value.strip()
     return False
+
+
+_FALLBACK_COMPONENT_MARK = "__fallback__"
+
+
+def _normalize_code(value: Any) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        value = value.strip()
+        return value or None
+    text = str(value).strip()
+    return text or None
+
+
+def _normalize_text(value: Any) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _normalize_ordem(value: Any) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        if isinstance(value, float) and value.is_integer():
+            value = int(value)
+        return str(value)
+    if isinstance(value, str):
+        value = value.strip()
+        if not value:
+            return None
+        try:
+            numeric = float(value)
+        except ValueError:
+            return value
+        else:
+            if numeric.is_integer():
+                return str(int(numeric))
+            return value
+    return str(value)
+
+
+def _ingredient_key(row: Mapping[str, Any]) -> tuple[Any, Any]:
+    produto = _normalize_code(row.get("ProdutoCodigo"))
+    componente_codigo = _normalize_code(row.get("ComponenteCodigo"))
+    if componente_codigo:
+        return (produto, componente_codigo)
+
+    componente_nome = _normalize_text(row.get("ComponenteNome"))
+    ordem = _normalize_ordem(row.get("Ordem"))
+    return (produto, (_FALLBACK_COMPONENT_MARK, componente_nome, ordem))
 
 
 def canonicalize_header(text: str, table: str | None = None) -> str:
