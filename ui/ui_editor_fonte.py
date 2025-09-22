@@ -816,19 +816,13 @@ class FTApp(QWidget):
             slot.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             slot.apply_metadata(zone_type="coluna-campos", widget_type="campo")
 
-        self.zone_article_sheet_left_slot_2.setSizePolicy(
-            QSizePolicy.Expanding, QSizePolicy.Preferred
-        )
         slot_parent = self.zone_article_sheet_left_slot_2.parentWidget()
         slot_layout = slot_parent.layout() if slot_parent is not None else None
         if slot_layout is not None:
-            for slot, stretch in (
-                (self.zone_article_sheet_left_slot_1, 0),
-                (self.zone_article_sheet_left_slot_2, 0),
-                (self.zone_article_sheet_left_slot_3, 1),
-                (self.zone_article_sheet_left_slot_4, 0),
-            ):
-                slot_layout.setStretch(slot_layout.indexOf(slot), stretch)
+            for slot in self.zone_article_sheet_left_slots:
+                index = slot_layout.indexOf(slot)
+                if index != -1:
+                    slot_layout.setStretch(index, 1)
             layout.update_vertical_split_shares(slot_layout)
 
         # --- Identificação e família (B1.C1.A.1) ---
