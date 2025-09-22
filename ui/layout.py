@@ -7,6 +7,7 @@ nesses rótulos.
 
 import colorsys
 import hashlib
+import math
 import os
 import re
 from collections.abc import Iterable
@@ -61,6 +62,59 @@ _DEFAULT_ZONE_BASE_DECLARATIONS = (
 # ``.<LETTER><digits>`` cell identifiers, followed by ``.LETTER`` or ``.digits``
 # segments.
 _TAG_RE = re.compile(r"^[A-Z]\d+(?:\.[A-Z]\d+)?(?:\.(?:[A-Z]+|\d+))*$")
+
+
+@dataclass
+class _VerticalSplitInfo:
+    layout: QVBoxLayout
+    zones: tuple["Zone", ...]
+    base_weights: tuple[float, ...]
+
+
+def _format_percentage(value: float) -> str:
+    percent = value * 100.0
+    if percent <= 0.0005:
+        return "0%"
+    if percent >= 99.9995:
+        return "100%"
+    if math.isclose(percent, round(percent), rel_tol=0.0, abs_tol=0.05):
+        return f"{int(round(percent))}%"
+    return f"{percent:.1f}%"
+
+
+def _resolve_vertical_weights(info: _VerticalSplitInfo) -> list[float]:
+    layout = info.layout
+    effective: list[float] = []
+    for index in range(layout.count()):
+        item = layout.itemAt(index)
+        if item is None:
+            effective.append(0.0)
+            continue
+        effective.append(float(max(layout.stretch(index), 0)))
+    total = sum(effective)
+    if total > 0.0:
+        return [value / total for value in effective]
+
+    base_weights = [max(weight, 0.0) for weight in info.base_weights]
+    base_total = sum(base_weights)
+    if base_total <= 0.0:
+        return [0.0 for _ in base_weights]
+    return [weight / base_total for weight in base_weights]
+
+
+def _apply_vertical_split_metadata(info: _VerticalSplitInfo) -> None:
+    shares = _resolve_vertical_weights(info)
+    for zone, share in zip(info.zones, shares):
+        suffix = f"height: {_format_percentage(share)}" if share > 0.0 else "height: 0%"
+        zone._set_style_dev_info_suffix(suffix)
+
+
+def update_vertical_split_shares(layout: QVBoxLayout | None) -> None:
+    if layout is None:
+        return
+    info = getattr(layout, "_zone_vertical_split_info", None)
+    if isinstance(info, _VerticalSplitInfo):
+        _apply_vertical_split_metadata(info)
 
 
 def _escape_object_name(name: str) -> str:
@@ -369,6 +423,8 @@ class Zone(QWidget):
         self._zone_type: str | None = zone_type or None
         self._widget_qt_class: str | None = widget_qt_class or None
         self._style_dev_info: str | None = None
+        self._style_dev_info_base: str | None = None
+        self._style_dev_info_suffix: str | None = None
         self._suspend_base_tracking = False
         self._next_base_style_label: Any = _KEEP_LABEL
         self._metadata_snapshot: dict[str, str] = {}
@@ -511,9 +567,8 @@ class Zone(QWidget):
         self._sync_style_label()
 
     def set_style_dev_info(self, info: str | None) -> None:
-        self._style_dev_info = info or None
-        self._update_metadata_snapshot(style_dev_info=self._style_dev_info)
-        self._sync_style_label()
+        self._style_dev_info_base = info or None
+        self._apply_style_dev_info_update()
 
     @property
     def widget_qt_class(self) -> str | None:
@@ -697,6 +752,23 @@ class Zone(QWidget):
         self._style_lbl.setToolTip("")
         refresh_style(self._style_lbl)
         self._refresh_metadata_tooltip()
+
+    def _apply_style_dev_info_update(self) -> None:
+        parts = [
+            segment
+            for segment in (
+                self._style_dev_info_base,
+                self._style_dev_info_suffix,
+            )
+            if segment
+        ]
+        self._style_dev_info = " — ".join(parts) if parts else None
+        self._update_metadata_snapshot(style_dev_info=self._style_dev_info)
+        self._sync_style_label()
+
+    def _set_style_dev_info_suffix(self, suffix: str | None) -> None:
+        self._style_dev_info_suffix = suffix or None
+        self._apply_style_dev_info_update()
 
     def _iter_metadata_tooltip_widgets(self):
         yield self
@@ -1069,8 +1141,9 @@ class Zone(QWidget):
         v = QVBoxLayout(cont)
         v.setContentsMargins(0, 0, 0, 0)
         v.setSpacing(self.ly.spacing())
+        ratio_values = tuple(ratios)
         zones = []
-        for idx, ratio in enumerate(ratios, start=1):
+        for idx, ratio in enumerate(ratio_values, start=1):
             tag = f"{self.tag}.{idx}"
             if not validate_tag(tag):
                 raise ValueError(f"Invalid zone tag: {tag}")
@@ -1099,6 +1172,18 @@ class Zone(QWidget):
             v.addWidget(zone, ratio)
             zones.append(zone)
         self.ly.addWidget(cont, 1)
+        base_weights = tuple(
+            float(max(weight, 0)) for weight in ratio_values[: len(zones)]
+        )
+        info = _VerticalSplitInfo(
+            layout=v,
+            zones=tuple(zones),
+            base_weights=base_weights
+            if base_weights
+            else tuple(1.0 for _ in zones),
+        )
+        setattr(v, "_zone_vertical_split_info", info)
+        _apply_vertical_split_metadata(info)
         return tuple(zones)
 
 

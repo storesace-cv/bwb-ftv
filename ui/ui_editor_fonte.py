@@ -829,6 +829,7 @@ class FTApp(QWidget):
                 (self.zone_article_sheet_left_slot_4, 0),
             ):
                 slot_layout.setStretch(slot_layout.indexOf(slot), stretch)
+            layout.update_vertical_split_shares(slot_layout)
 
         # --- Identificação e família (B1.C1.A.1) ---
         self.zone_general_aux_stack = self.zone_article_sheet_left_slot_1
