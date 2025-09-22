@@ -11,3 +11,27 @@ def test_sync_table_schema_handles_duplicate_headers():
     cur = conn.execute("PRAGMA table_info(Produtos)")
     cols = [row[1] for row in cur.fetchall()]
     assert cols == ["Codigo", "Nome"]
+
+
+def test_sync_table_schema_preserves_composite_primary_key():
+    conn = sqlite3.connect(":memory:")
+    conn.execute(
+        """
+        CREATE TABLE Produtos (
+            Codigo TEXT NOT NULL,
+            Loja TEXT NOT NULL,
+            Nome TEXT,
+            PRIMARY KEY (Codigo, Loja)
+        )
+        """
+    )
+    headers = ["Codigo", "Loja"]
+
+    sync_table_schema(conn, "Produtos", headers)
+
+    rows = conn.execute("PRAGMA table_info(Produtos)").fetchall()
+    pk_info = {row[1]: row[5] for row in rows}
+
+    assert [row[1] for row in rows] == ["Codigo", "Loja"]
+    assert pk_info["Codigo"] == 1
+    assert pk_info["Loja"] == 2
