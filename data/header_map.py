@@ -61,6 +61,7 @@ HEADER_MAP: Dict[str, Dict[str, str]] = {
     },
     "PrecosTaxas": {
         "Codigo": "Codigo",
+        "ProdVenda": "Codigo",
         "Loja": "Loja",
         "Preco1": "Preco1",
         "Preco2": "Preco2",
