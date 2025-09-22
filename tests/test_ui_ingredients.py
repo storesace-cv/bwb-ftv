@@ -142,6 +142,9 @@ def test_family_zone_has_top_margin_spacing(qapp):
         stylesheet = zone.base_stylesheet
         assert "border-radius: 12px" in stylesheet
         assert "padding: 6px" in stylesheet
+        assert "border-bottom-width: 2px" in stylesheet
+        assert "border-bottom-style: groove" in stylesheet
+        assert "border-bottom: 2px groove #f7f9fc" in stylesheet
     finally:
         ft.close()
 
