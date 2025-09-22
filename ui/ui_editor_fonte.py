@@ -457,6 +457,23 @@ class FTApp(QWidget):
             for pv in getattr(self, "prep_previews", []):
                 pv.load_image(codigo)
 
+    def _refresh_datastore(self) -> None:
+        """Synchronize the UI datastore reference with the service."""
+
+        self.ds = self.service.ds
+
+    def _on_import_data(self) -> None:
+        """Run the import workflow and refresh datastore bindings."""
+
+        import_data(self, self.service, self._load_record, self.cur_index)
+        self._refresh_datastore()
+
+    def _on_update_data(self) -> None:
+        """Run the update workflow and refresh datastore bindings."""
+
+        update_data(self, self.service, self._load_record, self.cur_index)
+        self._refresh_datastore()
+
     def _section_box(self, title: str, zone: Zone) -> QGroupBox:
         user_title = re.sub(r"^\[[^\]]+\]\s*-\s*", "", title).strip()
         box = QGroupBox()
@@ -557,12 +574,8 @@ class FTApp(QWidget):
         self.mnuRoot.addMenu(mConf)
         self.btMenu.setMenu(self.mnuRoot)
         # ligações básicas
-        actReload.triggered.connect(
-            lambda: import_data(self, self.service, self._load_record, self.cur_index)
-        )
-        actUpdate.triggered.connect(
-            lambda: update_data(self, self.service, self._load_record, self.cur_index)
-        )
+        actReload.triggered.connect(self._on_import_data)
+        actUpdate.triggered.connect(self._on_update_data)
         actBackup.triggered.connect(lambda: backup_database(self, self.ds))
         actRestore.triggered.connect(
             lambda: restore_database(self, self.ds, self._after_restore)
@@ -2551,6 +2564,8 @@ class FTApp(QWidget):
 
     def _after_restore(self):
         """Refresh UI state after a database restore."""
+
+        self._refresh_datastore()
         try:
             self._aux_refresh_lists()
         except Exception:
