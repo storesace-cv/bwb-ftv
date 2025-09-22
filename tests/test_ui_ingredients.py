@@ -1,4 +1,8 @@
 import pytest
+from tests._qt import require_real_qt_modules
+
+require_real_qt_modules("PyQt5.QtWidgets", "PyQt5.QtCore", "PyQt5.QtGui")
+
 from PyQt5.QtCore import QSize, Qt, QPoint
 from PyQt5.QtGui import QResizeEvent
 from PyQt5.QtWidgets import QFrame, QSizePolicy, QHBoxLayout, QVBoxLayout, QLabel

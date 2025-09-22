@@ -1,3 +1,7 @@
+from tests._qt import require_real_qt_modules
+
+require_real_qt_modules("PyQt5.QtWidgets")
+
 from services.products import ProductService
 from ui.ui_editor_fonte import FTApp
 

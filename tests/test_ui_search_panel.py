@@ -1,3 +1,7 @@
+from tests._qt import require_real_qt_modules
+
+require_real_qt_modules("PyQt5.QtWidgets", "PyQt5.QtCore")
+
 from data.datastore import DataStore
 from services.products import ProductService
 from ui.layout import Zone

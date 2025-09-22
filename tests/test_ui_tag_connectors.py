@@ -3,6 +3,10 @@ from __future__ import annotations
 import types
 
 import pytest
+from tests._qt import require_real_qt_modules
+
+require_real_qt_modules("PyQt5.QtWidgets")
+
 from PyQt5.QtWidgets import QCheckBox
 
 from services.products import ProductService

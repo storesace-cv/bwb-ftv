@@ -3,6 +3,10 @@ import types
 
 import pytest
 
+from tests._qt import require_real_qt_modules
+
+require_real_qt_modules("PyQt5.QtWidgets", "PyQt5.QtCore", "PyQt5.QtGui")
+
 
 qt_module = types.ModuleType("PyQt5")
 qt_core = types.ModuleType("PyQt5.QtCore")

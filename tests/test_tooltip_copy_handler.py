@@ -1,3 +1,7 @@
+from tests._qt import require_real_qt_modules
+
+require_real_qt_modules("PyQt5.QtWidgets", "PyQt5.QtCore")
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QLineEdit, QToolTip
 
