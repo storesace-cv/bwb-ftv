@@ -2,6 +2,9 @@
 
 Lista de correspondências entre cabeçalhos dos ficheiros Excel de importação e os campos das tabelas SQLite.
 
+Os ficheiros de demonstração em `databases/demos` mantêm estes cabeçalhos de referência. Utilize-os apenas como guia ao
+preparar novas folhas para importação.
+
 ## `Produtos_Base.xlsx`
 
 | Cabeçalho Excel | Tabela.Campo |
