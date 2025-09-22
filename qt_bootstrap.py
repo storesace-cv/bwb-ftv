@@ -37,14 +37,19 @@ def _find_pyqt5_root() -> Optional[Path]:
 def _platform_plugin_path(pyqt_root: Path) -> tuple[Optional[Path], list[Path]]:
     """Locate the Qt platform plugin directory within *pyqt_root*."""
 
-    candidates = []
+    attempted_paths: list[Path] = []
     for runtime_dir in ("Qt", "Qt5"):
         candidate = pyqt_root / runtime_dir / "plugins" / "platforms"
-        candidates.append(candidate)
-        if candidate.exists():
-            return candidate, candidates
+        attempted_paths.append(candidate)
+        if candidate.is_dir():
+            return candidate, attempted_paths
 
-    return None, candidates
+    legacy_candidate = pyqt_root / "plugins" / "platforms"
+    attempted_paths.append(legacy_candidate)
+    if legacy_candidate.is_dir():
+        return legacy_candidate, attempted_paths
+
+    return None, attempted_paths
 
 
 def _ensure_qt_plugin_environment() -> None:
@@ -57,7 +62,7 @@ def _ensure_qt_plugin_environment() -> None:
     platforms_dir, attempted_paths = _platform_plugin_path(pyqt_root)
 
     if platforms_dir is None:
-        attempted_display = ", ".join(str(path) for path in attempted_paths)
+        attempted_display = ", ".join(str(path) for path in attempted_paths) or "(none)"
         logger.error(
             "[QT] Diretório de plugins Qt inexistente; caminhos verificados: %s",
             attempted_display,
