@@ -149,7 +149,10 @@ Após importação, os ficheiros são arquivados em `imports/history` e registad
 ## Normalização de cabeçalhos
 - Remoção de acentos/pontuação
 
-> **Nota**: Apenas os campos listados abaixo são aceites; cabeçalhos diferentes serão ignorados.
+> **Nota**: O mapa oficial de cabeçalhos vive em `data/header_map.py`. O processo
+> de importação (`canonicalize_header` e `sync_table_schema`) consulta
+> obrigatoriamente essa estrutura e rejeita cabeçalhos fora da lista. Apenas os
+> campos listados abaixo são aceites.
 
 ## Tabela `Produtos_Base.xlsx`
 | Cabeçalho Excel | Coluna BD |
