@@ -220,6 +220,30 @@ def test_article_sheet_left_slots_expand_full_width(qapp):
         ft.close()
 
 
+def test_additional_info_zone_stretch_matches_parent(qapp):
+    ds = StubDataStore()
+    service = ProductService(ds)
+    ft = FTApp(service)
+    try:
+        parent_zone = ft.findChild(Zone, "B1.C1.A.2.A")
+        assert parent_zone is not None, "Zone B1.C1.A.2.A should exist"
+
+        child_zone = ft.findChild(Zone, "B1.C1.A.2.A.2")
+        assert child_zone is not None, "Zone B1.C1.A.2.A.2 should exist"
+        assert child_zone.parent() is parent_zone
+
+        layout = parent_zone.layout()
+        assert isinstance(layout, QVBoxLayout)
+
+        index = layout.indexOf(child_zone)
+        assert index != -1, "Child zone should be in the parent layout"
+        assert (
+            layout.stretch(index) == 1
+        ), "Child zone stretch should match the parent section weight"
+    finally:
+        ft.close()
+
+
 def test_pvps_zone_is_visible_without_legend_label(qapp):
     ds = StubDataStore()
     service = ProductService(ds)
