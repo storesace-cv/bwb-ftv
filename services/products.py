@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import logging
 import sqlite3
 from pathlib import Path
@@ -13,7 +14,7 @@ from contextlib import closing, contextmanager
 from PIL import Image, UnidentifiedImageError
 from openpyxl import Workbook, load_workbook
 
-from data.backup import create_backup
+from data.backup import create_backup, restore_backup
 from data.datastore import DataStore
 from data.migration import setup_database
 from data.repositories import quote_ident
@@ -449,6 +450,7 @@ class ProductService:
         """Update existing products from spreadsheets in the ``imports``
         folder."""
 
+        backup_path: Path | None = None
         if self._should_create_backup():
             conn = getattr(self.ds, "conn", None)
             if conn is not None:
@@ -461,14 +463,122 @@ class ProductService:
                         exc_info=True,
                     )
             try:
-                create_backup(prefix=BACKUP_PREFIX_FOR_UPDATES)
+                backup_path = create_backup(prefix=BACKUP_PREFIX_FOR_UPDATES)
             except Exception as exc:
                 logger.exception(
                     "[ProductService] Falha ao criar backup antes da atualização: %s",
                     exc,
                 )
                 raise
-        return update_from_excel(self.ds)
+        try:
+            return update_from_excel(self.ds)
+        except Exception:
+            conn = getattr(self.ds, "conn", None)
+            db_path: str | None = None
+            if conn is not None:
+                try:
+                    rows = conn.execute("PRAGMA database_list").fetchall()
+                except sqlite3.Error as exc:
+                    logger.debug(
+                        "[ProductService] Não foi possível obter caminhos da BD: %s",
+                        exc,
+                        exc_info=True,
+                    )
+                    rows = []
+                for row in rows or []:
+                    try:
+                        _, name, file_path = row
+                    except (ValueError, TypeError):
+                        continue
+                    if name == "main" and file_path not in {"", ":memory:"}:
+                        db_path = file_path
+                        break
+            close_fn = getattr(self.ds, "close", None)
+            if callable(close_fn):
+                try:
+                    close_fn()
+                except Exception as exc:
+                    logger.debug(
+                        "[ProductService] Falha ao fechar DataStore após erro: %s",
+                        exc,
+                        exc_info=True,
+                    )
+            elif conn is not None:
+                try:
+                    conn.close()
+                except sqlite3.Error as exc:
+                    logger.debug(
+                        "[ProductService] Falha ao fechar ligação SQLite após erro: %s",
+                        exc,
+                        exc_info=True,
+                    )
+            if backup_path is not None:
+                try:
+                    restore_backup(backup_path)
+                except Exception as exc:
+                    logger.exception(
+                        "[ProductService] Falha ao restaurar backup após erro: %s",
+                        exc,
+                    )
+                else:
+                    logger.info(
+                        "[ProductService] Base de dados restaurada a partir de %s",
+                        backup_path,
+                    )
+            new_ds: DataStore | None = None
+            ds_type = type(self.ds)
+            ds_kwargs: dict[str, Any] = {}
+            if db_path:
+                ds_kwargs["db_path"] = db_path
+            try:
+                sig = inspect.signature(ds_type.__init__)
+            except (TypeError, ValueError):
+                sig = None
+            params: set[str] = set()
+            if sig is not None:
+                params = {name for name in sig.parameters if name != "self"}
+            if "demo" in params and hasattr(self.ds, "demo"):
+                ds_kwargs["demo"] = getattr(self.ds, "demo")
+            prompt_cb = getattr(self.ds, "_prompt", None)
+            if prompt_cb is None and hasattr(self.ds, "prompt"):
+                prompt_cb = getattr(self.ds, "prompt")
+            if "prompt" in params and prompt_cb is not None:
+                ds_kwargs["prompt"] = prompt_cb
+            try:
+                new_ds = ds_type(**ds_kwargs)
+            except Exception as exc:
+                logger.debug(
+                    "[ProductService] Falha a reinstanciar %s: %s",
+                    ds_type.__name__,
+                    exc,
+                    exc_info=True,
+                )
+                if ds_type is not DataStore:
+                    fallback_kwargs = {
+                        key: value
+                        for key, value in ds_kwargs.items()
+                        if key in {"db_path", "demo", "prompt"}
+                    }
+                    try:
+                        new_ds = DataStore(**fallback_kwargs)
+                    except Exception as fallback_exc:
+                        logger.debug(
+                            "[ProductService] Falha na recuperação com DataStore: %s",
+                            fallback_exc,
+                            exc_info=True,
+                        )
+            if new_ds is not None:
+                self.ds = new_ds
+            if hasattr(self.ds, "reload_ids"):
+                try:
+                    self.ds.reload_ids()
+                except Exception as exc:
+                    logger.debug(
+                        "[ProductService] reload_ids falhou após restauro: %s",
+                        exc,
+                        exc_info=True,
+                    )
+            raise
 
     def _should_create_backup(self) -> bool:
         conn = getattr(self.ds, "conn", None)
