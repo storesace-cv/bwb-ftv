@@ -66,3 +66,8 @@ def test_uninvvmmpg_alias_for_produtos():
         canonicalize_header("Un Inv (V+M,M,P,G)", table="Produtos")
         == "UnInvVMMMPG"
     )
+
+
+def test_ppu_header_is_uppercase_for_fichas_tecnicas():
+    assert canonicalize_header("PPU", table="FichasTecnicas") == "PPU"
+    assert canonicalize_header("Ppu", table="FichasTecnicas") == "PPU"
