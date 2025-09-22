@@ -16,7 +16,7 @@ from openpyxl import Workbook, load_workbook
 
 from data.backup import create_backup, restore_backup
 from data.datastore import DataStore
-from data.header_map import allowed_headers_for
+from data.header_map import HEADER_MAP, allowed_headers_for
 from data.migration import setup_database
 from data.repositories import quote_ident
 from domain import Product, Ingredient, FichaTecnica
@@ -168,6 +168,9 @@ def canonicalize_header(text: str, table: str | None = None) -> str:
         result = "".join(word.capitalize() for word in txt_norm.split())
 
     if table:
+        mapping = HEADER_MAP.get(table, {})
+        if mapping and result in mapping:
+            result = mapping[result]
         allowed = allowed_headers_for(table)
         if allowed and result and result not in allowed:
             allowed_list = ", ".join(sorted(allowed))
