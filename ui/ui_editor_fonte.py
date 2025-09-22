@@ -1040,7 +1040,7 @@ class FTApp(QWidget):
             base_style_label=self.zone_article_sheet_left_slot_2.base_style_label,
         )
         self.zone_article_sheet_left_slot_2.add(info_zone, 0)
-        info_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        info_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         info_zone.apply_metadata(
             zone_type="secao-informacao",
             base_style_label=self.zone_article_sheet_left_slot_2.base_style_label,
@@ -1064,7 +1064,7 @@ class FTApp(QWidget):
             show_overlays=layout.DEV_OVERLAYS,
             base_style_label=info_zone.base_style_label,
         )
-        info_field_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        info_field_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         info_field_zone.apply_metadata(
             zone_type="linha-campo",
             apply_base_style=False,
@@ -1074,7 +1074,7 @@ class FTApp(QWidget):
 
         combo_container = QWidget(info_field_zone)
         combo_container.setSizePolicy(
-            QSizePolicy.Expanding, QSizePolicy.Expanding
+            QSizePolicy.Expanding, QSizePolicy.Preferred
         )
         combo_container_layout = QHBoxLayout(combo_container)
         combo_container_layout.setContentsMargins(0, 0, 0, 0)
@@ -1097,7 +1097,7 @@ class FTApp(QWidget):
             )
             column_zone.apply_metadata(apply_base_style=False)
             column_zone.setSizePolicy(
-                QSizePolicy.Expanding, QSizePolicy.Expanding
+                QSizePolicy.Expanding, QSizePolicy.Preferred
             )
             column_zone.ly.setContentsMargins(0, 0, 0, 0)
             column_zone.ly.setSpacing(family_row_spacing_value)
@@ -1111,7 +1111,7 @@ class FTApp(QWidget):
         )
 
         for column_zone, label_text, attr_name in combo_zone_specs:
-            column_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            column_zone.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
             column_zone.ly.setContentsMargins(0, 0, 0, 0)
             column_zone.ly.setSpacing(family_row_spacing_value)
 
