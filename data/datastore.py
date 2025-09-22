@@ -9,6 +9,7 @@ from typing import Callable, Iterable
 
 from utils import get_project_root
 from .migration import (
+    MIGRATIONS_DIR,
     get_pending_migrations as _get_pending_migrations,
     setup_database,
 )
@@ -29,6 +30,23 @@ def _create_empty_db(db_path: Path) -> None:
         sql = schema_file.read_text(encoding="utf-8")
         conn.executescript(sql)
         conn.commit()
+        try:
+            conn.execute(
+                "CREATE TABLE IF NOT EXISTS SchemaVersion (Filename TEXT PRIMARY KEY)"
+            )
+            if MIGRATIONS_DIR.exists():
+                filenames = sorted(p.name for p in MIGRATIONS_DIR.glob("*.sql"))
+                if filenames:
+                    conn.executemany(
+                        "INSERT OR IGNORE INTO SchemaVersion (Filename) VALUES (?)",
+                        [(name,) for name in filenames],
+                    )
+            conn.commit()
+        except sqlite3.Error as exc:  # pragma: no cover - defensive logging
+            logger.warning(
+                "[DataStore] Falha a registar migrações iniciais: %s", exc,
+                exc_info=True,
+            )
     finally:
         conn.close()
 
@@ -93,6 +111,7 @@ class DataStore:
         db_path = Path(db_path)
 
         self.conn = None
+        setup_error: sqlite3.Error | None = None
         if not self.demo:
             is_memory = str(db_path) == ":memory:" or str(db_path).startswith(
                 "file::memory:"
@@ -102,6 +121,7 @@ class DataStore:
                     f"[DataStore] Base de dados não encontrada em '{db_path}'. "
                     "Copie o ficheiro ou defina FTV_DB_PATH."
                 )
+                create_db = True
                 if self._prompt is not None:
                     try:
                         choice = self._prompt(
@@ -113,33 +133,52 @@ class DataStore:
                             exc_info=True,
                         )
                         raise FileNotFoundError(msg) from exc
-                    if choice == "Base vazia":
-                        try:
-                            _create_empty_db(db_path)
-                        except Exception as exc:
-                            logger.error(
-                                "[DataStore] Falha a preparar BD: %s", exc,
-                                exc_info=True,
-                            )
-                            raise FileNotFoundError(msg) from exc
-                    else:
-                        logger.error(msg)
-                        raise FileNotFoundError(msg)
+                    if choice != "Base vazia":
+                        create_db = False
+                if create_db:
+                    try:
+                        logger.info(
+                            "[DataStore] Base inexistente em '%s'. "
+                            "A criar base vazia padrão.",
+                            db_path,
+                        )
+                        _create_empty_db(db_path)
+                    except Exception as exc:
+                        logger.error(
+                            "[DataStore] Falha a preparar BD: %s", exc,
+                            exc_info=True,
+                        )
+                        raise FileNotFoundError(msg) from exc
                 else:
                     logger.error(msg)
                     raise FileNotFoundError(msg)
             try:
                 self.conn = sqlite3.connect(str(db_path))
                 self.conn.row_factory = sqlite3.Row
-                setup_database(self.conn)
+                try:
+                    setup_database(self.conn)
+                except sqlite3.Error as exc:
+                    try:
+                        self.conn.rollback()
+                    except sqlite3.Error:
+                        pass
+                    logger.error(
+                        "[DataStore] setup_database falhou: %s",
+                        exc,
+                        exc_info=True,
+                    )
+                    setup_error = exc
                 self._ensure_required_tables()
+                if setup_error is not None:
+                    raise setup_error
             except sqlite3.Error as exc:
-                logger.error(
-                    "[DataStore] Falha a ligar à BD '%s': %s",
-                    db_path,
-                    exc,
-                    exc_info=True,
-                )
+                if setup_error is None or exc is not setup_error:
+                    logger.error(
+                        "[DataStore] Falha a ligar à BD '%s': %s",
+                        db_path,
+                        exc,
+                        exc_info=True,
+                    )
                 raise
 
         # Repositórios
