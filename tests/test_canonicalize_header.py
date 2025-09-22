@@ -53,7 +53,7 @@ def test_invalid_iva_aliases_remain_unmapped():
 
 def test_invalid_header_for_table_raises():
     with pytest.raises(ValueError) as exc:
-        canonicalize_header("Prod venda", table="PrecosTaxas")
+        canonicalize_header("Desconhecido", table="PrecosTaxas")
     assert "Cabeçalho inesperado" in str(exc.value)
 
 
@@ -61,8 +61,23 @@ def test_valid_header_for_table_is_allowed():
     assert canonicalize_header("Preco1", table="PrecosTaxas") == "Preco1"
 
 
+def test_prod_venda_alias_maps_to_codigo_for_precos_taxas():
+    assert canonicalize_header("Prod venda", table="PrecosTaxas") == "Codigo"
+    assert (
+        canonicalize_header(
+            "Prod venda (não necessário p/ importar)", table="PrecosTaxas"
+        )
+        == "Codigo"
+    )
+
+
 def test_uninvvmmpg_alias_for_produtos():
     assert (
         canonicalize_header("Un Inv (V+M,M,P,G)", table="Produtos")
         == "UnInvVMMMPG"
     )
+
+
+def test_ppu_header_is_uppercase_for_fichas_tecnicas():
+    assert canonicalize_header("PPU", table="FichasTecnicas") == "PPU"
+    assert canonicalize_header("Ppu", table="FichasTecnicas") == "PPU"
