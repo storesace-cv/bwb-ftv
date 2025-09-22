@@ -1,8 +1,11 @@
 import shutil
+from pathlib import Path
+
 import pytest
 from openpyxl import Workbook, load_workbook
 
 from data.datastore import DataStore
+import services.products as products
 from services.products import ProductService, _update_from_excel, _import_single_excel
 from utils.paths import get_project_root
 
@@ -235,6 +238,49 @@ def test_update_stores_files_in_uploads(ds, imports_dir):
     for name in expected:
         assert name in names
         assert not (imports_dir / name).exists()
+
+
+def test_update_from_excel_attempts_backup_before_update(monkeypatch, ds):
+    svc = ProductService(ds)
+    monkeypatch.setattr(ProductService, "_should_create_backup", lambda self: True)
+    calls: list[str] = []
+
+    def fake_backup() -> Path:
+        calls.append("backup")
+        return Path("dummy-backup.db")
+
+    def fake_update(datastore) -> Path:
+        assert datastore is ds
+        calls.append("update")
+        return Path("dummy-report.xlsx")
+
+    monkeypatch.setattr(products, "create_backup", fake_backup)
+    monkeypatch.setattr(products, "update_from_excel", fake_update)
+
+    result = svc.update_from_excel()
+
+    assert result == Path("dummy-report.xlsx")
+    assert calls == ["backup", "update"]
+
+
+def test_update_from_excel_aborts_when_backup_fails(monkeypatch, ds):
+    svc = ProductService(ds)
+    monkeypatch.setattr(ProductService, "_should_create_backup", lambda self: True)
+    called = {"update": False}
+
+    def fake_backup() -> Path:
+        raise RuntimeError("backup falhou")
+
+    def fake_update(datastore):
+        called["update"] = True
+
+    monkeypatch.setattr(products, "create_backup", fake_backup)
+    monkeypatch.setattr(products, "update_from_excel", fake_update)
+
+    with pytest.raises(RuntimeError):
+        svc.update_from_excel()
+
+    assert called["update"] is False
 
 
 def test_update_from_excel_generates_report(ds, imports_dir, logs_dir):
