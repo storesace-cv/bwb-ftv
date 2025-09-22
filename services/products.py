@@ -145,6 +145,14 @@ def sync_table_schema(conn, table: str, headers: list[str]) -> list[str]:
     ]
 
     if missing:
+        headers_lower = [h.lower() for h in norm_headers]
+        pk_order = [
+            row[1]
+            for row in sorted(info_rows, key=lambda r: r[5])
+            if row[5] > 0 and row[1].lower() in headers_lower
+        ]
+        multi_pk = len(pk_order) > 1
+
         col_defs = []
         for h in norm_headers:
             col_info = info.get(h.lower(), {})
@@ -152,9 +160,15 @@ def sync_table_schema(conn, table: str, headers: list[str]) -> list[str]:
             col_type = col_info.get("type") or ""
             col_name = quote_ident(name)
             col_def = col_name if not col_type else f"{col_name} {col_type}"
-            if col_info.get("pk"):
-                col_def += " PRIMARY KEY"
+            if col_info.get("pk") and not multi_pk:
+                if "PRIMARY KEY" not in col_type.upper():
+                    col_def += " PRIMARY KEY"
             col_defs.append(col_def)
+
+        if multi_pk:
+            pk_cols = [quote_ident(name) for name in pk_order]
+            if pk_cols:
+                col_defs.append(f"PRIMARY KEY ({', '.join(pk_cols)})")
 
         new_table = f"{table}_new"
         cur.execute(
