@@ -89,9 +89,7 @@ def canonicalize_header(text: str, table: str | None = None) -> str:
         )
     if key in {"preco15", "preco1_5"}:
         return "Preco1"
-    if key in {"iva1", "iva12", "iva1_2"} or re.fullmatch(
-        r"iva\s*1", txt_norm.lower()
-    ):
+    if key == "iva1" or re.fullmatch(r"iva\s*1", txt_norm.lower()):
         return "Iva1"
     if key == "iva2" or re.fullmatch(r"iva\s*2", txt_norm.lower()):
         return "Iva2"

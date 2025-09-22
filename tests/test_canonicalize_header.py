@@ -35,7 +35,6 @@ def test_price_and_iva_aliases():
     assert canonicalize_header("preco1g", table="Produtos") == "Preco1G"
     assert canonicalize_header("preco1g", table="Outros") == "Preco1"
     assert canonicalize_header("iva1") == "Iva1"
-    assert canonicalize_header("iva1_2") == "Iva1"
     assert canonicalize_header("iva2") == "Iva2"
     assert canonicalize_header("IsencaoIva") == "IsencaoIva"
 
@@ -43,3 +42,8 @@ def test_price_and_iva_aliases():
 def test_iva_space_variations():
     assert canonicalize_header("iva 1") == "Iva1"
     assert canonicalize_header("iva 2") == "Iva2"
+
+
+def test_invalid_iva_aliases_remain_unmapped():
+    assert canonicalize_header("iva12") == "Iva12"
+    assert canonicalize_header("iva1_2") == "Iva12"
