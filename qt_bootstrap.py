@@ -34,10 +34,17 @@ def _find_pyqt5_root() -> Optional[Path]:
     return Path(next(iter(locations)))
 
 
-def _platform_plugin_path(pyqt_root: Path) -> Path:
-    """Compute the Qt platform plugin directory within *pyqt_root*."""
+def _platform_plugin_path(pyqt_root: Path) -> tuple[Optional[Path], list[Path]]:
+    """Locate the Qt platform plugin directory within *pyqt_root*."""
 
-    return pyqt_root / "Qt" / "plugins" / "platforms"
+    candidates = []
+    for runtime_dir in ("Qt", "Qt5"):
+        candidate = pyqt_root / runtime_dir / "plugins" / "platforms"
+        candidates.append(candidate)
+        if candidate.exists():
+            return candidate, candidates
+
+    return None, candidates
 
 
 def _ensure_qt_plugin_environment() -> None:
@@ -47,11 +54,13 @@ def _ensure_qt_plugin_environment() -> None:
     if pyqt_root is None:
         return
 
-    platforms_dir = _platform_plugin_path(pyqt_root)
+    platforms_dir, attempted_paths = _platform_plugin_path(pyqt_root)
 
-    if not platforms_dir.exists():
+    if platforms_dir is None:
+        attempted_display = ", ".join(str(path) for path in attempted_paths)
         logger.error(
-            "[QT] Diretório de plugins Qt inexistente: %s", platforms_dir
+            "[QT] Diretório de plugins Qt inexistente; caminhos verificados: %s",
+            attempted_display,
         )
         return
 
@@ -67,15 +76,16 @@ def _ensure_qt_plugin_environment() -> None:
     os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = str(platforms_dir)
     logger.info("[QT] Plataforma Qt configurada em %s", platforms_dir)
 
+    plugin_root = platforms_dir.parent
     existing_plugin_path = os.environ.get("QT_PLUGIN_PATH")
     if existing_plugin_path:
         paths = existing_plugin_path.split(os.pathsep)
-        if str(platforms_dir) not in paths:
+        if str(plugin_root) not in paths:
             os.environ["QT_PLUGIN_PATH"] = (
-                existing_plugin_path + os.pathsep + str(platforms_dir)
+                existing_plugin_path + os.pathsep + str(plugin_root)
             )
     else:
-        os.environ["QT_PLUGIN_PATH"] = str(platforms_dir)
+        os.environ["QT_PLUGIN_PATH"] = str(plugin_root)
 
     if os.environ.get("FTV_QT_DEBUG_PLUGINS") and "QT_DEBUG_PLUGINS" not in os.environ:
         os.environ["QT_DEBUG_PLUGINS"] = "1"
