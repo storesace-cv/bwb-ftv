@@ -1017,13 +1017,7 @@ def import_from_excel(ds: DataStore | None = None) -> None:
 
 
 
-def update_from_excel(ds: DataStore | None = None) -> Path | None:
-    """Update product data from Excel files in ``<root>/imports``.
-
-    A informação de preços de ``PreçosTaxas_base.xlsx`` é carregada para a
-    tabela ``PrecosTaxas``.
-    """
-
+def _prepare_import_files() -> dict[str, Path]:
     base = get_project_root() / "imports"
     base.mkdir(parents=True, exist_ok=True)
 
@@ -1040,14 +1034,16 @@ def update_from_excel(ds: DataStore | None = None) -> Path | None:
     for fp in files.values():
         if fp.suffix.lower() != ".xlsx":
             raise ValueError(f"{fp} is not an .xlsx file")
+    return files
 
-    ds = ds or DataStore()
-    conn = getattr(ds, "conn", None)
-    if conn is None:
-        return None
 
-    setup_database(conn)
-
+def _snapshot_tables(
+    conn: sqlite3.Connection,
+) -> tuple[
+    dict[Any, dict[str, Any]],
+    dict[Any, dict[str, Any]],
+    dict[Any, dict[str, Any]],
+]:
     def _row_to_dict(row: sqlite3.Row) -> dict[str, Any]:
         return {col: row[col] for col in row.keys()}
 
@@ -1078,17 +1074,6 @@ def update_from_excel(ds: DataStore | None = None) -> Path | None:
             snapshot[key] = row_dict
         return snapshot
 
-    def _ingredient_key(row: dict[str, Any]):
-        produto = row.get("ProdutoCodigo")
-        componente = row.get("ComponenteCodigo")
-        if isinstance(componente, str):
-            componente = componente.strip() or None
-        if componente:
-            return (produto, componente)
-        nome = row.get("ComponenteNome")
-        ordem = row.get("Ordem")
-        return (produto, nome, ordem)
-
     produtos_snapshot = _snapshot("Produtos", ("Codigo",))
     fichas_snapshot = _snapshot(
         "FichasTecnicas",
@@ -1101,6 +1086,43 @@ def update_from_excel(ds: DataStore | None = None) -> Path | None:
     fichas_state = {k: dict(v) for k, v in fichas_snapshot.items()}
     precos_state = {k: dict(v) for k, v in precos_snapshot.items()}
 
+    return produtos_state, fichas_state, precos_state
+
+
+def _collect_changes(
+    new_data: dict[str, Any],
+    existing: dict[str, Any] | None,
+    *,
+    key_fields: set[str],
+    include_keys_when_new: bool = False,
+) -> list[tuple[str, Any, Any]]:
+    changes: list[tuple[str, Any, Any]] = []
+    if existing is None:
+        for col, new_val in new_data.items():
+            if col in key_fields and not include_keys_when_new:
+                continue
+            if col in key_fields and include_keys_when_new:
+                changes.append((col, None, new_val))
+            elif col not in key_fields:
+                changes.append((col, None, new_val))
+        return changes
+    for col, new_val in new_data.items():
+        if col in key_fields:
+            continue
+        old_val = existing.get(col)
+        if old_val != new_val:
+            changes.append((col, old_val, new_val))
+    return changes
+
+
+def _apply_updates(
+    conn: sqlite3.Connection,
+    ds: DataStore,
+    files: dict[str, Path],
+    produtos_state: dict[Any, dict[str, Any]],
+    fichas_state: dict[Any, dict[str, Any]],
+    precos_state: dict[Any, dict[str, Any]],
+) -> list[dict[str, Any]]:
     report_entries: list[dict[str, Any]] = []
 
     def _record_change(
@@ -1124,31 +1146,6 @@ def update_from_excel(ds: DataStore | None = None) -> Path | None:
                 "changes": changes,
             }
         )
-
-    def _collect_changes(
-        new_data: dict[str, Any],
-        existing: dict[str, Any] | None,
-        *,
-        key_fields: set[str],
-        include_keys_when_new: bool = False,
-    ) -> list[tuple[str, Any, Any]]:
-        changes: list[tuple[str, Any, Any]] = []
-        if existing is None:
-            for col, new_val in new_data.items():
-                if col in key_fields and not include_keys_when_new:
-                    continue
-                if col in key_fields and include_keys_when_new:
-                    changes.append((col, None, new_val))
-                elif col not in key_fields:
-                    changes.append((col, None, new_val))
-            return changes
-        for col, new_val in new_data.items():
-            if col in key_fields:
-                continue
-            old_val = existing.get(col)
-            if old_val != new_val:
-                changes.append((col, old_val, new_val))
-        return changes
 
     def _upsert(file_path: Path, table: str) -> None:
         wb = load_workbook(file_path, read_only=True, data_only=True)
@@ -1401,6 +1398,10 @@ def update_from_excel(ds: DataStore | None = None) -> Path | None:
         fp.unlink()
     conn.commit()
 
+    return report_entries
+
+
+def _write_update_report(report_entries: list[dict[str, Any]]) -> Path:
     logs_dir = get_project_root() / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
     timestamp = time.strftime("%Y%m%d-%H%M%S")
@@ -1443,8 +1444,35 @@ def update_from_excel(ds: DataStore | None = None) -> Path | None:
 
     wb_report.save(report_path)
     wb_report.close()
-
     return report_path
+
+
+def update_from_excel(ds: DataStore | None = None) -> Path | None:
+    """Update product data from Excel files in ``<root>/imports``.
+
+    A informação de preços de ``PreçosTaxas_base.xlsx`` é carregada para a
+    tabela ``PrecosTaxas``.
+    """
+
+    files = _prepare_import_files()
+
+    ds = ds or DataStore()
+    conn = getattr(ds, "conn", None)
+    if conn is None:
+        return None
+
+    setup_database(conn)
+
+    produtos_state, fichas_state, precos_state = _snapshot_tables(conn)
+    report_entries = _apply_updates(
+        conn,
+        ds,
+        files,
+        produtos_state,
+        fichas_state,
+        precos_state,
+    )
+    return _write_update_report(report_entries)
 
 def _import_single_excel(path: Path, ds: DataStore | None) -> None:
     """Fallback import used for simple single-file spreadsheets.
