@@ -130,6 +130,19 @@ def test_identification_zone_has_embossed_bottom_border(qapp):
         ft.close()
 
 
+def test_family_zone_has_top_margin_spacing(qapp):
+    ds = StubDataStore()
+    service = ProductService(ds)
+    ft = FTApp(service)
+    try:
+        zone = ft.findChild(Zone, "B1.C1.A.1.2")
+        assert zone is not None
+        margins = zone.ly.contentsMargins()
+        assert margins.top() == 8
+    finally:
+        ft.close()
+
+
 def test_legend_labels_use_expanding_horizontal_policy(qapp):
     ds = StubDataStore()
     service = ProductService(ds)
