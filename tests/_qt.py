@@ -48,7 +48,6 @@ def require_real_qt_modules(*module_names: str) -> list[ModuleType]:
     if is_stub(package) or any(is_stub(mod) for mod in imported):
         pytest.skip(
             "PyQt5 stub active; this test requires the real Qt bindings",
-            allow_module_level=True,
         )
     return imported
 

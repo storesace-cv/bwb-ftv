@@ -15,7 +15,7 @@ PYQT5_STUB_ACTIVE = QApplication is None
 @pytest.fixture(scope="session")
 def qapp():
     if PYQT5_STUB_ACTIVE:
-        pytest.skip("PyQt5 QtWidgets is unavailable", allow_module_level=True)
+        pytest.skip("PyQt5 QtWidgets is unavailable")
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
