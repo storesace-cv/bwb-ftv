@@ -817,6 +817,15 @@ class FTApp(QWidget):
             slot.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             slot.apply_metadata(zone_type="coluna-campos", widget_type="campo")
 
+        slot2_base_declarations = tuple(
+            "padding: 3px 6px 3px;\n"
+            if declaration.strip().startswith("padding:")
+            else declaration
+            for declaration in layout._DEFAULT_ZONE_BASE_DECLARATIONS
+        )
+        self.zone_article_sheet_left_slot_2.apply_metadata(
+            base_declarations=slot2_base_declarations
+        )
         self.zone_article_sheet_left_slot_2.ly.setSpacing(
             max(0, left_slot_spacing // 2)
         )
@@ -1076,6 +1085,7 @@ class FTApp(QWidget):
             self.zone_article_sheet_left_slot_2,
             flow="v",
             margins=family_row_margin_value,
+            margin_v=family_row_margin_value // 2,
             spacing=family_row_spacing_value,
             level=self.zone_article_sheet_left_slot_2._level + 1,
             show_overlays=layout.DEV_OVERLAYS,
@@ -1087,7 +1097,7 @@ class FTApp(QWidget):
             zone_type="secao-informacao",
             base_style_label=self.zone_article_sheet_left_slot_2.base_style_label,
             base_declarations=(
-                *layout._DEFAULT_ZONE_BASE_DECLARATIONS,
+                *slot2_base_declarations,
                 "border-bottom-width: 2px;\n",
                 "border-bottom-style: groove;\n",
                 "border-bottom: 2px groove #f7f9fc;\n",
