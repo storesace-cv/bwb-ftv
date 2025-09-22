@@ -97,7 +97,8 @@ def _build_ft_row_items(ficha: FichaTecnica) -> list[QStandardItem]:
     items: list[QStandardItem] = []
     for col, value in enumerate(display_values):
         item = QStandardItem(value if value is not None else "")
-        item.setTextAlignment(_CELL_ALIGNMENT)
+        alignment = _CELL_ALIGNMENT if col == 0 else Qt.AlignRight | Qt.AlignVCenter
+        item.setTextAlignment(alignment)
         flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled
         if col in _EDITABLE_COLUMNS:
             flags |= Qt.ItemIsEditable
