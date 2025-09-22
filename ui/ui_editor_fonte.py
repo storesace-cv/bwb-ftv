@@ -1011,9 +1011,10 @@ class FTApp(QWidget):
             family_row_spacing_value
         )
 
-        # --- Informação adicional (B1.C1.A.2) ---
+        # --- Informação adicional (B1.C1.A.2.A) ---
+        info_zone_tag = f"{self.zone_article_sheet_left_slot_2.tag}.A"
         info_zone = Zone(
-            "B1.C1.A.2",
+            info_zone_tag,
             self.zone_article_sheet_left_slot_2,
             flow="v",
             margins=family_row_margin_value,
@@ -1038,7 +1039,7 @@ class FTApp(QWidget):
         info_zone.ly.setSpacing(family_row_spacing_value)
 
         info_field_zone = Zone(
-            "B1.C1.A.2.2",
+            f"{info_zone.tag}.2",
             info_zone,
             flow="v",
             margins=(0, 0),
