@@ -275,6 +275,37 @@ def test_toggle_overlay_updates_headers(qapp):
     ft.close()
 
 
+def test_article_sheet_left_overlay_heights_reflect_stretch(qapp):
+    original = layout.DEV_OVERLAYS
+    layout.DEV_OVERLAYS = True
+    ft = None
+    try:
+        ds = StubDataStore()
+        service = ProductService(ds)
+        ft = FTApp(service)
+        qapp.processEvents()
+
+        expected_percentages = {
+            "B1.C1.A.1": "0%",
+            "B1.C1.A.2": "0%",
+            "B1.C1.A.3": "100%",
+            "B1.C1.A.4": "0%",
+        }
+
+        for tag, percentage in expected_percentages.items():
+            zone = ft.findChild(Zone, tag)
+            assert zone is not None, f"Zone {tag} should exist"
+            info = zone._style_dev_info
+            assert info is not None, f"Zone {tag} should expose style dev info"
+            assert (
+                f"height: {percentage}" in info
+            ), f"Zone {tag} should report height {percentage}, got {info!r}"
+    finally:
+        if ft is not None:
+            ft.close()
+        layout.DEV_OVERLAYS = original
+
+
 def test_validate_tag_accepts_family_root(qapp):
     assert layout.validate_tag("B1.C1.A.2")
     zone = Zone("B1.C1.A.2")
