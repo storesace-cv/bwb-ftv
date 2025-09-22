@@ -817,6 +817,10 @@ class FTApp(QWidget):
             slot.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             slot.apply_metadata(zone_type="coluna-campos", widget_type="campo")
 
+        self.zone_article_sheet_left_slot_2.ly.setSpacing(
+            max(0, left_slot_spacing // 2)
+        )
+
         slot_parent = self.zone_article_sheet_left_slot_2.parentWidget()
         slot_layout = slot_parent.layout() if slot_parent is not None else None
         if slot_layout is not None:
