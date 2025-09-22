@@ -70,7 +70,7 @@ HEADER_MAP: Dict[str, Dict[str, str]] = {
         "Iva1": "Iva1",
         "Iva2": "Iva2",
         "IsencaoIva": "IsencaoIva",
-        "ProdVenda": "NomeProdVenda",
+        "ProdVenda": "Codigo",
         "NomeProdVenda": "NomeProdVenda",
         "Familia": "Familia",
         "SubFamilia": "SubFamilia",
