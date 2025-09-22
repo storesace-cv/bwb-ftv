@@ -35,3 +35,33 @@ def test_homebrew_fallback_selected(monkeypatch, tmp_path, caplog):
     assert str(platforms_dir.parent) in plugin_roots
 
     assert any("Homebrew" in record.message for record in caplog.records)
+
+
+def test_mac_missing_cocoa_uses_fallback(monkeypatch, tmp_path, caplog):
+    """Warn and fallback when the PyQt wheel lacks libqcocoa on macOS."""
+
+    monkeypatch.delenv("FTV_QT_PLUGIN_PATH", raising=False)
+    monkeypatch.delenv("QT_QPA_PLATFORM_PLUGIN_PATH", raising=False)
+    monkeypatch.delenv("QT_PLUGIN_PATH", raising=False)
+
+    monkeypatch.setattr(qt_bootstrap.sys, "platform", "darwin")
+
+    pyqt_root = tmp_path / "pyqt_stub"
+    (pyqt_root / "Qt" / "plugins" / "platforms").mkdir(parents=True)
+    monkeypatch.setattr(qt_bootstrap, "_find_pyqt5_root", lambda: pyqt_root)
+
+    fallback_root = tmp_path / "override"
+    platforms_dir = fallback_root / "plugins" / "platforms"
+    platforms_dir.mkdir(parents=True)
+    (platforms_dir / "libqcocoa.dylib").touch()
+    monkeypatch.setenv("FTV_QT_PLUGIN_PATH", str(fallback_root))
+
+    caplog.clear()
+    with caplog.at_level("INFO"):
+        qt_bootstrap._ensure_qt_plugin_environment()
+
+    assert os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] == str(platforms_dir)
+    assert any("libqcocoa" in record.message and "fallback" in record.message for record in caplog.records)
+
+    plugin_roots = os.environ["QT_PLUGIN_PATH"].split(os.pathsep)
+    assert str(platforms_dir.parent) in plugin_roots

@@ -36,7 +36,7 @@ def _find_pyqt5_root() -> Optional[Path]:
 
 def _platform_plugin_path(
     pyqt_root: Path,
-) -> tuple[Optional[Path], list[Path], Optional[str]]:
+) -> tuple[Optional[Path], list[Path], Optional[str], list[Path]]:
     """Locate the Qt platform plugin directory.
 
     The search first inspects the PyQt5 installation tree. When no bundled
@@ -46,27 +46,46 @@ def _platform_plugin_path(
     """
 
     attempted_paths: list[Path] = []
+    skipped_pyqt_wheel_dirs: list[Path] = []
 
     def _register_attempt(candidate: Path) -> Path:
         attempted_paths.append(candidate)
         return candidate
 
-    def _attempt_candidate(candidate: Path, source: str) -> tuple[Optional[Path], Optional[str]]:
+    def _attempt_candidate(
+        candidate: Path,
+        source: str,
+        *,
+        require_cocoa: bool = False,
+    ) -> tuple[Optional[Path], Optional[str]]:
         candidate = _register_attempt(candidate)
         if candidate.is_dir():
+            if require_cocoa and sys.platform == "darwin":
+                expected_plugin = candidate / "libqcocoa.dylib"
+                if not expected_plugin.exists():
+                    skipped_pyqt_wheel_dirs.append(candidate)
+                    return None, None
             return candidate, source
         return None, None
 
     for runtime_dir in ("Qt", "Qt5"):
         candidate = pyqt_root / runtime_dir / "plugins" / "platforms"
-        found, source = _attempt_candidate(candidate, "PyQt5 wheel")
+        found, source = _attempt_candidate(
+            candidate,
+            "PyQt5 wheel",
+            require_cocoa=True,
+        )
         if found:
-            return found, attempted_paths, source
+            return found, attempted_paths, source, skipped_pyqt_wheel_dirs
 
     legacy_candidate = pyqt_root / "plugins" / "platforms"
-    found, source = _attempt_candidate(legacy_candidate, "PyQt5 wheel")
+    found, source = _attempt_candidate(
+        legacy_candidate,
+        "PyQt5 wheel",
+        require_cocoa=True,
+    )
     if found:
-        return found, attempted_paths, source
+        return found, attempted_paths, source, skipped_pyqt_wheel_dirs
 
     def _platform_candidates(root: Path) -> list[Path]:
         candidates: list[Path] = []
@@ -88,7 +107,7 @@ def _platform_plugin_path(
         for candidate in _platform_candidates(override_root):
             found, source = _attempt_candidate(candidate, "Homebrew override")
             if found:
-                return found, attempted_paths, source
+                return found, attempted_paths, source, skipped_pyqt_wheel_dirs
 
     homebrew_candidates: list[tuple[Path, str]] = []
 
@@ -114,9 +133,9 @@ def _platform_plugin_path(
         for candidate in _platform_candidates(root):
             found, source = _attempt_candidate(candidate, f"{label}: {root}")
             if found:
-                return found, attempted_paths, source
+                return found, attempted_paths, source, skipped_pyqt_wheel_dirs
 
-    return None, attempted_paths, None
+    return None, attempted_paths, None, skipped_pyqt_wheel_dirs
 
 
 def _ensure_qt_plugin_environment() -> None:
@@ -126,7 +145,9 @@ def _ensure_qt_plugin_environment() -> None:
     if pyqt_root is None:
         return
 
-    platforms_dir, attempted_paths, source = _platform_plugin_path(pyqt_root)
+    platforms_dir, attempted_paths, source, skipped_pyqt_wheels = _platform_plugin_path(
+        pyqt_root
+    )
 
     if platforms_dir is None:
         attempted_display = ", ".join(str(path) for path in attempted_paths) or "(none)"
@@ -135,6 +156,14 @@ def _ensure_qt_plugin_environment() -> None:
             attempted_display,
         )
         return
+
+    if skipped_pyqt_wheels and source and source != "PyQt5 wheel":
+        skipped_display = ", ".join(str(path) for path in skipped_pyqt_wheels)
+        logger.warning(
+            "[QT] Diretório PyQt5 wheel sem libqcocoa.dylib (%s); usando fallback de %s",
+            skipped_display,
+            source,
+        )
 
     if sys.platform == "darwin" and source == "PyQt5 wheel":
         expected_plugin = platforms_dir / "libqcocoa.dylib"
