@@ -800,13 +800,9 @@ class FTApp(QWidget):
             widget_type="campo",
             base_declarations=(
                 *layout._DEFAULT_ZONE_BASE_DECLARATIONS,
-                "padding: 6px;\n",
-                "padding-bottom: 8px;\n",
                 "border-bottom-width: 2px;\n",
                 "border-bottom-style: groove;\n",
                 "border-bottom: 2px groove #f7f9fc;\n",
-                "margin-top: 4px;\n",
-                "margin-bottom: 8px;\n",
             ),
         )
 
