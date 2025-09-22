@@ -797,12 +797,13 @@ class FTApp(QWidget):
             zone_type="coluna-campos", widget_type="campo"
         )
 
+        left_slot_shares = (5, 3, 5, 7)
         (
             self.zone_article_sheet_left_slot_1,
             self.zone_article_sheet_left_slot_2,
             self.zone_article_sheet_left_slot_3,
             self.zone_article_sheet_left_slot_4,
-        ) = self.zone_article_sheet_left.split_v((1, 1, 1, 1))
+        ) = self.zone_article_sheet_left.split_v(left_slot_shares)
         self.zone_article_sheet_left_slots = (
             self.zone_article_sheet_left_slot_1,
             self.zone_article_sheet_left_slot_2,
@@ -819,10 +820,10 @@ class FTApp(QWidget):
         slot_parent = self.zone_article_sheet_left_slot_2.parentWidget()
         slot_layout = slot_parent.layout() if slot_parent is not None else None
         if slot_layout is not None:
-            for slot in self.zone_article_sheet_left_slots:
+            for slot, share in zip(self.zone_article_sheet_left_slots, left_slot_shares):
                 index = slot_layout.indexOf(slot)
                 if index != -1:
-                    slot_layout.setStretch(index, 1)
+                    slot_layout.setStretch(index, share)
             layout.update_vertical_split_shares(slot_layout)
 
         # --- Identificação e família (B1.C1.A.1) ---
