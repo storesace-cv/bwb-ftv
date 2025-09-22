@@ -1296,9 +1296,9 @@ class FTApp(QWidget):
             val = QLineEdit("—", field_zone)
             val.setFont(self.edNome.font())
             make_readonly_lineedit(val)
-            val.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            val.setAlignment(Qt.AlignCenter)
             val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-            field_zone.ly.addWidget(val, 0, Qt.AlignLeft | Qt.AlignVCenter)
+            field_zone.ly.addWidget(val, 0, Qt.AlignCenter)
             self.lbPVPs.append(val)
 
         article_sheet_preview_container = QWidget(self.zone_article_sheet_right)
