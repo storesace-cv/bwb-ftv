@@ -16,6 +16,7 @@ from openpyxl import Workbook, load_workbook
 
 from data.backup import create_backup, restore_backup
 from data.datastore import DataStore
+from data.header_map import allowed_headers_for
 from data.migration import setup_database
 from data.repositories import quote_ident
 from domain import Product, Ingredient, FichaTecnica
@@ -82,28 +83,40 @@ def canonicalize_header(text: str, table: str | None = None) -> str:
     key = "".join(txt_norm.lower().split())
 
     if key == "produtocodigo":
-        return (
+        result = (
             "ProdutoCodigo"
             if table in {"FichasTecnicas", "ProdutoPreparacao"}
             else "Codigo"
         )
-    if key in {"preco15", "preco1_5"}:
-        return "Preco1"
-    if key == "iva1" or re.fullmatch(r"iva\s*1", txt_norm.lower()):
-        return "Iva1"
-    if key == "iva2" or re.fullmatch(r"iva\s*2", txt_norm.lower()):
-        return "Iva2"
-    if key in {"preco1", "preco2", "preco3", "preco4", "preco5"}:
-        return f"Preco{key[-1]}"
-    if key in PRECO_GRAM_LOOKUP:
+    elif key in {"preco15", "preco1_5"}:
+        result = "Preco1"
+    elif key == "iva1" or re.fullmatch(r"iva\s*1", txt_norm.lower()):
+        result = "Iva1"
+    elif key == "iva2" or re.fullmatch(r"iva\s*2", txt_norm.lower()):
+        result = "Iva2"
+    elif key in {"preco1", "preco2", "preco3", "preco4", "preco5"}:
+        result = f"Preco{key[-1]}"
+    elif key in PRECO_GRAM_LOOKUP:
         preco_g, preco = PRECO_GRAM_LOOKUP[key]
-        return preco_g if table == "Produtos" else preco
+        result = preco_g if table == "Produtos" else preco
+    elif txt_norm and re.search(r"[A-Z]", txt_norm[1:]) and " " not in txt_norm:
+        # Preserve existing camel-case headers not matched above
+        result = txt_norm[0].upper() + txt_norm[1:]
+    else:
+        result = "".join(word.capitalize() for word in txt_norm.split())
 
-    # Preserve existing camel-case headers not matched above
-    if txt_norm and re.search(r"[A-Z]", txt_norm[1:]) and " " not in txt_norm:
-        return txt_norm[0].upper() + txt_norm[1:]
+    if table:
+        allowed = allowed_headers_for(table)
+        if allowed and result and result not in allowed:
+            allowed_list = ", ".join(sorted(allowed))
+            raise ValueError(
+                "Cabeçalho inesperado para a tabela "
+                f"{table}: '{text}' → '{result}'. "
+                "Cabeçalhos permitidos: "
+                f"{allowed_list}"
+            )
 
-    return "".join(word.capitalize() for word in txt_norm.split())
+    return result
 
 
 def sync_table_schema(conn, table: str, headers: list[str]) -> list[str]:
