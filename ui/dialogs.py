@@ -8,6 +8,7 @@ from ui.utilities import DEFAULT_TOOLTIP_DURATION_MS
 from utils.paths import get_project_root
 from utils.formatting import format_pt_number
 from data import create_backup, restore_backup
+from services.products import IMPORT_FILE_BASENAMES
 from .qt_compat import exec_modal
 
 logger = logging.getLogger(__name__)
@@ -15,11 +16,7 @@ logger = logging.getLogger(__name__)
 
 def missing_import_files() -> list[str]:
     base = get_project_root() / "imports"
-    files = [
-        base / "Produtos_Base.xlsx",
-        base / "FichasTecnicas_base.xlsx",
-        base / "PreçosTaxas_base.xlsx",
-    ]
+    files = [base / name for name in IMPORT_FILE_BASENAMES.values()]
     return [fp.name for fp in files if not fp.exists()]
 
 
