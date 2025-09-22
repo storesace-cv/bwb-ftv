@@ -130,7 +130,7 @@ def test_identification_zone_has_embossed_bottom_border(qapp):
         ft.close()
 
 
-def test_family_zone_has_top_margin_spacing(qapp):
+def test_family_zone_has_vertical_spacing_and_border(qapp):
     ds = StubDataStore()
     service = ProductService(ds)
     ft = FTApp(service)
@@ -139,6 +139,7 @@ def test_family_zone_has_top_margin_spacing(qapp):
         assert zone is not None
         margins = zone.ly.contentsMargins()
         assert margins.top() == 8
+        assert margins.bottom() == 8
         stylesheet = zone.base_stylesheet
         assert "border-radius: 12px" in stylesheet
         assert "padding: 6px" in stylesheet
