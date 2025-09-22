@@ -64,6 +64,10 @@
 | SubFamilia | Subfamília |
 | Ativo | Indicador de ativo |
 
+> **Nota**: As planilhas de importação devem usar os cabeçalhos canónicos (`Iva1`, `Iva2`).
+> Alias legados como `iva1_2` ou `iva12` deixaram de ser reconhecidos durante a
+> validação para evitar mapeamentos ambíguos.
+
 ### `Uploads`
 | Campo | Descrição |
 |---|---|
