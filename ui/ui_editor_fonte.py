@@ -795,7 +795,7 @@ class FTApp(QWidget):
                 current_policy.verticalPolicy(),
             )
 
-        self.zone_general_aux_family_slot.ly.setContentsMargins(0, 8, 0, 0)
+        self.zone_general_aux_family_slot.ly.setContentsMargins(0, 8, 0, 8)
         self.zone_general_aux_family_slot.apply_metadata(
             zone_type="coluna-campos",
             widget_type="campo",
