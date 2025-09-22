@@ -123,6 +123,9 @@ def test_identification_zone_has_embossed_bottom_border(qapp):
         assert "border-bottom-width: 2px" in stylesheet
         assert "border-bottom-style: groove" in stylesheet
         assert "border-bottom: 2px groove #f7f9fc" in stylesheet
+        margins = zone.ly.contentsMargins()
+        assert margins.top() == 8
+        assert margins.bottom() == 8
     finally:
         ft.close()
 
