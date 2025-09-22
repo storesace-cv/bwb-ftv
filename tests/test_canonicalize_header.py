@@ -59,3 +59,10 @@ def test_invalid_header_for_table_raises():
 
 def test_valid_header_for_table_is_allowed():
     assert canonicalize_header("Preco1", table="PrecosTaxas") == "Preco1"
+
+
+def test_uninvvmmpg_alias_for_produtos():
+    assert (
+        canonicalize_header("Un Inv (V+M,M,P,G)", table="Produtos")
+        == "UnInvVMMMPG"
+    )

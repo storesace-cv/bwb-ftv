@@ -156,6 +156,8 @@ def canonicalize_header(text: str, table: str | None = None) -> str:
         result = "Iva2"
     elif key in {"preco1", "preco2", "preco3", "preco4", "preco5"}:
         result = f"Preco{key[-1]}"
+    elif key == "uninvvmmpg":
+        result = "UnInvVMMMPG"
     elif key in PRECO_GRAM_LOOKUP:
         preco_g, preco = PRECO_GRAM_LOOKUP[key]
         result = preco_g if table == "Produtos" else preco
