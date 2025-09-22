@@ -53,8 +53,6 @@ def test_invalid_iva_aliases_remain_unmapped():
 def test_valid_header_for_table_is_allowed():
     assert canonicalize_header("Preco1", table="PrecosTaxas") == "Preco1"
 
-
-def test_prod_venda_alias_maps_to_codigo_for_precos_taxas():
     assert canonicalize_header("Prod venda", table="PrecosTaxas") == "Codigo"
     assert (
         canonicalize_header(
