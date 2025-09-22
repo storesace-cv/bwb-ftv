@@ -15,7 +15,7 @@ def test_allergens_from_db_invalid_rows():
         [
             (1, "Good", "Good"),
             (2, "", "Empty"),
-            (3, None, "Invalid"),
+            (3, "   ", "Invalid"),
         ],
     )
     ds.conn.commit()

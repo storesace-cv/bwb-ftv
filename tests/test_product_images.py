@@ -2,6 +2,10 @@ import os
 from pathlib import Path
 
 from PIL import Image
+from tests._qt import require_real_qt_modules
+
+require_real_qt_modules("PyQt5.QtWidgets", "PyQt5.QtCore", "PyQt5.QtGui")
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QFileDialog

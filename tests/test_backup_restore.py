@@ -1,3 +1,7 @@
+from tests._qt import require_real_qt_modules
+
+require_real_qt_modules("PyQt5.QtWidgets")
+
 from datetime import datetime
 from pathlib import Path
 import sqlite3

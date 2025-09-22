@@ -1,3 +1,7 @@
+from tests._qt import require_real_qt_modules
+
+require_real_qt_modules("PyQt5.QtWidgets")
+
 import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 

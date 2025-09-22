@@ -1,3 +1,7 @@
+from tests._qt import require_real_qt_modules
+
+require_real_qt_modules("PyQt5.QtWidgets", "PyQt5.QtCore", "PyQt5.QtGui")
+
 import os
 from pathlib import Path
 

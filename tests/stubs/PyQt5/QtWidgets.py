@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Sequence
 
+__STUB__ = True
+
 
 class QApplication:
     """Minimal QApplication stub to satisfy tests."""
@@ -18,3 +20,6 @@ class QApplication:
     @classmethod
     def instance(cls) -> "QApplication | None":
         return cls._instance
+
+
+__all__ = ["QApplication"]

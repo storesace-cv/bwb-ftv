@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-pytest.importorskip("PyQt5")
-pytest.importorskip("PyQt5.QtQml")
-pytest.importorskip("PyQt5.QtQuick")
+from tests._qt import require_real_qt_modules
+
+require_real_qt_modules("PyQt5.QtWidgets", "PyQt5.QtCore", "PyQt5.QtQml", "PyQt5.QtQuick")
 
 from PyQt5.QtCore import QObject
 

@@ -1,9 +1,8 @@
 import pytest
 
-# Skip when PyQt5 or its libGL-backed QtCore/QtWidgets modules are unavailable.
-pytest.importorskip("PyQt5", reason="PyQt5 requires libGL.so.1")
-pytest.importorskip("PyQt5.QtCore", reason="PyQt5.QtCore requires libGL.so.1")
-pytest.importorskip("PyQt5.QtWidgets", reason="PyQt5.QtWidgets requires libGL.so.1")
+from tests._qt import require_real_qt_modules
+
+require_real_qt_modules("PyQt5.QtWidgets", "PyQt5.QtCore", "PyQt5.QtGui")
 
 from PyQt5.QtCore import Qt, QPointF, QEvent, qInstallMessageHandler
 from PyQt5.QtGui import QMouseEvent

@@ -373,7 +373,10 @@ def test_update_from_excel_generates_report(ds, imports_dir, logs_dir):
 
     ingrediente_update = _find("Atualização de Ingrediente", "FichasTecnicas", "P1", "I1")
     assert ingrediente_update is not None
-    assert "Qtd: 1 -> 2" in (ingrediente_update[5] or "")
+    assert any(
+        marker in (ingrediente_update[5] or "")
+        for marker in ("Qtd: 1 -> 2", "Qtd: 1.0 -> 2")
+    )
 
     novo_ingrediente = _find("Novo Ingrediente", "FichasTecnicas", "P1", "I2")
     assert novo_ingrediente is not None

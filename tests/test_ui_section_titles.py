@@ -1,4 +1,8 @@
 import pytest
+from tests._qt import require_real_qt_modules
+
+require_real_qt_modules("PyQt5.QtWidgets", "PyQt5.QtGui")
+
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QGroupBox, QLabel
 from services.products import ProductService
