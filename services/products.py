@@ -11,7 +11,7 @@ import re
 import time
 from contextlib import closing, contextmanager
 from PIL import Image, UnidentifiedImageError
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
 
 from data.datastore import DataStore
 from data.migration import setup_database
@@ -427,11 +427,11 @@ class ProductService:
 
         import_from_excel(self.ds)
 
-    def update_from_excel(self) -> None:
+    def update_from_excel(self) -> Path | None:
         """Update existing products from spreadsheets in the ``imports``
         folder."""
 
-        update_from_excel(self.ds)
+        return update_from_excel(self.ds)
 
 
 def get_product_info(ds: DataStore, codigo: str) -> Product:
@@ -840,7 +840,8 @@ def import_from_excel(ds: DataStore | None = None) -> None:
     conn.commit()
 
 
-def update_from_excel(ds: DataStore | None = None) -> None:
+
+def update_from_excel(ds: DataStore | None = None) -> Path | None:
     """Update product data from Excel files in ``<root>/imports``.
 
     A informação de preços de ``PreçosTaxas_base.xlsx`` é carregada para a
@@ -857,7 +858,9 @@ def update_from_excel(ds: DataStore | None = None) -> None:
     }
     missing = [fp.name for fp in files.values() if not fp.exists()]
     if missing:
-        raise FileNotFoundError("Missing import files: " + ", ".join(sorted(missing)))
+        raise FileNotFoundError(
+            "Missing import files: " + ", ".join(sorted(missing))
+        )
     for fp in files.values():
         if fp.suffix.lower() != ".xlsx":
             raise ValueError(f"{fp} is not an .xlsx file")
@@ -865,9 +868,111 @@ def update_from_excel(ds: DataStore | None = None) -> None:
     ds = ds or DataStore()
     conn = getattr(ds, "conn", None)
     if conn is None:
-        return
+        return None
 
     setup_database(conn)
+
+    def _row_to_dict(row: sqlite3.Row) -> dict[str, Any]:
+        return {col: row[col] for col in row.keys()}
+
+    def _snapshot(
+        table: str,
+        key_columns: Iterable[str],
+        *,
+        key_builder=None,
+    ) -> dict[Any, dict[str, Any]]:
+        snapshot: dict[Any, dict[str, Any]] = {}
+        try:
+            existing_rows = conn.execute(
+                f"SELECT * FROM {quote_ident(table)}"
+            ).fetchall()
+        except sqlite3.Error:
+            return snapshot
+        for row in existing_rows:
+            row_dict = _row_to_dict(row)
+            if key_builder is not None:
+                key = key_builder(row_dict)
+            else:
+                key_vals = tuple(
+                    row_dict.get(col) for col in key_columns if col in row_dict
+                )
+                if not key_vals:
+                    continue
+                key = key_vals[0] if len(key_vals) == 1 else key_vals
+            snapshot[key] = row_dict
+        return snapshot
+
+    def _ingredient_key(row: dict[str, Any]):
+        produto = row.get("ProdutoCodigo")
+        componente = row.get("ComponenteCodigo")
+        if isinstance(componente, str):
+            componente = componente.strip() or None
+        if componente:
+            return (produto, componente)
+        nome = row.get("ComponenteNome")
+        ordem = row.get("Ordem")
+        return (produto, nome, ordem)
+
+    produtos_snapshot = _snapshot("Produtos", ("Codigo",))
+    fichas_snapshot = _snapshot(
+        "FichasTecnicas",
+        ("ProdutoCodigo", "ComponenteCodigo", "Ordem"),
+        key_builder=_ingredient_key,
+    )
+    precos_snapshot = _snapshot("PrecosTaxas", ("Codigo", "Loja"))
+
+    produtos_state = {k: dict(v) for k, v in produtos_snapshot.items()}
+    fichas_state = {k: dict(v) for k, v in fichas_snapshot.items()}
+    precos_state = {k: dict(v) for k, v in precos_snapshot.items()}
+
+    report_entries: list[dict[str, Any]] = []
+
+    def _record_change(
+        change_type: str,
+        table: str,
+        product: Any,
+        *,
+        component_code: Any | None = None,
+        component_name: Any | None = None,
+        changes: list[tuple[str, Any, Any]] | None = None,
+    ) -> None:
+        if not changes:
+            return
+        report_entries.append(
+            {
+                "type": change_type,
+                "table": table,
+                "product": product,
+                "component_code": component_code,
+                "component_name": component_name,
+                "changes": changes,
+            }
+        )
+
+    def _collect_changes(
+        new_data: dict[str, Any],
+        existing: dict[str, Any] | None,
+        *,
+        key_fields: set[str],
+        include_keys_when_new: bool = False,
+    ) -> list[tuple[str, Any, Any]]:
+        changes: list[tuple[str, Any, Any]] = []
+        if existing is None:
+            for col, new_val in new_data.items():
+                if col in key_fields and not include_keys_when_new:
+                    continue
+                if col in key_fields and include_keys_when_new:
+                    changes.append((col, None, new_val))
+                elif col not in key_fields:
+                    changes.append((col, None, new_val))
+            return changes
+        for col, new_val in new_data.items():
+            if col in key_fields:
+                continue
+            old_val = existing.get(col)
+            if old_val != new_val:
+                changes.append((col, old_val, new_val))
+        return changes
 
     def _upsert(file_path: Path, table: str) -> None:
         wb = load_workbook(file_path, read_only=True, data_only=True)
@@ -893,24 +998,56 @@ def update_from_excel(ds: DataStore | None = None) -> None:
             last_codigo: str | None = None
             for row in rows:
                 row_map = {
-                    headers[i]: row[i] for i in range(min(len(headers), len(row)))
+                    headers[i]: row[i]
+                    for i in range(min(len(headers), len(row)))
                 }
                 codigo = row_map.get("ProdutoCodigo")
                 if isinstance(codigo, str):
                     codigo = codigo.strip()
                     if not codigo:
-                        if last_codigo is None:
-                            continue
-                        codigo = last_codigo
-                    row_map["ProdutoCodigo"] = codigo
-                elif _is_blank(codigo):
-                    if last_codigo is None:
-                        continue
+                        codigo = None
+                if _is_blank(codigo):
                     codigo = last_codigo
-                    row_map["ProdutoCodigo"] = codigo
+                if codigo is None:
+                    continue
+                row_map["ProdutoCodigo"] = codigo
                 last_codigo = codigo
+                componente = row_map.get("ComponenteCodigo")
+                if isinstance(componente, str):
+                    componente = componente.strip() or None
+                row_map["ComponenteCodigo"] = componente
+                row_data = {c: row_map.get(c) for c in cols}
+                key = _ingredient_key(row_data)
+                existing = fichas_state.get(key)
+                changes = _collect_changes(
+                    row_data,
+                    existing,
+                    key_fields={"ProdutoCodigo"},
+                    include_keys_when_new=True,
+                )
+                if existing is None:
+                    _record_change(
+                        "Novo Ingrediente",
+                        "FichasTecnicas",
+                        codigo,
+                        component_code=row_data.get("ComponenteCodigo"),
+                        component_name=row_data.get("ComponenteNome"),
+                        changes=changes,
+                    )
+                elif changes:
+                    _record_change(
+                        "Atualização de Ingrediente",
+                        "FichasTecnicas",
+                        codigo,
+                        component_code=row_data.get("ComponenteCodigo"),
+                        component_name=row_data.get("ComponenteNome"),
+                        changes=changes,
+                    )
+                updated = dict(existing or {})
+                updated.update(row_data)
+                fichas_state[key] = updated
                 grouped.setdefault(codigo, []).append(
-                    tuple(row_map.get(c) for c in cols)
+                    tuple(row_data.get(c) for c in cols)
                 )
             for codigo, data in grouped.items():
                 conn.execute(
@@ -925,24 +1062,51 @@ def update_from_excel(ds: DataStore | None = None) -> None:
                 f"INSERT OR REPLACE INTO {quote_ident(table)} ({cols_sql}) "
                 f"VALUES ({placeholders})"
             )
-            data: list[tuple] = []
             id_col = "Codigo" if table in {"Produtos", "PrecosTaxas"} else None
             for row in rows:
                 row_map = {
-                    headers[i]: row[i] for i in range(min(len(headers), len(row)))
+                    headers[i]: row[i]
+                    for i in range(min(len(headers), len(row)))
                 }
+                identifier = None
                 if id_col:
                     identifier = row_map.get(id_col)
                     if isinstance(identifier, str):
                         identifier = identifier.strip()
                         if not identifier:
-                            continue
-                        row_map[id_col] = identifier
-                    elif _is_blank(identifier):
+                            identifier = None
+                    if _is_blank(identifier):
+                        identifier = None
+                    if identifier is None:
                         continue
-                data.append(tuple(row_map.get(c) for c in cols))
-            if data:
-                conn.executemany(sql, data)
+                    row_map[id_col] = identifier
+                row_data = {c: row_map.get(c) for c in cols}
+                if table == "Produtos":
+                    existing = produtos_state.get(identifier)
+                    changes = _collect_changes(
+                        row_data,
+                        existing,
+                        key_fields={"Codigo"},
+                        include_keys_when_new=True,
+                    )
+                    if existing is None:
+                        _record_change(
+                            "Novo Registo",
+                            "Produtos",
+                            identifier,
+                            changes=changes,
+                        )
+                    elif changes:
+                        _record_change(
+                            "Atualização de Registo",
+                            "Produtos",
+                            identifier,
+                            changes=changes,
+                        )
+                    updated = dict(existing or {})
+                    updated.update(row_data)
+                    produtos_state[identifier] = updated
+                conn.execute(sql, tuple(row_data.get(c) for c in cols))
         wb.close()
 
     _upsert(files["Produtos"], "Produtos")
@@ -958,7 +1122,9 @@ def update_from_excel(ds: DataStore | None = None) -> None:
             wb.close()
             return
         rows = list(rows)
-        mapped = [canonicalize_header(h, table="PrecosTaxas") for h in raw_headers]
+        mapped = [
+            canonicalize_header(h, table="PrecosTaxas") for h in raw_headers
+        ]
         if "Loja" not in mapped:
             mapped.append("Loja")
             rows = [tuple(list(r) + ["1"]) for r in rows]
@@ -1000,7 +1166,6 @@ def update_from_excel(ds: DataStore | None = None) -> None:
             f"INSERT INTO {quote_ident('PrecosTaxas')} ({cols_sql}) "
             f"VALUES ({placeholders})"
         )
-        data: list[tuple] = []
         for row in rows:
             row_map = {}
             for i in range(min(len(headers), len(row))):
@@ -1017,9 +1182,34 @@ def update_from_excel(ds: DataStore | None = None) -> None:
                 row_map["Codigo"] = codigo
             elif _is_blank(codigo):
                 continue
-            data.append(tuple(row_map.get(c) for c in cols))
-        if data:
-            conn.executemany(sql, data)
+            loja = row_map.get("Loja")
+            key = (codigo, loja)
+            row_data = {c: row_map.get(c) for c in cols}
+            existing = precos_state.get(key)
+            changes = _collect_changes(
+                row_data,
+                existing,
+                key_fields={"Codigo"},
+                include_keys_when_new=True,
+            )
+            if existing is None:
+                _record_change(
+                    "Novo Registo",
+                    "PrecosTaxas",
+                    codigo,
+                    changes=changes,
+                )
+            elif changes:
+                _record_change(
+                    "Atualização de Registo",
+                    "PrecosTaxas",
+                    codigo,
+                    changes=changes,
+                )
+            updated = dict(existing or {})
+            updated.update(row_data)
+            precos_state[key] = updated
+            conn.execute(sql, tuple(row_data.get(c) for c in cols))
         wb.close()
 
     _load_prices(files["PrecosTaxas"])
@@ -1035,6 +1225,50 @@ def update_from_excel(ds: DataStore | None = None) -> None:
         fp.unlink()
     conn.commit()
 
+    logs_dir = get_project_root() / "logs"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    report_path = logs_dir / f"updates-{timestamp}.xlsx"
+    wb_report = Workbook()
+    ws_report = wb_report.active
+    ws_report.title = "Atualizações"
+    ws_report.append(
+        [
+            "Tipo",
+            "Tabela",
+            "Produto",
+            "Componente",
+            "Nome Componente",
+            "Alterações",
+        ]
+    )
+
+    def _format_changes(entry: dict[str, Any]) -> str:
+        formatted: list[str] = []
+        change_type = entry["type"]
+        for field, old, new in entry.get("changes", []):
+            if change_type.startswith("Novo"):
+                formatted.append(f"{field}: {new}")
+            else:
+                formatted.append(f"{field}: {old} -> {new}")
+        return "; ".join(formatted)
+
+    for entry in report_entries:
+        ws_report.append(
+            [
+                entry.get("type"),
+                entry.get("table"),
+                entry.get("product"),
+                entry.get("component_code"),
+                entry.get("component_name"),
+                _format_changes(entry),
+            ]
+        )
+
+    wb_report.save(report_path)
+    wb_report.close()
+
+    return report_path
 
 def _import_single_excel(path: Path, ds: DataStore | None) -> None:
     """Fallback import used for simple single-file spreadsheets.
