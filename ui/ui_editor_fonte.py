@@ -1068,7 +1068,7 @@ class FTApp(QWidget):
             apply_base_style=False,
         )
         info_field_zone.ly.setContentsMargins(0, 0, 0, 0)
-        info_zone.add(info_field_zone, 0)
+        info_zone.add(info_field_zone, 1)
 
         combo_container = QWidget(info_field_zone)
         combo_container.setSizePolicy(
