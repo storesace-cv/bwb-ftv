@@ -1389,9 +1389,9 @@ class FTApp(QWidget):
 
             val = QLineEdit("—", field_zone)
             make_readonly_lineedit(val)
-            val.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            val.setAlignment(Qt.AlignCenter)
             val.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            field_zone.ly.addWidget(val, 0, Qt.AlignLeft | Qt.AlignVCenter)
+            field_zone.ly.addWidget(val, 0, Qt.AlignCenter)
             self.lbFoodCosts.append(val)
 
         C5AB = Zone(
