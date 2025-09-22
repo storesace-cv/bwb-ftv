@@ -13,6 +13,7 @@ from contextlib import closing, contextmanager
 from PIL import Image, UnidentifiedImageError
 from openpyxl import Workbook, load_workbook
 
+from data.backup import create_backup
 from data.datastore import DataStore
 from data.migration import setup_database
 from data.repositories import quote_ident
@@ -431,7 +432,44 @@ class ProductService:
         """Update existing products from spreadsheets in the ``imports``
         folder."""
 
+        if self._should_create_backup():
+            conn = getattr(self.ds, "conn", None)
+            if conn is not None:
+                try:
+                    conn.commit()
+                except sqlite3.Error as exc:
+                    logger.debug(
+                        "[ProductService] Falha a executar commit antes do backup: %s",
+                        exc,
+                        exc_info=True,
+                    )
+            try:
+                create_backup()
+            except Exception as exc:
+                logger.exception(
+                    "[ProductService] Falha ao criar backup antes da atualização: %s",
+                    exc,
+                )
+                raise
         return update_from_excel(self.ds)
+
+    def _should_create_backup(self) -> bool:
+        conn = getattr(self.ds, "conn", None)
+        if conn is None:
+            return False
+        try:
+            rows = conn.execute("PRAGMA database_list").fetchall()
+        except sqlite3.Error as exc:
+            logger.debug(
+                "[ProductService] Não foi possível obter informação da base de dados: %s",
+                exc,
+                exc_info=True,
+            )
+            return False
+        for _, name, file_path in rows:
+            if name == "main":
+                return bool(file_path) and file_path not in {"", ":memory:"}
+        return False
 
 
 def get_product_info(ds: DataStore, codigo: str) -> Product:
