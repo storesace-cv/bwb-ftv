@@ -34,22 +34,89 @@ def _find_pyqt5_root() -> Optional[Path]:
     return Path(next(iter(locations)))
 
 
-def _platform_plugin_path(pyqt_root: Path) -> tuple[Optional[Path], list[Path]]:
-    """Locate the Qt platform plugin directory within *pyqt_root*."""
+def _platform_plugin_path(
+    pyqt_root: Path,
+) -> tuple[Optional[Path], list[Path], Optional[str]]:
+    """Locate the Qt platform plugin directory.
+
+    The search first inspects the PyQt5 installation tree. When no bundled
+    plugins are available (which happens for Homebrew-provided Qt), fallbacks are
+    attempted based on environment variables and common Homebrew install
+    prefixes.
+    """
 
     attempted_paths: list[Path] = []
+
+    def _register_attempt(candidate: Path) -> Path:
+        attempted_paths.append(candidate)
+        return candidate
+
+    def _attempt_candidate(candidate: Path, source: str) -> tuple[Optional[Path], Optional[str]]:
+        candidate = _register_attempt(candidate)
+        if candidate.is_dir():
+            return candidate, source
+        return None, None
+
     for runtime_dir in ("Qt", "Qt5"):
         candidate = pyqt_root / runtime_dir / "plugins" / "platforms"
-        attempted_paths.append(candidate)
-        if candidate.is_dir():
-            return candidate, attempted_paths
+        found, source = _attempt_candidate(candidate, "PyQt5 wheel")
+        if found:
+            return found, attempted_paths, source
 
     legacy_candidate = pyqt_root / "plugins" / "platforms"
-    attempted_paths.append(legacy_candidate)
-    if legacy_candidate.is_dir():
-        return legacy_candidate, attempted_paths
+    found, source = _attempt_candidate(legacy_candidate, "PyQt5 wheel")
+    if found:
+        return found, attempted_paths, source
 
-    return None, attempted_paths
+    def _platform_candidates(root: Path) -> list[Path]:
+        candidates: list[Path] = []
+        if root.name == "platforms":
+            candidates.append(root)
+        candidates.append(root / "plugins" / "platforms")
+        candidates.append(root / "platforms")
+        seen: set[Path] = set()
+        unique: list[Path] = []
+        for path in candidates:
+            if path not in seen:
+                seen.add(path)
+                unique.append(path)
+        return unique
+
+    env_override = os.environ.get("FTV_QT_PLUGIN_PATH")
+    if env_override:
+        override_root = Path(env_override)
+        for candidate in _platform_candidates(override_root):
+            found, source = _attempt_candidate(candidate, "Homebrew override")
+            if found:
+                return found, attempted_paths, source
+
+    homebrew_candidates: list[tuple[Path, str]] = []
+
+    homebrew_prefix = os.environ.get("HOMEBREW_PREFIX")
+    if homebrew_prefix:
+        prefix_path = Path(homebrew_prefix)
+        homebrew_candidates.extend(
+            [
+                (prefix_path / "opt" / "qt", "Homebrew prefix"),
+                (prefix_path / "opt" / "qt@5", "Homebrew prefix"),
+            ]
+        )
+
+    homebrew_candidates.extend(
+        [
+            (Path("/opt/homebrew/opt/qt"), "Homebrew default"),
+            (Path("/opt/homebrew/opt/qt@5"), "Homebrew default"),
+            (Path("/usr/local/opt/qt"), "Homebrew default"),
+        ]
+    )
+
+    for root, label in homebrew_candidates:
+        for candidate in _platform_candidates(root):
+            found, source = _attempt_candidate(candidate, f"{label}: {root}")
+            if found:
+                return found, attempted_paths, source
+
+    return None, attempted_paths, None
 
 
 def _ensure_qt_plugin_environment() -> None:
@@ -59,7 +126,7 @@ def _ensure_qt_plugin_environment() -> None:
     if pyqt_root is None:
         return
 
-    platforms_dir, attempted_paths = _platform_plugin_path(pyqt_root)
+    platforms_dir, attempted_paths, source = _platform_plugin_path(pyqt_root)
 
     if platforms_dir is None:
         attempted_display = ", ".join(str(path) for path in attempted_paths) or "(none)"
@@ -69,7 +136,7 @@ def _ensure_qt_plugin_environment() -> None:
         )
         return
 
-    if sys.platform == "darwin":
+    if sys.platform == "darwin" and source == "PyQt5 wheel":
         expected_plugin = platforms_dir / "libqcocoa.dylib"
         if not expected_plugin.exists():
             logger.error(
@@ -79,7 +146,8 @@ def _ensure_qt_plugin_environment() -> None:
             return
 
     os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = str(platforms_dir)
-    logger.info("[QT] Plataforma Qt configurada em %s", platforms_dir)
+    source_display = source or "desconhecida"
+    logger.info("[QT] Plataforma Qt configurada em %s (fonte: %s)", platforms_dir, source_display)
 
     plugin_root = platforms_dir.parent
     existing_plugin_path = os.environ.get("QT_PLUGIN_PATH")
