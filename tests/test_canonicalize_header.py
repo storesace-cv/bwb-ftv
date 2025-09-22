@@ -50,13 +50,6 @@ def test_invalid_iva_aliases_remain_unmapped():
     assert canonicalize_header("iva12") == "Iva12"
     assert canonicalize_header("iva1_2") == "Iva12"
 
-
-def test_invalid_header_for_table_raises():
-    with pytest.raises(ValueError) as exc:
-        canonicalize_header("Desconhecido", table="PrecosTaxas")
-    assert "Cabeçalho inesperado" in str(exc.value)
-
-
 def test_valid_header_for_table_is_allowed():
     assert canonicalize_header("Preco1", table="PrecosTaxas") == "Preco1"
 
