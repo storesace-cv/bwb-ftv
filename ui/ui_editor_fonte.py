@@ -92,9 +92,9 @@ import itertools
 import re
 from pathlib import Path
 try:  # PyQt 5.15.10 wheels omit QWIDGETSIZE_MAX on some platforms
-    from PyQt5.QtCore import Qt, QTimer, QPoint, QWIDGETSIZE_MAX
+    from PyQt5.QtCore import Qt, QTimer, QPoint, QWIDGETSIZE_MAX, QSize
 except ImportError:  # pragma: no cover - fallback for stripped builds
-    from PyQt5.QtCore import Qt, QTimer, QPoint
+    from PyQt5.QtCore import Qt, QTimer, QPoint, QSize
 
     QWIDGETSIZE_MAX = 16777215
 from PyQt5.QtGui import QFont, QIcon, QKeySequence, QTextOption, QPixmap
@@ -182,6 +182,50 @@ APP_STYLESHEET = (
 logger = logging.getLogger(__name__)
 
 # ---------------------- Image Preview ----------------------
+
+
+class SquarePreviewContainer(QWidget):
+    """Wrapper that keeps a square viewport for the embedded child widget."""
+
+    def __init__(self, child: QWidget, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._child = child
+        self._child.setParent(self)
+        self._child.show()
+
+        policy = child.sizePolicy()
+        self.setSizePolicy(policy)
+        self.setMinimumSize(child.minimumSize())
+        self.setMaximumSize(child.maximumSize())
+        self._child.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+
+    # QWidget API -----------------------------------------------------
+    def hasHeightForWidth(self) -> bool:  # pragma: no cover - layout hint
+        return True
+
+    def heightForWidth(self, width: int) -> int:  # pragma: no cover - layout hint
+        return width
+
+    def sizeHint(self):  # pragma: no cover - layout hint
+        hint = self._child.sizeHint()
+        if hint.isValid():
+            side = max(hint.width(), hint.height())
+            return QSize(side, side)
+        return super().sizeHint()
+
+    def minimumSizeHint(self):  # pragma: no cover - layout hint
+        hint = self._child.minimumSizeHint()
+        if hint.isValid():
+            side = max(hint.width(), hint.height())
+            return QSize(side, side)
+        return super().minimumSizeHint()
+
+    def resizeEvent(self, event):  # pragma: no cover - GUI
+        super().resizeEvent(event)
+        side = min(self.width(), self.height())
+        x_offset = (self.width() - side) // 2
+        y_offset = (self.height() - side) // 2
+        self._child.setGeometry(x_offset, y_offset, side, side)
 
 
 class ImagePreview(QLabel):
@@ -1267,7 +1311,8 @@ class FTApp(QWidget):
         except Exception:
             init_code = None
         self.image_preview = ImagePreview(init_code, self.service)
-        article_sheet_preview_layout.addWidget(self.image_preview, 1)
+        self.image_preview_container = SquarePreviewContainer(self.image_preview)
+        article_sheet_preview_layout.addWidget(self.image_preview_container, 1)
 
         page_ly.addWidget(
             self._section_box("[B1] - FICHA DE ARTIGO", self.B1),
