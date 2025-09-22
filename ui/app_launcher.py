@@ -6,6 +6,7 @@ import logging
 import sys
 from typing import TYPE_CHECKING
 
+import qt_bootstrap
 from PyQt5.QtGui import QFont, QFontDatabase
 from PyQt5.QtWidgets import QApplication
 
@@ -39,6 +40,7 @@ def ensure_ftv_app() -> QApplication:
     app = QApplication.instance()
     if app is None:
         app = QApplication(sys.argv)
+        qt_bootstrap.log_qt_library_paths(app)
 
     _apply_global_theme(app)
 
