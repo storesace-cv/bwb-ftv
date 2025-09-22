@@ -110,7 +110,7 @@ Item {
             id: quantityLabel
             text: header ? String(quantity).toUpperCase() : root.formatNumber(quantity, 3)
             font.bold: header
-            horizontalAlignment: header ? Text.AlignHCenter : Text.AlignRight
+            horizontalAlignment: Text.AlignRight
             verticalAlignment: Text.AlignVCenter
             Layout.preferredWidth: 96
             color: header ? "#2c3e66" : "#42526e"
@@ -120,7 +120,7 @@ Item {
             id: unitLabel
             text: header ? String(unit).toUpperCase() : (unit || "—")
             font.bold: header
-            horizontalAlignment: header ? Text.AlignHCenter : Text.AlignLeft
+            horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             Layout.preferredWidth: 72
             color: header ? "#2c3e66" : "#42526e"
@@ -130,7 +130,7 @@ Item {
             id: ppuLabel
             text: header ? String(ppu).toUpperCase() : root.formatCurrency(ppu)
             font.bold: header
-            horizontalAlignment: header ? Text.AlignHCenter : Text.AlignRight
+            horizontalAlignment: Text.AlignRight
             verticalAlignment: Text.AlignVCenter
             Layout.preferredWidth: 100
             color: header ? "#2c3e66" : "#42526e"
@@ -140,7 +140,7 @@ Item {
             id: totalLabel
             text: header ? String(total).toUpperCase() : root.formatCurrency(total)
             font.bold: header
-            horizontalAlignment: header ? Text.AlignHCenter : Text.AlignRight
+            horizontalAlignment: Text.AlignRight
             verticalAlignment: Text.AlignVCenter
             Layout.preferredWidth: 110
             color: header ? "#2c3e66" : "#42526e"
