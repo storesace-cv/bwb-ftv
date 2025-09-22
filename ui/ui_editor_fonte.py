@@ -778,15 +778,13 @@ class FTApp(QWidget):
         slot_parent = self.zone_article_sheet_left_slot_2.parentWidget()
         slot_layout = slot_parent.layout() if slot_parent is not None else None
         if slot_layout is not None:
-            slot_layout.setStretch(
-                slot_layout.indexOf(self.zone_article_sheet_left_slot_2), 0
-            )
-            for expand_slot in (
-                self.zone_article_sheet_left_slot_1,
-                self.zone_article_sheet_left_slot_3,
-                self.zone_article_sheet_left_slot_4,
+            for slot, stretch in (
+                (self.zone_article_sheet_left_slot_1, 0),
+                (self.zone_article_sheet_left_slot_2, 0),
+                (self.zone_article_sheet_left_slot_3, 1),
+                (self.zone_article_sheet_left_slot_4, 0),
             ):
-                slot_layout.setStretch(slot_layout.indexOf(expand_slot), 1)
+                slot_layout.setStretch(slot_layout.indexOf(slot), stretch)
 
         # --- Identificação e família (B1.C1.A.1) ---
         self.zone_general_aux_stack = self.zone_article_sheet_left_slot_1
@@ -1079,7 +1077,7 @@ class FTApp(QWidget):
         combo_container_layout = QHBoxLayout(combo_container)
         combo_container_layout.setContentsMargins(0, 0, 0, 0)
         combo_container_layout.setSpacing(info_field_zone.ly.spacing())
-        info_field_zone.add(combo_container, 1)
+        info_field_zone.add(combo_container, 0)
 
         combo_columns: list[Zone] = []
         for suffix in ("A", "B", "C"):
@@ -1150,7 +1148,7 @@ class FTApp(QWidget):
             legend_zone._labels.append(label)
 
             combo = QComboBox(field_zone)
-            combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             combo.setStyleSheet(FIELD_STYLE)
             field_zone.ly.addWidget(combo, 0)
             setattr(self, attr_name, combo)
@@ -1167,7 +1165,7 @@ class FTApp(QWidget):
         self.lbInformacaoAdicional.setStyleSheet(FIELD_STYLE)
         self.lbInformacaoAdicional.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.lbInformacaoAdicional.setSizePolicy(
-            QSizePolicy.Expanding, QSizePolicy.Expanding
+            QSizePolicy.Expanding, QSizePolicy.Fixed
         )
         self.lbInformacaoAdicional.setFont(self.edNome.font())
         info_field_zone.ly.addWidget(self.lbInformacaoAdicional, 0, Qt.AlignVCenter)
