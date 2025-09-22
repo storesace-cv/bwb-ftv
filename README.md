@@ -107,6 +107,19 @@ full path to the desired file:
 export FTV_DB_PATH=/caminho/para/custom.db
 ```
 
+Em instalações onde o Qt é fornecido pelo Homebrew, utilize a variável de
+ambiente `FTV_QT_PLUGIN_PATH` para apontar para a raiz do Qt (por exemplo,
+`/opt/homebrew/opt/qt`). Quando não definida, a aplicação procura
+automaticamente por diretórios `plugins/platforms` em `HOMEBREW_PREFIX` e nos
+caminhos habituais do Homebrew (`/opt/homebrew/opt/qt`, `/opt/homebrew/opt/qt@5`
+e `/usr/local/opt/qt`).
+On systems where Qt is provided by Homebrew, use the `FTV_QT_PLUGIN_PATH`
+environment variable to point to the Qt prefix (for example,
+`/opt/homebrew/opt/qt`). When unset, the application automatically searches for
+`plugins/platforms` directories under `HOMEBREW_PREFIX` and the standard
+Homebrew prefixes (`/opt/homebrew/opt/qt`, `/opt/homebrew/opt/qt@5`, and
+`/usr/local/opt/qt`).
+
 Para ativar logs detalhados, defina a variável `debug` como `0` ao iniciar a
 aplicação:
 To enable detailed logs, set the `debug` variable to `0` when launching the application:
