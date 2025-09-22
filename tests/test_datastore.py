@@ -18,6 +18,23 @@ def _make_datastore():
     return ds
 
 
+def test_datastore_creates_missing_db_without_prompt(tmp_path, caplog):
+    db_path = tmp_path / "auto.db"
+    ds = None
+    with caplog.at_level(logging.INFO):
+        ds = DataStore(db_path=db_path)
+    try:
+        assert db_path.exists()
+        assert ds is not None and ds.conn is not None
+        assert any(
+            "A criar base vazia padrão." in record.message
+            for record in caplog.records
+        )
+    finally:
+        if ds is not None:
+            ds.close()
+
+
 def _make_filter_datastore():
     ds = DataStore(db_path=":memory:")
     cur = ds.conn.cursor()
