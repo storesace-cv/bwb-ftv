@@ -50,19 +50,18 @@ def test_invalid_iva_aliases_remain_unmapped():
     assert canonicalize_header("iva12") == "Iva12"
     assert canonicalize_header("iva1_2") == "Iva12"
 
+def test_valid_header_for_table_is_allowed():
+    assert canonicalize_header("Preco1", table="PrecosTaxas") == "Preco1"
 
-def test_prod_venda_header_for_precos_taxas_maps_to_nome_prod_venda():
-    assert canonicalize_header("Prod venda", table="PrecosTaxas") == "NomeProdVenda"
+
+def test_prod_venda_alias_maps_to_codigo_for_precos_taxas():
+    assert canonicalize_header("Prod venda", table="PrecosTaxas") == "Codigo"
     assert (
         canonicalize_header(
             "Prod venda (não necessário p/ importar)", table="PrecosTaxas"
         )
-        == "NomeProdVenda"
+        == "Codigo"
     )
-
-
-def test_valid_header_for_table_is_allowed():
-    assert canonicalize_header("Preco1", table="PrecosTaxas") == "Preco1"
 
 
 def test_uninvvmmpg_alias_for_produtos():
