@@ -1,5 +1,6 @@
 # Ignore backup files
 *.backup*
+
 # Byte-compiled / cache
 __pycache__/
 *.pyc
@@ -10,9 +11,24 @@ __pycache__/
 # Ignore logs, reports, and databases
 logs/
 reports/
-/databases/*
+
+# Databases (tudo)
+databases/
+databases/backups/
+databases/images/
+
+# Exceções específicas (se precisares manter algum ficheiro exemplo)
 !/databases/*/
 !/databases/allergens.example.json
 
 # Local captures / screenshots
 artifacts/
+
+# Imports
+imports/
+
+# Python caches por módulos
+domain/__pycache__/
+services/__pycache__/
+ui/__pycache__/
+utils/__pycache__/
