@@ -796,6 +796,11 @@ class FTApp(QWidget):
             )
 
         self.zone_general_aux_family_slot.ly.setContentsMargins(0, 8, 0, 0)
+        self.zone_general_aux_family_slot.apply_metadata(
+            zone_type="coluna-campos",
+            widget_type="campo",
+            base_declarations=layout._DEFAULT_ZONE_BASE_DECLARATIONS,
+        )
 
         self.zone_general_aux_identification_slot.ly.setContentsMargins(0, 8, 0, 8)
         self.zone_general_aux_identification_slot.apply_metadata(
