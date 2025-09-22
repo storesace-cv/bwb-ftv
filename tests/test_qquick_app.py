@@ -148,7 +148,11 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
             assert family_label_zone.property("widgetQtClass") == "QLabels"
             assert family_label_zone.property("styleDevInfo") == family_label_tag
 
+        slot_container_tag = zone_tag("general_aux_additional_info_slot")
+        assert slot_container_tag == zone_tag("article_sheet_left_slot_2")
+
         additional_section_tag = zone_tag("general_aux_additional_info_section")
+        assert additional_section_tag != slot_container_tag
         additional_section_meta = zones_metadata.get(additional_section_tag)
         assert additional_section_meta is not None
         assert additional_section_meta.get("zoneType") == "secao-informacao"
