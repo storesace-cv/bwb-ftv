@@ -5,6 +5,8 @@
 import sys
 import logging
 import os
+
+import qt_bootstrap  # noqa: F401  # ensure Qt environment variables are configured early
 from PyQt5.QtCore import QtMsgType, qInstallMessageHandler
 
 from data.datastore import DataStore  # noqa: E402
