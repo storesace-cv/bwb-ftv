@@ -772,6 +772,22 @@ class FTApp(QWidget):
             slot.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             slot.apply_metadata(zone_type="coluna-campos", widget_type="campo")
 
+        self.zone_article_sheet_left_slot_2.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Preferred
+        )
+        slot_parent = self.zone_article_sheet_left_slot_2.parentWidget()
+        slot_layout = slot_parent.layout() if slot_parent is not None else None
+        if slot_layout is not None:
+            slot_layout.setStretch(
+                slot_layout.indexOf(self.zone_article_sheet_left_slot_2), 0
+            )
+            for expand_slot in (
+                self.zone_article_sheet_left_slot_1,
+                self.zone_article_sheet_left_slot_3,
+                self.zone_article_sheet_left_slot_4,
+            ):
+                slot_layout.setStretch(slot_layout.indexOf(expand_slot), 1)
+
         # --- Identificação e família (B1.C1.A.1) ---
         self.zone_general_aux_stack = self.zone_article_sheet_left_slot_1
         self.zone_general_aux_stack.ly.setSpacing(2)
