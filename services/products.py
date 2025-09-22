@@ -30,6 +30,13 @@ logger = logging.getLogger(__name__)
 BACKUP_PREFIX_FOR_UPDATES = "ftv-actualizacao-"
 
 
+IMPORT_FILE_BASENAMES = {
+    "Produtos": "Produtos_Base.xlsx",
+    "FichasTecnicas": "FichasTecnicas_base.xlsx",
+    "PrecosTaxas": "PreçosTaxas_base.xlsx",
+}
+
+
 # Historical header aliases have been removed. Imports now rely on
 # spreadsheets using the canonical column names directly.
 
@@ -839,192 +846,172 @@ def import_from_excel(ds: DataStore | None = None) -> None:
     ``PrecosTaxas``.
     """
 
-    base = get_project_root() / "imports"
-    base.mkdir(parents=True, exist_ok=True)
-
-    files = {
-        "Produtos": base / "Produtos_Base.xlsx",
-        "FichasTecnicas": base / "FichasTecnicas_base.xlsx",
-        "PrecosTaxas": base / "PreçosTaxas_base.xlsx",
-    }
-    missing = [fp.name for fp in files.values() if not fp.exists()]
-    if missing:
-        raise FileNotFoundError(
-            "Missing import files: " + ", ".join(sorted(missing))
-        )
-    for fp in files.values():
-        if fp.suffix.lower() != ".xlsx":
-            raise ValueError(f"{fp} is not an .xlsx file")
-
     ds = ds or DataStore()
-    conn = getattr(ds, "conn", None)
-    if conn is None:
-        return
 
-    setup_database(conn)
-    for table, fp in files.items():
-        with closing(load_workbook(fp, read_only=True, data_only=True)) as wb:
-            ws = wb.active
-            rows = ws.iter_rows(values_only=True)
+    with _manage_import_files(ds) as files:
+        conn = getattr(ds, "conn", None)
+        if conn is None:
+            return
+
+        setup_database(conn)
+        for table, fp in files.items():
+            with closing(load_workbook(fp, read_only=True, data_only=True)) as wb:
+                ws = wb.active
+                rows = ws.iter_rows(values_only=True)
+                try:
+                    raw_headers = list(next(rows))
+                except StopIteration:
+                    continue
+                if table == "PrecosTaxas":
+                    mapped = [
+                        canonicalize_header(h, table=table) for h in raw_headers
+                    ]
+                    existing = [
+                        r[1]
+                        for r in conn.execute(
+                            f"PRAGMA table_info({quote_ident(table)})"
+                        )
+                    ]
+                    headers = mapped + [c for c in existing if c not in mapped]
+                else:
+                    headers = raw_headers
+                sync_table_schema(conn, table, headers)
+
+        cur = conn.cursor()
+        for tbl in ("Produtos", "FichasTecnicas", "PrecosTaxas"):
             try:
-                raw_headers = list(next(rows))
-            except StopIteration:
-                continue
-            if table == "PrecosTaxas":
-                mapped = [canonicalize_header(h, table=table) for h in raw_headers]
-                existing = [
-                    r[1]
-                    for r in conn.execute(
-                        f"PRAGMA table_info({quote_ident(table)})"
-                    )
-                ]
-                headers = mapped + [c for c in existing if c not in mapped]
-            else:
-                headers = raw_headers
-            sync_table_schema(conn, table, headers)
+                cur.execute(f"DELETE FROM {quote_ident(tbl)}")
+            except sqlite3.Error as exc:
+                logger.warning("failed to delete data from %s: %s", tbl, exc)
+        conn.commit()
 
-    cur = conn.cursor()
-    for tbl in ("Produtos", "FichasTecnicas", "PrecosTaxas"):
-        try:
-            cur.execute(f"DELETE FROM {quote_ident(tbl)}")
-        except sqlite3.Error as exc:
-            logger.warning("failed to delete data from %s: %s", tbl, exc)
-    conn.commit()
-
-    def _load_insert(file_path: Path, table: str) -> None:
-        with _load_workbook_rows(file_path, table, conn) as (
-            headers,
-            rows,
-            numeric_cols,
-        ):
-            headers = sync_table_schema(conn, table, headers)
-            cols = [h for h in headers if h]
-            if not cols:
-                return
-            placeholders = ",".join(["?"] * len(cols))
-            cols_sql = ",".join(quote_ident(c) for c in cols)
-            sql = (
-                f"INSERT INTO {quote_ident(table)} ({cols_sql}) VALUES ({placeholders})"
-            )
-            data: list[tuple] = []
-            id_col = None
-            if table == "FichasTecnicas":
-                id_col = "ProdutoCodigo"
-            elif table == "Produtos":
-                id_col = "Codigo"
-            last_identifier = None
-            for row in rows:
-                row_map = {}
-                for i in range(min(len(headers), len(row))):
-                    col = headers[i]
-                    val = row[i]
-                    if col in numeric_cols:
-                        val = parse_decimal(val)
-                    row_map[col] = val
-                if id_col:
-                    identifier = row_map.get(id_col)
-                    if isinstance(identifier, str):
-                        stripped = identifier.strip()
-                        if not stripped:
+        def _load_insert(file_path: Path, table: str) -> None:
+            with _load_workbook_rows(file_path, table, conn) as (
+                headers,
+                rows,
+                numeric_cols,
+            ):
+                headers = sync_table_schema(conn, table, headers)
+                cols = [h for h in headers if h]
+                if not cols:
+                    return
+                placeholders = ",".join(["?"] * len(cols))
+                cols_sql = ",".join(quote_ident(c) for c in cols)
+                sql = (
+                    f"INSERT INTO {quote_ident(table)} ({cols_sql}) VALUES ({placeholders})"
+                )
+                data: list[tuple] = []
+                id_col = None
+                if table == "FichasTecnicas":
+                    id_col = "ProdutoCodigo"
+                elif table == "Produtos":
+                    id_col = "Codigo"
+                last_identifier = None
+                for row in rows:
+                    row_map = {}
+                    for i in range(min(len(headers), len(row))):
+                        col = headers[i]
+                        val = row[i]
+                        if col in numeric_cols:
+                            val = parse_decimal(val)
+                        row_map[col] = val
+                    if id_col:
+                        identifier = row_map.get(id_col)
+                        if isinstance(identifier, str):
+                            stripped = identifier.strip()
+                            if not stripped:
+                                if last_identifier is None:
+                                    continue
+                                identifier = last_identifier
+                            else:
+                                identifier = stripped
+                            row_map[id_col] = identifier
+                        elif _is_blank(identifier):
                             if last_identifier is None:
                                 continue
                             identifier = last_identifier
-                        else:
-                            identifier = stripped
-                        row_map[id_col] = identifier
-                    elif _is_blank(identifier):
-                        if last_identifier is None:
+                            row_map[id_col] = identifier
+                        last_identifier = identifier
+                    data.append(tuple(row_map.get(c) for c in cols))
+                if data:
+                    conn.executemany(sql, data)
+
+        _load_insert(files["Produtos"], "Produtos")
+        _load_insert(files["FichasTecnicas"], "FichasTecnicas")
+
+        def _load_prices(file_path: Path) -> None:
+            with _load_workbook_rows(file_path, "PrecosTaxas", conn) as (
+                headers,
+                rows,
+                numeric_cols,
+            ):
+                rows = list(rows)
+                if "Loja" not in headers:
+                    headers.append("Loja")
+                    rows = [tuple(list(r) + ["1"]) for r in rows]
+                if "Codigo" not in headers:
+                    raise ValueError(
+                        "PreçosTaxas_base.xlsx missing 'Codigo' column; found: "
+                        + ", ".join(headers)
+                    )
+                existing = [
+                    r[1]
+                    for r in conn.execute(
+                        f"PRAGMA table_info({quote_ident('PrecosTaxas')})"
+                    )
+                ]
+                headers = sync_table_schema(
+                    conn,
+                    "PrecosTaxas",
+                    headers + [c for c in existing if c not in headers],
+                )
+                cols = [h for h in headers if h]
+                if not cols:
+                    return
+                conn.execute(f"DELETE FROM {quote_ident('PrecosTaxas')}")
+                placeholders = ",".join(["?"] * len(cols))
+                cols_sql = ",".join(quote_ident(c) for c in cols)
+                sql = (
+                    f"INSERT INTO {quote_ident('PrecosTaxas')} ({cols_sql}) "
+                    f"VALUES ({placeholders})"
+                )
+                data: list[tuple] = []
+                for row in rows:
+                    row_map = {}
+                    for i in range(min(len(headers), len(row))):
+                        col = headers[i]
+                        val = row[i]
+                        if col in numeric_cols:
+                            val = parse_decimal(val)
+                        row_map[col] = val
+                    codigo = row_map.get("Codigo")
+                    if isinstance(codigo, str):
+                        stripped = codigo.strip()
+                        if not stripped:
                             continue
-                        identifier = last_identifier
-                        row_map[id_col] = identifier
-                    last_identifier = identifier
-                data.append(tuple(row_map.get(c) for c in cols))
-            if data:
-                conn.executemany(sql, data)
-
-    _load_insert(files["Produtos"], "Produtos")
-    _load_insert(files["FichasTecnicas"], "FichasTecnicas")
-
-    def _load_prices(file_path: Path) -> None:
-        with _load_workbook_rows(file_path, "PrecosTaxas", conn) as (
-            headers,
-            rows,
-            numeric_cols,
-        ):
-            rows = list(rows)
-            if "Loja" not in headers:
-                headers.append("Loja")
-                rows = [tuple(list(r) + ["1"]) for r in rows]
-            if "Codigo" not in headers:
-                raise ValueError(
-                    "PreçosTaxas_base.xlsx missing 'Codigo' column; found: "
-                    + ", ".join(headers)
-                )
-            existing = [
-                r[1]
-                for r in conn.execute(
-                    f"PRAGMA table_info({quote_ident('PrecosTaxas')})"
-                )
-            ]
-            headers = sync_table_schema(
-                conn,
-                "PrecosTaxas",
-                headers + [c for c in existing if c not in headers],
-            )
-            cols = [h for h in headers if h]
-            if not cols:
-                return
-            conn.execute(f"DELETE FROM {quote_ident('PrecosTaxas')}")
-            placeholders = ",".join(["?"] * len(cols))
-            cols_sql = ",".join(quote_ident(c) for c in cols)
-            sql = (
-                f"INSERT INTO {quote_ident('PrecosTaxas')} ({cols_sql}) "
-                f"VALUES ({placeholders})"
-            )
-            data: list[tuple] = []
-            for row in rows:
-                row_map = {}
-                for i in range(min(len(headers), len(row))):
-                    col = headers[i]
-                    val = row[i]
-                    if col in numeric_cols:
-                        val = parse_decimal(val)
-                    row_map[col] = val
-                codigo = row_map.get("Codigo")
-                if isinstance(codigo, str):
-                    stripped = codigo.strip()
-                    if not stripped:
+                        row_map["Codigo"] = stripped
+                    elif _is_blank(codigo):
                         continue
-                    row_map["Codigo"] = stripped
-                elif _is_blank(codigo):
-                    continue
-                data.append(tuple(row_map.get(c) for c in cols))
-            if data:
-                conn.executemany(sql, data)
+                    data.append(tuple(row_map.get(c) for c in cols))
+                if data:
+                    conn.executemany(sql, data)
 
-    _load_prices(files["PrecosTaxas"])
-    conn.commit()
-    ds.reload_ids()
-
-    for fp in files.values():
-        content = fp.read_bytes()
-        conn.execute(
-            "INSERT INTO Uploads (Filename, Content) VALUES (?, ?)",
-            (fp.name, sqlite3.Binary(content)),
-        )
-        fp.unlink()
-    conn.commit()
+        _load_prices(files["PrecosTaxas"])
+        conn.commit()
+        ds.reload_ids()
 
 
 
-def _prepare_import_files() -> dict[str, Path]:
+@contextmanager
+def _manage_import_files(
+    ds: DataStore | None,
+) -> Iterator[dict[str, Path]]:
     base = get_project_root() / "imports"
     base.mkdir(parents=True, exist_ok=True)
 
     files = {
-        "Produtos": base / "Produtos_Base.xlsx",
-        "FichasTecnicas": base / "FichasTecnicas_base.xlsx",
-        "PrecosTaxas": base / "PreçosTaxas_base.xlsx",
+        table: base / filename
+        for table, filename in IMPORT_FILE_BASENAMES.items()
     }
     missing = [fp.name for fp in files.values() if not fp.exists()]
     if missing:
@@ -1034,7 +1021,23 @@ def _prepare_import_files() -> dict[str, Path]:
     for fp in files.values():
         if fp.suffix.lower() != ".xlsx":
             raise ValueError(f"{fp} is not an .xlsx file")
-    return files
+
+    try:
+        yield files
+    except Exception:
+        raise
+    else:
+        conn = getattr(ds, "conn", None)
+        if conn is None:
+            return
+        for fp in files.values():
+            content = fp.read_bytes()
+            conn.execute(
+                "INSERT INTO Uploads (Filename, Content) VALUES (?, ?)",
+                (fp.name, sqlite3.Binary(content)),
+            )
+            fp.unlink()
+        conn.commit()
 
 
 def _snapshot_tables(
@@ -1389,15 +1392,6 @@ def _apply_updates(
     conn.commit()
     ds.reload_ids()
 
-    for fp in files.values():
-        content = fp.read_bytes()
-        conn.execute(
-            "INSERT INTO Uploads (Filename, Content) VALUES (?, ?)",
-            (fp.name, sqlite3.Binary(content)),
-        )
-        fp.unlink()
-    conn.commit()
-
     return report_entries
 
 
@@ -1454,25 +1448,24 @@ def update_from_excel(ds: DataStore | None = None) -> Path | None:
     tabela ``PrecosTaxas``.
     """
 
-    files = _prepare_import_files()
-
     ds = ds or DataStore()
-    conn = getattr(ds, "conn", None)
-    if conn is None:
-        return None
+    with _manage_import_files(ds) as files:
+        conn = getattr(ds, "conn", None)
+        if conn is None:
+            return None
 
-    setup_database(conn)
+        setup_database(conn)
 
-    produtos_state, fichas_state, precos_state = _snapshot_tables(conn)
-    report_entries = _apply_updates(
-        conn,
-        ds,
-        files,
-        produtos_state,
-        fichas_state,
-        precos_state,
-    )
-    return _write_update_report(report_entries)
+        produtos_state, fichas_state, precos_state = _snapshot_tables(conn)
+        report_entries = _apply_updates(
+            conn,
+            ds,
+            files,
+            produtos_state,
+            fichas_state,
+            precos_state,
+        )
+        return _write_update_report(report_entries)
 
 def _import_single_excel(path: Path, ds: DataStore | None) -> None:
     """Fallback import used for simple single-file spreadsheets.

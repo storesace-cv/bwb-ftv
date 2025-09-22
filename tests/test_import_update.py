@@ -9,6 +9,10 @@ import services.products as products
 from services.products import ProductService, _update_from_excel, _import_single_excel
 from utils.paths import get_project_root
 
+PRODUCTS_FILE = products.IMPORT_FILE_BASENAMES["Produtos"]
+FICHAS_FILE = products.IMPORT_FILE_BASENAMES["FichasTecnicas"]
+PRECOS_FILE = products.IMPORT_FILE_BASENAMES["PrecosTaxas"]
+
 
 @pytest.fixture
 def ds():
@@ -58,7 +62,7 @@ def _write_base_files(
     ws.append(["Codigo", "Produto", "tipo_venda"])
     for code, name in products:
         ws.append([code, name, 1])
-    prod_wb.save(base_dir / "Produtos_Base.xlsx")
+    prod_wb.save(base_dir / PRODUCTS_FILE)
 
     ft_wb = Workbook()
     ws = ft_wb.active
@@ -79,7 +83,7 @@ def _write_base_files(
     )
     for code, _ in products:
         ws.append([None, code, None, None, None, None, None, None, None, None, None])
-    ft_wb.save(base_dir / "FichasTecnicas_base.xlsx")
+    ft_wb.save(base_dir / FICHAS_FILE)
 
     if prices is None:
         prices = [1.0, None, None, None, None]
@@ -87,7 +91,7 @@ def _write_base_files(
     ws = prec_wb.active
     ws.append([code_header, "Preco1", "Preco2", "Preco3", "Preco4", "Preco5"])
     ws.append([products[0][0], *prices])
-    prec_wb.save(base_dir / "PreçosTaxas_base.xlsx")
+    prec_wb.save(base_dir / PRECOS_FILE)
 
 
 def _write_sparse_codigo_files(base_dir, products):
@@ -96,7 +100,7 @@ def _write_sparse_codigo_files(base_dir, products):
     ws.append(["Codigo", "Produto", "tipo_venda"])
     for code, name, _ in products:
         ws.append([code, name, 1])
-    prod_wb.save(base_dir / "Produtos_Base.xlsx")
+    prod_wb.save(base_dir / PRODUCTS_FILE)
 
     ft_wb = Workbook()
     ws = ft_wb.active
@@ -132,14 +136,14 @@ def _write_sparse_codigo_files(base_dir, products):
                     ordem,
                 ]
             )
-    ft_wb.save(base_dir / "FichasTecnicas_base.xlsx")
+    ft_wb.save(base_dir / FICHAS_FILE)
 
     prec_wb = Workbook()
     ws = prec_wb.active
     ws.append(["Codigo", "Preco1", "Preco2", "Preco3", "Preco4", "Preco5"])
     for code, _, _ in products:
         ws.append([code, 1, None, None, None, None])
-    prec_wb.save(base_dir / "PreçosTaxas_base.xlsx")
+    prec_wb.save(base_dir / PRECOS_FILE)
 
 
 def test_import_from_excel_replaces_database(ds, imports_dir):
@@ -154,10 +158,10 @@ def test_import_from_excel_replaces_database(ds, imports_dir):
     assert ds.get_produto_info("OLD") == {}
     assert ds.get_produto_info("P1")["produto"] == "Produto 1"
     assert ds.get_produto_info("P2")["produto"] == "Produto 2"
-    assert not (imports_dir / "Produtos_Base.xlsx").exists()
+    assert not (imports_dir / PRODUCTS_FILE).exists()
     rows = ds.conn.execute("SELECT Filename FROM Uploads").fetchall()
     names = {r[0] for r in rows}
-    assert "Produtos_Base.xlsx" in names
+    assert PRODUCTS_FILE in names
 
 
 def test_update_from_excel_updates_and_inserts(ds, imports_dir):
@@ -182,28 +186,28 @@ def test_update_from_excel_updates_and_inserts(ds, imports_dir):
     assert ds.get_produto_info("P1")["produto"] == "Produto 1 updated"
     assert ds.get_produto_info("P2")["produto"] == "Produto 2"
     assert ds.get_produto_info("P3")["produto"] == "Produto 3"
-    assert not (imports_dir / "Produtos_Base.xlsx").exists()
+    assert not (imports_dir / PRODUCTS_FILE).exists()
     rows = ds.conn.execute("SELECT Filename FROM Uploads").fetchall()
     names = {r[0] for r in rows}
-    assert "Produtos_Base.xlsx" in names
+    assert PRODUCTS_FILE in names
 
 
 def test_import_from_excel_missing_file(ds, imports_dir):
     _write_base_files(imports_dir)
-    (imports_dir / "PreçosTaxas_base.xlsx").unlink()
+    (imports_dir / PRECOS_FILE).unlink()
     svc = ProductService(ds)
     with pytest.raises(FileNotFoundError) as exc:
         svc.import_from_excel()
-    assert "PreçosTaxas_base.xlsx" in str(exc.value)
+    assert PRECOS_FILE in str(exc.value)
 
 
 def test_update_from_excel_missing_file(ds, imports_dir):
     _write_base_files(imports_dir)
-    (imports_dir / "FichasTecnicas_base.xlsx").unlink()
+    (imports_dir / FICHAS_FILE).unlink()
     svc = ProductService(ds)
     with pytest.raises(FileNotFoundError) as exc:
         svc.update_from_excel()
-    assert "FichasTecnicas_base.xlsx" in str(exc.value)
+    assert FICHAS_FILE in str(exc.value)
 
 
 def test_import_stores_files_in_uploads(ds, imports_dir):
@@ -212,11 +216,7 @@ def test_import_stores_files_in_uploads(ds, imports_dir):
     svc.import_from_excel()
     rows = ds.conn.execute("SELECT Filename, length(Content) FROM Uploads").fetchall()
     assert len(rows) == 3
-    expected = [
-        "Produtos_Base.xlsx",
-        "FichasTecnicas_base.xlsx",
-        "PreçosTaxas_base.xlsx",
-    ]
+    expected = [PRODUCTS_FILE, FICHAS_FILE, PRECOS_FILE]
     names = {r[0] for r in rows}
     for name in expected:
         assert name in names
@@ -229,11 +229,7 @@ def test_update_stores_files_in_uploads(ds, imports_dir):
     svc.update_from_excel()
     rows = ds.conn.execute("SELECT Filename, length(Content) FROM Uploads").fetchall()
     assert len(rows) == 3
-    expected = [
-        "Produtos_Base.xlsx",
-        "FichasTecnicas_base.xlsx",
-        "PreçosTaxas_base.xlsx",
-    ]
+    expected = [PRODUCTS_FILE, FICHAS_FILE, PRECOS_FILE]
     names = {r[0] for r in rows}
     for name in expected:
         assert name in names
@@ -304,7 +300,7 @@ def test_update_from_excel_generates_report(ds, imports_dir, logs_dir):
     ws.append(["Codigo", "Produto", "TipoVenda", "Preco1G"])
     ws.append(["P1", "Produto 1 Atualizado", 1, 15])
     ws.append(["P2", "Produto 2", 1, 20])
-    prod_wb.save(imports_dir / "Produtos_Base.xlsx")
+    prod_wb.save(imports_dir / PRODUCTS_FILE)
 
     ft_wb = Workbook()
     ws = ft_wb.active
@@ -325,14 +321,14 @@ def test_update_from_excel_generates_report(ds, imports_dir, logs_dir):
     )
     ws.append([None, "P1", "Produto 1 Atualizado", "I1", "Ingrediente 1", 2, "Kg", 3, 6, None, 1])
     ws.append([None, None, None, "I2", "Ingrediente 2", 1, "Un", None, None, None, 2])
-    ft_wb.save(imports_dir / "FichasTecnicas_base.xlsx")
+    ft_wb.save(imports_dir / FICHAS_FILE)
 
     prec_wb = Workbook()
     ws = prec_wb.active
     ws.append(["Codigo", "Preco1", "Preco2", "Preco3", "Preco4", "Preco5"])
     ws.append(["P1", 12, None, None, None, None])
     ws.append(["P2", 22, None, None, None, None])
-    prec_wb.save(imports_dir / "PreçosTaxas_base.xlsx")
+    prec_wb.save(imports_dir / PRECOS_FILE)
 
     svc = ProductService(ds)
     report_path = svc.update_from_excel()
@@ -416,7 +412,7 @@ def test_update_from_excel_uses_produto_codigo(ds, imports_dir):
 def test_import_from_excel_skips_rows_without_codigo(ds, imports_dir):
     products = [("P1", "Produto 1"), ("   ", "Sem Código"), (None, "Outro")]
     _write_base_files(imports_dir, products=products)
-    prec_path = imports_dir / "PreçosTaxas_base.xlsx"
+    prec_path = imports_dir / PRECOS_FILE
     wb = load_workbook(prec_path)
     ws = wb.active
     ws.append([" ", None, None, None, None, None])
@@ -449,7 +445,7 @@ def test_update_from_excel_skips_rows_without_codigo(ds, imports_dir):
 
     products = [("P1", "Produto 1 atualizado"), ("P2", "Produto 2"), ("", "Sem Código")]
     _write_base_files(imports_dir, products=products)
-    prec_path = imports_dir / "PreçosTaxas_base.xlsx"
+    prec_path = imports_dir / PRECOS_FILE
     wb = load_workbook(prec_path)
     ws = wb.active
     ws.append(["", None, None, None, None, None])
@@ -609,7 +605,7 @@ def test_import_reads_preco(ds, imports_dir):
     ws = prod.active
     ws.append(["codigo", "nome", "tipo_venda"])
     ws.append(["P1", "Produto 1", 1])
-    prod.save(imports_dir / "Produtos_Base.xlsx")
+    prod.save(imports_dir / PRODUCTS_FILE)
 
     ft = Workbook()
     ws = ft.active
@@ -629,13 +625,13 @@ def test_import_reads_preco(ds, imports_dir):
         ]
     )
     ws.append([None, "P1", None, None, "Ing", 2, "Kg", 3, "1 234,5", None, None])
-    ft.save(imports_dir / "FichasTecnicas_base.xlsx")
+    ft.save(imports_dir / FICHAS_FILE)
 
     prec = Workbook()
     ws = prec.active
     ws.append(["codigo", "Preco1", "Preco2", "Preco3", "Preco4", "Preco5"])
     ws.append(["P1", 1, None, None, None, None])
-    prec.save(imports_dir / "PreçosTaxas_base.xlsx")
+    prec.save(imports_dir / PRECOS_FILE)
 
     svc = ProductService(ds)
     svc.import_from_excel()
@@ -656,7 +652,7 @@ def test_update_reads_preco(ds, imports_dir):
     ws = prod.active
     ws.append(["codigo", "nome", "tipo_venda"])
     ws.append(["P1", "Prod", 1])
-    prod.save(imports_dir / "Produtos_Base.xlsx")
+    prod.save(imports_dir / PRODUCTS_FILE)
 
     ft = Workbook()
     ws = ft.active
@@ -676,13 +672,13 @@ def test_update_reads_preco(ds, imports_dir):
         ]
     )
     ws.append([None, "P1", None, None, "Ing", 3, "Kg", 2, 7, None, None])
-    ft.save(imports_dir / "FichasTecnicas_base.xlsx")
+    ft.save(imports_dir / FICHAS_FILE)
 
     prec = Workbook()
     ws = prec.active
     ws.append(["codigo", "Preco1", "Preco2", "Preco3", "Preco4", "Preco5"])
     ws.append(["P1", 1, None, None, None, None])
-    prec.save(imports_dir / "PreçosTaxas_base.xlsx")
+    prec.save(imports_dir / PRECOS_FILE)
 
     svc = ProductService(ds)
     svc.update_from_excel()
@@ -702,3 +698,4 @@ def test_private_update_from_excel_parses_numbers(ds, tmp_path):
     info = ds.get_produto_info("P1")
     assert info["produto"] == "Produto 1"
     assert info["preco1g"] == 1234.5
+
