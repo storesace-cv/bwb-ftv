@@ -598,6 +598,8 @@ class FTApp(QWidget):
         self._allergen_checkboxes: dict[int, QCheckBox] = {}
         self._allergen_tooltips: dict[int, str] = {}
         self._allergen_zone: Zone | None = None
+        self._window_aspect_ratio = 1754 / 1240
+        self._resizing_lock = False
         self._build_ui()
         self._connect_nav()
         self._load_record(self.cur_index)
@@ -735,7 +737,7 @@ class FTApp(QWidget):
 
     def _build_ui(self):
         self.setWindowTitle(APP_TITLE)
-        self.resize(1180, 860)
+        self.resize(1240, 1754)
         root = QVBoxLayout(self)
         root.setContentsMargins(3, 5, 3, 5)
         root.setSpacing(5)
@@ -2980,6 +2982,40 @@ class FTApp(QWidget):
         QTimer.singleShot(0, self._apply_ingredient_widths)
 
     def resizeEvent(self, ev):
+        if getattr(self, "_resizing_lock", False):
+            super().resizeEvent(ev)
+            self._update_page_width()
+            self._apply_ingredient_widths()
+            self._apply_prep_autofit_or_scroll()
+            self._resizing_lock = False
+            return
+
+        new_size = ev.size()
+        old_size = ev.oldSize()
+        new_width = max(1, new_size.width())
+        new_height = max(1, new_size.height())
+        old_width = old_size.width() if old_size.width() > 0 else new_width
+        old_height = old_size.height() if old_size.height() > 0 else new_height
+
+        width_change = abs(new_width - old_width)
+        height_change = abs(new_height - old_height)
+        aspect_ratio = self._window_aspect_ratio
+
+        if width_change >= height_change:
+            adjusted_width = new_width
+            adjusted_height = int(round(adjusted_width * aspect_ratio))
+        else:
+            adjusted_height = new_height
+            adjusted_width = int(round(adjusted_height / aspect_ratio))
+
+        adjusted_width = max(1, adjusted_width)
+        adjusted_height = max(1, adjusted_height)
+
+        if adjusted_width != new_width or adjusted_height != new_height:
+            self._resizing_lock = True
+            self.resize(adjusted_width, adjusted_height)
+            return
+
         super().resizeEvent(ev)
         self._update_page_width()
         self._apply_ingredient_widths()
