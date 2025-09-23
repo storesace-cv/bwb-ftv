@@ -302,6 +302,7 @@ ApplicationWindow {
                         unit: qsTr("UNIDADE")
                         ppu: qsTr("PPU")
                         total: qsTr("TOTAL")
+                        weight: qsTr("PESO")
                         showOverlays: ingredientsZone.showOverlays
                         zoneType: ingredientsZone.zoneType
                         visible: ingredientsRepeater.count > 0
@@ -318,6 +319,7 @@ ApplicationWindow {
                             unit: modelData.unit || modelData.Unidade || ""
                             ppu: modelData.ppu !== undefined ? modelData.ppu : (modelData.Ppu !== undefined ? modelData.Ppu : "")
                             total: modelData.total !== undefined ? modelData.total : (modelData.Preco !== undefined ? modelData.Preco : "")
+                            weight: modelData.weight !== undefined ? modelData.weight : (modelData.Peso !== undefined ? modelData.Peso : "")
                             showOverlays: ingredientsZone.showOverlays
                             zoneType: ingredientsZone.zoneType
                         }

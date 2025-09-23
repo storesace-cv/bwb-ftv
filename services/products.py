@@ -388,6 +388,7 @@ def _row_to_ingredient(row: dict, codigo: str) -> Ingredient:
     quantity = row.get("Qtd") or 0
     ppu = row.get("Ppu")
     total = row.get("Preco")
+    weight = row.get("Peso")
     if total is None and ppu is not None:
         try:
             total = float(ppu) * float(quantity)
@@ -400,6 +401,7 @@ def _row_to_ingredient(row: dict, codigo: str) -> Ingredient:
         ppu=ppu,
         total=total,
         code=row.get("ComponenteCodigo"),
+        weight=weight,
     )
 
 
@@ -554,6 +556,7 @@ class ProductService:
                 ppu=ing.ppu,
                 total=ing.total,
                 code=ing.code,
+                weight=ing.weight,
             )
             for row in rows
             for ing in [_row_to_ingredient(row, codigo)]

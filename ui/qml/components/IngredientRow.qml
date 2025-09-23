@@ -14,6 +14,7 @@ Item {
     property string unit: ""
     property var ppu: undefined
     property var total: undefined
+    property var weight: undefined
     property bool showOverlays: false
     property string zoneType: ""
 
@@ -143,6 +144,16 @@ Item {
             horizontalAlignment: Text.AlignRight
             verticalAlignment: Text.AlignVCenter
             Layout.preferredWidth: 110
+            color: header ? "#2c3e66" : "#42526e"
+        }
+
+        Label {
+            id: weightLabel
+            text: header ? String(weight).toUpperCase() : root.formatNumber(weight, 3)
+            font.bold: header
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            Layout.preferredWidth: 100
             color: header ? "#2c3e66" : "#42526e"
         }
     }

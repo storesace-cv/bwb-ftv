@@ -106,6 +106,7 @@ def test_get_product_info_builds_product_from_datastore():
             "Ppu": 3.0,
             "Preco": 6.0,
             "ComponenteCodigo": "I1",
+            "Peso": 0.5,
         },
         {
             "ComponenteNome": "Ing2",
@@ -113,6 +114,7 @@ def test_get_product_info_builds_product_from_datastore():
             "Unidade": "kg",
             "Ppu": 2.0,
             "ComponenteCodigo": "I2",
+            "Peso": None,
         },
     ]
 
@@ -128,9 +130,11 @@ def test_get_product_info_builds_product_from_datastore():
     assert product.informacao_adicional == "Notas relevantes"
     assert product.ingredients[0].name == "Ing1"
     assert format_pt_number(product.ingredients[0].total) == format_pt_number(6.0)
+    assert format_pt_number(product.ingredients[0].weight) == format_pt_number(0.5)
     assert product.ingredients[1].name == "Ing2"
     assert format_pt_number(product.ingredients[1].total) == format_pt_number(2.0)
     assert product.ingredients[1].ppu == 2.0
+    assert product.ingredients[1].weight is None
 
 
 def test_list_fichas_tecnicas_logs_missing_ingredient_name(caplog):
@@ -157,6 +161,7 @@ def test_list_fichas_tecnicas_calculates_total_when_preco_missing():
             "Ppu": 3.0,
             "Preco": 6.0,
             "ComponenteCodigo": "I1",
+            "Peso": 0.25,
         },
         {
             "ComponenteNome": "Ing2",
@@ -164,6 +169,7 @@ def test_list_fichas_tecnicas_calculates_total_when_preco_missing():
             "Unidade": "kg",
             "Ppu": 2.0,
             "ComponenteCodigo": "I2",
+            "Peso": None,
         },
     ]
     service = ProductService(ds)
@@ -172,6 +178,8 @@ def test_list_fichas_tecnicas_calculates_total_when_preco_missing():
 
     assert format_pt_number(fichas[0].total) == format_pt_number(6.0)
     assert format_pt_number(fichas[1].total) == format_pt_number(3.0)
+    assert format_pt_number(fichas[0].weight) == format_pt_number(0.25)
+    assert fichas[1].weight is None
 
 
 def test_get_product_info_logs_missing_ingredient_name(caplog):
