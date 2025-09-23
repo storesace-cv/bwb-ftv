@@ -154,6 +154,8 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             Layout.preferredWidth: 100
+            Layout.minimumWidth: 100
+            Layout.maximumWidth: 100
             color: header ? "#2c3e66" : "#42526e"
         }
     }
