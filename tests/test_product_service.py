@@ -216,16 +216,20 @@ def test_product_service_set_search_filters_delegates():
     service.set_search_filters(
         produto="bolo",
         ingrediente="chocolate",
-        familia="Doces",
-        subfamilia="Bolos",
+        familia=("Doces", "Quentes"),
+        subfamilia=("Bolos", "Tartes"),
     )
 
-    ds.set_search_filters.assert_called_once_with(
-        produto="bolo",
-        ingrediente="chocolate",
-        familia="Doces",
-        subfamilia="Bolos",
-    )
+    ds.set_search_filters.assert_called_once()
+    kwargs = ds.set_search_filters.call_args.kwargs
+    assert kwargs == {
+        "produto": "bolo",
+        "ingrediente": "chocolate",
+        "familia": ("Doces", "Quentes"),
+        "subfamilia": ("Bolos", "Tartes"),
+    }
+    assert isinstance(kwargs["familia"], tuple)
+    assert isinstance(kwargs["subfamilia"], tuple)
 
 
 def test_product_service_set_search_filters_omits_unset_families():
@@ -246,4 +250,13 @@ def test_product_service_list_families_with_subfamilies_prefers_new_helper():
     service = ProductService(ds)
 
     assert service.list_families_with_subfamilies() == {"A": ("B",)}
+    ds.list_families_with_subfamilies.assert_called_once_with()
+
+
+def test_product_service_list_family_hierarchy_aliases_primary_helper():
+    ds = MagicMock(spec=DataStore)
+    ds.list_families_with_subfamilies.return_value = {"Q": ("R", "S")}
+    service = ProductService(ds)
+
+    assert service.list_family_hierarchy() == {"Q": ("R", "S")}
     ds.list_families_with_subfamilies.assert_called_once_with()
