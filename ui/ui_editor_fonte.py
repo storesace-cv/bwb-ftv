@@ -878,7 +878,6 @@ class FTApp(QWidget):
         self.searchFamilyCombo.selectionChanged.connect(
             self._on_family_selection_changed
         )
-        self.searchSubfamilyCombo.selectionChanged.connect(self._apply_search_filters)
         self.searchFamilyResetButton.clicked.connect(self._reset_family_filters)
         self.searchFamilyApplyButton.clicked.connect(self._apply_search_filters)
 
