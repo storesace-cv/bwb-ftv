@@ -127,6 +127,19 @@ def test_search_panel_toggle_and_submit(qapp):
 
         ft.searchProductField.setText("  Produto 1  ")
         ft.searchIngredientField.setText(" tomate ")
+        ft.searchFamilyCombo.showPopup()
+        qapp.processEvents()
+        family_view = ft.searchFamilyCombo.view()
+        assert family_view is not None
+        model_index = family_view.model().index(0, 0)
+        assert model_index.isValid()
+        family_view.pressed.emit(model_index)
+        qapp.processEvents()
+        assert family_view.isVisible()
+        ft.searchProductField.setFocus()
+        qapp.processEvents()
+        assert not family_view.isVisible()
+
         ft.searchFamilyCombo.select_items(["Pratos Quentes", "Sopas"])
         qapp.processEvents()
         subfamily_model = ft.searchSubfamilyCombo.model()
@@ -193,24 +206,21 @@ def test_search_panel_toggle_and_submit(qapp):
         ft.searchResetButton.click()
         qapp.processEvents()
 
-        assert ft.searchProductField.text() == "Produto 1"
-        assert ft.searchIngredientField.text() == "Cebola"
-        assert ft.searchFamilyCombo.selected_items() == [
-            "Pratos Quentes",
-            "Sopas",
-        ]
-        assert ft.searchSubfamilyCombo.selected_items() == [
-            "Cremes",
-            "Hambúrgueres",
-        ]
+        assert ft.searchProductField.text() == ""
+        assert ft.searchIngredientField.text() == ""
+        assert ft.searchFamilyCombo.selected_items() == []
+        assert ft.searchSubfamilyCombo.selected_items() == []
         assert service.search_filters_calls[-1] == (
             None,
             None,
-            ("Pratos Quentes", "Sopas"),
-            ("Cremes", "Hambúrgueres"),
+            None,
+            None,
         )
         assert ft.cur_index == 0
 
+        ft.searchProductField.setText("Produto 1")
+        ft.searchIngredientField.setText("Cebola")
+        qapp.processEvents()
         ft.searchFamilyCombo.select_items(["Pratos Quentes"])
         qapp.processEvents()
         ft.searchFamilyApplyButton.click()
@@ -219,7 +229,7 @@ def test_search_panel_toggle_and_submit(qapp):
             "Produto 1",
             "Cebola",
             ("Pratos Quentes",),
-            None,
+            ("Hambúrgueres",),
         )
         assert ft.cur_index == 0
 

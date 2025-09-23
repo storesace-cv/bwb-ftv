@@ -247,6 +247,13 @@ class MultiSelectComboBox(QComboBox):
             return
         super().hidePopup()
 
+    def focusOutEvent(self, event):  # pragma: no cover - UI integration
+        reason = event.reason() if hasattr(event, "reason") else Qt.OtherFocusReason
+        if reason != Qt.PopupFocusReason and self.view() and self.view().isVisible():
+            self._block_hide = False
+            super().hidePopup()
+        super().focusOutEvent(event)
+
     def _handle_item_pressed(self, index) -> None:
         model = self.model()
         if model is None:
@@ -2500,11 +2507,11 @@ class FTApp(QWidget):
 
     def _reset_family_filters(self, *, apply: bool = True) -> None:
         self.searchFamilyCombo.blockSignals(True)
-        self.searchFamilyCombo.clear_selection()
+        self._clear_family_selection()
         self.searchFamilyCombo.blockSignals(False)
         self._update_subfamily_options(preserve_selection=False)
         self.searchSubfamilyCombo.blockSignals(True)
-        self.searchSubfamilyCombo.clear_selection()
+        self._clear_subfamily_selection()
         self.searchSubfamilyCombo.blockSignals(False)
         if apply:
             self._apply_search_filters()
@@ -2512,8 +2519,8 @@ class FTApp(QWidget):
     def _apply_search_filters(self):
         product_name = (self.searchProductField.text() or "").strip() or None
         ingredient_name = (self.searchIngredientField.text() or "").strip() or None
-        family_selection = self.searchFamilyCombo.selected_items()
-        subfamily_selection = self.searchSubfamilyCombo.selected_items()
+        family_selection = self._selected_families()
+        subfamily_selection = self._selected_subfamilies()
         family_names = tuple(family_selection) or None
         subfamily_names = tuple(subfamily_selection) or None
         setter = getattr(self.service, "set_search_filters", None)
@@ -2527,9 +2534,22 @@ class FTApp(QWidget):
         self.cur_index = 0
         self._load_record(0)
 
+    def _selected_families(self) -> list[str]:
+        return self.searchFamilyCombo.selected_items()
+
+    def _selected_subfamilies(self) -> list[str]:
+        return self.searchSubfamilyCombo.selected_items()
+
+    def _clear_family_selection(self) -> None:
+        self.searchFamilyCombo.clear_selection()
+
+    def _clear_subfamily_selection(self) -> None:
+        self.searchSubfamilyCombo.clear_selection()
+
     def _reset_search_filters(self):
         self.searchProductField.setText("")
         self.searchIngredientField.setText("")
+        self._reset_family_filters(apply=False)
         self._apply_search_filters()
 
     def _connect_nav(self):
