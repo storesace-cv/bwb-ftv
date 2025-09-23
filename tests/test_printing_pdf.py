@@ -9,6 +9,7 @@ import pytest
 from tests._qt import require_real_qt_modules
 
 from domain.models import Ingredient, Product
+from services.products import get_image_path
 from ui.printing import _configure_printer, _prepare_management_payload, _render_pdf
 
 
@@ -213,6 +214,63 @@ def test_qt_pdf_font_sizes_respect_scale(qapp, tmp_path):
         assert any(abs(size - target) <= 0.1 for size in font_sizes), (
             f"missing scaled font size for {expected}pt (expected around {target})"
         )
+
+
+def test_qt_pdf_embeds_product_image(qapp, tmp_path):
+    modules = require_real_qt_modules(
+        "PyQt5.QtWidgets", "PyQt5.QtGui", "PyQt5.QtPrintSupport"
+    )
+    if not modules:
+        pytest.skip("Real Qt modules are required")
+
+    from PyQt5.QtGui import QImage
+
+    codigo = "PDF_IMG_TEST"
+    image_path = get_image_path(codigo)
+    try:
+        img = QImage(48, 48, QImage.Format_ARGB32)
+        img.fill(0xFF336699)
+        img.save(str(image_path))
+
+        product = Product(
+            code=codigo,
+            name="Produto com Imagem",
+            familia="Família",
+            subfamilia="Sub",
+            informacao_adicional="Notas",
+            tipo_artigo_cod=2,
+            validade_cod=5,
+            temperatura_cod=3,
+            pvps=[9.5],
+            iva=23,
+            ingredients=[
+                Ingredient(
+                    name="Ingrediente Único",
+                    quantity=1.0,
+                    unit="kg",
+                    ppu=3.5,
+                    total=3.5,
+                    code="I900",
+                    weight=1.0,
+                )
+            ],
+        )
+
+        payload = _prepare_management_payload(product)
+        pdf_path = tmp_path / "ft_gestao_image.pdf"
+        _render_pdf(payload, pdf_path, (595.28, 841.89))
+
+        assert pdf_path.exists()
+        pdf_bytes = pdf_path.read_bytes()
+        assert b"/Subtype /Image" in pdf_bytes
+
+        streams = _extract_pdf_streams(pdf_path)
+        assert streams, "expected at least one PDF stream"
+        combined = "\n".join(streams)
+        assert re.search(r"/Im\d+\s+Do", combined), "expected an image draw command"
+    finally:
+        if image_path.exists():
+            image_path.unlink()
 
 
 def test_basic_pdf_preserves_unicode(tmp_path, monkeypatch):
