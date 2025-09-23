@@ -121,6 +121,7 @@ def test_search_panel_toggle_and_submit(qapp):
         assert isinstance(ft.searchLeftZone, Zone)
         assert ft.searchResetButton.text() == "Mostrar todos os registos"
         assert ft.searchFamilyResetButton.text() == "Mostrar todas as famílias"
+        assert ft.searchFamilyApplyButton.text() == "IR"
         assert ft.searchFamilyCombo.selected_items() == []
         assert ft.searchSubfamilyCombo.selected_items() == []
 
@@ -189,18 +190,22 @@ def test_search_panel_toggle_and_submit(qapp):
         ft.searchResetButton.click()
         qapp.processEvents()
 
-        assert ft.searchProductField.text() == ""
-        assert ft.searchIngredientField.text() == ""
-        assert ft.searchFamilyCombo.selected_items() == ["Pratos Quentes", "Sopas"]
-        assert ft.searchSubfamilyCombo.selected_items() == [
-            "Cremes",
-            "Hambúrgueres",
-        ]
+        assert ft.searchProductField.text() == "Produto 1"
+        assert ft.searchIngredientField.text() == "Cebola"
+        assert ft.searchFamilyCombo.selected_items() == []
+        assert ft.searchSubfamilyCombo.selected_items() == []
+        assert service.search_filters_calls[-1] == (None, None, None, None)
+        assert ft.cur_index == 0
+
+        ft.searchFamilyCombo.select_items(["Pratos Quentes"])
+        qapp.processEvents()
+        ft.searchFamilyApplyButton.click()
+        qapp.processEvents()
         assert service.search_filters_calls[-1] == (
+            "Produto 1",
+            "Cebola",
+            ("Pratos Quentes",),
             None,
-            None,
-            ("Pratos Quentes", "Sopas"),
-            ("Cremes", "Hambúrgueres"),
         )
         assert ft.cur_index == 0
 
