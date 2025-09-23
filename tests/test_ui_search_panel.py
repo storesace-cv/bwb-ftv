@@ -15,15 +15,19 @@ def _setup_ds():
     cur.execute("DELETE FROM FichasTecnicas")
     cur.execute("DELETE FROM PrecosTaxas")
     cur.execute(
-        "INSERT INTO Produtos (Codigo, Produto, TipoVenda) VALUES (?, ?, 1)",
-        ("P1", "Produto 1"),
+        (
+            "INSERT INTO Produtos "
+            "(Codigo, Produto, TipoVenda, Familia, SubFamilia) "
+            "VALUES (?, ?, 1, ?, ?)"
+        ),
+        ("P1", "Produto 1", "Pratos Quentes", "Hambúrgueres"),
     )
     cur.execute(
         (
-            "INSERT INTO FichasTecnicas (ProdutoCodigo, ProdutoNome, ComponenteNome) "
-            "VALUES (?, ?, ?)"
+            "INSERT INTO FichasTecnicas (ProdutoCodigo, ProdutoNome, ComponenteNome, FamiliaSubfamilia) "
+            "VALUES (?, ?, ?, ?)"
         ),
-        ("P1", "Produto 1", "Tomate"),
+        ("P1", "Produto 1", "Tomate", "Pratos Quentes > Hambúrgueres"),
     )
     cur.execute(
         (
@@ -39,16 +43,25 @@ def _setup_ds():
 class RecordingService(ProductService):
     def __init__(self, ds):
         super().__init__(ds)
-        self.search_filters_calls: list[tuple[str | None, str | None]] = []
+        self.search_filters_calls: list[
+            tuple[str | None, str | None, str | None, str | None]
+        ] = []
 
     def set_search_filters(
         self,
         *,
         produto: str | None = None,
         ingrediente: str | None = None,
+        familia: str | None = None,
+        subfamilia: str | None = None,
     ) -> None:
-        self.search_filters_calls.append((produto, ingrediente))
-        super().set_search_filters(produto=produto, ingrediente=ingrediente)
+        self.search_filters_calls.append((produto, ingrediente, familia, subfamilia))
+        super().set_search_filters(
+            produto=produto,
+            ingrediente=ingrediente,
+            familia=familia,
+            subfamilia=subfamilia,
+        )
 
 
 def test_search_panel_toggle_and_submit(qapp):
@@ -70,10 +83,17 @@ def test_search_panel_toggle_and_submit(qapp):
 
         ft.searchProductField.setText("  Produto 1  ")
         ft.searchIngredientField.setText(" tomate ")
+        ft.searchFamilyField.setText("Pratos Quentes")
+        ft.searchSubfamilyField.setText("Hambúrgueres")
         ft.searchProductButton.click()
         qapp.processEvents()
 
-        assert service.search_filters_calls[-1] == ("Produto 1", "tomate")
+        assert service.search_filters_calls[-1] == (
+            "Produto 1",
+            "tomate",
+            "Pratos Quentes",
+            "Hambúrgueres",
+        )
         assert ft.cur_index == 0
 
         ft.btSearchToggle.click()
@@ -86,23 +106,38 @@ def test_search_panel_toggle_and_submit(qapp):
         assert ft.searchProductField.text() == "  Produto 1  "
 
         ft.searchIngredientField.setText("Queijo")
+        ft.searchFamilyField.setText("Pratos Quentes")
         ft.searchIngredientButton.click()
         qapp.processEvents()
-        assert service.search_filters_calls[-1] == ("Produto 1", "Queijo")
+        assert service.search_filters_calls[-1] == (
+            "Produto 1",
+            "Queijo",
+            "Pratos Quentes",
+            "Hambúrgueres",
+        )
 
         ft.searchProductField.setText("   ")
         ft.searchProductField.returnPressed.emit()
         qapp.processEvents()
-        assert service.search_filters_calls[-1] == (None, "Queijo")
+        assert service.search_filters_calls[-1] == (
+            None,
+            "Queijo",
+            "Pratos Quentes",
+            "Hambúrgueres",
+        )
 
         ft.searchProductField.setText("Produto 1")
         ft.searchIngredientField.setText("Cebola")
+        ft.searchFamilyField.setText("Pratos Quentes")
+        ft.searchSubfamilyField.setText("Hambúrgueres")
         ft.searchResetButton.click()
         qapp.processEvents()
 
         assert ft.searchProductField.text() == ""
         assert ft.searchIngredientField.text() == ""
-        assert service.search_filters_calls[-1] == (None, None)
+        assert ft.searchFamilyField.text() == ""
+        assert ft.searchSubfamilyField.text() == ""
+        assert service.search_filters_calls[-1] == (None, None, None, None)
         assert ft.cur_index == 0
     finally:
         ft.close()
