@@ -101,9 +101,7 @@ def _build_ft_row_items(ficha: FichaTecnica) -> list[QStandardItem]:
         item = QStandardItem(value if value is not None else "")
         if col == 0:
             alignment = _CELL_ALIGNMENT
-        elif col == 1:
-            alignment = Qt.AlignHCenter | Qt.AlignVCenter
-        elif col == 5:
+        elif col in (1, 2, 5):
             alignment = Qt.AlignHCenter | Qt.AlignVCenter
         else:
             alignment = Qt.AlignRight | Qt.AlignVCenter
