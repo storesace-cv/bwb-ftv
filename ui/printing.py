@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 from collections.abc import Iterable as IterableABC
@@ -20,6 +21,8 @@ except ImportError:  # pragma: no cover - executed when stubs are active
     _QT_AVAILABLE = False
 else:  # pragma: no cover - exercised in integration tests
     _QT_AVAILABLE = True
+
+_USE_BASIC_PDF = False
 
 from domain.models import Product
 from services.products import calculate_food_cost
@@ -243,6 +246,18 @@ def _prompt_pdf_destination(product: Product, parent: QWidget | None = None) -> 
 
 
 def _render_pdf(payload: dict[str, Any], destination: Path, page_metrics: tuple[float, float]) -> None:
+    """Render *payload* into a PDF written to *destination* using the configured backend."""
+
+    if _QT_AVAILABLE and not _USE_BASIC_PDF:
+        _render_pdf_qt(payload, destination, page_metrics)
+        return
+
+    _render_pdf_basic(payload, destination, page_metrics)
+
+
+def _render_pdf_qt(
+    payload: dict[str, Any], destination: Path, page_metrics: tuple[float, float]
+) -> None:
     if not _QT_AVAILABLE:
         raise RuntimeError("PyQt5 is required to render PDFs")
     printer = _configure_printer(destination, page_metrics)
@@ -252,6 +267,78 @@ def _render_pdf(payload: dict[str, Any], destination: Path, page_metrics: tuple[
         _draw_management_sheet(painter, printer.pageRect(QPrinter.Point), payload)
     finally:
         painter.end()
+
+
+def _render_pdf_basic(
+    payload: dict[str, Any], destination: Path, page_metrics: tuple[float, float]
+) -> None:
+    lines = list(_build_pdf_lines(payload))
+    margin = 36.0
+    font_size = 10
+    leading = font_size + 4
+    _, height = page_metrics
+    y_cursor = height - margin
+    text_ops: list[str] = []
+    for line in lines:
+        text_ops.append(
+            "BT /F1 {size} Tf {x:.2f} {y:.2f} Td ({text}) Tj ET".format(
+                size=font_size,
+                x=margin,
+                y=y_cursor,
+                text=_escape_pdf_text(line),
+            )
+        )
+        y_cursor -= leading
+        if y_cursor <= margin:
+            break
+
+    content_stream = "\n".join(text_ops)
+    payload_json = json.dumps(payload, ensure_ascii=False)
+
+    objects: list[str] = []
+    objects.append("1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj")
+    objects.append("2 0 obj<< /Type /Pages /Count 1 /Kids [3 0 R] >>endobj")
+    objects.append(
+        "3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %.2f %.2f] /Resources "
+        "<< /Font << /F1 5 0 R >> >> /Contents 4 0 R >>endobj" % page_metrics
+    )
+    content_bytes = content_stream.encode("utf-8")
+    objects.append(
+        "4 0 obj<< /Length %d >>stream\n%s\nendstream endobj"
+        % (len(content_bytes), content_stream)
+    )
+    objects.append(
+        "5 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>endobj"
+    )
+
+    header = b"%PDF-1.4\n"
+    prefix = f"%FT_GESTAO_PAYLOAD {payload_json}\n".encode("utf-8")
+
+    xref_positions: list[int] = []
+    body_parts: list[bytes] = []
+    offset = len(header) + len(prefix)
+    for obj in objects:
+        part = f"{obj}\n".encode("utf-8")
+        xref_positions.append(offset)
+        body_parts.append(part)
+        offset += len(part)
+
+    xref_start = offset
+    xref_entries = [b"0000000000 65535 f "]
+    for pos in xref_positions:
+        xref_entries.append(f"{pos:010} 00000 n ".encode("utf-8"))
+
+    xref_table = b"xref\n0 %d\n%s\n" % (
+        len(xref_entries),
+        b"\n".join(xref_entries),
+    )
+    trailer = (
+        b"trailer<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF"
+        % (len(xref_entries), xref_start)
+    )
+
+    pdf_content = b"".join([header, prefix, *body_parts, xref_table, trailer])
+    destination.write_bytes(pdf_content)
 
 
 def _configure_printer(destination: Path, page_metrics: tuple[float, float]) -> QPrinter:
@@ -787,3 +874,67 @@ def _serialise_numeric(value: Any) -> float | str | None:
     if numeric is None:
         return str(value)
     return numeric
+
+
+def _build_pdf_lines(payload: dict[str, Any]) -> Iterable[str]:
+    blocks = payload.get("blocks", {})
+    block_b1 = blocks.get("B1", {}) or {}
+    block_b2 = blocks.get("B2", {}) or {}
+    block_b3 = blocks.get("B3", {}) or {}
+
+    yield f"{payload.get('page_title', 'Ficha Técnica de Gestão')} — {payload.get('identifier')}"
+    generated_at = payload.get("generated_at")
+    if generated_at:
+        yield f"Gerado em: {generated_at}"
+    yield ""
+
+    yield "[B1] Ficha de Artigo"
+    for label, key in (
+        ("Código", "codigo"),
+        ("Nome", "nome"),
+        ("Família", "familia"),
+        ("Sub-família", "subfamilia"),
+        ("Informação adicional", "informacao_adicional"),
+        ("Tipo artigo", "tipo_artigo_cod"),
+        ("Validade", "validade_cod"),
+        ("Temperatura", "temperatura_cod"),
+    ):
+        value = block_b1.get(key)
+        yield f"{label}: {_format_text(value)}"
+
+    yield ""
+    yield "[B2] Ingredientes"
+    yield "# | Código | Ingrediente | Qtd | Un. | PPU | Total | Peso"
+    for entry in block_b2.get("ingredientes", []) or []:
+        row = " | ".join(
+            [
+                str(entry.get("ordem") or ""),
+                _format_text(entry.get("codigo")),
+                _format_text(entry.get("nome")),
+                _format_measure(entry.get("quantidade")),
+                _format_text(entry.get("unidade")),
+                _format_currency(entry.get("ppu")),
+                _format_currency(entry.get("total")),
+                _format_number(entry.get("peso"), precision=3),
+            ]
+        )
+        yield row
+
+    totals = block_b2.get("totais", {}) or {}
+    yield f"Custo Total: {_format_currency(totals.get('custo_total'))}"
+    yield f"Peso Total: {_format_measure(totals.get('peso_total'))}"
+    yield f"N.º Ingredientes: {totals.get('num_ingredientes', 0)}"
+
+    yield ""
+    yield "[B3] Food Cost"
+    iva_value = block_b3.get("iva")
+    yield f"IVA: {_format_percentage(iva_value)}"
+    pvps = list(block_b3.get("pvps", []) or [])
+    food_costs = list(block_b3.get("food_cost", []) or [])
+    for index, pvp in enumerate(pvps, start=1):
+        fc = food_costs[index - 1] if index - 1 < len(food_costs) else None
+        yield f"PVP{index}: {_format_currency(pvp)} | Food Cost: {_format_percentage(fc)}"
+
+
+def _escape_pdf_text(text: str) -> str:
+    return str(text).replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")

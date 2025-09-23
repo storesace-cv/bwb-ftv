@@ -5,8 +5,6 @@ from pathlib import Path
 
 from tests._qt import require_real_qt_modules
 
-require_real_qt_modules("PyQt5.QtWidgets", "PyQt5.QtGui", "PyQt5.QtPrintSupport")
-
 from domain.models import Ingredient, Product
 from ui.printing import _prepare_management_payload, _render_pdf
 
@@ -36,6 +34,9 @@ def _extract_pdf_streams(path: Path) -> list[str]:
 
 
 def test_management_pdf_contains_brand_elements(qapp, tmp_path):
+    require_real_qt_modules(
+        "PyQt5.QtWidgets", "PyQt5.QtGui", "PyQt5.QtPrintSupport"
+    )
     product = Product(
         code="P001",
         name="Produto Teste",
@@ -82,3 +83,41 @@ def test_management_pdf_contains_brand_elements(qapp, tmp_path):
     assert "0.933333333 0.960784313 1 scn" in combined
     assert "0.290196078 0.435294117 0.647058823 scn" in combined
     assert combined.count(" re") >= 6
+
+
+def test_basic_pdf_preserves_unicode(tmp_path, monkeypatch):
+    from ui import printing as printing_mod
+
+    product = Product(
+        code="P002",
+        name="Bolo de Maçã",
+        familia="Sobremesas",
+        subfamilia="Bolos",
+        informacao_adicional="Feito com maçã e canela",
+        tipo_artigo_cod=2,
+        validade_cod=5,
+        temperatura_cod=3,
+        pvps=[12.5],
+        iva=23,
+        ingredients=[
+            Ingredient(
+                name="Maçã",
+                quantity=1.0,
+                unit="kg",
+                ppu=2.0,
+                total=2.0,
+                code="I003",
+                weight=1.0,
+            ),
+        ],
+    )
+
+    payload = _prepare_management_payload(product)
+    pdf_path = tmp_path / "ft_gestao_unicode.pdf"
+    monkeypatch.setattr(printing_mod, "_USE_BASIC_PDF", True)
+    _render_pdf(payload, pdf_path, (595.28, 841.89))
+
+    content = pdf_path.read_bytes().decode("utf-8")
+    assert "Bolo de Maçã" in content
+    assert "Feito com maçã e canela" in content
+    assert '"name": "Bolo de Maçã"' in content or '"nome": "Bolo de Maçã"' in content
