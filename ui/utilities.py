@@ -99,6 +99,57 @@ FCFILTER_BUTTON_STYLE_TEMPLATE = (
     "}}"
 )
 
+# Reusable palette for Food Cost indicators.  The levels share the same
+# soft pastels used by the filter buttons while ``Todos`` mirrors the neutral
+# reset button.  Values are stored as RGB triplets so that both buttons and
+# read-only fields can build their styles from a single source of truth.
+FOOD_COST_LEVEL_RGB_MAP: dict[str, tuple[int, int, int]] = {
+    "Bom": (198, 216, 112),
+    "Aceitável": (248, 222, 126),
+    "Mau": (255, 158, 145),
+    "Todos": (200, 200, 200),
+}
+
+_FOOD_COST_FIELD_TEMPLATE = (
+    "QLineEdit {{\n"
+    "    background-color: rgba({r}, {g}, {b}, {background_alpha});\n"
+    "    border: 1px solid rgba({r}, {g}, {b}, {border_alpha});\n"
+    "    border-radius: 6px;\n"
+    "    padding: 4px 6px;\n"
+    "    selection-background-color: rgba(0, 110, 255, 0.45);\n"
+    "}}"
+)
+
+
+def food_cost_lineedit_stylesheet(
+    rgb: Sequence[int],
+    *,
+    background_alpha: float = 0.5,
+    border_alpha: float = 0.4,
+) -> str:
+    """Return a stylesheet for a read-only Food Cost ``QLineEdit`` tinted with ``rgb``."""
+
+    if len(rgb) != 3:
+        raise ValueError("food_cost_lineedit_stylesheet expects exactly three RGB values")
+
+    def _clamp_component(value: int) -> int:
+        return max(0, min(255, int(value)))
+
+    r, g, b = (_clamp_component(component) for component in rgb)
+
+    def _format_alpha(value: float) -> str:
+        bounded = max(0.0, min(1.0, float(value)))
+        text = f"{bounded:.3f}".rstrip("0").rstrip(".")
+        return text or "0"
+
+    return _FOOD_COST_FIELD_TEMPLATE.format(
+        r=r,
+        g=g,
+        b=b,
+        background_alpha=_format_alpha(background_alpha),
+        border_alpha=_format_alpha(border_alpha),
+    )
+
 
 class AlignmentVariant(str, Enum):
     """Supported alignment variants for styled labels and fields."""
