@@ -2502,7 +2502,6 @@ class FTApp(QWidget):
 
     def _on_family_selection_changed(self) -> None:
         self._update_subfamily_options()
-        self._apply_search_filters()
 
     def _reset_family_filters(self, *, apply: bool = True) -> None:
         self.searchFamilyCombo.blockSignals(True)
