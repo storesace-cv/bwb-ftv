@@ -139,9 +139,11 @@ from .qt_compat import exec_modal
 from .utilities import (
     AlignmentVariant,
     FIELD_STYLE,
+    FOOD_COST_LEVEL_RGB_MAP,
     apply_fcfilter_btn_style,
     apply_label_style,
     apply_overlay_label_style,
+    food_cost_lineedit_stylesheet,
     make_readonly_lineedit,
     match_font,
 )
@@ -2322,7 +2324,47 @@ class FTApp(QWidget):
         pvps = list(getattr(product, "pvps", []) or [])
         pvps.extend([None] * (5 - len(pvps)))
         iva = getattr(product, "iva", None)
+
+        level_styles = {
+            name: food_cost_lineedit_stylesheet(rgb)
+            for name, rgb in FOOD_COST_LEVEL_RGB_MAP.items()
+        }
+        default_style = level_styles.get("Todos") or food_cost_lineedit_stylesheet(
+            (200, 200, 200)
+        )
+
+        level_ranges: list[tuple[str, float, float]] = []
+        repo = getattr(getattr(self.service, "ds", None), "fcost", None)
+
+        def _level_value(entry, key: str, index: int):
+            if isinstance(entry, dict):
+                return entry.get(key)
+            try:
+                return entry[index]
+            except (TypeError, IndexError):
+                return None
+
+        if repo is not None:
+            try:
+                for entry in repo.list_levels():
+                    nome = _level_value(entry, "Nome", 1)
+                    vmin = parse_decimal(_level_value(entry, "ValorMin", 2))
+                    vmax = parse_decimal(_level_value(entry, "ValorMax", 3))
+                    if not nome:
+                        continue
+                    try:
+                        vmin_f = float(vmin) if vmin is not None else None
+                        vmax_f = float(vmax) if vmax is not None else None
+                    except (TypeError, ValueError):
+                        continue
+                    if vmin_f is None or vmax_f is None:
+                        continue
+                    level_ranges.append((str(nome), vmin_f, vmax_f))
+            except Exception:
+                logger.exception("[FoodCost] failed to retrieve cost levels for styling.")
+
         for idx, (lbl, pvp) in enumerate(zip(self.lbFoodCosts, pvps)):
+            lbl.setStyleSheet(default_style)
             if pvp in (None, 0):
                 lbl.setText("--N/A--")
                 if idx == 0:
@@ -2352,7 +2394,19 @@ class FTApp(QWidget):
                 )
                 lbl.setText("--N/A--")
             else:
-                lbl.setText(format_pt_number(pct))
+                try:
+                    pct_value = float(pct)
+                except (TypeError, ValueError):
+                    pct_value = None
+                if pct_value is None:
+                    lbl.setText("--N/A--")
+                else:
+                    for level_name, vmin, vmax in level_ranges:
+                        if vmin <= pct_value <= vmax:
+                            style = level_styles.get(level_name, default_style)
+                            lbl.setStyleSheet(style)
+                            break
+                    lbl.setText(format_pt_number(pct_value))
 
     def _update_costs_from_table(self):
         """Recalculate total cost using the service layer."""
