@@ -302,7 +302,7 @@ ApplicationWindow {
                         unit: qsTr("UNIDADE")
                         ppu: qsTr("PPU")
                         total: qsTr("TOTAL")
-                        weight: qsTr("PESO")
+                        weight: qsTr("PESO (%)")
                         showOverlays: ingredientsZone.showOverlays
                         zoneType: ingredientsZone.zoneType
                         visible: ingredientsRepeater.count > 0
