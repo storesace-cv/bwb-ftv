@@ -840,14 +840,25 @@ class FTApp(QWidget):
         # para compatibilidade com código legado e testes externos.
         self.searchFamilyField = self.searchFamilyCombo
         self.searchSubfamilyField = self.searchSubfamilyCombo
-        self.searchFamilyApplyButton = QPushButton("IR", search_center_widget)
-        self.searchFamilyApplyButton.setSizePolicy(
+        self.searchFamilyButton = QPushButton("IR", search_center_widget)
+        self.searchFamilyButton.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Fixed
+        )
+        self.searchFamilyApplyButton = self.searchFamilyButton
+        self.searchSubfamilyButton = QPushButton("IR", search_center_widget)
+        self.searchSubfamilyButton.setSizePolicy(
             QSizePolicy.Expanding, QSizePolicy.Fixed
         )
 
         search_center_layout.addWidget(self.searchFamilyCombo, 0, 0)
-        search_center_layout.addWidget(self.searchFamilyApplyButton, 0, 1)
         search_center_layout.addWidget(self.searchSubfamilyCombo, 1, 0, 1, 2)
+
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setContentsMargins(0, 0, 0, 0)
+        buttons_layout.setSpacing(6)
+        buttons_layout.addWidget(self.searchFamilyButton)
+        buttons_layout.addWidget(self.searchSubfamilyButton)
+        search_center_layout.addLayout(buttons_layout, 2, 0, 1, 2)
         search_center_layout.setColumnStretch(0, 1)
         search_center_layout.setColumnStretch(1, 0)
 
@@ -867,6 +878,7 @@ class FTApp(QWidget):
         self.searchSubfamilyCombo.selectionChanged.connect(self._apply_search_filters)
         self.searchFamilyResetButton.clicked.connect(self._reset_family_filters)
         self.searchFamilyApplyButton.clicked.connect(self._apply_search_filters)
+        self.searchSubfamilyButton.clicked.connect(self._apply_search_filters)
 
         self._family_hierarchy: dict[str, tuple[str, ...]] = {}
         self._init_family_filters()
