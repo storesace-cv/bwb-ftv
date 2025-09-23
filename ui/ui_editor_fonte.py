@@ -686,7 +686,7 @@ class FTApp(QWidget):
         self.btMenu.setText("Menu")
         self.btMenu.setPopupMode(QToolButton.InstantPopup)
         size_hint = self.btMenu.sizeHint()
-        self.btMenu.setFixedSize(size_hint.width() * 3, size_hint.height() * 3)
+        self.btMenu.setFixedSize(int(size_hint.width() * 1.5), int(size_hint.height() * 1.5))
         menu_font = QFont()
         menu_font.setPointSize(12)
         self.btMenu.setFont(menu_font)
