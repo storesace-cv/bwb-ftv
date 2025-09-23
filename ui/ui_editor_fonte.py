@@ -838,13 +838,24 @@ class FTApp(QWidget):
         self.searchFamilyResetButton = QPushButton(
             "Mostrar todas as famílias", search_center_widget
         )
-        self.searchFamilyResetButton.setSizePolicy(
-            QSizePolicy.Expanding, QSizePolicy.Fixed
-        )
+        self.searchFamilyApplyButton = QPushButton("IR", search_center_widget)
+
+        for btn in (self.searchFamilyResetButton, self.searchFamilyApplyButton):
+            btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+        buttons_row = QWidget(search_center_widget)
+        buttons_layout = QGridLayout(buttons_row)
+        buttons_layout.setContentsMargins(0, 0, 0, 0)
+        buttons_layout.setHorizontalSpacing(6)
+        buttons_layout.setVerticalSpacing(0)
+        buttons_layout.addWidget(self.searchFamilyResetButton, 0, 0)
+        buttons_layout.addWidget(self.searchFamilyApplyButton, 0, 1)
+        buttons_layout.setColumnStretch(0, 1)
+        buttons_layout.setColumnStretch(1, 1)
 
         search_center_layout.addWidget(self.searchFamilyCombo, 0, 0, 1, 2)
         search_center_layout.addWidget(self.searchSubfamilyCombo, 1, 0, 1, 2)
-        search_center_layout.addWidget(self.searchFamilyResetButton, 2, 0, 1, 2)
+        search_center_layout.addWidget(buttons_row, 2, 0, 1, 2)
         search_center_layout.setColumnStretch(0, 1)
 
         self.searchCenterZone.ly.addWidget(search_center_widget)
@@ -854,6 +865,7 @@ class FTApp(QWidget):
         )
         self.searchSubfamilyCombo.selectionChanged.connect(self._apply_search_filters)
         self.searchFamilyResetButton.clicked.connect(self._reset_family_filters)
+        self.searchFamilyApplyButton.clicked.connect(self._apply_search_filters)
 
         self._family_hierarchy: dict[str, tuple[str, ...]] = {}
         self._init_family_filters()
@@ -2478,7 +2490,7 @@ class FTApp(QWidget):
         self._update_subfamily_options()
         self._apply_search_filters()
 
-    def _reset_family_filters(self) -> None:
+    def _reset_family_filters(self, *, apply: bool = True) -> None:
         self.searchFamilyCombo.blockSignals(True)
         self.searchFamilyCombo.clear_selection()
         self.searchFamilyCombo.blockSignals(False)
@@ -2486,13 +2498,16 @@ class FTApp(QWidget):
         self.searchSubfamilyCombo.blockSignals(True)
         self.searchSubfamilyCombo.clear_selection()
         self.searchSubfamilyCombo.blockSignals(False)
-        self._apply_search_filters()
+        if apply:
+            self._apply_search_filters()
 
     def _apply_search_filters(self):
         product_name = (self.searchProductField.text() or "").strip() or None
         ingredient_name = (self.searchIngredientField.text() or "").strip() or None
-        family_names = tuple(self.searchFamilyCombo.selected_items()) or None
-        subfamily_names = tuple(self.searchSubfamilyCombo.selected_items()) or None
+        family_selection = self.searchFamilyCombo.selected_items()
+        subfamily_selection = self.searchSubfamilyCombo.selected_items()
+        family_names = tuple(family_selection) or None
+        subfamily_names = tuple(subfamily_selection) or None
         setter = getattr(self.service, "set_search_filters", None)
         if callable(setter):
             setter(
@@ -2505,11 +2520,10 @@ class FTApp(QWidget):
         self._load_record(0)
 
     def _reset_search_filters(self):
-        self.searchProductField.clear()
-        self.searchIngredientField.clear()
+        self._reset_family_filters(apply=False)
         setter = getattr(self.service, "set_search_filters", None)
         if callable(setter):
-            setter(produto=None, ingrediente=None)
+            setter(produto=None, ingrediente=None, familia=None, subfamilia=None)
         self.cur_index = 0
         self._load_record(0)
 
