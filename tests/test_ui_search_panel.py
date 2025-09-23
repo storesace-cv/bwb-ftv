@@ -143,12 +143,15 @@ def test_search_panel_toggle_and_submit(qapp):
         ft.searchProductButton.click()
         qapp.processEvents()
 
-        assert service.search_filters_calls[-1] == (
+        last_call = service.search_filters_calls[-1]
+        assert last_call == (
             "Produto 1",
             "tomate",
             ("Pratos Quentes", "Sopas"),
             ("Cremes", "Hambúrgueres"),
         )
+        assert isinstance(last_call[2], tuple)
+        assert isinstance(last_call[3], tuple)
         assert ft.cur_index == 0
 
         ft.btSearchToggle.click()

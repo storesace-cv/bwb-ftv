@@ -597,15 +597,53 @@ class DataStore:
                 produto_like = _like(produto_filtro)
                 ingrediente_like = _like(ingrediente_filtro)
 
-                def _build_membership_clause(
-                    expression: str, values: tuple[str, ...] | None
+                def _build_family_subfilters(
+                    *,
+                    family_expr: str,
+                    subfamily_expr: str,
+                    family_values: tuple[str, ...] | None,
+                    subfamily_values: tuple[str, ...] | None,
                 ) -> tuple[str, list[str]]:
-                    if not values:
-                        return "1=1", []
-                    placeholders = ", ".join("?" for _ in values)
-                    clause = f"LOWER({expression}) IN ({placeholders})"
-                    params = [entry.casefold() for entry in values]
+                    fragments: list[str] = []
+                    params: list[str] = []
+
+                    if family_values:
+                        placeholders = ", ".join("?" for _ in family_values)
+                        fragments.append(
+                            f"{family_expr} IN ({placeholders})"
+                        )
+                        params.extend(value.casefold() for value in family_values)
+
+                    if subfamily_values:
+                        placeholders = ", ".join("?" for _ in subfamily_values)
+                        fragments.append(
+                            f"{subfamily_expr} IN ({placeholders})"
+                        )
+                        params.extend(value.casefold() for value in subfamily_values)
+
+                    if not fragments:
+                        return "", []
+
+                    clause = " AND ".join(fragments)
                     return clause, params
+
+                def _merge_primary_fallback(
+                    primary_clause: str,
+                    primary_params: list[str],
+                    fallback_clause: str,
+                    fallback_params: list[str],
+                ) -> tuple[str, list[str]]:
+                    if primary_clause and fallback_clause:
+                        merged = f"(({primary_clause}) OR ({fallback_clause}))"
+                        return merged, primary_params + fallback_params
+                    if primary_clause:
+                        return f"({primary_clause})", primary_params
+                    if fallback_clause:
+                        return f"({fallback_clause})", fallback_params
+                    return "1=1", []
+
+                def _ensure_clause(clause: str) -> str:
+                    return f"({clause})" if clause else "1=1"
 
                 fallback_family = (
                     "COALESCE(TRIM(CASE "
@@ -622,26 +660,28 @@ class DataStore:
                     "END), '')"
                 )
 
-                family_expr_produtos = (
-                    "COALESCE(NULLIF(TRIM(p.Familia), ''), " + fallback_family + ")"
+                family_clause_produtos, family_params_produtos = _build_family_subfilters(
+                    family_expr="LOWER(TRIM(p.Familia))",
+                    subfamily_expr="LOWER(TRIM(p.SubFamilia))",
+                    family_values=familia_filtro,
+                    subfamily_values=subfamilia_filtro,
                 )
-                subfamily_expr_produtos = (
-                    "COALESCE(NULLIF(TRIM(p.SubFamilia), ''), "
-                    + fallback_subfamily
-                    + ")"
+                family_clause_fallback, family_params_fallback = _build_family_subfilters(
+                    family_expr=f"LOWER({fallback_family})",
+                    subfamily_expr=f"LOWER({fallback_subfamily})",
+                    family_values=familia_filtro,
+                    subfamily_values=subfamilia_filtro,
                 )
-                family_clause_produtos, family_params_produtos = _build_membership_clause(
-                    family_expr_produtos, familia_filtro
+
+                combined_clause_produtos, combined_params_produtos = _merge_primary_fallback(
+                    family_clause_produtos,
+                    family_params_produtos,
+                    family_clause_fallback,
+                    family_params_fallback,
                 )
-                subfamily_clause_produtos, subfamily_params_produtos = _build_membership_clause(
-                    subfamily_expr_produtos, subfamilia_filtro
-                )
-                family_clause_ft, family_params_ft = _build_membership_clause(
-                    fallback_family, familia_filtro
-                )
-                subfamily_clause_ft, subfamily_params_ft = _build_membership_clause(
-                    fallback_subfamily, subfamilia_filtro
-                )
+
+                fallback_only_clause = _ensure_clause(family_clause_fallback)
+                fallback_only_params = list(family_params_fallback)
 
                 if has_produtos:
                     query = (
@@ -654,18 +694,14 @@ class DataStore:
                         "AND COALESCE(ft.ComponenteNome, '') "
                         "LIKE ? ESCAPE '\\' COLLATE NOCASE "
                         "AND "
-                        + family_clause_produtos
-                        + " "
-                        "AND "
-                        + subfamily_clause_produtos
+                        + combined_clause_produtos
                         + " "
                         "ORDER BY Codigo"
                     )
                     params = (
                         produto_like,
                         ingrediente_like,
-                        *family_params_produtos,
-                        *subfamily_params_produtos,
+                        *combined_params_produtos,
                     )
                     source = (
                         "sql:Produtos filtrado"
@@ -679,18 +715,14 @@ class DataStore:
                         "WHERE COALESCE(ft.ProdutoNome, '') LIKE ? ESCAPE '\\' COLLATE NOCASE "
                         "AND COALESCE(ft.ComponenteNome, '') LIKE ? ESCAPE '\\' COLLATE NOCASE "
                         "AND "
-                        + family_clause_ft
-                        + " "
-                        "AND "
-                        + subfamily_clause_ft
+                        + fallback_only_clause
                         + " "
                         "ORDER BY ft.ProdutoCodigo"
                     )
                     params = (
                         produto_like,
                         ingrediente_like,
-                        *family_params_ft,
-                        *subfamily_params_ft,
+                        *fallback_only_params,
                     )
                     source = (
                         "sql:FichasTecnicas filtrado"
