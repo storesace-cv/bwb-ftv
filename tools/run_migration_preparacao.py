@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Fase 3 — Executar migração do bloco [B6] PREPARAÇÃO (produto_preparacao)
+Fase 3 — Executar migração do bloco [B4] PREPARAÇÃO (produto_preparacao)
 Uso: python3 tools/run_migration_preparacao.py
 (pode ser executado a partir de qualquer diretório)
 

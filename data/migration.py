@@ -522,7 +522,7 @@ def _seed_temperaturas(conn: sqlite3.Connection) -> None:
 
 
 def ensure_preparacao_table(conn: sqlite3.Connection) -> None:
-    """Ensure table ``ProdutoPreparacao`` exists for bloco ``[B6]`` PREPARAÇÃO.
+    """Ensure table ``ProdutoPreparacao`` exists for bloco ``[B4]`` PREPARAÇÃO.
 
     If the table is missing, legacy SQL migrations ``preparacao.sql`` and
     ``rename_to_camelcase.sql`` are executed.  Errors from missing tables or

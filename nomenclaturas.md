@@ -49,6 +49,6 @@ Este documento consolida os termos mais recorrentes encontrados no código-fonte
 | **databases/backups/** | Diretório padrão para cópias de segurança geradas automaticamente. | Referenciado em `docs/agent_resources.md`. | Backup Agent / Equipa de Operações.
 | **databases/allergens.json** | Ficheiro JSON opcional para importar alergénios antes do seeding automático. | Referenciado no `README.md`. | Data Import Agent.
 | **tools/cleanup_schema.py** | Script que sincroniza `Produtos`, `FichasTecnicas` e `PrecosTaxas` com os cabeçalhos atuais. | Documentado em `README.md` e `docs/agent_resources.md`. | Schema Maintenance Agent.
-| **tools/run_migration_preparacao.py** | Script CLI que aplica migrações do bloco `[B6]` PREPARAÇÃO e valida a tabela `ProdutoPreparacao`. | Referenciado em `docs/agent_resources.md`. | Migration Agent.
+| **tools/run_migration_preparacao.py** | Script CLI que aplica migrações do bloco `[B4]` PREPARAÇÃO e valida a tabela `ProdutoPreparacao`. | Referenciado em `docs/agent_resources.md`. | Migration Agent.
 
 > **Nota:** sempre que um termo deixar de ser utilizado ou sofrer alteração de significado, remova ou ajuste a respetiva linha e notifique os responsáveis indicados.

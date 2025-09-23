@@ -87,23 +87,25 @@ _ZONE_TAGS: Mapping[str, str] = {
     "article_sheet_right": "B1.C1.B",
 
     # --- Simplified viewer aliases (other blocks) -----------------------
-    "viewer_technical_state": "B4.C3",
-    "viewer_technical_validity": "B4.C4",
-    "viewer_notes_observations": "B5.C1",
+    "viewer_technical_state": "B2.C3",
+    "viewer_technical_validity": "B2.C4",
+
+    # Observações (B3.C2)
+    "food_cost_observations": "B3.C2",
 
     # --- Ficha Técnica ----------------------------------------------------
-    "ingredients_root": "B4.C1",
-    "ingredients_secondary": "B4.C2",
+    "ingredients_root": "B2.C1",
+    "ingredients_secondary": "B2.C2",
 
     # --- FOOD COST --------------------------------------------------------
-    "food_cost_root": "B5.C1",
+    "food_cost_root": "B3.C1",
 
     # --- PREPARAÇÃO -------------------------------------------------------
-    "preparation_root": "B6.C1",
+    "preparation_root": "B4.C1",
 
     # --- NUTRIÇÃO / ALERGÉNIOS -------------------------------------------
-    "allergens_root": "B7.C1",
-    "allergens_secondary": "B7.C2",
+    "allergens_root": "B5.C1",
+    "allergens_secondary": "B5.C2",
 }
 
 
