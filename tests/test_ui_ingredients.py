@@ -5,7 +5,14 @@ require_real_qt_modules("PyQt5.QtWidgets", "PyQt5.QtCore", "PyQt5.QtGui")
 
 from PyQt5.QtCore import QSize, Qt, QPoint
 from PyQt5.QtGui import QResizeEvent
-from PyQt5.QtWidgets import QFrame, QSizePolicy, QHBoxLayout, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import (
+    QFrame,
+    QSizePolicy,
+    QHBoxLayout,
+    QVBoxLayout,
+    QLabel,
+    QTableView,
+)
 from services.products import ProductService
 from ui import layout
 from ui.layout import Zone
@@ -83,6 +90,9 @@ def test_load_record_populates_ingredients(qapp):
     ft = FTApp(service)
     ft._load_record(0)
     model = ft.tbIng.model()
+    zone = ft.findChild(Zone, "B2.C1.1")
+    assert zone is not None
+    assert zone.findChild(QTableView) is ft.tbIng
     assert ft.lbInformacaoAdicional.text() == "Sem glúten"
     assert model.rowCount() == 2
     expected = ds.get_ingredientes("P1")
@@ -94,8 +104,11 @@ def test_load_record_populates_ingredients(qapp):
         assert model.data(model.index(row, 4)) == format_pt_number(data["Preco"])
         assert model.data(model.index(row, 5)) == format_pt_number(data["Peso"])
         assert model.item(row, 0).textAlignment() == Qt.AlignLeft | Qt.AlignVCenter
-        for col in range(1, 6):
-            assert model.item(row, col).textAlignment() == Qt.AlignRight | Qt.AlignVCenter
+        assert model.item(row, 1).textAlignment() == Qt.AlignHCenter | Qt.AlignVCenter
+        assert model.item(row, 2).textAlignment() == Qt.AlignHCenter | Qt.AlignVCenter
+        assert model.item(row, 3).textAlignment() == Qt.AlignRight | Qt.AlignVCenter
+        assert model.item(row, 4).textAlignment() == Qt.AlignRight | Qt.AlignVCenter
+        assert model.item(row, 5).textAlignment() == Qt.AlignHCenter | Qt.AlignVCenter
     assert not ft.tbIng.isColumnHidden(0)
     assert model.columnCount() == 6
     assert not ft.tbIng.verticalHeader().isVisible()
@@ -116,6 +129,7 @@ def test_ingredient_table_style_includes_bottom_border(qapp):
         assert "margin: 0" in style
         assert "padding: 0" in style
         assert "border-bottom: 1px solid #dfe3eb" in style
+        assert "text-align" not in style
         assert "QTableView::item:last" in style
         assert "border-bottom: none" in style
     finally:
