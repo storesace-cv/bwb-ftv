@@ -93,7 +93,7 @@ def test_allergen_checkbox_tooltip(qapp):
     service = AllergenServiceStub()
     ft = FTApp(service)
     try:
-        checkboxes = ft.B7_C1.findChildren(QCheckBox)
+        checkboxes = ft.B5_C1.findChildren(QCheckBox)
         tooltip_by_name = {cb.text(): cb.toolTip() for cb in checkboxes}
         expected = "Pão, Massa\nEvitar contaminação"
         assert tooltip_by_name["Glúten"] == expected

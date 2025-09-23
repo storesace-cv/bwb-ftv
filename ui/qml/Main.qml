@@ -344,7 +344,7 @@ ApplicationWindow {
             showOverlays: root.showDevOverlays
 
             Zone {
-                tag: zoneTagMap["viewer_notes_observations"]
+                tag: zoneTagMap["food_cost_observations"]
                 title: qsTr("Observações")
                 zoneType: "bloco-food-cost"
                 widgetType: "campo"

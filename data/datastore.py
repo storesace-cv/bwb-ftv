@@ -955,7 +955,7 @@ class DataStore:
             )
             return False
 
-    # Preparação (B6)
+    # Preparação (B4)
     def get_preparacao_html(self, codigo: str) -> str:
         if not self.prep:
             return ""

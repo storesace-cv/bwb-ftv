@@ -46,19 +46,19 @@ def test_checkbox_right_click_keeps_clipboard(qapp, qtbot):
     ft = FTApp.__new__(FTApp)
     ft.service = _DummyAllergenService()
     ft._allergen_checkboxes = {}
-    ft.B7_C1 = Zone(
+    ft.B5_C1 = Zone(
         zone_tag("allergens_root"),
         show_overlays=False,
         theme_name="bwb-style-1",
         widget_type="caixa de seleção",
     )
-    ft.C7 = ft.B7_C1
-    qtbot.addWidget(ft.B7_C1)
+    ft.C5 = ft.B5_C1
+    qtbot.addWidget(ft.B5_C1)
     ft._build_allergens_grid()
     checkbox = ft._allergen_checkboxes[1]
     tooltip_text = checkbox.toolTip()
-    ft.B7_C1.show()
-    qtbot.waitUntil(ft.B7_C1.isVisible)
+    ft.B5_C1.show()
+    qtbot.waitUntil(ft.B5_C1.isVisible)
     before = qapp.clipboard().text()
     qtbot.mouseClick(checkbox, Qt.RightButton, pos=checkbox.rect().center(), delay=10)
     qtbot.wait(50)
