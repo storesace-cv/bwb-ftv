@@ -209,26 +209,25 @@ class SquarePreviewContainer(QWidget):
         self.setMinimumSize(child.minimumSize())
 
 
-class MultiSelectComboBox(SquarePreviewContainer):
+class MultiSelectComboBox(QComboBox):
     """Combo box that supports multiple selections via checkable items."""
 
     selectionChanged = pyqtSignal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        inner_combo = QComboBox(parent)
-        self.combo = inner_combo
-        SquarePreviewContainer.__init__(self, inner_combo, parent)
+        super().__init__(parent)
 
-        self.combo.setModel(QStandardItemModel(self.combo))
-        self.combo.setEditable(True)
-        line_edit = QLineEdit(self.combo)
+        self.setModel(QStandardItemModel(self))
+        self.setEditable(True)
+        line_edit = QLineEdit(self)
         line_edit.setReadOnly(True)
         line_edit.setFocusPolicy(Qt.NoFocus)
         line_edit.setText("")
-        self.combo.setLineEdit(line_edit)
-        self.combo.lineEdit().setPlaceholderText("")
-        self.combo.setInsertPolicy(QComboBox.NoInsert)
-        self.combo.view().pressed.connect(self._handle_item_pressed)
+        self.setLineEdit(line_edit)
+        self.lineEdit().setPlaceholderText("")
+        self.setInsertPolicy(QComboBox.NoInsert)
+        self.view().pressed.connect(self._handle_item_pressed)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self._placeholder_text = ""
         self._separator = ", "
         self._block_hide = False
@@ -236,16 +235,16 @@ class MultiSelectComboBox(SquarePreviewContainer):
 
     def showPopup(self) -> None:  # pragma: no cover - UI integration
         self._block_hide = False
-        self.combo.showPopup()
+        super().showPopup()
 
     def hidePopup(self) -> None:  # pragma: no cover - UI integration
         if self._block_hide:
             self._block_hide = False
             return
-        self.combo.hidePopup()
+        super().hidePopup()
 
     def _handle_item_pressed(self, index) -> None:
-        model = self.combo.model()
+        model = self.model()
         if model is None:
             return
         item = model.itemFromIndex(index)
@@ -261,7 +260,7 @@ class MultiSelectComboBox(SquarePreviewContainer):
 
     def set_placeholder_text(self, text: str) -> None:
         self._placeholder_text = text
-        line_edit = self.combo.lineEdit()
+        line_edit = self.lineEdit()
         if line_edit is not None:
             line_edit.setPlaceholderText(text)
         self._update_display_text()
@@ -272,7 +271,7 @@ class MultiSelectComboBox(SquarePreviewContainer):
         *,
         checked: Iterable[str] | None = None,
     ) -> None:
-        model = self.combo.model()
+        model = self.model()
         if model is None:
             return
         existing_selection = (
@@ -303,7 +302,7 @@ class MultiSelectComboBox(SquarePreviewContainer):
         self._update_display_text()
 
     def selected_items(self) -> list[str]:
-        model = self.combo.model()
+        model = self.model()
         if model is None:
             return []
         selections: list[str] = []
@@ -316,7 +315,7 @@ class MultiSelectComboBox(SquarePreviewContainer):
         return selections
 
     def select_items(self, values: Iterable[str]) -> None:
-        model = self.combo.model()
+        model = self.model()
         if model is None:
             return
         wanted = {str(value).strip() for value in values if value}
@@ -336,7 +335,7 @@ class MultiSelectComboBox(SquarePreviewContainer):
     def _update_display_text(self) -> None:
         selections = self.selected_items()
         display_text = self._separator.join(selections)
-        line_edit = self.combo.lineEdit()
+        line_edit = self.lineEdit()
         if line_edit is None:
             return
         if not selections:
@@ -347,37 +346,11 @@ class MultiSelectComboBox(SquarePreviewContainer):
 
     # QObject API ----------------------------------------------------
     def blockSignals(self, block: bool) -> bool:
-        prev = self.combo.blockSignals(block)
-        super().blockSignals(block)
+        prev = super().blockSignals(block)
+        line_edit = self.lineEdit()
+        if line_edit is not None:
+            line_edit.blockSignals(block)
         return prev
-
-    # QWidget API -----------------------------------------------------
-    def hasHeightForWidth(self) -> bool:  # pragma: no cover - layout hint
-        return True
-
-    def heightForWidth(self, width: int) -> int:  # pragma: no cover - layout hint
-        return width
-
-    def sizeHint(self):  # pragma: no cover - layout hint
-        hint = self._child.sizeHint()
-        if hint.isValid():
-            side = max(hint.width(), hint.height())
-            return QSize(side, side)
-        return super().sizeHint()
-
-    def minimumSizeHint(self):  # pragma: no cover - layout hint
-        hint = self._child.minimumSizeHint()
-        if hint.isValid():
-            side = max(hint.width(), hint.height())
-            return QSize(side, side)
-        return super().minimumSizeHint()
-
-    def resizeEvent(self, event):  # pragma: no cover - GUI
-        super().resizeEvent(event)
-        side = min(self.width(), self.height())
-        x_offset = (self.width() - side) // 2
-        y_offset = (self.height() - side) // 2
-        self._child.setGeometry(x_offset, y_offset, side, side)
 
 
 class ImagePreview(QLabel):
@@ -858,6 +831,10 @@ class FTApp(QWidget):
         self.searchFamilyCombo.set_placeholder_text("Famílias")
         self.searchSubfamilyCombo = MultiSelectComboBox(search_center_widget)
         self.searchSubfamilyCombo.set_placeholder_text("Subfamílias")
+        # ``searchFamilyField``/``searchSubfamilyField`` eram QLineEdit; manter alias
+        # para compatibilidade com código legado e testes externos.
+        self.searchFamilyField = self.searchFamilyCombo
+        self.searchSubfamilyField = self.searchSubfamilyCombo
         self.searchFamilyResetButton = QPushButton(
             "Mostrar todas as famílias", search_center_widget
         )
