@@ -209,23 +209,26 @@ class SquarePreviewContainer(QWidget):
         self.setMinimumSize(child.minimumSize())
 
 
-class MultiSelectComboBox(QComboBox):
+class MultiSelectComboBox(SquarePreviewContainer):
     """Combo box that supports multiple selections via checkable items."""
 
     selectionChanged = pyqtSignal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        super().__init__(parent)
-        self.setModel(QStandardItemModel(self))
-        self.setEditable(True)
-        line_edit = QLineEdit(self)
+        inner_combo = QComboBox(parent)
+        self.combo = inner_combo
+        SquarePreviewContainer.__init__(self, inner_combo, parent)
+
+        self.combo.setModel(QStandardItemModel(self.combo))
+        self.combo.setEditable(True)
+        line_edit = QLineEdit(self.combo)
         line_edit.setReadOnly(True)
         line_edit.setFocusPolicy(Qt.NoFocus)
         line_edit.setText("")
-        self.setLineEdit(line_edit)
-        self.lineEdit().setPlaceholderText("")
-        self.setInsertPolicy(QComboBox.NoInsert)
-        self.view().pressed.connect(self._handle_item_pressed)
+        self.combo.setLineEdit(line_edit)
+        self.combo.lineEdit().setPlaceholderText("")
+        self.combo.setInsertPolicy(QComboBox.NoInsert)
+        self.combo.view().pressed.connect(self._handle_item_pressed)
         self._placeholder_text = ""
         self._separator = ", "
         self._block_hide = False
@@ -233,16 +236,16 @@ class MultiSelectComboBox(QComboBox):
 
     def showPopup(self) -> None:  # pragma: no cover - UI integration
         self._block_hide = False
-        super().showPopup()
+        self.combo.showPopup()
 
     def hidePopup(self) -> None:  # pragma: no cover - UI integration
         if self._block_hide:
             self._block_hide = False
             return
-        super().hidePopup()
+        self.combo.hidePopup()
 
     def _handle_item_pressed(self, index) -> None:
-        model = self.model()
+        model = self.combo.model()
         if model is None:
             return
         item = model.itemFromIndex(index)
@@ -258,7 +261,7 @@ class MultiSelectComboBox(QComboBox):
 
     def set_placeholder_text(self, text: str) -> None:
         self._placeholder_text = text
-        line_edit = self.lineEdit()
+        line_edit = self.combo.lineEdit()
         if line_edit is not None:
             line_edit.setPlaceholderText(text)
         self._update_display_text()
@@ -269,7 +272,7 @@ class MultiSelectComboBox(QComboBox):
         *,
         checked: Iterable[str] | None = None,
     ) -> None:
-        model = self.model()
+        model = self.combo.model()
         if model is None:
             return
         existing_selection = (
@@ -300,7 +303,7 @@ class MultiSelectComboBox(QComboBox):
         self._update_display_text()
 
     def selected_items(self) -> list[str]:
-        model = self.model()
+        model = self.combo.model()
         if model is None:
             return []
         selections: list[str] = []
@@ -313,7 +316,7 @@ class MultiSelectComboBox(QComboBox):
         return selections
 
     def select_items(self, values: Iterable[str]) -> None:
-        model = self.model()
+        model = self.combo.model()
         if model is None:
             return
         wanted = {str(value).strip() for value in values if value}
@@ -333,7 +336,7 @@ class MultiSelectComboBox(QComboBox):
     def _update_display_text(self) -> None:
         selections = self.selected_items()
         display_text = self._separator.join(selections)
-        line_edit = self.lineEdit()
+        line_edit = self.combo.lineEdit()
         if line_edit is None:
             return
         if not selections:
@@ -342,8 +345,11 @@ class MultiSelectComboBox(QComboBox):
         else:
             line_edit.setText(display_text)
 
-        self.setMaximumSize(child.maximumSize())
-        self._child.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+    # QObject API ----------------------------------------------------
+    def blockSignals(self, block: bool) -> bool:
+        prev = self.combo.blockSignals(block)
+        super().blockSignals(block)
+        return prev
 
     # QWidget API -----------------------------------------------------
     def hasHeightForWidth(self) -> bool:  # pragma: no cover - layout hint
