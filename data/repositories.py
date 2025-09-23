@@ -238,15 +238,22 @@ class IngredientesRepo:
         """Devolve dados do produto em ``FichasTecnicas``.
 
         Retorna uma lista de dicts com as chaves canónicas
-        ``ComponenteNome``, ``Qtd``, ``Unidade``, ``Ppu``, ``Preco`` e
-        ``ComponenteCodigo``.
+        ``ComponenteNome``, ``Qtd``, ``Unidade``, ``Ppu``, ``Preco``,
+        ``Peso`` e ``ComponenteCodigo``.
         """
 
         cur = self.conn.cursor()
         try:
             cur.execute(
                 """
-                SELECT ComponenteNome, Qtd, Unidade, Ppu, Preco, ComponenteCodigo
+                SELECT
+                    ComponenteNome,
+                    Qtd,
+                    Unidade,
+                    Ppu,
+                    Preco,
+                    Peso,
+                    ComponenteCodigo
                 FROM FichasTecnicas
                 WHERE TRIM(ProdutoCodigo) = TRIM(?)
                 ORDER BY Ordem
@@ -272,7 +279,8 @@ class IngredientesRepo:
                     "Unidade": r[2],
                     "Ppu": r[3],
                     "Preco": r[4],
-                    "ComponenteCodigo": r[5],
+                    "Peso": r[5],
+                    "ComponenteCodigo": r[6],
                 }
             )
         return out

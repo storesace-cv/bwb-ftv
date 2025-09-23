@@ -14,6 +14,7 @@ class Ingredient:
     ppu: float | None = None
     total: float | None = None
     code: str | None = None
+    weight: float | None = None
 
 
 @dataclass
@@ -26,6 +27,7 @@ class FichaTecnica:
     ppu: float | None = None
     total: float | None = None
     code: str | None = None
+    weight: float | None = None
 
 
 @dataclass
