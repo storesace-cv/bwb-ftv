@@ -167,6 +167,7 @@ from .dialogs import (
     restore_database,
     edit_fcost_values,
 )
+from .printing import generate_ft_gestao_pdf
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
 
@@ -622,6 +623,36 @@ class FTApp(QWidget):
         update_data(self, self.service, self._load_record, self.cur_index)
         self._refresh_datastore()
 
+    def _on_print_ft_gestao_actual(self) -> None:
+        """Export the currently loaded product as FT Gestão (single record)."""
+
+        product = getattr(self, "current_product", None)
+        if product is None:
+            QMessageBox.warning(
+                self,
+                APP_TITLE,
+                "Não existe ficha técnica carregada para exportação.",
+            )
+            return
+
+        identifier = getattr(product, "code", None) or getattr(
+            product, "name", "<desconhecido>"
+        )
+        try:
+            logger.info(
+                "[Print] FT Gestão (Actual) solicitado para produto %s", identifier
+            )
+            generate_ft_gestao_pdf(product)
+        except NotImplementedError:
+            logger.info(
+                "[Print] Geração FT Gestão (Actual) ainda não implementada para %s",
+                identifier,
+            )
+        except Exception:
+            logger.exception(
+                "[Print] Erro ao gerar FT Gestão (Actual) para produto %s", identifier
+            )
+
     def _section_box(self, title: str, zone: Zone) -> QGroupBox:
         user_title = re.sub(r"^\[[^\]]+\]\s*-\s*", "", title).strip()
         box = QGroupBox()
@@ -713,7 +744,7 @@ class FTApp(QWidget):
         mPrint = QMenu(self.btPrintMenu)
         apply_menu_font(mPrint)
         mPrint.addAction("FT's Gestão (filtro)")
-        mPrint.addAction("FT's Gestão (Actual)")
+        actPrintGestaoActual = mPrint.addAction("FT's Gestão (Actual)")
         mPrint.addAction("FT's Operacionais (filtro)")
         mPrint.addAction("FT's Operacionais (Actual)")
         self.btPrintMenu.setMenu(mPrint)
@@ -758,6 +789,7 @@ class FTApp(QWidget):
         self.btMenu.setMenu(self.mnuRoot)
         # ligações básicas
         actReload.triggered.connect(self._on_import_data)
+        actPrintGestaoActual.triggered.connect(self._on_print_ft_gestao_actual)
         actUpdate.triggered.connect(self._on_update_data)
         actBackup.triggered.connect(lambda: backup_database(self, self.ds))
         actRestore.triggered.connect(
