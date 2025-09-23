@@ -20,6 +20,8 @@
 #
 # Changelog
 # ---------
+# 2025-09-23 18:23 — v3.110 — Menu de impressão dedicado com atalhos para
+#    relatórios de FT's Gestão e Operacionais.
 # 2025-09-21 11:20 — v3.108 — Inserida célula reservada B1.A1.A.2 e
 #    realinhados os separadores auxiliares para corresponder à nomenclatura.
 # 2025-09-21 14:45 — v3.109 — Família/Sub-família e combos passam para
@@ -683,11 +685,19 @@ class FTApp(QWidget):
         from PyQt5.QtWidgets import QMenu, QToolButton
 
         self.btMenu = QToolButton()
+        self.btPrintMenu = QToolButton()
+        self.btPrintMenu.setPopupMode(QToolButton.InstantPopup)
+        self.btPrintMenu.setToolButtonStyle(Qt.ToolButtonIconOnly)
+        self.btPrintMenu.setIcon(
+            self.style().standardIcon(QStyle.SP_DialogPrintButton)
+        )
         self.btMenu.setText("Menu")
         self.btMenu.setPopupMode(QToolButton.InstantPopup)
         size_hint = self.btMenu.sizeHint()
         menu_height = int(size_hint.height() * 1.5)
         self.btMenu.setFixedSize(int(size_hint.width() * 1.5), menu_height)
+        self.btPrintMenu.setFixedSize(menu_height, menu_height)
+        self.btPrintMenu.setIconSize(QSize(menu_height, menu_height))
         menu_font = QFont()
         menu_font.setPointSize(12)
 
@@ -695,9 +705,17 @@ class FTApp(QWidget):
             widget.setFont(menu_font)
             widget.setStyleSheet("font-size: 12pt;")
 
+        apply_menu_font(self.btPrintMenu)
         apply_menu_font(self.btMenu)
         self.mnuRoot = QMenu(self)
         apply_menu_font(self.mnuRoot)
+        mPrint = QMenu(self.btPrintMenu)
+        apply_menu_font(mPrint)
+        mPrint.addAction("FT's Gestão (filtro)")
+        mPrint.addAction("FT's Gestão (Actual)")
+        mPrint.addAction("FT's Operacionais (filtro)")
+        mPrint.addAction("FT's Operacionais (Actual)")
+        self.btPrintMenu.setMenu(mPrint)
         mBD = QMenu("Base de Dados", self.mnuRoot)
         apply_menu_font(mBD)
         actUpdate = QAction("Atualizar Dados", self)
@@ -817,6 +835,7 @@ class FTApp(QWidget):
         self.btSearchToggle.setToolTip("Pesquisar fichas")
         self.btSearchToggle.toggled.connect(self._toggle_search_panel)
         top.addWidget(self.btSearchToggle, 0, Qt.AlignRight)
+        top.addWidget(self.btPrintMenu, 0, Qt.AlignRight)
         top.addWidget(self.btMenu, 0, Qt.AlignRight)
         root.addLayout(top)
 
