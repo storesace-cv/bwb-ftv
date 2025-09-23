@@ -346,6 +346,14 @@ def test_set_search_filters_preserves_family_on_partial_update():
         assert ds._family_filter == ("Sopas",)
         assert ds._subfamily_filter == ("Cremes",)
         assert ds._ids == ["P3"]
+
+        ds.set_search_filters(produto="  ", ingrediente="")
+
+        assert ds._product_filter is None
+        assert ds._ingredient_filter is None
+        assert ds._family_filter == ("Sopas",)
+        assert ds._subfamily_filter == ("Cremes",)
+        assert ds._ids == ["P3"]
     finally:
         ds.close()
 
@@ -360,6 +368,20 @@ def test_set_search_filters_normalizes_iterables():
         assert ds._family_filter == ("Pratos Quentes",)
         assert ds._subfamily_filter == ("hambúrgueres",)
         assert ds._ids == ["P1"]
+    finally:
+        ds.close()
+
+
+def test_set_search_filters_accepts_multiple_families_and_subfamilias():
+    ds = _make_filter_datastore()
+    try:
+        ds.set_search_filters(
+            familia=("Pratos Quentes", " sopas "),
+            subfamilia=(" hambúrgueres ", "CREMES"),
+        )
+        assert ds._family_filter == ("Pratos Quentes", "sopas")
+        assert ds._subfamily_filter == ("hambúrgueres", "CREMES")
+        assert ds._ids == ["P1", "P3"]
     finally:
         ds.close()
 
