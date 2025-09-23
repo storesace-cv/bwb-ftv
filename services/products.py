@@ -435,14 +435,36 @@ class ProductService:
                 "ingrediente": ingrediente,
             }
 
-            def _coerce_selection(value: object) -> object:
+            def _coerce_selection(value: object) -> tuple[str, ...] | None:
                 if value is None:
                     return None
+
+                def _normalize(entry: object) -> str | None:
+                    if entry is None:
+                        return None
+                    text = str(entry).strip()
+                    return text or None
+
                 if isinstance(value, (str, bytes)):
-                    return value
+                    cleaned = _normalize(value)
+                    return (cleaned,) if cleaned else None
+
                 if isinstance(value, IterableABC):
-                    return tuple(value)
-                return value
+                    collected: list[str] = []
+                    seen: set[str] = set()
+                    for entry in value:
+                        cleaned = _normalize(entry)
+                        if cleaned is None:
+                            continue
+                        key = cleaned.casefold()
+                        if key in seen:
+                            continue
+                        seen.add(key)
+                        collected.append(cleaned)
+                    return tuple(collected) if collected else None
+
+                cleaned = _normalize(value)
+                return (cleaned,) if cleaned else None
 
             if familia is not _UNSET:
                 coerced = _coerce_selection(familia)
