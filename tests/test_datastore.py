@@ -394,6 +394,35 @@ def test_set_search_filters_accepts_multiple_families_and_subfamilias():
         ds.close()
 
 
+def test_set_search_filters_supports_fallback_only_multiple_selections():
+    ds = DataStore(db_path=":memory:")
+    try:
+        cur = ds.conn.cursor()
+        cur.execute("DROP TABLE Produtos")
+        cur.execute("DELETE FROM FichasTecnicas")
+        cur.executemany(
+            (
+                "INSERT INTO FichasTecnicas "
+                "(ProdutoCodigo, ProdutoNome, ComponenteNome, FamiliaSubfamilia) "
+                "VALUES (?, ?, ?, ?)"
+            ),
+            [
+                ("F1", "Produto 1", "Ing", "Fam A > Sub A"),
+                ("F2", "Produto 2", "Ing", "Fam B > Sub B"),
+            ],
+        )
+        ds.conn.commit()
+
+        ds.set_search_filters(
+            familia=("Fam A", "Fam B"),
+            subfamilia=("Sub A", "Sub B"),
+        )
+
+        assert ds._ids == ["F1", "F2"]
+    finally:
+        ds.close()
+
+
 def test_list_families_with_subfamilies_uses_canonical_names():
     ds = _make_filter_datastore()
     try:

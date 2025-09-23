@@ -236,18 +236,34 @@ def test_product_service_set_search_filters_coerces_iterables():
     ds = MagicMock(spec=DataStore)
     service = ProductService(ds)
 
+    expected_familias = (" Doces", "Quentes")
+    familias = (name for name in expected_familias)
     subfamilias = (name.strip() for name in ["  Bolos", "Tartes  "])
     service.set_search_filters(
-        familia=[" Doces", "Quentes"],
+        familia=familias,
         subfamilia=subfamilias,
     )
 
     ds.set_search_filters.assert_called_once()
     kwargs = ds.set_search_filters.call_args.kwargs
-    assert kwargs["familia"] == (" Doces", "Quentes")
+    assert kwargs["familia"] == expected_familias
     assert kwargs["subfamilia"] == ("Bolos", "Tartes")
     assert isinstance(kwargs["familia"], tuple)
     assert isinstance(kwargs["subfamilia"], tuple)
+
+
+def test_product_service_set_search_filters_accepts_strings():
+    ds = MagicMock(spec=DataStore)
+    service = ProductService(ds)
+
+    service.set_search_filters(familia="Doces", subfamilia="Bolos")
+
+    ds.set_search_filters.assert_called_once_with(
+        produto=None,
+        ingrediente=None,
+        familia="Doces",
+        subfamilia="Bolos",
+    )
 
 
 def test_product_service_set_search_filters_omits_unset_families():
