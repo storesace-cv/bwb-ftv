@@ -131,6 +131,7 @@ from PyQt5.QtWidgets import (
     QFrame,
     QStyle,
     QComboBox,
+    QListView,
 )
 from data.datastore import DataStore
 from services.products import ProductService, calculate_food_cost
@@ -218,6 +219,9 @@ class MultiSelectComboBox(QComboBox):
         super().__init__(parent)
 
         self.setModel(QStandardItemModel(self))
+        view = QListView(self)
+        view.setSelectionMode(QListView.MultiSelection)
+        self.setView(view)
         self.setEditable(True)
         line_edit = QLineEdit(self)
         line_edit.setReadOnly(True)
@@ -334,15 +338,16 @@ class MultiSelectComboBox(QComboBox):
 
     def _update_display_text(self) -> None:
         selections = self.selected_items()
-        display_text = self._separator.join(selections)
         line_edit = self.lineEdit()
         if line_edit is None:
             return
         if not selections:
             line_edit.setText("")
             line_edit.setPlaceholderText(self._placeholder_text)
+        elif len(selections) == 1:
+            line_edit.setText(selections[0])
         else:
-            line_edit.setText(display_text)
+            line_edit.setText("-- Selecção Múltipla")
 
     # QObject API ----------------------------------------------------
     def blockSignals(self, block: bool) -> bool:
@@ -835,30 +840,26 @@ class FTApp(QWidget):
         # para compatibilidade com código legado e testes externos.
         self.searchFamilyField = self.searchFamilyCombo
         self.searchSubfamilyField = self.searchSubfamilyCombo
-        self.searchFamilyResetButton = QPushButton(
-            "Mostrar todas as famílias", search_center_widget
-        )
         self.searchFamilyApplyButton = QPushButton("IR", search_center_widget)
+        self.searchFamilyApplyButton.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Fixed
+        )
 
-        for btn in (self.searchFamilyResetButton, self.searchFamilyApplyButton):
-            btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-
-        buttons_row = QWidget(search_center_widget)
-        buttons_layout = QGridLayout(buttons_row)
-        buttons_layout.setContentsMargins(0, 0, 0, 0)
-        buttons_layout.setHorizontalSpacing(6)
-        buttons_layout.setVerticalSpacing(0)
-        buttons_layout.addWidget(self.searchFamilyResetButton, 0, 0)
-        buttons_layout.addWidget(self.searchFamilyApplyButton, 0, 1)
-        buttons_layout.setColumnStretch(0, 1)
-        buttons_layout.setColumnStretch(1, 1)
-
-        search_center_layout.addWidget(self.searchFamilyCombo, 0, 0, 1, 2)
+        search_center_layout.addWidget(self.searchFamilyCombo, 0, 0)
+        search_center_layout.addWidget(self.searchFamilyApplyButton, 0, 1)
         search_center_layout.addWidget(self.searchSubfamilyCombo, 1, 0, 1, 2)
-        search_center_layout.addWidget(buttons_row, 2, 0, 1, 2)
         search_center_layout.setColumnStretch(0, 1)
+        search_center_layout.setColumnStretch(1, 0)
 
         self.searchCenterZone.ly.addWidget(search_center_widget)
+
+        self.searchFamilyResetButton = QPushButton(
+            "Mostrar todas as famílias", self.searchCenterZone
+        )
+        self.searchFamilyResetButton.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Fixed
+        )
+        self.searchCenterZone.ly.addWidget(self.searchFamilyResetButton)
 
         self.searchFamilyCombo.selectionChanged.connect(
             self._on_family_selection_changed
@@ -2520,12 +2521,9 @@ class FTApp(QWidget):
         self._load_record(0)
 
     def _reset_search_filters(self):
-        self._reset_family_filters(apply=False)
-        setter = getattr(self.service, "set_search_filters", None)
-        if callable(setter):
-            setter(produto=None, ingrediente=None, familia=None, subfamilia=None)
-        self.cur_index = 0
-        self._load_record(0)
+        self.searchProductField.setText("")
+        self.searchIngredientField.setText("")
+        self._apply_search_filters()
 
     def _connect_nav(self):
         self.btFirst.clicked.connect(lambda: self._goto(0))
