@@ -167,7 +167,7 @@ from .dialogs import (
     restore_database,
     edit_fcost_values,
 )
-from .printing import generate_ft_gestao_pdf
+from .printing import ExportCancelled, generate_ft_gestao_pdf
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
 
@@ -642,16 +642,53 @@ class FTApp(QWidget):
             logger.info(
                 "[Print] FT Gestão (Actual) solicitado para produto %s", identifier
             )
-            generate_ft_gestao_pdf(product)
-        except NotImplementedError:
+            output_path = generate_ft_gestao_pdf(product, parent=self)
+        except ExportCancelled:
             logger.info(
-                "[Print] Geração FT Gestão (Actual) ainda não implementada para %s",
+                "[Print] Exportação FT Gestão cancelada pelo utilizador (%s)",
                 identifier,
             )
+            return
+        except (TypeError, ValueError) as exc:
+            logger.warning(
+                "[Print] Dados inválidos para exportar FT Gestão de %s: %s",
+                identifier,
+                exc,
+            )
+            QMessageBox.warning(
+                self,
+                APP_TITLE,
+                "Não foi possível exportar a ficha de gestão: dados incompletos.",
+            )
+            return
         except Exception:
             logger.exception(
                 "[Print] Erro ao gerar FT Gestão (Actual) para produto %s", identifier
             )
+            QMessageBox.critical(
+                self,
+                APP_TITLE,
+                "Ocorreu um erro ao exportar a ficha de gestão. Consulte os logs.",
+            )
+            return
+
+        if not output_path:
+            logger.info(
+                "[Print] Exportação FT Gestão ignorada para %s (sem destino)",
+                identifier,
+            )
+            return
+
+        QMessageBox.information(
+            self,
+            APP_TITLE,
+            f"Ficha de Gestão exportada com sucesso para:\n{output_path}",
+        )
+        logger.info(
+            "[Print] FT Gestão (Actual) concluída em %s para %s",
+            output_path,
+            identifier,
+        )
 
     def _section_box(self, title: str, zone: Zone) -> QGroupBox:
         user_title = re.sub(r"^\[[^\]]+\]\s*-\s*", "", title).strip()
