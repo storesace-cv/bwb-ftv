@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import zlib
+import re
 from pathlib import Path
+
+import pytest
 
 from tests._qt import require_real_qt_modules
 
 from domain.models import Ingredient, Product
-from ui.printing import _prepare_management_payload, _render_pdf
+from ui.printing import _configure_printer, _prepare_management_payload, _render_pdf
 
 
 def _extract_pdf_streams(path: Path) -> list[str]:
@@ -31,6 +34,14 @@ def _extract_pdf_streams(path: Path) -> list[str]:
         streams.append(decoded.decode("latin-1", "ignore"))
         start = end + len("endstream")
     return streams
+
+
+def _rect_widths(stream: str) -> list[float]:
+    pattern = re.compile(r"-?\d+(?:\.\d+)?\s+-?\d+(?:\.\d+)?\s+(-?\d+(?:\.\d+)?)\s+-?\d+(?:\.\d+)?\s+re")
+    widths: list[float] = []
+    for match in pattern.finditer(stream):
+        widths.append(float(match.group(1)))
+    return widths
 
 
 def test_management_pdf_contains_brand_elements(qapp, tmp_path):
@@ -83,6 +94,59 @@ def test_management_pdf_contains_brand_elements(qapp, tmp_path):
     assert "0.933333333 0.960784313 1 scn" in combined
     assert "0.290196078 0.435294117 0.647058823 scn" in combined
     assert combined.count(" re") >= 6
+
+
+def test_qt_pdf_block_width_matches_printable_area(qapp, tmp_path):
+    modules = require_real_qt_modules(
+        "PyQt5.QtWidgets", "PyQt5.QtGui", "PyQt5.QtPrintSupport"
+    )
+    if not modules:
+        pytest.skip("Real Qt modules are required")
+
+    from PyQt5.QtPrintSupport import QPrinter
+
+    product = Product(
+        code="P010",
+        name="Produto Largura",
+        familia="Família",
+        subfamilia="Sub",
+        informacao_adicional="Notas",
+        tipo_artigo_cod=2,
+        validade_cod=5,
+        temperatura_cod=3,
+        pvps=[12.5],
+        iva=23,
+        ingredients=[
+            Ingredient(
+                name="Ingrediente A",
+                quantity=1.5,
+                unit="kg",
+                ppu=2.5,
+                total=3.75,
+                code="I001",
+                weight=1.5,
+            )
+        ],
+    )
+
+    payload = _prepare_management_payload(product)
+    pdf_path = tmp_path / "ft_gestao_width.pdf"
+    printer = _configure_printer(pdf_path, (595.28, 841.89))
+    printable_width = printer.pageRect(QPrinter.Point).width()
+    del printer
+
+    _render_pdf(payload, pdf_path, (595.28, 841.89))
+
+    streams = _extract_pdf_streams(pdf_path)
+    assert streams, "expected at least one PDF stream"
+
+    widths: list[float] = []
+    for stream in streams:
+        widths.extend(_rect_widths(stream))
+
+    assert widths, "expected at least one rectangle command"
+    widest = max(widths)
+    assert widest == pytest.approx(printable_width, abs=0.6)
 
 
 def test_basic_pdf_preserves_unicode(tmp_path, monkeypatch):
