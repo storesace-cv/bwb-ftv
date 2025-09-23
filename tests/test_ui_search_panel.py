@@ -44,16 +44,22 @@ class RecordingService(ProductService):
     def __init__(self, ds):
         super().__init__(ds)
         self.search_filters_calls: list[
-            tuple[str | None, str | None, str | None, str | None]
+            tuple[
+                str | None,
+                str | None,
+                tuple[str, ...] | None,
+                tuple[str, ...] | None,
+            ]
         ] = []
+        self._family_data = {"Pratos Quentes": ("Hambúrgueres",)}
 
     def set_search_filters(
         self,
         *,
         produto: str | None = None,
         ingrediente: str | None = None,
-        familia: str | None = None,
-        subfamilia: str | None = None,
+        familia: tuple[str, ...] | None = None,
+        subfamilia: tuple[str, ...] | None = None,
     ) -> None:
         self.search_filters_calls.append((produto, ingrediente, familia, subfamilia))
         super().set_search_filters(
@@ -62,6 +68,9 @@ class RecordingService(ProductService):
             familia=familia,
             subfamilia=subfamilia,
         )
+
+    def list_family_hierarchy(self) -> dict[str, tuple[str, ...]]:
+        return self._family_data
 
 
 def test_search_panel_toggle_and_submit(qapp):
@@ -80,19 +89,24 @@ def test_search_panel_toggle_and_submit(qapp):
         assert ft.searchProductField.hasFocus()
         assert isinstance(ft.searchLeftZone, Zone)
         assert ft.searchResetButton.text() == "Mostrar todos os registos"
+        assert ft.searchFamilyResetButton.text() == "Mostrar todas as famílias"
+        assert ft.searchFamilyCombo.selected_items() == []
+        assert ft.searchSubfamilyCombo.selected_items() == []
 
         ft.searchProductField.setText("  Produto 1  ")
         ft.searchIngredientField.setText(" tomate ")
-        ft.searchFamilyField.setText("Pratos Quentes")
-        ft.searchSubfamilyField.setText("Hambúrgueres")
+        ft.searchFamilyCombo.select_items(["Pratos Quentes"])
+        qapp.processEvents()
+        ft.searchSubfamilyCombo.select_items(["Hambúrgueres"])
+        qapp.processEvents()
         ft.searchProductButton.click()
         qapp.processEvents()
 
         assert service.search_filters_calls[-1] == (
             "Produto 1",
             "tomate",
-            "Pratos Quentes",
-            "Hambúrgueres",
+            ("Pratos Quentes",),
+            ("Hambúrgueres",),
         )
         assert ft.cur_index == 0
 
@@ -104,16 +118,17 @@ def test_search_panel_toggle_and_submit(qapp):
         ft.btSearchToggle.click()
         qapp.processEvents()
         assert ft.searchProductField.text() == "  Produto 1  "
+        assert ft.searchFamilyCombo.selected_items() == ["Pratos Quentes"]
+        assert ft.searchSubfamilyCombo.selected_items() == ["Hambúrgueres"]
 
         ft.searchIngredientField.setText("Queijo")
-        ft.searchFamilyField.setText("Pratos Quentes")
         ft.searchIngredientButton.click()
         qapp.processEvents()
         assert service.search_filters_calls[-1] == (
             "Produto 1",
             "Queijo",
-            "Pratos Quentes",
-            "Hambúrgueres",
+            ("Pratos Quentes",),
+            ("Hambúrgueres",),
         )
 
         ft.searchProductField.setText("   ")
@@ -122,23 +137,33 @@ def test_search_panel_toggle_and_submit(qapp):
         assert service.search_filters_calls[-1] == (
             None,
             "Queijo",
-            "Pratos Quentes",
-            "Hambúrgueres",
+            ("Pratos Quentes",),
+            ("Hambúrgueres",),
         )
 
         ft.searchProductField.setText("Produto 1")
         ft.searchIngredientField.setText("Cebola")
-        ft.searchFamilyField.setText("Pratos Quentes")
-        ft.searchSubfamilyField.setText("Hambúrgueres")
         ft.searchResetButton.click()
         qapp.processEvents()
 
         assert ft.searchProductField.text() == ""
         assert ft.searchIngredientField.text() == ""
-        assert ft.searchFamilyField.text() == ""
-        assert ft.searchSubfamilyField.text() == ""
-        assert service.search_filters_calls[-1] == (None, None, None, None)
+        assert ft.searchFamilyCombo.selected_items() == ["Pratos Quentes"]
+        assert ft.searchSubfamilyCombo.selected_items() == ["Hambúrgueres"]
+        assert service.search_filters_calls[-1] == (
+            None,
+            None,
+            ("Pratos Quentes",),
+            ("Hambúrgueres",),
+        )
         assert ft.cur_index == 0
+
+        ft.searchFamilyResetButton.click()
+        qapp.processEvents()
+
+        assert ft.searchFamilyCombo.selected_items() == []
+        assert ft.searchSubfamilyCombo.selected_items() == []
+        assert service.search_filters_calls[-1] == (None, None, None, None)
     finally:
         ft.close()
         ds.close()
