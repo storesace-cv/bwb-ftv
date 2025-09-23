@@ -209,6 +209,15 @@ class SquarePreviewContainer(QWidget):
         self.setSizePolicy(policy)
         self.setMinimumSize(child.minimumSize())
 
+    def resizeEvent(self, event) -> None:  # pragma: no cover - UI interaction
+        side = min(self.width(), self.height())
+        offset_x = max(0, (self.width() - side) // 2)
+        offset_y = max(0, (self.height() - side) // 2)
+
+        self._child.setGeometry(offset_x, offset_y, side, side)
+
+        super().resizeEvent(event)
+
 
 class MultiSelectComboBox(QComboBox):
     """Combo box that supports multiple selections via checkable items."""
