@@ -688,9 +688,10 @@ class FTApp(QWidget):
         self.btPrintMenu = QToolButton()
         self.btPrintMenu.setPopupMode(QToolButton.InstantPopup)
         self.btPrintMenu.setToolButtonStyle(Qt.ToolButtonIconOnly)
-        self.btPrintMenu.setIcon(
-            self.style().standardIcon(QStyle.SP_DialogPrintButton)
-        )
+        print_icon = QIcon.fromTheme("document-print")
+        if print_icon.isNull():
+            print_icon = self.style().standardIcon(QStyle.SP_FileIcon)
+        self.btPrintMenu.setIcon(print_icon)
         self.btMenu.setText("Menu")
         self.btMenu.setPopupMode(QToolButton.InstantPopup)
         size_hint = self.btMenu.sizeHint()
