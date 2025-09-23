@@ -226,3 +226,24 @@ def test_product_service_set_search_filters_delegates():
         familia="Doces",
         subfamilia="Bolos",
     )
+
+
+def test_product_service_set_search_filters_omits_unset_families():
+    ds = MagicMock(spec=DataStore)
+    service = ProductService(ds)
+
+    service.set_search_filters(produto="bolo")
+
+    ds.set_search_filters.assert_called_once_with(
+        produto="bolo",
+        ingrediente=None,
+    )
+
+
+def test_product_service_list_families_with_subfamilies_prefers_new_helper():
+    ds = MagicMock(spec=DataStore)
+    ds.list_families_with_subfamilies.return_value = {"A": ("B",)}
+    service = ProductService(ds)
+
+    assert service.list_families_with_subfamilies() == {"A": ("B",)}
+    ds.list_families_with_subfamilies.assert_called_once_with()

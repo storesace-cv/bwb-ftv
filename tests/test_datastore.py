@@ -333,6 +333,50 @@ def test_set_search_filters_fallbacks_to_ficha_familia():
         ds.close()
 
 
+def test_set_search_filters_preserves_family_on_partial_update():
+    ds = _make_filter_datastore()
+    try:
+        ds.set_search_filters(familia=[" Sopas  "], subfamilia=[" Cremes "])
+        assert ds._ids == ["P3"]
+        assert ds._family_filter == ("Sopas",)
+        assert ds._subfamily_filter == ("Cremes",)
+
+        ds.set_search_filters(produto="sopa")
+
+        assert ds._family_filter == ("Sopas",)
+        assert ds._subfamily_filter == ("Cremes",)
+        assert ds._ids == ["P3"]
+    finally:
+        ds.close()
+
+
+def test_set_search_filters_normalizes_iterables():
+    ds = _make_filter_datastore()
+    try:
+        ds.set_search_filters(
+            familia=[" Pratos Quentes ", "pratos quentes", ""],
+            subfamilia=(" hambúrgueres ", "HAMBÚRGUERES"),
+        )
+        assert ds._family_filter == ("Pratos Quentes",)
+        assert ds._subfamily_filter == ("hambúrgueres",)
+        assert ds._ids == ["P1"]
+    finally:
+        ds.close()
+
+
+def test_list_families_with_subfamilies_uses_canonical_names():
+    ds = _make_filter_datastore()
+    try:
+        mapping = ds.list_families_with_subfamilies()
+        assert mapping == {
+            "Pratos Frios": ("Saladas",),
+            "Pratos Quentes": ("Hambúrgueres",),
+            "Sopas": ("Cremes",),
+        }
+    finally:
+        ds.close()
+
+
 def test_list_active_allergens_db():
     ds = DataStore(db_path=":memory:")
     cur = ds.conn.cursor()
