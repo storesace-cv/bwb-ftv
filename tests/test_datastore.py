@@ -276,16 +276,20 @@ def test_set_search_filters_clears_with_empty_strings():
         ds.set_search_filters(
             produto="salada",
             ingrediente="tomate",
-            familia="Pratos Frios",
-            subfamilia="Saladas",
+            familia=["Pratos Frios"],
+            subfamilia=("Saladas",),
         )
+        assert ds._family_filter == ("Pratos Frios",)
+        assert ds._subfamily_filter == ("Saladas",)
         assert ds._ids == ["P2"]
         ds.set_search_filters(
             produto="",
             ingrediente="  ",
-            familia="",
-            subfamilia="  ",
+            familia=[],
+            subfamilia=(),
         )
+        assert ds._family_filter is None
+        assert ds._subfamily_filter is None
         assert ds._ids == ["P1", "P2", "P3"]
     finally:
         ds.close()
@@ -297,9 +301,10 @@ def test_set_search_filters_filters_by_familia():
         ds.set_search_filters(
             produto=None,
             ingrediente=None,
-            familia="pratos quentes",
+            familia=[" pratos quentes "],
             subfamilia=None,
         )
+        assert ds._family_filter == ("pratos quentes",)
         assert ds._ids == ["P1"]
     finally:
         ds.close()
@@ -312,8 +317,9 @@ def test_set_search_filters_filters_by_subfamilia():
             produto=None,
             ingrediente=None,
             familia=None,
-            subfamilia="saladas",
+            subfamilia=[" saladas "],
         )
+        assert ds._subfamily_filter == ("saladas",)
         assert ds._ids == ["P2"]
     finally:
         ds.close()
@@ -325,9 +331,11 @@ def test_set_search_filters_fallbacks_to_ficha_familia():
         ds.set_search_filters(
             produto=None,
             ingrediente=None,
-            familia="sopas",
-            subfamilia="cremes",
+            familia=(" sopas ",),
+            subfamilia=(" cremes ",),
         )
+        assert ds._family_filter == ("sopas",)
+        assert ds._subfamily_filter == ("cremes",)
         assert ds._ids == ["P3"]
     finally:
         ds.close()

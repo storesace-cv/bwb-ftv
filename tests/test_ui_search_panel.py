@@ -192,9 +192,20 @@ def test_search_panel_toggle_and_submit(qapp):
 
         assert ft.searchProductField.text() == "Produto 1"
         assert ft.searchIngredientField.text() == "Cebola"
-        assert ft.searchFamilyCombo.selected_items() == []
-        assert ft.searchSubfamilyCombo.selected_items() == []
-        assert service.search_filters_calls[-1] == (None, None, None, None)
+        assert ft.searchFamilyCombo.selected_items() == [
+            "Pratos Quentes",
+            "Sopas",
+        ]
+        assert ft.searchSubfamilyCombo.selected_items() == [
+            "Cremes",
+            "Hambúrgueres",
+        ]
+        assert service.search_filters_calls[-1] == (
+            None,
+            None,
+            ("Pratos Quentes", "Sopas"),
+            ("Cremes", "Hambúrgueres"),
+        )
         assert ft.cur_index == 0
 
         ft.searchFamilyCombo.select_items(["Pratos Quentes"])
