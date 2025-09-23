@@ -111,7 +111,7 @@ Item {
             id: quantityLabel
             text: header ? String(quantity).toUpperCase() : root.formatNumber(quantity, 3)
             font.bold: header
-            horizontalAlignment: Text.AlignRight
+            horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             Layout.preferredWidth: 96
             color: header ? "#2c3e66" : "#42526e"
