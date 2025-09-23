@@ -2358,6 +2358,7 @@ class FTApp(QWidget):
 
     def _load_family_hierarchy(self) -> dict[str, tuple[str, ...]]:
         provider_names = (
+            "list_families_with_subfamilies",
             "list_family_hierarchy",
             "list_family_groups",
             "list_family_options",

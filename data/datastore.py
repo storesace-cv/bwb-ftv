@@ -5,7 +5,7 @@ import logging
 import os
 import sqlite3
 from pathlib import Path
-from typing import Callable, Iterable
+from typing import Any, Callable, Iterable
 
 from utils import get_project_root
 from .migration import (
@@ -18,6 +18,49 @@ base = get_project_root()
 
 
 logger = logging.getLogger(__name__)
+
+
+_UNSET = object()
+
+
+def _normalize_family_name(value: Any) -> str | None:
+    """Return a trimmed string representation of ``value`` or ``None``."""
+
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _normalize_family_selection(value: Any) -> tuple[str, ...] | None:
+    """Return a tuple of unique, trimmed names or ``None`` for empty selections."""
+
+    if value is None:
+        return None
+
+    # ``str`` is also an iterable; treat it as a single entry instead.
+    if isinstance(value, (str, bytes)):
+        cleaned = _normalize_family_name(value)
+        return (cleaned,) if cleaned else None
+
+    try:
+        iterator = iter(value)
+    except TypeError:
+        cleaned = _normalize_family_name(value)
+        return (cleaned,) if cleaned else None
+
+    collected: list[str] = []
+    seen: set[str] = set()
+    for entry in iterator:
+        cleaned = _normalize_family_name(entry)
+        if cleaned is None:
+            continue
+        key = cleaned.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        collected.append(cleaned)
+    return tuple(collected) if collected else None
 
 
 def _create_empty_db(db_path: Path) -> None:
@@ -212,8 +255,8 @@ class DataStore:
         self._ids = []
         self._product_filter: str | None = None
         self._ingredient_filter: str | None = None
-        self._family_filter: str | None = None
-        self._subfamily_filter: str | None = None
+        self._family_filter: tuple[str, ...] | None = None
+        self._subfamily_filter: tuple[str, ...] | None = None
         try:
             self.reload_ids()
         except sqlite3.Error as exc:
@@ -249,39 +292,27 @@ class DataStore:
         *,
         produto: str | None = None,
         ingrediente: str | None = None,
-        familia: str | Iterable[str] | None = None,
-        subfamilia: str | Iterable[str] | None = None,
+        familia: object = _UNSET,
+        subfamilia: object = _UNSET,
     ) -> None:
         """Atualizar filtros de pesquisa e recarregar códigos se necessário."""
 
-        def _clean(value: str | Iterable[str] | None):
+        def _clean_text(value: str | None) -> str | None:
             if value is None:
                 return None
-            if isinstance(value, str):
-                cleaned = value.strip()
-                return cleaned or None
-            if isinstance(value, Iterable) and not isinstance(value, (str, bytes)):
-                collected: list[str] = []
-                seen: set[str] = set()
-                for entry in value:
-                    if entry is None:
-                        continue
-                    text = str(entry).strip()
-                    if not text:
-                        continue
-                    key = text.casefold()
-                    if key in seen:
-                        continue
-                    seen.add(key)
-                    collected.append(text)
-                return tuple(collected) or None
-            cleaned = str(value).strip()
+            cleaned = value.strip()
             return cleaned or None
 
-        produto_val = _clean(produto)
-        ingrediente_val = _clean(ingrediente)
-        familia_val = _clean(familia)
-        subfamilia_val = _clean(subfamilia)
+        produto_val = _clean_text(produto)
+        ingrediente_val = _clean_text(ingrediente)
+        if familia is _UNSET:
+            familia_val = self._family_filter
+        else:
+            familia_val = _normalize_family_selection(familia)
+        if subfamilia is _UNSET:
+            subfamilia_val = self._subfamily_filter
+        else:
+            subfamilia_val = _normalize_family_selection(subfamilia)
 
         if (
             produto_val == self._product_filter
@@ -297,21 +328,26 @@ class DataStore:
         self._subfamily_filter = subfamilia_val
         self.reload_ids()
 
-    def list_family_hierarchy(self) -> dict[str, tuple[str, ...]]:
+    def list_families_with_subfamilies(self) -> dict[str, tuple[str, ...]]:
         """Obter mapa ``{família: (subfamílias...)}`` a partir da base de dados."""
 
-        results: dict[str, set[str]] = {}
         if not self.conn:
             return {}
 
-        def _add_entry(family: str | None, subfamily: str | None) -> None:
-            family_name = (family or "").strip()
-            if not family_name:
+        families_display: dict[str, str] = {}
+        subfamilies_display: dict[str, dict[str, str]] = {}
+
+        def _add_entry(raw_family: Any, raw_subfamily: Any) -> None:
+            family_name = _normalize_family_name(raw_family)
+            if family_name is None:
                 return
-            bucket = results.setdefault(family_name, set())
-            sub_name = (subfamily or "").strip()
-            if sub_name:
-                bucket.add(sub_name)
+            family_key = family_name.casefold()
+            display_name = families_display.setdefault(family_key, family_name)
+            bucket = subfamilies_display.setdefault(family_key, {})
+            sub_name = _normalize_family_name(raw_subfamily)
+            if sub_name is None:
+                return
+            bucket.setdefault(sub_name.casefold(), sub_name)
 
         try:
             cur = self.conn.cursor()
@@ -374,15 +410,29 @@ class DataStore:
 
         except sqlite3.Error as exc:  # pragma: no cover - defensive logging
             logger.error(
-                "[DataStore] list_family_hierarchy falhou: %s", exc, exc_info=True
+                "[DataStore] list_families_with_subfamilies falhou: %s",
+                exc,
+                exc_info=True,
             )
             return {}
 
         normalized: dict[str, tuple[str, ...]] = {}
-        for family_name in sorted(results.keys(), key=str.casefold):
-            subs = tuple(sorted(results[family_name], key=str.casefold))
-            normalized[family_name] = subs
+        for family_key in sorted(
+            families_display.keys(), key=lambda key: families_display[key].casefold()
+        ):
+            display_name = families_display[family_key]
+            subs_bucket = subfamilies_display.get(family_key, {})
+            sorted_subs = tuple(
+                subs_bucket[key]
+                for key in sorted(subs_bucket.keys(), key=lambda key: subs_bucket[key].casefold())
+            )
+            normalized[display_name] = sorted_subs
         return normalized
+
+    def list_family_hierarchy(self) -> dict[str, tuple[str, ...]]:
+        """Compat wrapper para assinaturas antigas."""
+
+        return self.list_families_with_subfamilies()
 
     def get_active_fcost_range(self) -> tuple[float, float] | None:
         """Obter ``(ValorMin, ValorMax)`` do nível de Food Cost ativo."""
@@ -547,21 +597,15 @@ class DataStore:
                 produto_like = _like(produto_filtro)
                 ingrediente_like = _like(ingrediente_filtro)
 
-                def _build_clause(expression: str, value):
-                    if value is None:
+                def _build_membership_clause(
+                    expression: str, values: tuple[str, ...] | None
+                ) -> tuple[str, list[str]]:
+                    if not values:
                         return "1=1", []
-                    if isinstance(value, tuple):
-                        lowered = [entry.casefold() for entry in value if entry]
-                        if not lowered:
-                            return "1=1", []
-                        placeholders = ", ".join("?" for _ in lowered)
-                        clause = f"LOWER({expression}) IN ({placeholders})"
-                        return clause, lowered
-                    like_value = _like(value)
-                    return (
-                        f"{expression} LIKE ? ESCAPE '\\' COLLATE NOCASE",
-                        [like_value],
-                    )
+                    placeholders = ", ".join("?" for _ in values)
+                    clause = f"LOWER({expression}) IN ({placeholders})"
+                    params = [entry.casefold() for entry in values]
+                    return clause, params
 
                 fallback_family = (
                     "COALESCE(TRIM(CASE "
@@ -586,16 +630,16 @@ class DataStore:
                     + fallback_subfamily
                     + ")"
                 )
-                family_clause_produtos, family_params_produtos = _build_clause(
+                family_clause_produtos, family_params_produtos = _build_membership_clause(
                     family_expr_produtos, familia_filtro
                 )
-                subfamily_clause_produtos, subfamily_params_produtos = _build_clause(
+                subfamily_clause_produtos, subfamily_params_produtos = _build_membership_clause(
                     subfamily_expr_produtos, subfamilia_filtro
                 )
-                family_clause_ft, family_params_ft = _build_clause(
+                family_clause_ft, family_params_ft = _build_membership_clause(
                     fallback_family, familia_filtro
                 )
-                subfamily_clause_ft, subfamily_params_ft = _build_clause(
+                subfamily_clause_ft, subfamily_params_ft = _build_membership_clause(
                     fallback_subfamily, subfamilia_filtro
                 )
 

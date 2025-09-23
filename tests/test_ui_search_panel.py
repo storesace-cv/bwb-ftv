@@ -3,7 +3,7 @@ from tests._qt import require_real_qt_modules
 require_real_qt_modules("PyQt5.QtWidgets", "PyQt5.QtCore")
 
 from data.datastore import DataStore
-from services.products import ProductService
+from services.products import ProductService, _UNSET
 from ui.layout import Zone
 from ui.ui_editor_fonte import FTApp
 
@@ -58,15 +58,22 @@ class RecordingService(ProductService):
         *,
         produto: str | None = None,
         ingrediente: str | None = None,
-        familia: tuple[str, ...] | None = None,
-        subfamilia: tuple[str, ...] | None = None,
+        familia: object = _UNSET,
+        subfamilia: object = _UNSET,
     ) -> None:
-        self.search_filters_calls.append((produto, ingrediente, familia, subfamilia))
         super().set_search_filters(
             produto=produto,
             ingrediente=ingrediente,
             familia=familia,
             subfamilia=subfamilia,
+        )
+        self.search_filters_calls.append(
+            (
+                getattr(self.ds, "_product_filter", None),
+                getattr(self.ds, "_ingredient_filter", None),
+                getattr(self.ds, "_family_filter", None),
+                getattr(self.ds, "_subfamily_filter", None),
+            )
         )
 
     def list_family_hierarchy(self) -> dict[str, tuple[str, ...]]:

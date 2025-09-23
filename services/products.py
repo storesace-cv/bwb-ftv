@@ -30,6 +30,9 @@ logger = logging.getLogger(__name__)
 BACKUP_PREFIX_FOR_UPDATES = "ftv-actualizacao-"
 
 
+_UNSET = object()
+
+
 IMPORT_FILE_BASENAMES = {
     "Produtos": "Produtos_Base.xlsx",
     "FichasTecnicas": "FichasTecnicas_base.xlsx",
@@ -422,21 +425,29 @@ class ProductService:
         *,
         produto: str | None = None,
         ingrediente: str | None = None,
-        familia: str | Iterable[str] | None = None,
-        subfamilia: str | Iterable[str] | None = None,
+        familia: object = _UNSET,
+        subfamilia: object = _UNSET,
     ) -> None:
         if hasattr(self.ds, "set_search_filters"):
-            self.ds.set_search_filters(
-                produto=produto,
-                ingrediente=ingrediente,
-                familia=familia,
-                subfamilia=subfamilia,
-            )
+            kwargs = {
+                "produto": produto,
+                "ingrediente": ingrediente,
+            }
+            if familia is not _UNSET:
+                kwargs["familia"] = familia
+            if subfamilia is not _UNSET:
+                kwargs["subfamilia"] = subfamilia
+            self.ds.set_search_filters(**kwargs)
 
-    def list_family_hierarchy(self) -> dict[str, tuple[str, ...]]:
+    def list_families_with_subfamilies(self) -> dict[str, tuple[str, ...]]:
+        if hasattr(self.ds, "list_families_with_subfamilies"):
+            return self.ds.list_families_with_subfamilies()
         if hasattr(self.ds, "list_family_hierarchy"):
             return self.ds.list_family_hierarchy()
         return {}
+
+    def list_family_hierarchy(self) -> dict[str, tuple[str, ...]]:
+        return self.list_families_with_subfamilies()
 
     # -- auxiliary tables -------------------------------------------------
     def list_tipos_artigos(self) -> list[tuple[int, str]]:
