@@ -23,6 +23,7 @@ HEADER_MAP: Dict[str, Dict[str, str]] = {
         "TipoVenda": "TipoVenda",
         "TipoProducao": "TipoProducao",
         "TipoGener": "TipoGener",
+        "Loja": "Loja",
         "UnStockVMPG": "UnStockVMPG",
         "UnVendaVMV": "UnVendaVMV",
         "UnInvVMMMPG": "UnInvVMMMPG",

@@ -89,15 +89,24 @@ import logging
 import html as html_module
 import html.parser as html_parser
 import itertools
+from collections.abc import Iterable
 import re
 from pathlib import Path
 try:  # PyQt 5.15.10 wheels omit QWIDGETSIZE_MAX on some platforms
-    from PyQt5.QtCore import Qt, QTimer, QPoint, QWIDGETSIZE_MAX, QSize
+    from PyQt5.QtCore import Qt, QTimer, QPoint, QWIDGETSIZE_MAX, QSize, pyqtSignal
 except ImportError:  # pragma: no cover - fallback for stripped builds
-    from PyQt5.QtCore import Qt, QTimer, QPoint, QSize
+    from PyQt5.QtCore import Qt, QTimer, QPoint, QSize, pyqtSignal
 
     QWIDGETSIZE_MAX = 16777215
-from PyQt5.QtGui import QFont, QIcon, QKeySequence, QTextOption, QPixmap
+from PyQt5.QtGui import (
+    QFont,
+    QIcon,
+    QKeySequence,
+    QTextOption,
+    QPixmap,
+    QStandardItemModel,
+    QStandardItem,
+)
 from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
@@ -198,6 +207,141 @@ class SquarePreviewContainer(QWidget):
         policy = child.sizePolicy()
         self.setSizePolicy(policy)
         self.setMinimumSize(child.minimumSize())
+
+
+class MultiSelectComboBox(QComboBox):
+    """Combo box that supports multiple selections via checkable items."""
+
+    selectionChanged = pyqtSignal()
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setModel(QStandardItemModel(self))
+        self.setEditable(True)
+        line_edit = QLineEdit(self)
+        line_edit.setReadOnly(True)
+        line_edit.setFocusPolicy(Qt.NoFocus)
+        line_edit.setText("")
+        self.setLineEdit(line_edit)
+        self.lineEdit().setPlaceholderText("")
+        self.setInsertPolicy(QComboBox.NoInsert)
+        self.view().pressed.connect(self._handle_item_pressed)
+        self._placeholder_text = ""
+        self._separator = ", "
+        self._block_hide = False
+        self._update_display_text()
+
+    def showPopup(self) -> None:  # pragma: no cover - UI integration
+        self._block_hide = False
+        super().showPopup()
+
+    def hidePopup(self) -> None:  # pragma: no cover - UI integration
+        if self._block_hide:
+            self._block_hide = False
+            return
+        super().hidePopup()
+
+    def _handle_item_pressed(self, index) -> None:
+        model = self.model()
+        if model is None:
+            return
+        item = model.itemFromIndex(index)
+        if item is None:
+            return
+        new_state = Qt.Unchecked if item.checkState() == Qt.Checked else Qt.Checked
+        item.setCheckState(new_state)
+        # Keep the popup open so the user can select multiple entries.
+        self._block_hide = True
+        QTimer.singleShot(0, self.showPopup)
+        self._update_display_text()
+        self.selectionChanged.emit()
+
+    def set_placeholder_text(self, text: str) -> None:
+        self._placeholder_text = text
+        line_edit = self.lineEdit()
+        if line_edit is not None:
+            line_edit.setPlaceholderText(text)
+        self._update_display_text()
+
+    def set_options(
+        self,
+        options: Iterable[str],
+        *,
+        checked: Iterable[str] | None = None,
+    ) -> None:
+        model = self.model()
+        if model is None:
+            return
+        existing_selection = (
+            {text for text in checked}
+            if checked is not None
+            else set(self.selected_items())
+        )
+        model.clear()
+        for option in options:
+            if option is None:
+                continue
+            text = str(option).strip()
+            if not text:
+                continue
+            item = QStandardItem(text)
+            item.setFlags(
+                Qt.ItemIsEnabled
+                | Qt.ItemIsUserCheckable
+                | Qt.ItemIsSelectable
+            )
+            item.setData(text, Qt.DisplayRole)
+            item.setCheckable(True)
+            if text in existing_selection:
+                item.setCheckState(Qt.Checked)
+            else:
+                item.setCheckState(Qt.Unchecked)
+            model.appendRow(item)
+        self._update_display_text()
+
+    def selected_items(self) -> list[str]:
+        model = self.model()
+        if model is None:
+            return []
+        selections: list[str] = []
+        for row in range(model.rowCount()):
+            item = model.item(row)
+            if item is None:
+                continue
+            if item.checkState() == Qt.Checked:
+                selections.append(item.text())
+        return selections
+
+    def select_items(self, values: Iterable[str]) -> None:
+        model = self.model()
+        if model is None:
+            return
+        wanted = {str(value).strip() for value in values if value}
+        for row in range(model.rowCount()):
+            item = model.item(row)
+            if item is None:
+                continue
+            item.setCheckState(
+                Qt.Checked if item.text() in wanted else Qt.Unchecked
+            )
+        self._update_display_text()
+        self.selectionChanged.emit()
+
+    def clear_selection(self) -> None:
+        self.select_items([])
+
+    def _update_display_text(self) -> None:
+        selections = self.selected_items()
+        display_text = self._separator.join(selections)
+        line_edit = self.lineEdit()
+        if line_edit is None:
+            return
+        if not selections:
+            line_edit.setText("")
+            line_edit.setPlaceholderText(self._placeholder_text)
+        else:
+            line_edit.setText(display_text)
+
         self.setMaximumSize(child.maximumSize())
         self._child.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
 
@@ -704,25 +848,32 @@ class FTApp(QWidget):
         search_center_layout.setHorizontalSpacing(6)
         search_center_layout.setVerticalSpacing(4)
 
-        self.searchFamilyField = QLineEdit(search_center_widget)
-        self.searchFamilyField.setPlaceholderText("Família")
-        self.searchFamilyButton = QPushButton("IR", search_center_widget)
-        self.searchSubfamilyField = QLineEdit(search_center_widget)
-        self.searchSubfamilyField.setPlaceholderText("Subfamília")
-        self.searchSubfamilyButton = QPushButton("IR", search_center_widget)
+        self.searchFamilyCombo = MultiSelectComboBox(search_center_widget)
+        self.searchFamilyCombo.set_placeholder_text("Famílias")
+        self.searchSubfamilyCombo = MultiSelectComboBox(search_center_widget)
+        self.searchSubfamilyCombo.set_placeholder_text("Subfamílias")
+        self.searchFamilyResetButton = QPushButton(
+            "Mostrar todas as famílias", search_center_widget
+        )
+        self.searchFamilyResetButton.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Fixed
+        )
 
-        search_center_layout.addWidget(self.searchFamilyField, 0, 0)
-        search_center_layout.addWidget(self.searchFamilyButton, 0, 1)
-        search_center_layout.addWidget(self.searchSubfamilyField, 1, 0)
-        search_center_layout.addWidget(self.searchSubfamilyButton, 1, 1)
+        search_center_layout.addWidget(self.searchFamilyCombo, 0, 0, 1, 2)
+        search_center_layout.addWidget(self.searchSubfamilyCombo, 1, 0, 1, 2)
+        search_center_layout.addWidget(self.searchFamilyResetButton, 2, 0, 1, 2)
         search_center_layout.setColumnStretch(0, 1)
 
         self.searchCenterZone.ly.addWidget(search_center_widget)
 
-        self.searchFamilyButton.clicked.connect(self._apply_search_filters)
-        self.searchSubfamilyButton.clicked.connect(self._apply_search_filters)
-        self.searchFamilyField.returnPressed.connect(self._apply_search_filters)
-        self.searchSubfamilyField.returnPressed.connect(self._apply_search_filters)
+        self.searchFamilyCombo.selectionChanged.connect(
+            self._on_family_selection_changed
+        )
+        self.searchSubfamilyCombo.selectionChanged.connect(self._apply_search_filters)
+        self.searchFamilyResetButton.clicked.connect(self._reset_family_filters)
+
+        self._family_hierarchy: dict[str, tuple[str, ...]] = {}
+        self._init_family_filters()
 
         root.addWidget(self.searchContainer, 0)
 
@@ -2196,18 +2347,175 @@ class FTApp(QWidget):
         if desired:
             self.searchProductField.setFocus(Qt.TabFocusReason)
 
+    def _init_family_filters(self) -> None:
+        hierarchy = self._load_family_hierarchy()
+        self._family_hierarchy = hierarchy
+        families = [family for family in hierarchy.keys()]
+        self.searchFamilyCombo.set_options(families)
+        self.searchFamilyCombo.setEnabled(bool(families))
+        self._update_subfamily_options(preserve_selection=False)
+        self.searchSubfamilyCombo.setEnabled(bool(hierarchy))
+
+    def _load_family_hierarchy(self) -> dict[str, tuple[str, ...]]:
+        provider_names = (
+            "list_family_hierarchy",
+            "list_family_groups",
+            "list_family_options",
+            "list_familias",
+        )
+        for name in provider_names:
+            loader = getattr(self.service, name, None)
+            if not callable(loader):
+                continue
+            try:
+                raw = loader()
+            except Exception:  # pragma: no cover - defensive logging
+                logger.exception(
+                    "[SearchPanel] Falha ao obter famílias através de %s", name
+                )
+                return {}
+            normalized = self._normalize_family_hierarchy(raw)
+            if normalized is not None:
+                return normalized
+        return {}
+
+    @staticmethod
+    def _clean_family_value(value: object) -> str | None:
+        if value is None:
+            return None
+        text = str(value).strip()
+        return text or None
+
+    @classmethod
+    def _normalize_family_hierarchy(
+        cls, raw: object
+    ) -> dict[str, tuple[str, ...]] | None:
+        if raw is None:
+            return {}
+
+        families: dict[str, set[str]] = {}
+
+        def _add_family(family_value: object, subs_value: object | None) -> None:
+            family_name = cls._clean_family_value(family_value)
+            if family_name is None:
+                return
+            bucket = families.setdefault(family_name, set())
+            if subs_value is None:
+                return
+            if isinstance(subs_value, (str, bytes)):
+                sub_name = cls._clean_family_value(subs_value)
+                if sub_name is not None:
+                    bucket.add(sub_name)
+                return
+            if isinstance(subs_value, dict):
+                iterable = subs_value.values()
+            elif isinstance(subs_value, Iterable):
+                iterable = subs_value
+            else:
+                iterable = []
+            for entry in iterable:
+                sub_name = cls._clean_family_value(entry)
+                if sub_name is not None:
+                    bucket.add(sub_name)
+
+        if isinstance(raw, dict):
+            items = raw.items()
+        elif isinstance(raw, Iterable) and not isinstance(raw, (str, bytes)):
+            items = raw
+        else:
+            return {}
+
+        for entry in items:
+            if isinstance(entry, dict):
+                family_value = (
+                    entry.get("familia")
+                    or entry.get("family")
+                    or entry.get("nome")
+                    or entry.get("name")
+                )
+                subs_value = (
+                    entry.get("subfamilias")
+                    or entry.get("subfamilies")
+                    or entry.get("subFamilias")
+                    or entry.get("subFamilia")
+                    or entry.get("subfamily")
+                )
+                if subs_value is None and "subfamilia" in entry:
+                    subs_value = entry.get("subfamilia")
+                _add_family(family_value, subs_value)
+            elif isinstance(entry, tuple) or isinstance(entry, list):
+                if len(entry) == 2:
+                    family_value, subs_value = entry
+                    _add_family(family_value, subs_value)
+                elif len(entry) == 1:
+                    _add_family(entry[0], None)
+            else:
+                _add_family(entry, None)
+
+        sorted_families: dict[str, tuple[str, ...]] = {}
+        for family_name in sorted(families.keys(), key=str.casefold):
+            subs = families[family_name]
+            sorted_families[family_name] = tuple(
+                sorted(subs, key=str.casefold)
+            )
+        return sorted_families
+
+    def _update_subfamily_options(self, *, preserve_selection: bool = True) -> None:
+        hierarchy = self._family_hierarchy
+        current_selection = (
+            self.searchSubfamilyCombo.selected_items() if preserve_selection else []
+        )
+        selected_families = self.searchFamilyCombo.selected_items()
+        if selected_families:
+            families = selected_families
+        else:
+            families = hierarchy.keys()
+
+        collected: list[str] = []
+        for family in families:
+            for sub in hierarchy.get(family, ()):  # ``hierarchy`` stores tuples
+                collected.append(sub)
+
+        seen: dict[str, str] = {}
+        for name in collected:
+            key = name.casefold()
+            if key not in seen:
+                seen[key] = name
+        available_subfamilies = [seen[key] for key in sorted(seen.keys())]
+        checked = (
+            [name for name in current_selection if name in available_subfamilies]
+            if preserve_selection
+            else []
+        )
+        self.searchSubfamilyCombo.set_options(available_subfamilies, checked=checked)
+        self.searchSubfamilyCombo.setEnabled(bool(hierarchy))
+
+    def _on_family_selection_changed(self) -> None:
+        self._update_subfamily_options()
+        self._apply_search_filters()
+
+    def _reset_family_filters(self) -> None:
+        self.searchFamilyCombo.blockSignals(True)
+        self.searchFamilyCombo.clear_selection()
+        self.searchFamilyCombo.blockSignals(False)
+        self._update_subfamily_options(preserve_selection=False)
+        self.searchSubfamilyCombo.blockSignals(True)
+        self.searchSubfamilyCombo.clear_selection()
+        self.searchSubfamilyCombo.blockSignals(False)
+        self._apply_search_filters()
+
     def _apply_search_filters(self):
         product_name = (self.searchProductField.text() or "").strip() or None
         ingredient_name = (self.searchIngredientField.text() or "").strip() or None
-        family_name = (self.searchFamilyField.text() or "").strip() or None
-        subfamily_name = (self.searchSubfamilyField.text() or "").strip() or None
+        family_names = tuple(self.searchFamilyCombo.selected_items()) or None
+        subfamily_names = tuple(self.searchSubfamilyCombo.selected_items()) or None
         setter = getattr(self.service, "set_search_filters", None)
         if callable(setter):
             setter(
                 produto=product_name,
                 ingrediente=ingredient_name,
-                familia=family_name,
-                subfamilia=subfamily_name,
+                familia=family_names,
+                subfamilia=subfamily_names,
             )
         self.cur_index = 0
         self._load_record(0)
@@ -2215,13 +2523,7 @@ class FTApp(QWidget):
     def _reset_search_filters(self):
         self.searchProductField.clear()
         self.searchIngredientField.clear()
-        self.searchFamilyField.clear()
-        self.searchSubfamilyField.clear()
-        setter = getattr(self.service, "set_search_filters", None)
-        if callable(setter):
-            setter(produto=None, ingrediente=None, familia=None, subfamilia=None)
-        self.cur_index = 0
-        self._load_record(0)
+        self._apply_search_filters()
 
     def _connect_nav(self):
         self.btFirst.clicked.connect(lambda: self._goto(0))

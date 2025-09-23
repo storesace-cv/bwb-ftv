@@ -422,8 +422,8 @@ class ProductService:
         *,
         produto: str | None = None,
         ingrediente: str | None = None,
-        familia: str | None = None,
-        subfamilia: str | None = None,
+        familia: str | Iterable[str] | None = None,
+        subfamilia: str | Iterable[str] | None = None,
     ) -> None:
         if hasattr(self.ds, "set_search_filters"):
             self.ds.set_search_filters(
@@ -432,6 +432,11 @@ class ProductService:
                 familia=familia,
                 subfamilia=subfamilia,
             )
+
+    def list_family_hierarchy(self) -> dict[str, tuple[str, ...]]:
+        if hasattr(self.ds, "list_family_hierarchy"):
+            return self.ds.list_family_hierarchy()
+        return {}
 
     # -- auxiliary tables -------------------------------------------------
     def list_tipos_artigos(self) -> list[tuple[int, str]]:
@@ -985,6 +990,8 @@ def import_from_excel(ds: DataStore | None = None) -> None:
                         if isinstance(identifier, str):
                             stripped = identifier.strip()
                             if not stripped:
+                                if table == "Produtos":
+                                    continue
                                 if last_identifier is None:
                                     continue
                                 identifier = last_identifier
@@ -992,6 +999,8 @@ def import_from_excel(ds: DataStore | None = None) -> None:
                                 identifier = stripped
                             row_map[id_col] = identifier
                         elif _is_blank(identifier):
+                            if table == "Produtos":
+                                continue
                             if last_identifier is None:
                                 continue
                             identifier = last_identifier

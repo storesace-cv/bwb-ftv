@@ -249,16 +249,34 @@ class DataStore:
         *,
         produto: str | None = None,
         ingrediente: str | None = None,
-        familia: str | None = None,
-        subfamilia: str | None = None,
+        familia: str | Iterable[str] | None = None,
+        subfamilia: str | Iterable[str] | None = None,
     ) -> None:
         """Atualizar filtros de pesquisa e recarregar códigos se necessário."""
 
-        def _clean(value: str | None) -> str | None:
+        def _clean(value: str | Iterable[str] | None):
             if value is None:
                 return None
-            value = value.strip()
-            return value or None
+            if isinstance(value, str):
+                cleaned = value.strip()
+                return cleaned or None
+            if isinstance(value, Iterable) and not isinstance(value, (str, bytes)):
+                collected: list[str] = []
+                seen: set[str] = set()
+                for entry in value:
+                    if entry is None:
+                        continue
+                    text = str(entry).strip()
+                    if not text:
+                        continue
+                    key = text.casefold()
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    collected.append(text)
+                return tuple(collected) or None
+            cleaned = str(value).strip()
+            return cleaned or None
 
         produto_val = _clean(produto)
         ingrediente_val = _clean(ingrediente)
@@ -278,6 +296,93 @@ class DataStore:
         self._family_filter = familia_val
         self._subfamily_filter = subfamilia_val
         self.reload_ids()
+
+    def list_family_hierarchy(self) -> dict[str, tuple[str, ...]]:
+        """Obter mapa ``{família: (subfamílias...)}`` a partir da base de dados."""
+
+        results: dict[str, set[str]] = {}
+        if not self.conn:
+            return {}
+
+        def _add_entry(family: str | None, subfamily: str | None) -> None:
+            family_name = (family or "").strip()
+            if not family_name:
+                return
+            bucket = results.setdefault(family_name, set())
+            sub_name = (subfamily or "").strip()
+            if sub_name:
+                bucket.add(sub_name)
+
+        try:
+            cur = self.conn.cursor()
+            cur.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='Produtos'"
+            )
+            has_produtos = cur.fetchone() is not None
+
+            if has_produtos:
+                cur.execute(
+                    "SELECT DISTINCT "
+                    "COALESCE(NULLIF(TRIM(Familia), ''), '') AS Familia, "
+                    "COALESCE(NULLIF(TRIM(SubFamilia), ''), '') AS SubFamilia "
+                    "FROM Produtos "
+                    "WHERE TipoVenda = 1"
+                )
+                for familia, subfamilia in cur.fetchall():
+                    _add_entry(familia, subfamilia)
+
+            fallback_family = (
+                "COALESCE(TRIM(CASE "
+                "WHEN instr(ft.FamiliaSubfamilia, '>') > 0 "
+                "THEN SUBSTR(ft.FamiliaSubfamilia, 1, instr(ft.FamiliaSubfamilia, '>') - 1) "
+                "ELSE ft.FamiliaSubfamilia "
+                "END), '')"
+            )
+            fallback_subfamily = (
+                "COALESCE(TRIM(CASE "
+                "WHEN instr(ft.FamiliaSubfamilia, '>') > 0 "
+                "THEN SUBSTR(ft.FamiliaSubfamilia, instr(ft.FamiliaSubfamilia, '>') + 1) "
+                "ELSE '' "
+                "END), '')"
+            )
+
+            if has_produtos:
+                cur.execute(
+                    "SELECT DISTINCT "
+                    "COALESCE(NULLIF(TRIM(p.Familia), ''), "
+                    + fallback_family
+                    + ") AS Familia, "
+                    "COALESCE(NULLIF(TRIM(p.SubFamilia), ''), "
+                    + fallback_subfamily
+                    + ") AS SubFamilia "
+                    "FROM FichasTecnicas ft "
+                    "LEFT JOIN Produtos p ON ft.ProdutoCodigo = p.Codigo "
+                    "WHERE p.TipoVenda = 1"
+                )
+            else:
+                cur.execute(
+                    "SELECT DISTINCT "
+                    + fallback_family
+                    + " AS Familia, "
+                    + fallback_subfamily
+                    + " AS SubFamilia "
+                    "FROM FichasTecnicas ft"
+                )
+
+            for familia, subfamilia in cur.fetchall():
+                _add_entry(familia, subfamilia)
+
+        except sqlite3.Error as exc:  # pragma: no cover - defensive logging
+            logger.error(
+                "[DataStore] list_family_hierarchy falhou: %s", exc, exc_info=True
+            )
+            return {}
+
+        normalized: dict[str, tuple[str, ...]] = {}
+        for family_name in sorted(results.keys(), key=str.casefold):
+            subs = tuple(sorted(results[family_name], key=str.casefold))
+            normalized[family_name] = subs
+        return normalized
 
     def get_active_fcost_range(self) -> tuple[float, float] | None:
         """Obter ``(ValorMin, ValorMax)`` do nível de Food Cost ativo."""
@@ -441,8 +546,22 @@ class DataStore:
 
                 produto_like = _like(produto_filtro)
                 ingrediente_like = _like(ingrediente_filtro)
-                familia_like = _like(familia_filtro)
-                subfamilia_like = _like(subfamilia_filtro)
+
+                def _build_clause(expression: str, value):
+                    if value is None:
+                        return "1=1", []
+                    if isinstance(value, tuple):
+                        lowered = [entry.casefold() for entry in value if entry]
+                        if not lowered:
+                            return "1=1", []
+                        placeholders = ", ".join("?" for _ in lowered)
+                        clause = f"LOWER({expression}) IN ({placeholders})"
+                        return clause, lowered
+                    like_value = _like(value)
+                    return (
+                        f"{expression} LIKE ? ESCAPE '\\' COLLATE NOCASE",
+                        [like_value],
+                    )
 
                 fallback_family = (
                     "COALESCE(TRIM(CASE "
@@ -459,6 +578,27 @@ class DataStore:
                     "END), '')"
                 )
 
+                family_expr_produtos = (
+                    "COALESCE(NULLIF(TRIM(p.Familia), ''), " + fallback_family + ")"
+                )
+                subfamily_expr_produtos = (
+                    "COALESCE(NULLIF(TRIM(p.SubFamilia), ''), "
+                    + fallback_subfamily
+                    + ")"
+                )
+                family_clause_produtos, family_params_produtos = _build_clause(
+                    family_expr_produtos, familia_filtro
+                )
+                subfamily_clause_produtos, subfamily_params_produtos = _build_clause(
+                    subfamily_expr_produtos, subfamilia_filtro
+                )
+                family_clause_ft, family_params_ft = _build_clause(
+                    fallback_family, familia_filtro
+                )
+                subfamily_clause_ft, subfamily_params_ft = _build_clause(
+                    fallback_subfamily, subfamilia_filtro
+                )
+
                 if has_produtos:
                     query = (
                         "SELECT DISTINCT COALESCE(p.Codigo, ft.ProdutoCodigo) AS Codigo "
@@ -469,19 +609,19 @@ class DataStore:
                         "LIKE ? ESCAPE '\\' COLLATE NOCASE "
                         "AND COALESCE(ft.ComponenteNome, '') "
                         "LIKE ? ESCAPE '\\' COLLATE NOCASE "
-                        "AND COALESCE(NULLIF(TRIM(p.Familia), ''), "
-                        + fallback_family
-                        + ") LIKE ? ESCAPE '\\' COLLATE NOCASE "
-                        "AND COALESCE(NULLIF(TRIM(p.SubFamilia), ''), "
-                        + fallback_subfamily
-                        + ") LIKE ? ESCAPE '\\' COLLATE NOCASE "
+                        "AND "
+                        + family_clause_produtos
+                        + " "
+                        "AND "
+                        + subfamily_clause_produtos
+                        + " "
                         "ORDER BY Codigo"
                     )
                     params = (
                         produto_like,
                         ingrediente_like,
-                        familia_like,
-                        subfamilia_like,
+                        *family_params_produtos,
+                        *subfamily_params_produtos,
                     )
                     source = (
                         "sql:Produtos filtrado"
@@ -495,18 +635,18 @@ class DataStore:
                         "WHERE COALESCE(ft.ProdutoNome, '') LIKE ? ESCAPE '\\' COLLATE NOCASE "
                         "AND COALESCE(ft.ComponenteNome, '') LIKE ? ESCAPE '\\' COLLATE NOCASE "
                         "AND "
-                        + fallback_family
-                        + " LIKE ? ESCAPE '\\' COLLATE NOCASE "
+                        + family_clause_ft
+                        + " "
                         "AND "
-                        + fallback_subfamily
-                        + " LIKE ? ESCAPE '\\' COLLATE NOCASE "
+                        + subfamily_clause_ft
+                        + " "
                         "ORDER BY ft.ProdutoCodigo"
                     )
                     params = (
                         produto_like,
                         ingrediente_like,
-                        familia_like,
-                        subfamilia_like,
+                        *family_params_ft,
+                        *subfamily_params_ft,
                     )
                     source = (
                         "sql:FichasTecnicas filtrado"
