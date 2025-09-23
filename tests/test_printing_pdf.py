@@ -149,6 +149,72 @@ def test_qt_pdf_block_width_matches_printable_area(qapp, tmp_path):
     assert widest == pytest.approx(printable_width, abs=0.6)
 
 
+def test_qt_pdf_font_sizes_respect_scale(qapp, tmp_path):
+    modules = require_real_qt_modules(
+        "PyQt5.QtWidgets", "PyQt5.QtGui", "PyQt5.QtPrintSupport"
+    )
+    if not modules:
+        pytest.skip("Real Qt modules are required")
+
+    from PyQt5.QtPrintSupport import QPrinter
+
+    product = Product(
+        code="P020",
+        name="Produto Fontes",
+        familia="Família",
+        subfamilia="Sub",
+        informacao_adicional="Notas",
+        tipo_artigo_cod=2,
+        validade_cod=5,
+        temperatura_cod=3,
+        pvps=[9.5],
+        iva=23,
+        ingredients=[
+            Ingredient(
+                name="Ingrediente Único",
+                quantity=2.0,
+                unit="kg",
+                ppu=3.0,
+                total=6.0,
+                code="I900",
+                weight=2.0,
+            )
+        ],
+    )
+
+    payload = _prepare_management_payload(product)
+    pdf_path = tmp_path / "ft_gestao_fonts.pdf"
+
+    printer = _configure_printer(pdf_path, (595.28, 841.89))
+    page_rect_points = printer.pageRect(QPrinter.Point)
+    page_rect_pixels = printer.pageRect(QPrinter.DevicePixel)
+    del printer
+
+    if not page_rect_points.height():
+        pytest.skip("Printer did not report a point-based page height")
+
+    scale_y = page_rect_pixels.height() / page_rect_points.height()
+
+    _render_pdf(payload, pdf_path, (595.28, 841.89))
+
+    streams = _extract_pdf_streams(pdf_path)
+    assert streams, "expected at least one PDF stream"
+
+    font_pattern = re.compile(r"(\d+(?:\.\d+)?)\s+Tf")
+    font_sizes: list[float] = []
+    for stream in streams:
+        font_sizes.extend(float(match.group(1)) for match in font_pattern.finditer(stream))
+
+    assert font_sizes, "expected to extract font sizes from PDF"
+
+    expected_point_sizes = [22.0, 16.0, 12.0, 10.0, 9.0]
+    for expected in expected_point_sizes:
+        target = expected / scale_y
+        assert any(abs(size - target) <= 0.1 for size in font_sizes), (
+            f"missing scaled font size for {expected}pt (expected around {target})"
+        )
+
+
 def test_basic_pdf_preserves_unicode(tmp_path, monkeypatch):
     from ui import printing as printing_mod
 

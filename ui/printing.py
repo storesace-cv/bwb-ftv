@@ -272,9 +272,33 @@ def _render_pdf_qt(
     painter.scale(scale_x, scale_y)
     painter.setRenderHint(QPainter.Antialiasing, True)
     try:
-        _draw_management_sheet(painter, printer.pageRect(QPrinter.Point), payload)
+        _draw_management_sheet(
+            painter,
+            printer.pageRect(QPrinter.Point),
+            payload,
+            scale_x=scale_x,
+            scale_y=scale_y,
+        )
     finally:
         painter.end()
+
+
+def _scaled_font(
+    point_size: float,
+    weight: int | None = None,
+    *,
+    family: str = "Helvetica",
+    scale_y: float = 1.0,
+) -> QFont:
+    if not _QT_AVAILABLE or QFont is None:  # pragma: no cover - defensive guard
+        raise RuntimeError("PyQt5 is required to create scaled fonts")
+    font = QFont(family)
+    font.setWeight(weight if weight is not None else QFont.Normal)
+    effective_size = point_size
+    if scale_y:
+        effective_size = point_size / scale_y
+    font.setPointSizeF(effective_size)
+    return font
 
 
 def _render_pdf_basic(
@@ -369,7 +393,14 @@ def _configure_printer(destination: Path, page_metrics: tuple[float, float]) -> 
     return printer
 
 
-def _draw_management_sheet(painter: QPainter, rect: QRectF, payload: dict[str, Any]) -> None:
+def _draw_management_sheet(
+    painter: QPainter,
+    rect: QRectF,
+    payload: dict[str, Any],
+    *,
+    scale_x: float = 1.0,
+    scale_y: float = 1.0,
+) -> None:
     block_spacing = 24.0
     y = rect.top()
 
@@ -377,15 +408,38 @@ def _draw_management_sheet(painter: QPainter, rect: QRectF, payload: dict[str, A
     subtitle = f"{payload.get('identifier', '--')}"
     generated_at = payload.get("generated_at")
 
-    y = _draw_page_header(painter, rect, y, title, subtitle, generated_at)
+    y = _draw_page_header(
+        painter,
+        rect,
+        y,
+        title,
+        subtitle,
+        generated_at,
+        scale_y=scale_y,
+    )
 
     blocks = payload.get("blocks", {})
     y += block_spacing
-    y = _draw_block_b1(painter, QRectF(rect.left(), y, rect.width(), 0), blocks.get("B1", {}))
+    y = _draw_block_b1(
+        painter,
+        QRectF(rect.left(), y, rect.width(), 0),
+        blocks.get("B1", {}),
+        scale_y=scale_y,
+    )
     y += block_spacing
-    y = _draw_block_b2(painter, QRectF(rect.left(), y, rect.width(), 0), blocks.get("B2", {}))
+    y = _draw_block_b2(
+        painter,
+        QRectF(rect.left(), y, rect.width(), 0),
+        blocks.get("B2", {}),
+        scale_y=scale_y,
+    )
     y += block_spacing
-    _draw_block_b3(painter, QRectF(rect.left(), y, rect.width(), 0), blocks.get("B3", {}))
+    _draw_block_b3(
+        painter,
+        QRectF(rect.left(), y, rect.width(), 0),
+        blocks.get("B3", {}),
+        scale_y=scale_y,
+    )
 
 
 def _draw_page_header(
@@ -395,9 +449,11 @@ def _draw_page_header(
     title: str,
     subtitle: str,
     generated_at: str | None,
+    *,
+    scale_y: float = 1.0,
 ) -> float:
     painter.save()
-    header_font = QFont("Helvetica", 22, QFont.Bold)
+    header_font = _scaled_font(22, QFont.Bold, scale_y=scale_y)
     painter.setFont(header_font)
     painter.setPen(QColor("#253858"))
     fm_header = QFontMetricsF(header_font)
@@ -405,7 +461,7 @@ def _draw_page_header(
     header_rect = QRectF(rect.left(), y, rect.width(), header_height)
     painter.drawText(header_rect, Qt.AlignLeft | Qt.AlignVCenter, title)
 
-    subtitle_font = QFont("Helvetica", 12, QFont.Bold)
+    subtitle_font = _scaled_font(12, QFont.Bold, scale_y=scale_y)
     painter.setFont(subtitle_font)
     painter.setPen(QColor("#4a6fa5"))
     fm_sub = QFontMetricsF(subtitle_font)
@@ -414,7 +470,7 @@ def _draw_page_header(
     painter.drawText(subtitle_rect, Qt.AlignLeft | Qt.AlignVCenter, subtitle)
 
     if generated_at:
-        meta_font = QFont("Helvetica", 9)
+        meta_font = _scaled_font(9, scale_y=scale_y)
         painter.setFont(meta_font)
         painter.setPen(QColor("#6b778c"))
         fm_meta = QFontMetricsF(meta_font)
@@ -432,7 +488,13 @@ def _draw_page_header(
     return subtitle_rect.bottom()
 
 
-def _draw_block_b1(painter: QPainter, rect: QRectF, data: dict[str, Any]) -> float:
+def _draw_block_b1(
+    painter: QPainter,
+    rect: QRectF,
+    data: dict[str, Any],
+    *,
+    scale_y: float = 1.0,
+) -> float:
     title = "Ficha de Artigo"
     rows = [
         ("Código", data.get("codigo")),
@@ -445,21 +507,21 @@ def _draw_block_b1(painter: QPainter, rect: QRectF, data: dict[str, Any]) -> flo
         ("Temperatura", data.get("temperatura_cod")),
     ]
 
-    block_height = _estimate_block_height(rows, title)
+    block_height = _estimate_block_height(rows, title, scale_y=scale_y)
     block_rect = QRectF(rect.left(), rect.top(), rect.width(), block_height)
     _draw_block_background(painter, block_rect)
     inner = block_rect.adjusted(_BLOCK_PADDING, _BLOCK_PADDING, -_BLOCK_PADDING, -_BLOCK_PADDING)
 
     painter.save()
-    title_font = QFont("Helvetica", 16, QFont.Bold)
+    title_font = _scaled_font(16, QFont.Bold, scale_y=scale_y)
     painter.setFont(title_font)
     painter.setPen(QColor("#253858"))
     fm_title = QFontMetricsF(title_font)
     title_rect = QRectF(inner.left(), inner.top(), inner.width(), fm_title.height())
     painter.drawText(title_rect, Qt.AlignLeft | Qt.AlignVCenter, title)
 
-    label_font = QFont("Helvetica", 10, QFont.Bold)
-    value_font = QFont("Helvetica", 10)
+    label_font = _scaled_font(10, QFont.Bold, scale_y=scale_y)
+    value_font = _scaled_font(10, scale_y=scale_y)
     label_color = QColor("#6b778c")
     value_color = QColor("#172b4d")
     fm_value = QFontMetricsF(value_font)
@@ -493,17 +555,23 @@ def _draw_block_b1(painter: QPainter, rect: QRectF, data: dict[str, Any]) -> flo
     return block_rect.bottom()
 
 
-def _draw_block_b2(painter: QPainter, rect: QRectF, data: dict[str, Any]) -> float:
+def _draw_block_b2(
+    painter: QPainter,
+    rect: QRectF,
+    data: dict[str, Any],
+    *,
+    scale_y: float = 1.0,
+) -> float:
     title = "Ingredientes"
     ingredientes = list(data.get("ingredientes", []))
     totals = data.get("totais", {}) or {}
-    block_height = _estimate_table_block_height(len(ingredientes))
+    block_height = _estimate_table_block_height(len(ingredientes), scale_y=scale_y)
     block_rect = QRectF(rect.left(), rect.top(), rect.width(), block_height)
     _draw_block_background(painter, block_rect)
     inner = block_rect.adjusted(_BLOCK_PADDING, _BLOCK_PADDING, -_BLOCK_PADDING, -_BLOCK_PADDING)
 
     painter.save()
-    title_font = QFont("Helvetica", 16, QFont.Bold)
+    title_font = _scaled_font(16, QFont.Bold, scale_y=scale_y)
     painter.setFont(title_font)
     painter.setPen(QColor("#253858"))
     fm_title = QFontMetricsF(title_font)
@@ -512,9 +580,9 @@ def _draw_block_b2(painter: QPainter, rect: QRectF, data: dict[str, Any]) -> flo
 
     table_top = title_rect.bottom() + 16
     table_rect = QRectF(inner.left(), table_top, inner.width(), _table_height(len(ingredientes)))
-    _draw_ingredient_table(painter, table_rect, ingredientes)
+    _draw_ingredient_table(painter, table_rect, ingredientes, scale_y=scale_y)
 
-    totals_font = QFont("Helvetica", 10, QFont.Bold)
+    totals_font = _scaled_font(10, QFont.Bold, scale_y=scale_y)
     painter.setFont(totals_font)
     painter.setPen(QColor("#253858"))
     fm_totals = QFontMetricsF(totals_font)
@@ -524,7 +592,7 @@ def _draw_block_b2(painter: QPainter, rect: QRectF, data: dict[str, Any]) -> flo
         ("Peso Total", totals.get("peso_total")),
         ("N.º Ingredientes", totals.get("num_ingredientes")),
     ]
-    value_font = QFont("Helvetica", 10)
+    value_font = _scaled_font(10, scale_y=scale_y)
     painter.setFont(value_font)
     value_color = QColor("#42526e")
     fm_value = QFontMetricsF(value_font)
@@ -555,7 +623,13 @@ def _draw_block_b2(painter: QPainter, rect: QRectF, data: dict[str, Any]) -> flo
     return block_rect.bottom()
 
 
-def _draw_block_b3(painter: QPainter, rect: QRectF, data: dict[str, Any]) -> float:
+def _draw_block_b3(
+    painter: QPainter,
+    rect: QRectF,
+    data: dict[str, Any],
+    *,
+    scale_y: float = 1.0,
+) -> float:
     title = "Food Cost"
     pvps = list(data.get("pvps", []))
     fcs = list(data.get("food_cost", []))
@@ -566,20 +640,20 @@ def _draw_block_b3(painter: QPainter, rect: QRectF, data: dict[str, Any]) -> flo
         fc = fcs[idx - 1] if idx - 1 < len(fcs) else None
         rows.append((f"PVP{idx}", pvp, f"Food Cost", fc))
 
-    block_height = _estimate_food_cost_height(max(1, len(rows)))
+    block_height = _estimate_food_cost_height(max(1, len(rows)), scale_y=scale_y)
     block_rect = QRectF(rect.left(), rect.top(), rect.width(), block_height)
     _draw_block_background(painter, block_rect)
     inner = block_rect.adjusted(_BLOCK_PADDING, _BLOCK_PADDING, -_BLOCK_PADDING, -_BLOCK_PADDING)
 
     painter.save()
-    title_font = QFont("Helvetica", 16, QFont.Bold)
+    title_font = _scaled_font(16, QFont.Bold, scale_y=scale_y)
     painter.setFont(title_font)
     painter.setPen(QColor("#253858"))
     fm_title = QFontMetricsF(title_font)
     title_rect = QRectF(inner.left(), inner.top(), inner.width(), fm_title.height())
     painter.drawText(title_rect, Qt.AlignLeft | Qt.AlignVCenter, title)
 
-    meta_font = QFont("Helvetica", 10, QFont.Bold)
+    meta_font = _scaled_font(10, QFont.Bold, scale_y=scale_y)
     painter.setFont(meta_font)
     painter.setPen(QColor("#4a6fa5"))
     fm_meta = QFontMetricsF(meta_font)
@@ -594,7 +668,7 @@ def _draw_block_b3(painter: QPainter, rect: QRectF, data: dict[str, Any]) -> flo
     rows_top = meta_rect.bottom() + 12
     row_height = _FOOD_ROW_HEIGHT
     table_rect = QRectF(inner.left(), rows_top, inner.width(), row_height * max(1, len(rows)))
-    _draw_food_cost_table(painter, table_rect, rows)
+    _draw_food_cost_table(painter, table_rect, rows, scale_y=scale_y)
 
     painter.restore()
     return block_rect.bottom()
@@ -612,7 +686,11 @@ def _draw_block_background(painter: QPainter, rect: QRectF) -> None:
 
 
 def _draw_ingredient_table(
-    painter: QPainter, rect: QRectF, ingredientes: list[dict[str, Any]]
+    painter: QPainter,
+    rect: QRectF,
+    ingredientes: list[dict[str, Any]],
+    *,
+    scale_y: float = 1.0,
 ) -> None:
     painter.save()
     header_bg = QColor("#eef5ff")
@@ -658,7 +736,7 @@ def _draw_ingredient_table(
     painter.setBrush(Qt.NoBrush)
     painter.drawRoundedRect(header_rect, 6, 6)
 
-    header_font = QFont("Helvetica", 10, QFont.Bold)
+    header_font = _scaled_font(10, QFont.Bold, scale_y=scale_y)
     painter.setFont(header_font)
     fm_header = QFontMetricsF(header_font)
 
@@ -670,7 +748,7 @@ def _draw_ingredient_table(
         painter.setPen(header_text)
         painter.drawText(cell_rect.adjusted(6, 0, -6, 0), align, header.upper())
 
-    row_font = QFont("Helvetica", 10)
+    row_font = _scaled_font(10, scale_y=scale_y)
     painter.setFont(row_font)
     row_height = _TABLE_ROW_HEIGHT
     rows = ingredientes or [{}]
@@ -694,7 +772,11 @@ def _draw_ingredient_table(
 
 
 def _draw_food_cost_table(
-    painter: QPainter, rect: QRectF, rows: list[tuple[str, Any, str, Any]]
+    painter: QPainter,
+    rect: QRectF,
+    rows: list[tuple[str, Any, str, Any]],
+    *,
+    scale_y: float = 1.0,
 ) -> None:
     painter.save()
     grid_color = QColor("#4a6fa5")
@@ -705,7 +787,7 @@ def _draw_food_cost_table(
     grid_pen.setCosmetic(True)
     painter.setPen(grid_pen)
 
-    row_font = QFont("Helvetica", 10)
+    row_font = _scaled_font(10, scale_y=scale_y)
     painter.setFont(row_font)
 
     col_width = rect.width() / 2
@@ -778,36 +860,41 @@ def _ingredient_cell_text(index: int, entry: dict[str, Any]) -> str:
     return _format_number(entry.get("peso"), precision=3)
 
 
-def _estimate_block_height(rows: Iterable[tuple[str, Any]], title: str) -> float:
+def _estimate_block_height(
+    rows: Iterable[tuple[str, Any]],
+    title: str,
+    *,
+    scale_y: float = 1.0,
+) -> float:
     base = 2 * _BLOCK_PADDING
-    title_font = QFont("Helvetica", 16, QFont.Bold)
+    title_font = _scaled_font(16, QFont.Bold, scale_y=scale_y)
     fm_title = QFontMetricsF(title_font)
     base += fm_title.height() + 12
-    value_font = QFont("Helvetica", 10)
+    value_font = _scaled_font(10, scale_y=scale_y)
     fm_value = QFontMetricsF(value_font)
     for _ in rows:
         base += fm_value.height() + 8
     return base
 
 
-def _estimate_table_block_height(num_rows: int) -> float:
+def _estimate_table_block_height(num_rows: int, *, scale_y: float = 1.0) -> float:
     base = 2 * _BLOCK_PADDING
-    title_font = QFont("Helvetica", 16, QFont.Bold)
+    title_font = _scaled_font(16, QFont.Bold, scale_y=scale_y)
     fm_title = QFontMetricsF(title_font)
     base += fm_title.height() + 16
     base += _table_height(num_rows)
-    totals_font = QFont("Helvetica", 10)
+    totals_font = _scaled_font(10, scale_y=scale_y)
     fm_totals = QFontMetricsF(totals_font)
     base += 3 * (fm_totals.height() + 6) + 10
     return base
 
 
-def _estimate_food_cost_height(num_rows: int) -> float:
+def _estimate_food_cost_height(num_rows: int, *, scale_y: float = 1.0) -> float:
     base = 2 * _BLOCK_PADDING
-    title_font = QFont("Helvetica", 16, QFont.Bold)
+    title_font = _scaled_font(16, QFont.Bold, scale_y=scale_y)
     fm_title = QFontMetricsF(title_font)
     base += fm_title.height() + 12
-    meta_font = QFont("Helvetica", 10, QFont.Bold)
+    meta_font = _scaled_font(10, QFont.Bold, scale_y=scale_y)
     fm_meta = QFontMetricsF(meta_font)
     base += fm_meta.height() + 12
     base += num_rows * _FOOD_ROW_HEIGHT
