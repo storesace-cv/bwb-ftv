@@ -12,11 +12,11 @@ from typing import Any, Iterable
 
 try:  # pragma: no cover - import guard depends on environment
     from PyQt5.QtCore import QRectF, QSizeF, Qt
-    from PyQt5.QtGui import QColor, QFont, QFontMetricsF, QPainter, QPen
+    from PyQt5.QtGui import QColor, QFont, QFontMetricsF, QImage, QPainter, QPen, QPixmap
     from PyQt5.QtPrintSupport import QPrinter
     from PyQt5.QtWidgets import QFileDialog, QWidget
 except ImportError:  # pragma: no cover - executed when stubs are active
-    QRectF = QSizeF = Qt = QColor = QFont = QFontMetricsF = QPainter = QPen = QPrinter = None  # type: ignore[assignment]
+    QRectF = QSizeF = Qt = QColor = QFont = QFontMetricsF = QImage = QPainter = QPen = QPixmap = QPrinter = None  # type: ignore[assignment]
     QFileDialog = QWidget = None  # type: ignore[assignment]
     _QT_AVAILABLE = False
 else:  # pragma: no cover - exercised in integration tests
@@ -25,7 +25,7 @@ else:  # pragma: no cover - exercised in integration tests
 _USE_BASIC_PDF = False
 
 from domain.models import Product
-from services.products import calculate_food_cost
+from services.products import calculate_food_cost, get_image_path
 from utils.formatting import parse_decimal
 
 logger = logging.getLogger(__name__)
@@ -123,6 +123,13 @@ def _prepare_management_payload(product: Product) -> dict[str, Any]:
         totals.get("custo_total"), pvps_numeric, _safe_float(iva_raw), identifier
     )
 
+    fallback_image = Path(__file__).resolve().parent / "no-image-thumb.png"
+    image_path = fallback_image
+    if product.code:
+        candidate = get_image_path(product.code)
+        if candidate.exists():
+            image_path = candidate
+
     blocks = {
         "B1": {
             "codigo": product.code,
@@ -133,6 +140,7 @@ def _prepare_management_payload(product: Product) -> dict[str, Any]:
             "tipo_artigo_cod": product.tipo_artigo_cod,
             "validade_cod": product.validade_cod,
             "temperatura_cod": product.temperatura_cod,
+            "image_path": str(image_path),
         },
         "B2": {
             "ingredientes": ing_data,
@@ -507,7 +515,9 @@ def _draw_block_b1(
         ("Temperatura", data.get("temperatura_cod")),
     ]
 
-    block_height = _estimate_block_height(rows, title, scale_y=scale_y)
+    block_height = _estimate_block_height(
+        rows, title, scale_y=scale_y, image_height=_B1_IMAGE_BOX_SIZE
+    )
     block_rect = QRectF(rect.left(), rect.top(), rect.width(), block_height)
     _draw_block_background(painter, block_rect)
     inner = block_rect.adjusted(_BLOCK_PADDING, _BLOCK_PADDING, -_BLOCK_PADDING, -_BLOCK_PADDING)
@@ -526,7 +536,16 @@ def _draw_block_b1(
     value_color = QColor("#172b4d")
     fm_value = QFontMetricsF(value_font)
     current_y = title_rect.bottom() + 12
-    col_width = inner.width() * 0.32
+
+    image_box_width = min(_B1_IMAGE_BOX_SIZE, inner.width() * 0.35)
+    image_box_width = max(0.0, image_box_width)
+    image_spacing = _B1_IMAGE_SPACING if image_box_width else 0.0
+    text_right = inner.right() - image_box_width - image_spacing
+    if text_right < inner.left():
+        text_right = inner.left()
+        image_spacing = 0.0
+    text_width = max(text_right - inner.left(), 0.0)
+    col_width = text_width * 0.35 if text_width else inner.width() * 0.35
 
     for label, raw_value in rows:
         value = _format_text(raw_value)
@@ -543,13 +562,46 @@ def _draw_block_b1(
             QRectF(
                 inner.left() + col_width + 12,
                 current_y,
-                inner.width() - col_width - 12,
+                max(text_width - col_width - 12, 0.0),
                 fm_value.height(),
             ),
             Qt.AlignLeft | Qt.AlignVCenter,
             value,
         )
         current_y += fm_value.height() + 8
+
+    if image_box_width and QImage is not None and QPixmap is not None:
+        image_top = title_rect.bottom() + 12
+        image_left = text_right + image_spacing
+        if image_left < inner.left():
+            image_left = inner.left()
+        image_rect = QRectF(image_left, image_top, image_box_width, image_box_width)
+
+        painter.setPen(QPen(QColor("#d0d7e3")))
+        painter.setBrush(QColor("#ffffff"))
+        painter.drawRoundedRect(image_rect, 12, 12)
+
+        pixmap: QPixmap | None = None
+        path = data.get("image_path")
+        if path:
+            qimage = QImage(str(path))
+            if not qimage.isNull():
+                pixmap = QPixmap.fromImage(qimage)
+
+        if pixmap is not None and not pixmap.isNull():
+            scaled = pixmap.scaled(
+                int(image_rect.width()),
+                int(image_rect.height()),
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation,
+            )
+            target = QRectF(
+                image_rect.left() + (image_rect.width() - scaled.width()) / 2,
+                image_rect.top() + (image_rect.height() - scaled.height()) / 2,
+                scaled.width(),
+                scaled.height(),
+            )
+            painter.drawPixmap(target, scaled)
 
     painter.restore()
     return block_rect.bottom()
@@ -865,6 +917,7 @@ def _estimate_block_height(
     title: str,
     *,
     scale_y: float = 1.0,
+    image_height: float | None = None,
 ) -> float:
     base = 2 * _BLOCK_PADDING
     title_font = _scaled_font(16, QFont.Bold, scale_y=scale_y)
@@ -874,6 +927,8 @@ def _estimate_block_height(
     fm_value = QFontMetricsF(value_font)
     for _ in rows:
         base += fm_value.height() + 8
+    if image_height is not None:
+        base = max(base, 2 * _BLOCK_PADDING + fm_title.height() + 12 + image_height)
     return base
 
 
@@ -956,6 +1011,8 @@ _PAGE_MARGIN = 36.0
 _BLOCK_PADDING = 16.0
 _TABLE_ROW_HEIGHT = 28.0
 _FOOD_ROW_HEIGHT = 36.0
+_B1_IMAGE_BOX_SIZE = 160.0
+_B1_IMAGE_SPACING = 16.0
 
 
 def _safe_float(value: Any) -> float | None:
