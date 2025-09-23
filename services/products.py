@@ -5,6 +5,7 @@ from __future__ import annotations
 import inspect
 import logging
 import sqlite3
+from collections.abc import Iterable as IterableABC
 from pathlib import Path
 from typing import Any, Iterable, Iterator, Mapping
 import unicodedata
@@ -433,10 +434,22 @@ class ProductService:
                 "produto": produto,
                 "ingrediente": ingrediente,
             }
+
+            def _coerce_selection(value: object) -> object:
+                if value is None:
+                    return None
+                if isinstance(value, (str, bytes)):
+                    return value
+                if isinstance(value, IterableABC):
+                    return tuple(value)
+                return value
+
             if familia is not _UNSET:
-                kwargs["familia"] = familia
+                coerced = _coerce_selection(familia)
+                kwargs["familia"] = coerced
             if subfamilia is not _UNSET:
-                kwargs["subfamilia"] = subfamilia
+                coerced = _coerce_selection(subfamilia)
+                kwargs["subfamilia"] = coerced
             self.ds.set_search_filters(**kwargs)
 
     def list_families_with_subfamilies(self) -> dict[str, tuple[str, ...]]:
