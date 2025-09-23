@@ -213,8 +213,16 @@ def test_product_service_set_search_filters_delegates():
     ds = MagicMock(spec=DataStore)
     service = ProductService(ds)
 
-    service.set_search_filters(produto="bolo", ingrediente="chocolate")
+    service.set_search_filters(
+        produto="bolo",
+        ingrediente="chocolate",
+        familia="Doces",
+        subfamilia="Bolos",
+    )
 
     ds.set_search_filters.assert_called_once_with(
-        produto="bolo", ingrediente="chocolate"
+        produto="bolo",
+        ingrediente="chocolate",
+        familia="Doces",
+        subfamilia="Bolos",
     )

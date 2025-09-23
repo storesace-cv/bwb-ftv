@@ -212,6 +212,8 @@ class DataStore:
         self._ids = []
         self._product_filter: str | None = None
         self._ingredient_filter: str | None = None
+        self._family_filter: str | None = None
+        self._subfamily_filter: str | None = None
         try:
             self.reload_ids()
         except sqlite3.Error as exc:
@@ -245,8 +247,10 @@ class DataStore:
     def set_search_filters(
         self,
         *,
-        produto: str | None,
-        ingrediente: str | None,
+        produto: str | None = None,
+        ingrediente: str | None = None,
+        familia: str | None = None,
+        subfamilia: str | None = None,
     ) -> None:
         """Atualizar filtros de pesquisa e recarregar códigos se necessário."""
 
@@ -258,15 +262,21 @@ class DataStore:
 
         produto_val = _clean(produto)
         ingrediente_val = _clean(ingrediente)
+        familia_val = _clean(familia)
+        subfamilia_val = _clean(subfamilia)
 
         if (
             produto_val == self._product_filter
             and ingrediente_val == self._ingredient_filter
+            and familia_val == self._family_filter
+            and subfamilia_val == self._subfamily_filter
         ):
             return
 
         self._product_filter = produto_val
         self._ingredient_filter = ingrediente_val
+        self._family_filter = familia_val
+        self._subfamily_filter = subfamilia_val
         self.reload_ids()
 
     def get_active_fcost_range(self) -> tuple[float, float] | None:
@@ -394,7 +404,11 @@ class DataStore:
 
         produto_filtro = getattr(self, "_product_filter", None)
         ingrediente_filtro = getattr(self, "_ingredient_filter", None)
-        filtros_ativos = bool(produto_filtro or ingrediente_filtro)
+        familia_filtro = getattr(self, "_family_filter", None)
+        subfamilia_filtro = getattr(self, "_subfamily_filter", None)
+        filtros_ativos = bool(
+            produto_filtro or ingrediente_filtro or familia_filtro or subfamilia_filtro
+        )
 
         # 1) tentar via repositório (apenas sem filtros)
         if self.produtos and not filtros_ativos:
@@ -427,6 +441,23 @@ class DataStore:
 
                 produto_like = _like(produto_filtro)
                 ingrediente_like = _like(ingrediente_filtro)
+                familia_like = _like(familia_filtro)
+                subfamilia_like = _like(subfamilia_filtro)
+
+                fallback_family = (
+                    "COALESCE(TRIM(CASE "
+                    "WHEN instr(ft.FamiliaSubfamilia, '>') > 0 "
+                    "THEN SUBSTR(ft.FamiliaSubfamilia, 1, instr(ft.FamiliaSubfamilia, '>') - 1) "
+                    "ELSE ft.FamiliaSubfamilia "
+                    "END), '')"
+                )
+                fallback_subfamily = (
+                    "COALESCE(TRIM(CASE "
+                    "WHEN instr(ft.FamiliaSubfamilia, '>') > 0 "
+                    "THEN SUBSTR(ft.FamiliaSubfamilia, instr(ft.FamiliaSubfamilia, '>') + 1) "
+                    "ELSE '' "
+                    "END), '')"
+                )
 
                 if has_produtos:
                     query = (
@@ -438,9 +469,20 @@ class DataStore:
                         "LIKE ? ESCAPE '\\' COLLATE NOCASE "
                         "AND COALESCE(ft.ComponenteNome, '') "
                         "LIKE ? ESCAPE '\\' COLLATE NOCASE "
+                        "AND COALESCE(NULLIF(TRIM(p.Familia), ''), "
+                        + fallback_family
+                        + ") LIKE ? ESCAPE '\\' COLLATE NOCASE "
+                        "AND COALESCE(NULLIF(TRIM(p.SubFamilia), ''), "
+                        + fallback_subfamily
+                        + ") LIKE ? ESCAPE '\\' COLLATE NOCASE "
                         "ORDER BY Codigo"
                     )
-                    params = (produto_like, ingrediente_like)
+                    params = (
+                        produto_like,
+                        ingrediente_like,
+                        familia_like,
+                        subfamilia_like,
+                    )
                     source = (
                         "sql:Produtos filtrado"
                         if filtros_ativos
@@ -452,9 +494,20 @@ class DataStore:
                         "FROM FichasTecnicas ft "
                         "WHERE COALESCE(ft.ProdutoNome, '') LIKE ? ESCAPE '\\' COLLATE NOCASE "
                         "AND COALESCE(ft.ComponenteNome, '') LIKE ? ESCAPE '\\' COLLATE NOCASE "
+                        "AND "
+                        + fallback_family
+                        + " LIKE ? ESCAPE '\\' COLLATE NOCASE "
+                        "AND "
+                        + fallback_subfamily
+                        + " LIKE ? ESCAPE '\\' COLLATE NOCASE "
                         "ORDER BY ft.ProdutoCodigo"
                     )
-                    params = (produto_like, ingrediente_like)
+                    params = (
+                        produto_like,
+                        ingrediente_like,
+                        familia_like,
+                        subfamilia_like,
+                    )
                     source = (
                         "sql:FichasTecnicas filtrado"
                         if filtros_ativos

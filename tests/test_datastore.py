@@ -41,25 +41,50 @@ def _make_filter_datastore():
     cur.execute("DELETE FROM Produtos")
     cur.execute("DELETE FROM FichasTecnicas")
     products = [
-        ("P1", "Hambúrguer Clássico", 1),
-        ("P2", "Salada Fresca", 1),
-        ("P3", "Sopa do Dia", 1),
+        ("P1", "Hambúrguer Clássico", 1, "Pratos Quentes", "Hambúrgueres"),
+        ("P2", "Salada Fresca", 1, "Pratos Frios", "Saladas"),
+        ("P3", "Sopa do Dia", 1, None, None),
     ]
     cur.executemany(
-        "INSERT INTO Produtos (Codigo, Produto, TipoVenda) VALUES (?, ?, ?)",
+        (
+            "INSERT INTO Produtos "
+            "(Codigo, Produto, TipoVenda, Familia, SubFamilia) "
+            "VALUES (?, ?, ?, ?, ?)"
+        ),
         products,
     )
     fichas = [
-        ("P1", "Hambúrguer Clássico", "Queijo Cheddar"),
-        ("P1", "Hambúrguer Clássico", "Pão Brioche"),
-        ("P2", "Salada Fresca", "Tomate Cherry"),
-        ("P2", "Salada Fresca", "Alface"),
-        ("P3", "Sopa do Dia", "Cenoura"),
+        (
+            "P1",
+            "Hambúrguer Clássico",
+            "Queijo Cheddar",
+            "Pratos Quentes > Hambúrgueres",
+        ),
+        (
+            "P1",
+            "Hambúrguer Clássico",
+            "Pão Brioche",
+            "Pratos Quentes > Hambúrgueres",
+        ),
+        (
+            "P2",
+            "Salada Fresca",
+            "Tomate Cherry",
+            "Pratos Frios > Saladas",
+        ),
+        (
+            "P2",
+            "Salada Fresca",
+            "Alface",
+            "Pratos Frios > Saladas",
+        ),
+        ("P3", "Sopa do Dia", "Cenoura", "Sopas > Cremes"),
     ]
     cur.executemany(
         (
             "INSERT INTO FichasTecnicas "
-            "(ProdutoCodigo, ProdutoNome, ComponenteNome) VALUES (?, ?, ?)"
+            "(ProdutoCodigo, ProdutoNome, ComponenteNome, FamiliaSubfamilia) "
+            "VALUES (?, ?, ?, ?)"
         ),
         fichas,
     )
@@ -206,7 +231,12 @@ def test_reload_ids_filters_by_fcost_level():
 def test_set_search_filters_filters_by_produto():
     ds = _make_filter_datastore()
     try:
-        ds.set_search_filters(produto="  salada ", ingrediente=None)
+        ds.set_search_filters(
+            produto="  salada ",
+            ingrediente=None,
+            familia=None,
+            subfamilia=None,
+        )
         assert ds._ids == ["P2"]
     finally:
         ds.close()
@@ -215,7 +245,12 @@ def test_set_search_filters_filters_by_produto():
 def test_set_search_filters_filters_by_ingrediente():
     ds = _make_filter_datastore()
     try:
-        ds.set_search_filters(produto=None, ingrediente="QUEIJO")
+        ds.set_search_filters(
+            produto=None,
+            ingrediente="QUEIJO",
+            familia=None,
+            subfamilia=None,
+        )
         assert ds._ids == ["P1"]
     finally:
         ds.close()
@@ -224,7 +259,12 @@ def test_set_search_filters_filters_by_ingrediente():
 def test_set_search_filters_combined():
     ds = _make_filter_datastore()
     try:
-        ds.set_search_filters(produto="sopa", ingrediente="cenoura")
+        ds.set_search_filters(
+            produto="sopa",
+            ingrediente="cenoura",
+            familia=None,
+            subfamilia=None,
+        )
         assert ds._ids == ["P3"]
     finally:
         ds.close()
@@ -233,10 +273,62 @@ def test_set_search_filters_combined():
 def test_set_search_filters_clears_with_empty_strings():
     ds = _make_filter_datastore()
     try:
-        ds.set_search_filters(produto="salada", ingrediente="tomate")
+        ds.set_search_filters(
+            produto="salada",
+            ingrediente="tomate",
+            familia="Pratos Frios",
+            subfamilia="Saladas",
+        )
         assert ds._ids == ["P2"]
-        ds.set_search_filters(produto="", ingrediente="  ")
+        ds.set_search_filters(
+            produto="",
+            ingrediente="  ",
+            familia="",
+            subfamilia="  ",
+        )
         assert ds._ids == ["P1", "P2", "P3"]
+    finally:
+        ds.close()
+
+
+def test_set_search_filters_filters_by_familia():
+    ds = _make_filter_datastore()
+    try:
+        ds.set_search_filters(
+            produto=None,
+            ingrediente=None,
+            familia="pratos quentes",
+            subfamilia=None,
+        )
+        assert ds._ids == ["P1"]
+    finally:
+        ds.close()
+
+
+def test_set_search_filters_filters_by_subfamilia():
+    ds = _make_filter_datastore()
+    try:
+        ds.set_search_filters(
+            produto=None,
+            ingrediente=None,
+            familia=None,
+            subfamilia="saladas",
+        )
+        assert ds._ids == ["P2"]
+    finally:
+        ds.close()
+
+
+def test_set_search_filters_fallbacks_to_ficha_familia():
+    ds = _make_filter_datastore()
+    try:
+        ds.set_search_filters(
+            produto=None,
+            ingrediente=None,
+            familia="sopas",
+            subfamilia="cremes",
+        )
+        assert ds._ids == ["P3"]
     finally:
         ds.close()
 

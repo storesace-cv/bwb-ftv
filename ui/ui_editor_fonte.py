@@ -698,6 +698,32 @@ class FTApp(QWidget):
         self.searchIngredientField.returnPressed.connect(self._apply_search_filters)
         self.searchResetButton.clicked.connect(self._reset_search_filters)
 
+        search_center_widget = QWidget(self.searchCenterZone)
+        search_center_layout = QGridLayout(search_center_widget)
+        search_center_layout.setContentsMargins(6, 6, 6, 6)
+        search_center_layout.setHorizontalSpacing(6)
+        search_center_layout.setVerticalSpacing(4)
+
+        self.searchFamilyField = QLineEdit(search_center_widget)
+        self.searchFamilyField.setPlaceholderText("Família")
+        self.searchFamilyButton = QPushButton("IR", search_center_widget)
+        self.searchSubfamilyField = QLineEdit(search_center_widget)
+        self.searchSubfamilyField.setPlaceholderText("Subfamília")
+        self.searchSubfamilyButton = QPushButton("IR", search_center_widget)
+
+        search_center_layout.addWidget(self.searchFamilyField, 0, 0)
+        search_center_layout.addWidget(self.searchFamilyButton, 0, 1)
+        search_center_layout.addWidget(self.searchSubfamilyField, 1, 0)
+        search_center_layout.addWidget(self.searchSubfamilyButton, 1, 1)
+        search_center_layout.setColumnStretch(0, 1)
+
+        self.searchCenterZone.ly.addWidget(search_center_widget)
+
+        self.searchFamilyButton.clicked.connect(self._apply_search_filters)
+        self.searchSubfamilyButton.clicked.connect(self._apply_search_filters)
+        self.searchFamilyField.returnPressed.connect(self._apply_search_filters)
+        self.searchSubfamilyField.returnPressed.connect(self._apply_search_filters)
+
         root.addWidget(self.searchContainer, 0)
 
         lbl_w = 110
@@ -2173,18 +2199,27 @@ class FTApp(QWidget):
     def _apply_search_filters(self):
         product_name = (self.searchProductField.text() or "").strip() or None
         ingredient_name = (self.searchIngredientField.text() or "").strip() or None
+        family_name = (self.searchFamilyField.text() or "").strip() or None
+        subfamily_name = (self.searchSubfamilyField.text() or "").strip() or None
         setter = getattr(self.service, "set_search_filters", None)
         if callable(setter):
-            setter(produto=product_name, ingrediente=ingredient_name)
+            setter(
+                produto=product_name,
+                ingrediente=ingredient_name,
+                familia=family_name,
+                subfamilia=subfamily_name,
+            )
         self.cur_index = 0
         self._load_record(0)
 
     def _reset_search_filters(self):
         self.searchProductField.clear()
         self.searchIngredientField.clear()
+        self.searchFamilyField.clear()
+        self.searchSubfamilyField.clear()
         setter = getattr(self.service, "set_search_filters", None)
         if callable(setter):
-            setter(produto=None, ingrediente=None)
+            setter(produto=None, ingrediente=None, familia=None, subfamilia=None)
         self.cur_index = 0
         self._load_record(0)
 

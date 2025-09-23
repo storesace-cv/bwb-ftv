@@ -422,9 +422,16 @@ class ProductService:
         *,
         produto: str | None = None,
         ingrediente: str | None = None,
+        familia: str | None = None,
+        subfamilia: str | None = None,
     ) -> None:
         if hasattr(self.ds, "set_search_filters"):
-            self.ds.set_search_filters(produto=produto, ingrediente=ingrediente)
+            self.ds.set_search_filters(
+                produto=produto,
+                ingrediente=ingrediente,
+                familia=familia,
+                subfamilia=subfamilia,
+            )
 
     # -- auxiliary tables -------------------------------------------------
     def list_tipos_artigos(self) -> list[tuple[int, str]]:
