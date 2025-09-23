@@ -686,7 +686,8 @@ class FTApp(QWidget):
         self.btMenu.setText("Menu")
         self.btMenu.setPopupMode(QToolButton.InstantPopup)
         size_hint = self.btMenu.sizeHint()
-        self.btMenu.setFixedSize(int(size_hint.width() * 1.5), int(size_hint.height() * 1.5))
+        menu_height = int(size_hint.height() * 1.5)
+        self.btMenu.setFixedSize(int(size_hint.width() * 1.5), menu_height)
         menu_font = QFont()
         menu_font.setPointSize(12)
 
@@ -806,6 +807,8 @@ class FTApp(QWidget):
         self.btSearchToggle = QToolButton()
         self.btSearchToggle.setCheckable(True)
         self.btSearchToggle.setAutoRaise(True)
+        self.btSearchToggle.setFixedSize(menu_height, menu_height)
+        self.btSearchToggle.setIconSize(QSize(menu_height, menu_height))
         search_icon = self.style().standardIcon(QStyle.SP_FileDialogContentsView)
         if isinstance(search_icon, QIcon):
             self.btSearchToggle.setIcon(search_icon)
