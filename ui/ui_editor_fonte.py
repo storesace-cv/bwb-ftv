@@ -2507,7 +2507,11 @@ class FTApp(QWidget):
     def _reset_search_filters(self):
         self.searchProductField.clear()
         self.searchIngredientField.clear()
-        self._apply_search_filters()
+        setter = getattr(self.service, "set_search_filters", None)
+        if callable(setter):
+            setter(produto=None, ingrediente=None)
+        self.cur_index = 0
+        self._load_record(0)
 
     def _connect_nav(self):
         self.btFirst.clicked.connect(lambda: self._goto(0))
