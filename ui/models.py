@@ -10,7 +10,7 @@ from PyQt5.QtGui import QStandardItem, QStandardItemModel
 from domain import FichaTecnica
 from utils.formatting import format_pt_number, parse_decimal
 
-_FT_HEADERS = ["INGREDIENTES", "QTD", "U.M.", "PPU", "TOTAL", "PESO"]
+_FT_HEADERS = ["INGREDIENTES", "QTD", "U.M.", "PPU", "TOTAL", "PESO (%)"]
 _FT_DEV_HEADERS = [
     "FichasTecnicas.ComponenteNome",
     "FichasTecnicas.Qtd",
@@ -99,7 +99,12 @@ def _build_ft_row_items(ficha: FichaTecnica) -> list[QStandardItem]:
     items: list[QStandardItem] = []
     for col, value in enumerate(display_values):
         item = QStandardItem(value if value is not None else "")
-        alignment = _CELL_ALIGNMENT if col == 0 else Qt.AlignRight | Qt.AlignVCenter
+        if col == 0:
+            alignment = _CELL_ALIGNMENT
+        elif col == 5:
+            alignment = Qt.AlignHCenter | Qt.AlignVCenter
+        else:
+            alignment = Qt.AlignRight | Qt.AlignVCenter
         item.setTextAlignment(alignment)
         flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled
         if col in _EDITABLE_COLUMNS:
