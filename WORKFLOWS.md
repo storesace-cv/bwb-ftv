@@ -58,6 +58,11 @@ Excel files → Data Import Agent → DataStore ↔ ProductService → FTApp →
 - Import trigger: `ProductService.import_from_excel()`
 - Fetching sheet rows: `ProductService.list_fichas_tecnicas()` uses `DataStore.get_ingredientes()`
 
+**Notas sobre impressão**
+
+- A impressão da **Ficha Técnica de Gestão** (sinónimos: “FT Gestão”, “FT's Gestão”, “Ficha de Gestão”) privilegia a visão de custos e exclui os blocos **B4** e **B5**.
+- A impressão da **Ficha Técnica Operacional** (sinónimos: “FT Operacional”, “FT's Operacional”, “Ficha Operacional”, “FTs Operacionais”) centra-se no processo produtivo, omitindo o bloco **B3** e a tag **B1.C1.A.3** (“Preços de Venda”).
+
 **Agent responsibilities & data**
 
 | Agent | Responsibility | Data exchanged |
