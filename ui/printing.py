@@ -262,6 +262,14 @@ def _render_pdf_qt(
         raise RuntimeError("PyQt5 is required to render PDFs")
     printer = _configure_printer(destination, page_metrics)
     painter = QPainter(printer)
+    page_rect_points = printer.pageRect(QPrinter.Point)
+    page_rect_pixels = printer.pageRect(QPrinter.DevicePixel)
+    scale_x = 1.0
+    scale_y = 1.0
+    if page_rect_points.width() and page_rect_points.height():
+        scale_x = page_rect_pixels.width() / page_rect_points.width()
+        scale_y = page_rect_pixels.height() / page_rect_points.height()
+    painter.scale(scale_x, scale_y)
     painter.setRenderHint(QPainter.Antialiasing, True)
     try:
         _draw_management_sheet(painter, printer.pageRect(QPrinter.Point), payload)
@@ -596,6 +604,7 @@ def _draw_block_background(painter: QPainter, rect: QRectF) -> None:
     painter.save()
     border_pen = QPen(QColor("#d0d7e3"))
     border_pen.setWidthF(1.2)
+    border_pen.setCosmetic(True)
     painter.setPen(border_pen)
     painter.setBrush(QColor("#ffffff"))
     painter.drawRoundedRect(rect, 16, 16)
@@ -611,6 +620,12 @@ def _draw_ingredient_table(
     grid_color = QColor("#4a6fa5")
     body_text = QColor("#172b4d")
     secondary_text = QColor("#42526e")
+    header_outline_pen = QPen(grid_color)
+    header_outline_pen.setWidthF(1.0)
+    header_outline_pen.setCosmetic(True)
+    grid_pen = QPen(grid_color)
+    grid_pen.setWidthF(0.8)
+    grid_pen.setCosmetic(True)
 
     headers = [
         "Ingrediente",
@@ -639,7 +654,7 @@ def _draw_ingredient_table(
     header_rect = QRectF(rect.left(), rect.top(), rect.width(), header_height)
     painter.drawRoundedRect(header_rect, 6, 6)
 
-    painter.setPen(QPen(grid_color, 1))
+    painter.setPen(header_outline_pen)
     painter.setBrush(Qt.NoBrush)
     painter.drawRoundedRect(header_rect, 6, 6)
 
@@ -665,7 +680,7 @@ def _draw_ingredient_table(
         for col, width in enumerate(column_widths):
             x = positions[col]
             cell_rect = QRectF(x, top, width, row_height)
-            painter.setPen(QPen(grid_color, 0.8))
+            painter.setPen(grid_pen)
             painter.drawRect(cell_rect)
             painter.setPen(body_text if col == 0 else secondary_text)
             painter.drawText(
@@ -685,7 +700,10 @@ def _draw_food_cost_table(
     grid_color = QColor("#4a6fa5")
     label_color = QColor("#2c3e66")
     value_color = QColor("#172b4d")
-    painter.setPen(QPen(grid_color, 0.8))
+    grid_pen = QPen(grid_color)
+    grid_pen.setWidthF(0.8)
+    grid_pen.setCosmetic(True)
+    painter.setPen(grid_pen)
 
     row_font = QFont("Helvetica", 10)
     painter.setFont(row_font)
@@ -696,6 +714,7 @@ def _draw_food_cost_table(
 
     for left_label, left_value, right_label, right_value in rows:
         row_rect = QRectF(rect.left(), top, rect.width(), _FOOD_ROW_HEIGHT)
+        painter.setPen(grid_pen)
         painter.drawRect(row_rect)
 
         painter.setPen(label_color)
@@ -726,6 +745,7 @@ def _draw_food_cost_table(
             _format_percentage(right_value),
         )
         top += _FOOD_ROW_HEIGHT
+        painter.setPen(grid_pen)
 
     painter.restore()
 
