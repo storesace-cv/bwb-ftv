@@ -1579,34 +1579,152 @@ class FTApp(QWidget):
             0,
         )
 
-        # ---------------- B5 — FOOD COST (B5.C1) ----------------
-        self.C5 = Zone(
-            "B5.C1",
+        # ---------------- B2 — FICHA TÉCNICA (B2.C1) ----------------
+        self.B2_C1 = Zone(
+            "B2.C1",
             self,
             flow="v",
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
         )
-        page_ly.addWidget(self._section_box("[B5] - FOOD COST", self.C5), 0)
+        page_ly.addWidget(
+            self._section_box("[B2] - FICHA TÉCNICA", self.B2_C1),
+            0,
+        )
 
-        C5A = Zone(
-            "B5.C1.A",
-            self.C5,
+        B2_ing_zone, B2_totals_zone = self.B2_C1.split_v((1, 0))
+        B2_ing_zone.apply_metadata(
+            zone_type="secao-tabela-ingredientes",
+            widget_type="tabela",
+        )
+
+        self.ingModel = build_fichas_tecnicas_model(
+            [], overlays=layout.DEV_OVERLAYS
+        )
+
+        self.tbIng = QTableView(self)
+        self.tbIng.setModel(self.ingModel)
+        self.tbIng.verticalHeader().setVisible(False)
+        self.tbIng.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.tbIng.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.tbIng.setViewportMargins(0, 0, 0, 4)
+        self.tbIng.setFrameShape(QFrame.NoFrame)
+        self.tbIng.setShowGrid(False)
+        self.tbIng.setStyleSheet(
+            "\n".join(
+                (
+                    "QTableView {",
+                    "    border: none;",
+                    "    background-color: transparent;",
+                    "    alternate-background-color: transparent;",
+                    "}",
+                    "QTableView::item {",
+                    "    margin: 0;",
+                    "    padding: 0;",
+                    "    border: none;",
+                    "    border-bottom: 1px solid #000000;",
+                    "}",
+                    "QTableView::item:hover {",
+                    "    background-color: rgba(11, 99, 206, 0.08);",
+                    "}",
+                )
+            )
+        )
+        hh = self.tbIng.horizontalHeader()
+        hh.setStyleSheet(
+            """
+            QHeaderView {
+                background-color: transparent;
+            }
+            QHeaderView::section {
+                background-color: rgba(200, 200, 200, 0.5);
+                border: 1px solid rgba(0, 0, 0, 0.3);
+                border-top-color: rgba(255, 255, 255, 0.8);
+                border-left-color: rgba(255, 255, 255, 0.8);
+                border-bottom-color: rgba(0, 0, 0, 0.4);
+                border-right-color: rgba(0, 0, 0, 0.4);
+                border-radius: 6px;
+                padding: 4px;
+            }
+            QHeaderView::section:pressed {
+                background-color: rgba(200, 200, 200, 0.8);
+            }
+            """
+        )
+        hh.setDefaultAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        vh = self.tbIng.verticalHeader()
+        header_h = hh.height() or hh.minimumSectionSize()
+        initial_h = header_h + vh.defaultSectionSize() + self.tbIng.frameWidth() * 2
+        self.tbIng.setFixedHeight(initial_h)
+        self.tbIng.setEditTriggers(QTableView.DoubleClicked | QTableView.EditKeyPressed)
+        B2_ing_zone.add(self.tbIng, 1)
+        nome_font = QFont(self.edNome.font())
+        nome_font.setPixelSize(20)
+        nome_font.setBold(True)
+        self.edNome.setFont(nome_font)
+        self.edNome.setFixedHeight(self.edNome.sizeHint().height())
+        self.edNome.updateGeometry()
+
+        header_nome_font = QFont(nome_font)
+        self.headerEdNome.setFont(header_nome_font)
+        self.headerEdNome.setFixedHeight(self.headerEdNome.sizeHint().height())
+        self.headerEdNome.updateGeometry()
+
+        self._setup_ing_columns()
+
+        # Zona para custos totais após a tabela de ingredientes
+        self.B2Custo = Zone(
+            f"{B2_totals_zone.tag}.A",
+            B2_totals_zone,
+            flow="h",
+            level=B2_totals_zone._level + 1,
+            show_overlays=layout.DEV_OVERLAYS,
+            widget_type="campo",
+        )
+        self.B2Custo.apply_metadata(
+            zone_type="barra-totais",
+            widget_type="campo",
+        )
+        self.B2Custo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        B2_totals_zone.add(self.B2Custo, 0)
+        self.B2Custo.ly.addStretch(1)
+        custo_total_label = QLabel("Custo Total:")
+        apply_label_style(custo_total_label)
+        self.B2Custo.add(custo_total_label, 0)
+        self.edCustoTotal = QLineEdit()
+        make_readonly_lineedit(self.edCustoTotal)
+        self.edCustoTotal.setStyleSheet(FIELD_STYLE)
+        self.edCustoTotal.setFixedWidth(self.edCustoTotal.sizeHint().width() * 2)
+        self.B2Custo.add(self.edCustoTotal, 0)
+
+        # ---------------- B3 — FOOD COST (B3.C1) ----------------
+        self.B3_C1 = Zone(
+            "B3.C1",
+            self,
+            flow="v",
+            level=0,
+            show_overlays=layout.DEV_OVERLAYS,
+        )
+        page_ly.addWidget(self._section_box("[B3] - FOOD COST", self.B3_C1), 0)
+
+        B3A = Zone(
+            "B3.C1.A",
+            self.B3_C1,
             flow="v",
             level=1,
             show_overlays=layout.DEV_OVERLAYS,
         )
-        self.C5.add(C5A, 1)
-        C5AA = Zone(
-            "B5.C1.A.A",
-            C5A,
+        self.B3_C1.add(B3A, 1)
+        B3AA = Zone(
+            "B3.C1.A.A",
+            B3A,
             flow="h",
             level=2,
             show_overlays=layout.DEV_OVERLAYS,
         )
-        C5AA.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        C5A.add(C5AA, 0)
-        fc1, fc2, fc3, fc4, fc5 = C5AA.split_h((1, 1, 1, 1, 1))
+        B3AA.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        B3A.add(B3AA, 0)
+        fc1, fc2, fc3, fc4, fc5 = B3AA.split_h((1, 1, 1, 1, 1))
 
         self.lbFoodCosts: list[QLineEdit] = []
         for idx, fc in enumerate((fc1, fc2, fc3, fc4, fc5), start=1):
@@ -1644,16 +1762,16 @@ class FTApp(QWidget):
             field_zone.ly.addWidget(val, 0, Qt.AlignCenter)
             self.lbFoodCosts.append(val)
 
-        C5AB = Zone(
-            "B5.C1.A.B",
-            C5A,
+        B3AB = Zone(
+            "B3.C1.A.B",
+            B3A,
             flow="h",
             level=2,
             show_overlays=layout.DEV_OVERLAYS,
         )
-        C5AB.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        C5A.add(C5AB, 0)
-        fcB1, fcB2, fcB3, fcB4, fcB5 = C5AB.split_h((1, 1, 1, 1, 1))
+        B3AB.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        B3A.add(B3AB, 0)
+        fcB1, fcB2, fcB3, fcB4, fcB5 = B3AB.split_h((1, 1, 1, 1, 1))
 
         level_comments: dict[str, str] = {}
         repo = getattr(self.ds, "fcost", None)
@@ -1748,140 +1866,25 @@ class FTApp(QWidget):
         ]
         self._refresh_fcost_tooltips()
 
-        # ---------------- B4 — Ficha Técnica (B4.C1) ----------------
-        self.C4 = Zone(
+        # ---------------- B4 — PREPARAÇÃO (B4.C1) ----------------
+        self.B4_C1 = Zone(
             "B4.C1",
             self,
             flow="v",
             level=0,
             show_overlays=layout.DEV_OVERLAYS,
         )
-        page_ly.addWidget(self._section_box("[B4] - FICHA TÉCNICA", self.C4), 0)
+        page_ly.addWidget(self._section_box("[B4] - PREPARAÇÃO", self.B4_C1), 1)
 
-        C4_ing_zone, C4_totals_zone = self.C4.split_v((1, 0))
-        C4_ing_zone.apply_metadata(
-            zone_type="secao-tabela-ingredientes",
-            widget_type="tabela",
-        )
-
-        self.ingModel = build_fichas_tecnicas_model(
-            [], overlays=layout.DEV_OVERLAYS
-        )
-
-        self.tbIng = QTableView(self)
-        self.tbIng.setModel(self.ingModel)
-        self.tbIng.verticalHeader().setVisible(False)
-        self.tbIng.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.tbIng.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.tbIng.setViewportMargins(0, 0, 0, 4)
-        self.tbIng.setFrameShape(QFrame.NoFrame)
-        self.tbIng.setShowGrid(False)
-        self.tbIng.setStyleSheet(
-            "\n".join(
-                (
-                    "QTableView {",
-                    "    border: none;",
-                    "    background-color: transparent;",
-                    "    alternate-background-color: transparent;",
-                    "}",
-                    "QTableView::item {",
-                    "    margin: 0;",
-                    "    padding: 0;",
-                    "    border: none;",
-                    "    border-bottom: 1px solid #000000;",
-                    "}",
-                    "QTableView::item:hover {",
-                    "    background-color: rgba(11, 99, 206, 0.08);",
-                    "}",
-                )
-            )
-        )
-        hh = self.tbIng.horizontalHeader()
-        hh.setStyleSheet(
-            """
-            QHeaderView {
-                background-color: transparent;
-            }
-            QHeaderView::section {
-                background-color: rgba(200, 200, 200, 0.5);
-                border: 1px solid rgba(0, 0, 0, 0.3);
-                border-top-color: rgba(255, 255, 255, 0.8);
-                border-left-color: rgba(255, 255, 255, 0.8);
-                border-bottom-color: rgba(0, 0, 0, 0.4);
-                border-right-color: rgba(0, 0, 0, 0.4);
-                border-radius: 6px;
-                padding: 4px;
-            }
-            QHeaderView::section:pressed {
-                background-color: rgba(200, 200, 200, 0.8);
-            }
-            """
-        )
-        hh.setDefaultAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        vh = self.tbIng.verticalHeader()
-        header_h = hh.height() or hh.minimumSectionSize()
-        initial_h = header_h + vh.defaultSectionSize() + self.tbIng.frameWidth() * 2
-        self.tbIng.setFixedHeight(initial_h)
-        self.tbIng.setEditTriggers(QTableView.DoubleClicked | QTableView.EditKeyPressed)
-        C4_ing_zone.add(self.tbIng, 1)
-        nome_font = QFont(self.edNome.font())
-        nome_font.setPixelSize(20)
-        nome_font.setBold(True)
-        self.edNome.setFont(nome_font)
-        self.edNome.setFixedHeight(self.edNome.sizeHint().height())
-        self.edNome.updateGeometry()
-
-        header_nome_font = QFont(nome_font)
-        self.headerEdNome.setFont(header_nome_font)
-        self.headerEdNome.setFixedHeight(self.headerEdNome.sizeHint().height())
-        self.headerEdNome.updateGeometry()
-
-        self._setup_ing_columns()
-
-        # Zona para custos totais após a tabela de ingredientes
-        self.C4Custo = Zone(
-            f"{C4_totals_zone.tag}.A",
-            C4_totals_zone,
-            flow="h",
-            level=C4_totals_zone._level + 1,
-            show_overlays=layout.DEV_OVERLAYS,
-            widget_type="campo",
-        )
-        self.C4Custo.apply_metadata(
-            zone_type="barra-totais",
-            widget_type="campo",
-        )
-        self.C4Custo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        C4_totals_zone.add(self.C4Custo, 0)
-        self.C4Custo.ly.addStretch(1)
-        custo_total_label = QLabel("Custo Total:")
-        apply_label_style(custo_total_label)
-        self.C4Custo.add(custo_total_label, 0)
-        self.edCustoTotal = QLineEdit()
-        make_readonly_lineedit(self.edCustoTotal)
-        self.edCustoTotal.setStyleSheet(FIELD_STYLE)
-        self.edCustoTotal.setFixedWidth(self.edCustoTotal.sizeHint().width() * 2)
-        self.C4Custo.add(self.edCustoTotal, 0)
-
-        # ---------------- B6 — PREPARAÇÃO (B6.C1) ----------------
-        self.C6 = Zone(
-            "B6.C1",
-            self,
-            flow="v",
-            level=0,
-            show_overlays=layout.DEV_OVERLAYS,
-        )
-        page_ly.addWidget(self._section_box("[B6] - PREPARAÇÃO", self.C6), 1)
-
-        C6_text, C6_gallery = self.C6.split_v((3, 2))
-        C6_text.apply_metadata(
+        B4_text, B4_gallery = self.B4_C1.split_v((3, 2))
+        B4_text.apply_metadata(
             zone_type="secao-texto-preparacao",
             widget_type="editor",
         )
-        C6_gallery.apply_overlays(layout.DEV_OVERLAYS)
+        B4_gallery.apply_overlays(layout.DEV_OVERLAYS)
 
         self.prep_previews: list[PrepImagePreview] = []
-        gallery_slots = C6_gallery.split_h((1, 1, 1, 1))
+        gallery_slots = B4_gallery.split_h((1, 1, 1, 1))
         for slot in gallery_slots:
             slot.apply_metadata(zone_type="slot-preparacao", widget_type="etiqueta-c")
         for idx, slot in enumerate(gallery_slots, start=1):
@@ -1940,7 +1943,7 @@ class FTApp(QWidget):
                 button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
                 button.setMinimumWidth(button.sizeHint().width())
 
-        C6_text.add(toolbar, 0)
+        B4_text.add(toolbar, 0)
 
         self.edPrep = QTextEdit()
         self.edPrep.setAcceptRichText(True)
@@ -1951,11 +1954,11 @@ class FTApp(QWidget):
         self.edPrep.document().setDefaultStyleSheet("img { max-width:100%; }")
         self.edPrep.setPlaceholderText("— Texto de preparação —")
         self.edPrep.textChanged.connect(self._on_prep_changed)
-        C6_text.add(self.edPrep, 1)
+        B4_text.add(self.edPrep, 1)
 
-        # ---------------- B7 — NUTRIÇÃO / ALERGÉNIOS (B7.C1) ----------------
-        self.B7_C1 = Zone(
-            "B7.C1",
+        # ---------------- B5 — NUTRIÇÃO / ALERGÉNIOS (B5.C1) ----------------
+        self.B5_C1 = Zone(
+            "B5.C1",
             self,
             flow="v",
             level=0,
@@ -1963,14 +1966,14 @@ class FTApp(QWidget):
             widget_type="caixa de seleção",
         )
         # ``self.C7`` is kept for backward compatibility with legacy code.
-        self.C7 = self.B7_C1
+        self.C7 = self.B5_C1
 
-        self.B7_C1.apply_metadata(
+        self.B5_C1.apply_metadata(
             zone_type="bloco-alergenios",
             widget_type="caixa de seleção",
         )
         page_ly.addWidget(
-            self._section_box("[B7] - NUTRIÇÃO / ALERGÉNIOS", self.B7_C1),
+            self._section_box("[B5] - NUTRIÇÃO / ALERGÉNIOS", self.B5_C1),
             0,
         )
 
@@ -2109,7 +2112,7 @@ class FTApp(QWidget):
             )
             grid.addWidget(cb, r, c, alignment=Qt.AlignLeft)
             checkboxes[key] = cb
-        zone = getattr(self, "B7_C1", None)
+        zone = getattr(self, "B5_C1", None)
         if zone is None:
             zone = getattr(self, "C7", None)
         if zone is None:  # pragma: no cover - defensive guard
