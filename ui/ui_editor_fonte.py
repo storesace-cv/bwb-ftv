@@ -2165,11 +2165,9 @@ class FTApp(QWidget):
         model = self.tbIng.model()
         if not model:
             return
-        self.tbIng.setColumnWidth(0, int(w * 0.52))
-        self.tbIng.setColumnWidth(1, int(w * 0.08))
-        self.tbIng.setColumnWidth(2, int(w * 0.125))
-        self.tbIng.setColumnWidth(3, int(w * 0.15))
-        self.tbIng.setColumnWidth(4, int(w * 0.125))
+        ratios = [0.46, 0.08, 0.115, 0.13, 0.105, 0.11]
+        for idx, ratio in enumerate(ratios):
+            self.tbIng.setColumnWidth(idx, int(w * ratio))
         self.tbIng.horizontalHeader().setDefaultAlignment(
             Qt.AlignHCenter | Qt.AlignVCenter
         )
