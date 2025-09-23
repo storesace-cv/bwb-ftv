@@ -240,6 +240,9 @@ class IngredientesRepo:
         Retorna uma lista de dicts com as chaves canónicas
         ``ComponenteNome``, ``Qtd``, ``Unidade``, ``Ppu``, ``Preco``,
         ``Peso`` e ``ComponenteCodigo``.
+
+        Pode ainda incluir as chaves suplementares ``FamiliaSubfamilia``,
+        ``Familia`` e ``Subfamilia`` quando presentes na base de dados.
         """
 
         cur = self.conn.cursor()
@@ -253,10 +256,30 @@ class IngredientesRepo:
                     Ppu,
                     Preco,
                     Peso,
-                    ComponenteCodigo
+                    ComponenteCodigo,
+                    FamiliaSubfamilia,
+                    TRIM(
+                        CASE
+                            WHEN instr(COALESCE(FamiliaSubfamilia, ''), '>') > 0 THEN SUBSTR(
+                                COALESCE(FamiliaSubfamilia, ''),
+                                1,
+                                instr(COALESCE(FamiliaSubfamilia, ''), '>') - 1
+                            )
+                            ELSE COALESCE(FamiliaSubfamilia, '')
+                        END
+                    ) AS Familia,
+                    TRIM(
+                        CASE
+                            WHEN instr(COALESCE(FamiliaSubfamilia, ''), '>') > 0 THEN SUBSTR(
+                                COALESCE(FamiliaSubfamilia, ''),
+                                instr(COALESCE(FamiliaSubfamilia, ''), '>') + 1
+                            )
+                            ELSE ''
+                        END
+                    ) AS Subfamilia
                 FROM FichasTecnicas
                 WHERE TRIM(ProdutoCodigo) = TRIM(?)
-                ORDER BY Ordem
+                ORDER BY Familia, Subfamilia, Ordem, ComponenteNome
                 """,
                 (codigo,),
             )
@@ -281,6 +304,9 @@ class IngredientesRepo:
                     "Preco": r[4],
                     "Peso": r[5],
                     "ComponenteCodigo": r[6],
+                    "FamiliaSubfamilia": r[7],
+                    "Familia": r[8],
+                    "Subfamilia": r[9],
                 }
             )
         return out
