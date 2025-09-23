@@ -10,16 +10,16 @@ from PyQt5.QtGui import QStandardItem, QStandardItemModel
 from domain import FichaTecnica
 from utils.formatting import format_pt_number, parse_decimal
 
-_FT_HEADERS = ["INGREDIENTES", "QTD", "U.M.", "PPU", "PESO", "TOTAL"]
+_FT_HEADERS = ["INGREDIENTES", "QTD", "U.M.", "PPU", "TOTAL", "PESO"]
 _FT_DEV_HEADERS = [
     "FichasTecnicas.ComponenteNome",
     "FichasTecnicas.Qtd",
     "FichasTecnicas.Unidade",
     "FichasTecnicas.Ppu",
-    "FichasTecnicas.Peso",
     "FichasTecnicas.Preco",
+    "FichasTecnicas.Peso",
 ]
-_EDITABLE_COLUMNS = {1, 3, 5}
+_EDITABLE_COLUMNS = {1, 3, 4}
 _HEADER_ALIGNMENT = Qt.AlignHCenter | Qt.AlignVCenter
 _CELL_ALIGNMENT = Qt.AlignLeft | Qt.AlignVCenter
 
@@ -90,8 +90,8 @@ def _build_ft_row_items(ficha: FichaTecnica) -> list[QStandardItem]:
         format_pt_number(ficha.quantity),
         ficha.unit or "",
         format_pt_number(ficha.ppu),
-        format_pt_number(ficha.weight),
         format_pt_number(ficha.total),
+        format_pt_number(ficha.weight),
     )
     if not has_ingredient:
         display_values = ("—", "", "", "", "", "")
@@ -123,7 +123,7 @@ def _sync_item_to_ficha(model: QStandardItemModel, item: QStandardItem) -> None:
     if item.row() >= len(rows):
         return
     ficha = rows[item.row()]
-    column_attr = {1: "quantity", 3: "ppu", 5: "total"}.get(col)
+    column_attr = {1: "quantity", 3: "ppu", 4: "total"}.get(col)
     if not column_attr:
         return
 

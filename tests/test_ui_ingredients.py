@@ -91,8 +91,8 @@ def test_load_record_populates_ingredients(qapp):
         assert model.data(model.index(row, 1)) == format_pt_number(data["Qtd"])
         assert model.data(model.index(row, 2)) == data["Unidade"]
         assert model.data(model.index(row, 3)) == format_pt_number(data["Ppu"])
-        assert model.data(model.index(row, 4)) == format_pt_number(data["Peso"])
-        assert model.data(model.index(row, 5)) == format_pt_number(data["Preco"])
+        assert model.data(model.index(row, 4)) == format_pt_number(data["Preco"])
+        assert model.data(model.index(row, 5)) == format_pt_number(data["Peso"])
         assert model.item(row, 0).textAlignment() == Qt.AlignLeft | Qt.AlignVCenter
         for col in range(1, 6):
             assert model.item(row, col).textAlignment() == Qt.AlignRight | Qt.AlignVCenter
