@@ -123,7 +123,7 @@ Item {
             font.bold: header
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            Layout.preferredWidth: 72
+            Layout.preferredWidth: 61.2
             color: header ? "#2c3e66" : "#42526e"
         }
 
@@ -133,7 +133,7 @@ Item {
             font.bold: header
             horizontalAlignment: Text.AlignRight
             verticalAlignment: Text.AlignVCenter
-            Layout.preferredWidth: 100
+            Layout.preferredWidth: 85
             color: header ? "#2c3e66" : "#42526e"
         }
 
@@ -143,7 +143,7 @@ Item {
             font.bold: header
             horizontalAlignment: Text.AlignRight
             verticalAlignment: Text.AlignVCenter
-            Layout.preferredWidth: 110
+            Layout.preferredWidth: 93.5
             color: header ? "#2c3e66" : "#42526e"
         }
 
@@ -153,9 +153,9 @@ Item {
             font.bold: header
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            Layout.preferredWidth: 100
-            Layout.minimumWidth: 100
-            Layout.maximumWidth: 100
+            Layout.preferredWidth: 46.75
+            Layout.minimumWidth: 46.75
+            Layout.maximumWidth: 46.75
             color: header ? "#2c3e66" : "#42526e"
         }
     }
