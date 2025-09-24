@@ -7,7 +7,10 @@ import logging
 from pathlib import Path
 from typing import Any, Mapping
 
-from reportbro import Report, ReportBroError
+try:  # pragma: no cover - exercised only when the dependency is available
+    from reportbro import Report, ReportBroError
+except ModuleNotFoundError:  # pragma: no cover - fallback used in CI and dev without reportbro-lib
+    from ._stubs.reportbro import Report, ReportBroError
 
 logger = logging.getLogger(__name__)
 

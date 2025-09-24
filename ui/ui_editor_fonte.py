@@ -182,6 +182,7 @@ from .printing import (
     generate_ft_gestao_pdf,
     generate_ft_gestao_reportbro_pdf,
 )
+from .reportbro_stub import open_reportbro_stub_dialog
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
 
@@ -640,19 +641,21 @@ class FTApp(QWidget):
         self._refresh_datastore()
 
     def _open_reportbro_editor(self) -> None:
-        """Open the ReportBro editor using the system's default browser."""
+        """Open the ReportBro editor or fall back to the bundled stub."""
 
         editor_target = os.getenv("FTV_REPORTBRO_EDITOR_URL", "").strip()
-        if editor_target:
-            path = Path(editor_target)
-            if path.exists():
-                if path.is_dir():
-                    path = path / "index.html"
-                url = QUrl.fromLocalFile(str(path))
-            else:
-                url = QUrl.fromUserInput(editor_target)
+        if not editor_target:
+            logger.info("[ReportBro] A abrir editor offline (stub incluído)")
+            open_reportbro_stub_dialog(self)
+            return
+
+        path = Path(editor_target)
+        if path.exists():
+            if path.is_dir():
+                path = path / "index.html"
+            url = QUrl.fromLocalFile(str(path))
         else:
-            url = QUrl.fromUserInput("https://app.reportbro.com/editor")
+            url = QUrl.fromUserInput(editor_target)
 
         if not url.isValid() or url.isEmpty():
             QMessageBox.warning(
