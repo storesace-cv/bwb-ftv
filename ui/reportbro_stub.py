@@ -96,7 +96,9 @@ def _build_installation_hint() -> str:
         "instalar o ReportBro automaticamente e ativar o editor oficial.\n\n"
         f"    python {INSTALL_SCRIPT}\n\n"
         "O script tenta primeiro uma instalação padrão e, se necessário, "
-        "repete com a flag --user. O comando inicial é:\n\n"
+        "repete com a flag --user. Quando a janela abre, a aplicação também "
+        "tenta instalar automaticamente com os mesmos parâmetros. O comando "
+        "inicial é:\n\n"
         f"    {_format_command(command)}"
     )
 
@@ -104,7 +106,7 @@ def _build_installation_hint() -> str:
 def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no cover - GUI
     """Show the ReportBro stub dialog modally."""
 
-    from PyQt5.QtCore import Qt, QUrl
+    from PyQt5.QtCore import Qt, QUrl, QTimer
     from PyQt5.QtGui import QDesktopServices
     from PyQt5.QtWidgets import (
         QDialog,
@@ -175,6 +177,7 @@ def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no 
             layout.addWidget(button_box)
 
             self._populate_templates()
+            self._schedule_auto_install()
 
         # ------------------------- Helpers -------------------------
 
@@ -235,6 +238,37 @@ def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no 
                     self.windowTitle(),
                     result.details
                     or "Não foi possível instalar o ReportBro automaticamente.",
+                )
+
+        def _schedule_auto_install(self) -> None:
+            try:
+                already_available = reportbro_installer.is_requirement_satisfied(
+                    reportbro_installer.REPORTBRO_REQUIREMENT
+                )
+            except Exception:
+                logger.exception("[ReportBro] Falha ao verificar instalação automática")
+                return
+            if already_available:
+                return
+
+            QTimer.singleShot(0, self._auto_install_reportbro)
+
+        def _auto_install_reportbro(self) -> None:
+            logger.info("[ReportBro] Instalação automática iniciada a partir do modo offline")
+            result = self._run_installer()
+            if result.status == "success":
+                QMessageBox.information(
+                    self,
+                    self.windowTitle(),
+                    "Instalação concluída automaticamente. Configure a variável "
+                    "FTV_REPORTBRO_EDITOR_URL e reinicie a aplicação.",
+                )
+            elif result.status == "error" and result.details:
+                QMessageBox.warning(
+                    self,
+                    self.windowTitle(),
+                    "Não foi possível concluir a instalação automática do ReportBro:\n"
+                    f"{result.details}",
                 )
 
         def _run_installer(self) -> _InstallResult:
