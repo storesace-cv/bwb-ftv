@@ -465,7 +465,7 @@ def _draw_page_header(
     painter.setFont(header_font)
     painter.setPen(QColor("#253858"))
     fm_header = QFontMetricsF(header_font)
-    header_height = fm_header.height()
+    header_height = fm_header.lineSpacing()
     header_rect = QRectF(rect.left(), y, rect.width(), header_height)
     painter.drawText(header_rect, Qt.AlignLeft | Qt.AlignVCenter, title)
 
@@ -473,8 +473,9 @@ def _draw_page_header(
     painter.setFont(subtitle_font)
     painter.setPen(QColor("#4a6fa5"))
     fm_sub = QFontMetricsF(subtitle_font)
+    sub_height = fm_sub.lineSpacing()
     sub_y = y + header_height + 4
-    subtitle_rect = QRectF(rect.left(), sub_y, rect.width(), fm_sub.height())
+    subtitle_rect = QRectF(rect.left(), sub_y, rect.width(), sub_height)
     painter.drawText(subtitle_rect, Qt.AlignLeft | Qt.AlignVCenter, subtitle)
 
     if generated_at:
@@ -482,8 +483,9 @@ def _draw_page_header(
         painter.setFont(meta_font)
         painter.setPen(QColor("#6b778c"))
         fm_meta = QFontMetricsF(meta_font)
-        meta_y = sub_y + fm_sub.height() + 2
-        meta_rect = QRectF(rect.left(), meta_y, rect.width(), fm_meta.height())
+        meta_height = fm_meta.lineSpacing()
+        meta_y = sub_y + sub_height + 2
+        meta_rect = QRectF(rect.left(), meta_y, rect.width(), meta_height)
         painter.drawText(
             meta_rect,
             Qt.AlignLeft | Qt.AlignVCenter,
@@ -527,14 +529,17 @@ def _draw_block_b1(
     painter.setFont(title_font)
     painter.setPen(QColor("#253858"))
     fm_title = QFontMetricsF(title_font)
-    title_rect = QRectF(inner.left(), inner.top(), inner.width(), fm_title.height())
+    title_height = fm_title.lineSpacing()
+    title_rect = QRectF(inner.left(), inner.top(), inner.width(), title_height)
     painter.drawText(title_rect, Qt.AlignLeft | Qt.AlignVCenter, title)
 
     label_font = _scaled_font(10, QFont.Bold, scale_y=scale_y)
     value_font = _scaled_font(10, scale_y=scale_y)
     label_color = QColor("#6b778c")
     value_color = QColor("#172b4d")
+    fm_label = QFontMetricsF(label_font)
     fm_value = QFontMetricsF(value_font)
+    line_height = max(fm_label.lineSpacing(), fm_value.lineSpacing())
     current_y = title_rect.bottom() + 12
 
     image_box_width = min(_B1_IMAGE_BOX_SIZE, inner.width() * 0.35)
@@ -552,7 +557,7 @@ def _draw_block_b1(
         painter.setFont(label_font)
         painter.setPen(label_color)
         painter.drawText(
-            QRectF(inner.left(), current_y, col_width, fm_value.height()),
+            QRectF(inner.left(), current_y, col_width, line_height),
             Qt.AlignLeft | Qt.AlignVCenter,
             label,
         )
@@ -563,12 +568,12 @@ def _draw_block_b1(
                 inner.left() + col_width + 12,
                 current_y,
                 max(text_width - col_width - 12, 0.0),
-                fm_value.height(),
+                line_height,
             ),
             Qt.AlignLeft | Qt.AlignVCenter,
             value,
         )
-        current_y += fm_value.height() + 8
+        current_y += line_height + 8
 
     if image_box_width and QImage is not None and QPixmap is not None:
         image_top = title_rect.bottom() + 12
@@ -627,7 +632,8 @@ def _draw_block_b2(
     painter.setFont(title_font)
     painter.setPen(QColor("#253858"))
     fm_title = QFontMetricsF(title_font)
-    title_rect = QRectF(inner.left(), inner.top(), inner.width(), fm_title.height())
+    title_height = fm_title.lineSpacing()
+    title_rect = QRectF(inner.left(), inner.top(), inner.width(), title_height)
     painter.drawText(title_rect, Qt.AlignLeft | Qt.AlignVCenter, title)
 
     table_top = title_rect.bottom() + 16
@@ -638,6 +644,7 @@ def _draw_block_b2(
     painter.setFont(totals_font)
     painter.setPen(QColor("#253858"))
     fm_totals = QFontMetricsF(totals_font)
+    totals_height = fm_totals.lineSpacing()
     totals_y = table_rect.bottom() + 16
     totals_rows = [
         ("Custo Total", totals.get("custo_total")),
@@ -648,12 +655,13 @@ def _draw_block_b2(
     painter.setFont(value_font)
     value_color = QColor("#42526e")
     fm_value = QFontMetricsF(value_font)
+    value_height = fm_value.lineSpacing()
 
     for label, raw_value in totals_rows:
         painter.setFont(totals_font)
         painter.setPen(QColor("#253858"))
         painter.drawText(
-            QRectF(inner.left(), totals_y, inner.width() * 0.35, fm_totals.height()),
+            QRectF(inner.left(), totals_y, inner.width() * 0.35, totals_height),
             Qt.AlignLeft | Qt.AlignVCenter,
             label,
         )
@@ -664,12 +672,12 @@ def _draw_block_b2(
                 inner.left() + inner.width() * 0.35 + 12,
                 totals_y,
                 inner.width() * 0.65 - 12,
-                fm_value.height(),
+                value_height,
             ),
             Qt.AlignLeft | Qt.AlignVCenter,
             _format_measure(raw_value),
         )
-        totals_y += fm_value.height() + 6
+        totals_y += value_height + 6
 
     painter.restore()
     return block_rect.bottom()
@@ -702,18 +710,20 @@ def _draw_block_b3(
     painter.setFont(title_font)
     painter.setPen(QColor("#253858"))
     fm_title = QFontMetricsF(title_font)
-    title_rect = QRectF(inner.left(), inner.top(), inner.width(), fm_title.height())
+    title_height = fm_title.lineSpacing()
+    title_rect = QRectF(inner.left(), inner.top(), inner.width(), title_height)
     painter.drawText(title_rect, Qt.AlignLeft | Qt.AlignVCenter, title)
 
     meta_font = _scaled_font(10, QFont.Bold, scale_y=scale_y)
     painter.setFont(meta_font)
     painter.setPen(QColor("#4a6fa5"))
     fm_meta = QFontMetricsF(meta_font)
+    meta_height = fm_meta.lineSpacing()
     meta_rect = QRectF(
         inner.left(),
         title_rect.bottom() + 12,
         inner.width(),
-        fm_meta.height(),
+        meta_height,
     )
     painter.drawText(meta_rect, Qt.AlignLeft | Qt.AlignVCenter, f"IVA: {_format_measure(iva)}")
 
@@ -922,13 +932,15 @@ def _estimate_block_height(
     base = 2 * _BLOCK_PADDING
     title_font = _scaled_font(16, QFont.Bold, scale_y=scale_y)
     fm_title = QFontMetricsF(title_font)
-    base += fm_title.height() + 12
+    title_height = fm_title.lineSpacing()
+    base += title_height + 12
     value_font = _scaled_font(10, scale_y=scale_y)
     fm_value = QFontMetricsF(value_font)
+    value_height = fm_value.lineSpacing()
     for _ in rows:
-        base += fm_value.height() + 8
+        base += value_height + 8
     if image_height is not None:
-        base = max(base, 2 * _BLOCK_PADDING + fm_title.height() + 12 + image_height)
+        base = max(base, 2 * _BLOCK_PADDING + title_height + 12 + image_height)
     return base
 
 
@@ -936,11 +948,12 @@ def _estimate_table_block_height(num_rows: int, *, scale_y: float = 1.0) -> floa
     base = 2 * _BLOCK_PADDING
     title_font = _scaled_font(16, QFont.Bold, scale_y=scale_y)
     fm_title = QFontMetricsF(title_font)
-    base += fm_title.height() + 16
+    base += fm_title.lineSpacing() + 16
     base += _table_height(num_rows)
     totals_font = _scaled_font(10, scale_y=scale_y)
     fm_totals = QFontMetricsF(totals_font)
-    base += 3 * (fm_totals.height() + 6) + 10
+    totals_height = fm_totals.lineSpacing()
+    base += 3 * (totals_height + 6) + 10
     return base
 
 
@@ -948,10 +961,10 @@ def _estimate_food_cost_height(num_rows: int, *, scale_y: float = 1.0) -> float:
     base = 2 * _BLOCK_PADDING
     title_font = _scaled_font(16, QFont.Bold, scale_y=scale_y)
     fm_title = QFontMetricsF(title_font)
-    base += fm_title.height() + 12
+    base += fm_title.lineSpacing() + 12
     meta_font = _scaled_font(10, QFont.Bold, scale_y=scale_y)
     fm_meta = QFontMetricsF(meta_font)
-    base += fm_meta.height() + 12
+    base += fm_meta.lineSpacing() + 12
     base += num_rows * _FOOD_ROW_HEIGHT
     return base
 
