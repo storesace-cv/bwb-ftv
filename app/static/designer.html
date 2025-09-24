@@ -83,15 +83,16 @@
     <div id="toast" class="toast"></div>
     <script>
       const DEFAULT_DOCUMENT_PROPERTIES = {
-        pageFormat: "A4",
+        pageSize: "A4",
         orientation: "portrait",
-        marginLeft: 15,
-        marginRight: 15,
-        marginTop: 15,
-        marginBottom: 15,
+        unit: "mm",
+        marginLeft: 20,
+        marginRight: 20,
+        marginTop: 20,
+        marginBottom: 20,
         contentHeight: "",
-        header: false,
-        footer: false,
+        header: True,
+        footer: True,
         patternLocale: "pt_PT",
         patternCurrencySymbol: "€",
         patternNumberGroupSymbol: " ",
@@ -133,7 +134,27 @@
           properties = {};
         }
 
+        if (typeof properties.pageSize !== "string" || !properties.pageSize.trim()) {
+          if (typeof properties.pageFormat === "string" && properties.pageFormat.trim()) {
+            properties.pageSize = properties.pageFormat.trim();
+          }
+        }
+
         properties = { ...DEFAULT_DOCUMENT_PROPERTIES, ...properties };
+        delete properties.pageFormat;
+
+        if (typeof properties.pageSize === "string") {
+          properties.pageSize = properties.pageSize.trim() || DEFAULT_DOCUMENT_PROPERTIES.pageSize;
+        } else {
+          properties.pageSize = DEFAULT_DOCUMENT_PROPERTIES.pageSize;
+        }
+
+        if (typeof properties.unit === "string") {
+          properties.unit = properties.unit.trim() || DEFAULT_DOCUMENT_PROPERTIES.unit;
+        } else {
+          properties.unit = DEFAULT_DOCUMENT_PROPERTIES.unit;
+        }
+
         if (typeof properties.contentHeight === "number") {
           properties.contentHeight = String(properties.contentHeight);
         }
