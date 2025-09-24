@@ -96,15 +96,14 @@ def _build_installation_hint() -> str:
     requirement = reportbro_installer.REPORTBRO_REQUIREMENT
     command = reportbro_installer.build_pip_install_command(requirement)
     return (
-        "Execute os scripts abaixo numa consola com permissões de utilizador "
-        "para reinstalar automaticamente o ReportBro e preparar o editor "
-        "oficial.\n\n"
-        f"    python {INSTALL_SCRIPT}\n"
-        f"    python {EDITOR_INSTALL_SCRIPT}\n\n"
-        "O primeiro script garante as bibliotecas Python (reportbro-lib) e "
-        "o segundo descarrega os assets oficiais para app/static/. Quando o "
-        "gestor offline abre, a aplicação também tenta executar estes passos "
-        "automaticamente com os mesmos parâmetros. O comando inicial é:\n\n"
+        "Execute o script abaixo numa consola com permissões de utilizador para "
+        "instalar o ReportBro automaticamente e ativar o editor oficial.\n\n"
+        f"    python {INSTALL_SCRIPT}\n\n"
+        "O script tenta primeiro uma instalação padrão e, se necessário, "
+        "repete com a flag --user. Quando a janela abre, a aplicação também "
+        "tenta instalar automaticamente com os mesmos parâmetros. O comando "
+        "inicial é:\n\n"
+
         f"    {_format_command(command)}"
     )
 
