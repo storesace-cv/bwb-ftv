@@ -1,0 +1,200 @@
+{
+  "documentProperties": {
+    "pageFormat": "A4",
+    "orientation": "portrait",
+    "marginLeft": 15,
+    "marginRight": 15,
+    "marginTop": 15,
+    "marginBottom": 15,
+    "contentHeight": 0,
+    "header": false,
+    "footer": false,
+    "patternLocale": "pt_PT",
+    "patternCurrencySymbol": "€",
+    "patternNumberGroupSymbol": " "
+  },
+  "parameters": [
+    {
+      "id": 1,
+      "name": "title",
+      "type": "string",
+      "nullable": false
+    },
+    {
+      "id": 2,
+      "name": "subtitle",
+      "type": "string",
+      "nullable": true
+    },
+    {
+      "id": 3,
+      "name": "metadata",
+      "type": "string",
+      "nullable": true
+    },
+    {
+      "id": 4,
+      "name": "product_details",
+      "type": "string",
+      "nullable": true
+    },
+    {
+      "id": 5,
+      "name": "pricing_details",
+      "type": "string",
+      "nullable": true
+    },
+    {
+      "id": 6,
+      "name": "ingredients",
+      "type": "string",
+      "nullable": true
+    },
+    {
+      "id": 7,
+      "name": "totals",
+      "type": "string",
+      "nullable": true
+    }
+  ],
+  "styles": [
+    {
+      "id": 1,
+      "name": "Title",
+      "bold": true,
+      "italic": false,
+      "underline": false,
+      "strikethrough": false,
+      "horizontalAlignment": "left",
+      "verticalAlignment": "top",
+      "textColor": "#1d1f23",
+      "backgroundColor": "",
+      "font": "Helvetica",
+      "fontSize": 20,
+      "lineSpacing": 1.0,
+      "paddingLeft": 0,
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 6,
+      "borderColor": "#000000",
+      "borderWidth": 0,
+      "borderAll": false,
+      "borderLeft": false,
+      "borderTop": false,
+      "borderRight": false,
+      "borderBottom": false
+    },
+    {
+      "id": 2,
+      "name": "Body",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "strikethrough": false,
+      "horizontalAlignment": "left",
+      "verticalAlignment": "top",
+      "textColor": "#1d1f23",
+      "backgroundColor": "",
+      "font": "Helvetica",
+      "fontSize": 12,
+      "lineSpacing": 1.2,
+      "paddingLeft": 0,
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 4,
+      "borderColor": "#000000",
+      "borderWidth": 0,
+      "borderAll": false,
+      "borderLeft": false,
+      "borderTop": false,
+      "borderRight": false,
+      "borderBottom": false
+    }
+  ],
+  "docElements": [
+    {
+      "id": 1,
+      "containerId": "0_content",
+      "elementType": "text",
+      "x": 0,
+      "y": 0,
+      "width": 515,
+      "height": 30,
+      "content": "${title}",
+      "styleId": 1,
+      "eval": false
+    },
+    {
+      "id": 2,
+      "containerId": "0_content",
+      "elementType": "text",
+      "x": 0,
+      "y": 32,
+      "width": 515,
+      "height": 22,
+      "content": "${subtitle}",
+      "styleId": 2,
+      "eval": false
+    },
+    {
+      "id": 3,
+      "containerId": "0_content",
+      "elementType": "text",
+      "x": 0,
+      "y": 58,
+      "width": 515,
+      "height": 20,
+      "content": "${metadata}",
+      "styleId": 2,
+      "eval": false
+    },
+    {
+      "id": 4,
+      "containerId": "0_content",
+      "elementType": "text",
+      "x": 0,
+      "y": 90,
+      "width": 515,
+      "height": 110,
+      "content": "${product_details}",
+      "styleId": 2,
+      "eval": false
+    },
+    {
+      "id": 5,
+      "containerId": "0_content",
+      "elementType": "text",
+      "x": 0,
+      "y": 206,
+      "width": 515,
+      "height": 90,
+      "content": "${pricing_details}",
+      "styleId": 2,
+      "eval": false
+    },
+    {
+      "id": 6,
+      "containerId": "0_content",
+      "elementType": "text",
+      "x": 0,
+      "y": 302,
+      "width": 515,
+      "height": 220,
+      "content": "${ingredients}",
+      "styleId": 2,
+      "eval": false
+    },
+    {
+      "id": 7,
+      "containerId": "0_content",
+      "elementType": "text",
+      "x": 0,
+      "y": 530,
+      "width": 515,
+      "height": 80,
+      "content": "${totals}",
+      "styleId": 2,
+      "eval": false
+    }
+  ]
+}
