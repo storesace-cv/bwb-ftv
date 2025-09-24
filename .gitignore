@@ -7,10 +7,17 @@ __pycache__/
 
 # Environment files
 .env
+.venv/
+
+# ReportBro assets generated via bootstrap
+app/static/reportbro-designer/
 
 # Ignore logs, reports, and databases
 logs/
 reports/
+
+# Generated previews
+*.pdf
 
 # Databases (tudo)
 databases/
