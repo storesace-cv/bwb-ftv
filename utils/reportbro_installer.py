@@ -6,7 +6,6 @@ import argparse
 import shlex
 import subprocess
 import sys
-from dataclasses import dataclass
 from importlib import metadata
 from pathlib import Path
 from typing import Sequence
@@ -98,32 +97,6 @@ def build_pip_install_command(
     return args
 
 
-def running_inside_virtualenv() -> bool:
-    """Return ``True`` when the interpreter is executing inside a virtualenv."""
-
-    real_prefix = getattr(sys, "real_prefix", None)
-    base_prefix = getattr(sys, "base_prefix", sys.prefix)
-    if real_prefix is not None and real_prefix != sys.prefix:
-        return True
-    return sys.prefix != base_prefix
-
-
-def is_user_site_enabled() -> bool:
-    """Return ``True`` when the user site-packages directory is active."""
-
-    try:
-        import site  # noqa: PLC0415 - imported lazily to avoid startup cost
-    except ImportError:  # pragma: no cover - site module always available normally
-        return False
-    return bool(getattr(site, "ENABLE_USER_SITE", False))
-
-
-def default_pip_args() -> tuple[str, ...]:
-    """Return the default pip arguments for local installations."""
-
-    return ()
-
-
 def _run_command(command: Sequence[str]) -> None:
     try:
         subprocess.run(command, check=True)
@@ -153,27 +126,6 @@ def ensure_reportbro_installed(
 
     if not force and is_requirement_satisfied(requirement):
         return False
-
-    if pip_args is None:
-        pip_args_tuple: tuple[str, ...] = default_pip_args()
-        allow_user_fallback = True
-    else:
-        pip_args_tuple = tuple(pip_args)
-        allow_user_fallback = False
-
-    command = build_pip_install_command(requirement, pip_args_tuple)
-
-    try:
-        _run_command(command)
-    except InstallationError:
-        if not allow_user_fallback:
-            raise
-        if running_inside_virtualenv() or not is_user_site_enabled():
-            raise
-        fallback_args = ("--user",)
-        fallback_command = build_pip_install_command(requirement, fallback_args)
-        _run_command(fallback_command)
-
     return True
 
 
@@ -219,38 +171,23 @@ def _build_arg_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _build_arg_parser()
     args = parser.parse_args(argv)
-    pip_args: Sequence[str] | None = tuple(args.pip_args) if args.pip_args else None
 
     try:
         requirement = load_reportbro_requirement(args.requirements)
     except InstallationError as exc:
         parser.error(str(exc))
 
-    command = build_pip_install_command(
-        requirement,
-        pip_args if pip_args is not None else default_pip_args(),
-    )
-
     if args.dry_run:
         print(_format_command(command))
         return 0
 
     try:
-        installed = ensure_reportbro_installed(
-            requirements_path=args.requirements,
-            pip_args=pip_args,
-            force=args.force,
-        )
     except InstallationError as exc:
         if not args.quiet:
             print(str(exc), file=sys.stderr)
         return 1
 
     if not args.quiet:
-        if installed:
-            print("Instalação concluída com sucesso.")
-        else:
-            print("O ReportBro já se encontra instalado.")
     return 0
 
 
@@ -263,8 +200,6 @@ __all__ = [
     "default_pip_args",
     "ensure_reportbro_installed",
     "is_requirement_satisfied",
-    "is_user_site_enabled",
-    "running_inside_virtualenv",
     "load_reportbro_requirement",
     "main",
 ]

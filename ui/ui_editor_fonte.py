@@ -158,6 +158,7 @@ from .models import (
     update_fichas_tecnicas_model,
 )
 from .qt_compat import exec_modal
+from .reportbro_stub import open_reportbro_stub_dialog
 from .utilities import (
     AlignmentVariant,
     FIELD_STYLE,
@@ -183,6 +184,30 @@ from .printing import (
     generate_ft_gestao_reportbro_pdf,
 )
 APP_TITLE = "Fichas Técnicas Valorizadas"
+
+
+def resolve_reportbro_url(target: str) -> QUrl | None:
+    """Interpret ``target`` and return a suitable ``QUrl`` instance.
+
+    The function accepts HTTP(S) endpoints as well as filesystem paths.  It uses
+    ``QUrl.fromUserInput`` to benefit from Qt's heuristics (e.g. automatically
+    prefixing ``http://`` for bare hostnames) and falls back to converting the
+    value into an absolute local path when no scheme is provided.
+    """
+
+    sanitized = target.strip()
+    if not sanitized:
+        return None
+
+    url = QUrl.fromUserInput(sanitized)
+    if url.isValid() and url.scheme():
+        return url
+
+    candidate_path = Path(sanitized).expanduser()
+    if not candidate_path.is_absolute():
+        candidate_path = (Path.cwd() / candidate_path).resolve()
+
+    return QUrl.fromLocalFile(str(candidate_path))
 
 APP_STYLESHEET = (
     "QWidget {\n"

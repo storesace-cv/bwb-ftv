@@ -53,9 +53,6 @@ def _format_command(arguments: Iterable[str]) -> str:
 
 
 def _build_installation_hint() -> str:
-    command = reportbro_installer.build_pip_install_command(
-        reportbro_installer.REPORTBRO_REQUIREMENT,
-        reportbro_installer.default_pip_args(),
     )
     return (
         "Execute o script abaixo numa consola com permissões de utilizador para "
@@ -65,6 +62,7 @@ def _build_installation_hint() -> str:
         "repete com a flag --user. O comando inicial é:\n\n"
         f"    {_format_command(command)}"
     )
+
 
 
 def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no cover - GUI
@@ -201,9 +199,6 @@ def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no 
                 )
 
         def _run_installer(self) -> _InstallResult:
-            try:
-                logger.info("[ReportBro] A executar instalador de dependências")
-                installed = reportbro_installer.ensure_reportbro_installed()
             except reportbro_installer.InstallationError as exc:
                 logger.warning("[ReportBro] Instalação falhou: %s", exc)
                 return _InstallResult("error", str(exc))
