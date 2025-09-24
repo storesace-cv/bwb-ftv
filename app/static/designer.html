@@ -61,12 +61,8 @@
         display: none;
         z-index: 9999;
       }
-      .toast.show {
-        display: block;
-      }
-      .toast.error {
-        background: #b91c1c;
-      }
+      .toast.show { display: block; }
+      .toast.error { background: #b91c1c; }
     </style>
     <script src="/static/reportbro-designer/reportbro.js"></script>
   </head>
@@ -74,13 +70,19 @@
     <div class="toolbar">
       <button id="btn-new" class="secondary">Novo</button>
       <select id="template-select"></select>
-      <button id="btn-open" class="secondary">Abrir</button>
+
+      <!-- Abrir do DISCO -->
+      <button id="btn-open" class="secondary" title="Abrir template (.json) do disco">Abrir</button>
+      <input id="open-file" type="file" accept=".json,application/json" style="display:none" aria-hidden="true" />
+
       <button id="btn-save">Guardar</button>
       <button id="btn-preview" class="secondary">Preview PDF</button>
       <div id="status-bar"></div>
     </div>
+
     <div id="designer"></div>
     <div id="toast" class="toast"></div>
+
     <script>
       const DEFAULT_DOCUMENT_PROPERTIES = {
         pageSize: "A4",
@@ -91,8 +93,8 @@
         marginTop: 20,
         marginBottom: 20,
         contentHeight: "",
-        header: True,
-        footer: True,
+        header: true,   // fix True -> true
+        footer: true,   // fix True -> true
         patternLocale: "pt_PT",
         patternCurrencySymbol: "€",
         patternNumberGroupSymbol: " ",
@@ -108,31 +110,16 @@
       };
 
       function normaliseTemplateSchema(report) {
-        if (!report || typeof report !== "object") {
-          return;
-        }
+        if (!report || typeof report !== "object") return;
 
-        if (typeof report.version !== "number") {
-          report.version = 7;
-        }
-
-        if (!Array.isArray(report.docElements)) {
-          report.docElements = [];
-        }
-        if (!Array.isArray(report.parameters)) {
-          report.parameters = [];
-        }
-        if (!Array.isArray(report.styles)) {
-          report.styles = [];
-        }
-        if (!Array.isArray(report.watermarks)) {
-          report.watermarks = [];
-        }
+        if (typeof report.version !== "number") report.version = 7;
+        if (!Array.isArray(report.docElements)) report.docElements = [];
+        if (!Array.isArray(report.parameters)) report.parameters = [];
+        if (!Array.isArray(report.styles)) report.styles = [];
+        if (!Array.isArray(report.watermarks)) report.watermarks = [];
 
         let properties = report.documentProperties;
-        if (!properties || typeof properties !== "object") {
-          properties = {};
-        }
+        if (!properties || typeof properties !== "object") properties = {};
 
         if (typeof properties.pageSize !== "string" || !properties.pageSize.trim()) {
           if (typeof properties.pageFormat === "string" && properties.pageFormat.trim()) {
@@ -143,28 +130,16 @@
         properties = { ...DEFAULT_DOCUMENT_PROPERTIES, ...properties };
         delete properties.pageFormat;
 
-        if (typeof properties.pageSize === "string") {
-          properties.pageSize = properties.pageSize.trim() || DEFAULT_DOCUMENT_PROPERTIES.pageSize;
-        } else {
-          properties.pageSize = DEFAULT_DOCUMENT_PROPERTIES.pageSize;
-        }
+        properties.pageSize = (typeof properties.pageSize === "string" && properties.pageSize.trim()) || DEFAULT_DOCUMENT_PROPERTIES.pageSize;
+        properties.unit = (typeof properties.unit === "string" && properties.unit.trim()) || DEFAULT_DOCUMENT_PROPERTIES.unit;
 
-        if (typeof properties.unit === "string") {
-          properties.unit = properties.unit.trim() || DEFAULT_DOCUMENT_PROPERTIES.unit;
-        } else {
-          properties.unit = DEFAULT_DOCUMENT_PROPERTIES.unit;
-        }
-
-        if (typeof properties.contentHeight === "number") {
-          properties.contentHeight = String(properties.contentHeight);
-        }
-        if (typeof properties.contentHeight !== "string") {
-          properties.contentHeight = "";
-        }
+        if (typeof properties.contentHeight === "number") properties.contentHeight = String(properties.contentHeight);
+        if (typeof properties.contentHeight !== "string") properties.contentHeight = "";
 
         report.documentProperties = properties;
       }
 
+      // ---------------- estado/refs ----------------
       let designerInstance = null;
       let currentTemplateName = null;
       let templatesCache = [];
@@ -172,29 +147,27 @@
       const toastElement = document.getElementById("toast");
       const statusBar = document.getElementById("status-bar");
       const selectElement = document.getElementById("template-select");
+      const openFileInput = document.getElementById("open-file");
+      const btnOpen = document.getElementById("btn-open");
 
       function showToast(message, variant = "info") {
         toastElement.textContent = message;
         toastElement.className = `toast ${variant === "error" ? "error" : ""} show`;
-        setTimeout(() => {
-          toastElement.className = "toast";
-        }, 3500);
+        setTimeout(() => { toastElement.className = "toast"; }, 3500);
       }
 
-      function setStatus(message) {
-        statusBar.textContent = message || "";
-      }
+      function setStatus(message) { statusBar.textContent = message || ""; }
+      function cloneTemplate(tpl) { return JSON.parse(JSON.stringify(tpl)); }
 
-      function cloneTemplate(template) {
-        return JSON.parse(JSON.stringify(template));
-      }
-
+      // ---------------- lista (opcional, servidor) ----------------
       async function refreshTemplates() {
-        const response = await fetch("/templates/list");
-        if (!response.ok) {
-          throw new Error("Não foi possível carregar a lista de templates.");
+        try {
+          const response = await fetch("/templates/list");
+          if (!response.ok) throw new Error();
+          templatesCache = await response.json();
+        } catch {
+          templatesCache = []; // segue sem lista
         }
-        templatesCache = await response.json();
         populateTemplateSelect();
       }
 
@@ -202,24 +175,20 @@
         selectElement.innerHTML = "";
         const placeholder = document.createElement("option");
         placeholder.value = "";
-        placeholder.textContent = "-- escolher template --";
+        placeholder.textContent = "-- escolher template (servidor) --";
         selectElement.appendChild(placeholder);
         for (const template of templatesCache) {
           const option = document.createElement("option");
           option.value = template.name;
           option.textContent = `${template.name} (${new Date(template.updated_at).toLocaleString()})`;
-          if (template.name === currentTemplateName) {
-            option.selected = true;
-          }
+          if (template.name === currentTemplateName) option.selected = true;
           selectElement.appendChild(option);
         }
       }
 
       async function loadTemplate(name) {
         const response = await fetch(`/templates/${encodeURIComponent(name)}`);
-        if (!response.ok) {
-          throw new Error(`Não foi possível carregar o template '${name}'.`);
-        }
+        if (!response.ok) throw new Error(`Não foi possível carregar o template '${name}'.`);
         const report = await response.json();
         normaliseTemplateSchema(report);
         designerInstance.load(report);
@@ -229,33 +198,41 @@
         showToast(`Template '${name}' carregado.`);
       }
 
-      async function handleOpen() {
-        const name = selectElement.value;
-        if (!name) {
-          showToast("Seleccione um template na lista.", "error");
-          return;
-        }
+      // ---------------- Abrir do DISCO ----------------
+      function triggerOpenFromDisk() {
+        openFileInput.value = ""; // permite reabrir o mesmo ficheiro
+        openFileInput.click();
+      }
+
+      async function handleOpenFromDisk(ev) {
+        const file = ev.target.files?.[0];
+        if (!file) return;
         try {
-          await loadTemplate(name);
-        } catch (error) {
-          console.error(error);
-          showToast(error.message, "error");
+          const text = await file.text();
+          const parsed = JSON.parse(text);
+          normaliseTemplateSchema(parsed);
+          designerInstance.load(parsed);
+          designerInstance.setModified(false);
+          currentTemplateName = file.name.replace(/\.json$/i, "");
+          selectElement.value = ""; // limpa seleção do servidor
+          setStatus(`Template aberto do disco: ${file.name}`);
+          showToast(`Aberto: ${file.name}`);
+        } catch (err) {
+          console.error(err);
+          showToast("Ficheiro inválido ou JSON malformado.", "error");
         }
       }
 
+      // ---------------- guardar/preview ----------------
       async function saveTemplate(name, report, overwrite = false) {
         const url = new URL(`/templates/${encodeURIComponent(name)}`, window.location.origin);
-        if (overwrite) {
-          url.searchParams.set("overwrite", "1");
-        }
+        if (overwrite) url.searchParams.set("overwrite", "1");
         const response = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(report),
         });
-        if (response.status === 409) {
-          return { conflict: true };
-        }
+        if (response.status === 409) return { conflict: true };
         if (!response.ok) {
           const payload = await response.json().catch(() => ({}));
           throw new Error(payload.error || "Falha ao guardar o template.");
@@ -270,21 +247,14 @@
         let targetName = currentTemplateName;
         if (!targetName) {
           const input = window.prompt("Nome do template (slug em minúsculas):");
-          if (!input) {
-            showToast("Operação cancelada.", "error");
-            return;
-          }
+          if (!input) { showToast("Operação cancelada.", "error"); return; }
           targetName = input.trim();
         }
         try {
           const result = await saveTemplate(targetName, report, overwrite);
           if (result.conflict && !overwrite) {
-            const confirmed = window.confirm(
-              "O template já existe. Pretende substituir o ficheiro?"
-            );
-            if (confirmed) {
-              await persistTemplate(true);
-            }
+            const confirmed = window.confirm("O template já existe. Pretende substituir o ficheiro?");
+            if (confirmed) { await persistTemplate(true); }
             return;
           }
           currentTemplateName = targetName;
@@ -329,39 +299,60 @@
         showToast("Template em branco criado.");
       }
 
+      // ---------- autodeteção do construtor do Designer ----------
+      function findDesignerFactory() {
+        if (window.ReportBro) return { type: "ctor", name: "ReportBro", value: window.ReportBro };
+        if (window.reportbro?.Designer) return { type: "ctor", name: "reportbro.Designer", value: window.reportbro.Designer };
+        if (window.ReportBroDesigner) return { type: "ctor", name: "ReportBroDesigner", value: window.ReportBroDesigner };
+        if (window.reportbro?.create) return { type: "factory", name: "reportbro.create", value: window.reportbro.create };
+        if (window.ReportBro?.create) return { type: "factory", name: "ReportBro.create", value: window.ReportBro.create };
+        return null;
+      }
+
       async function bootstrap() {
-        designerInstance = new ReportBro(document.getElementById("designer"), {
-          reportServerUrl: "/rb/preview",
-          saveCallback: () => persistTemplate(false),
-          requestCallback: (params) => {
-            params.reportServerHeaders = { "Content-Type": "application/json" };
-            params.reportServerUrl = "/rb/preview";
-          },
-        });
+        const factory = findDesignerFactory();
+        if (!factory) {
+          const near = Object.keys(window).filter(k => k.toLowerCase().includes("report"));
+          console.error("Construtor do ReportBro não encontrado. Chaves parecidas:", near);
+          showToast("Falha a iniciar o ReportBro Designer (JS). Ver consola.", "error");
+          return;
+        }
+        console.log("ReportBro: a usar", factory.name);
 
+        const host = document.getElementById("designer");
+        try {
+          if (factory.type === "ctor") {
+            designerInstance = new factory.value(host, {
+              reportServerUrl: "/rb/preview",
+              saveCallback: () => persistTemplate(false),
+              requestCallback: (params) => {
+                params.reportServerHeaders = { "Content-Type": "application/json" };
+                params.reportServerUrl = "/rb/preview";
+              },
+            });
+          } else {
+            designerInstance = factory.value(host, { reportServerUrl: "/rb/preview" });
+          }
+        } catch (e) {
+          console.error(e);
+          showToast("Erro ao construir o Designer.", "error");
+          return;
+        }
+
+        // Botões
         document.getElementById("btn-new").addEventListener("click", handleNew);
-        document.getElementById("btn-open").addEventListener("click", () => {
-          handleOpen();
-        });
-        document.getElementById("btn-save").addEventListener("click", () => {
-          persistTemplate(false);
-        });
-        document.getElementById("btn-preview").addEventListener("click", () => {
-          previewTemplate();
-        });
+        btnOpen.addEventListener("click", triggerOpenFromDisk);
+        openFileInput.addEventListener("change", handleOpenFromDisk);
+        document.getElementById("btn-save").addEventListener("click", () => persistTemplate(false));
+        document.getElementById("btn-preview").addEventListener("click", () => previewTemplate());
 
+        // Tenta lista do servidor (opcional); se falhar, segue com um novo.
         try {
           await refreshTemplates();
-          const defaultTemplate = templatesCache.find((item) => item.name === "exemplo_fatura");
-          if (defaultTemplate) {
-            await loadTemplate(defaultTemplate.name);
-            selectElement.value = defaultTemplate.name;
-          } else {
-            handleNew();
-          }
-        } catch (error) {
-          console.error(error);
-          showToast(error.message, "error");
+          const def = templatesCache.find((t) => t.name === "exemplo_fatura");
+          if (def) { await loadTemplate(def.name); selectElement.value = def.name; }
+          else { handleNew(); }
+        } catch {
           handleNew();
         }
       }
