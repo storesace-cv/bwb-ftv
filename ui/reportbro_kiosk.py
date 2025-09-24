@@ -312,7 +312,6 @@ if QT_AVAILABLE:
             page = self._web_view.page()
             if page is None:
                 return
-
             script = f"""
 (() => {{
     const select = document.getElementById('template-select');
@@ -331,7 +330,35 @@ if QT_AVAILABLE:
     return true;
 }})();
             """
-            page.runJavaScript(script)
+                """
+(() => {
+    const select = document.getElementById('template-select');
+    if (!select) {
+        return;
+    }
+    if (!select.dataset.rbKioskAutoload) {
+        select.addEventListener('change', () => {
+            if (select.value) {
+                document.getElementById('btn-open')?.click();
+            }
+        });
+        select.dataset.rbKioskAutoload = '1';
+    }
+    if (!select.value) {
+        select.focus();
+        if (typeof select.showPicker === 'function') {
+            select.showPicker();
+        } else {
+            const event = new MouseEvent('mousedown', { bubbles: true });
+            select.dispatchEvent(event);
+        }
+        return;
+    }
+    document.getElementById('btn-open')?.click();
+})();
+                """
+            )
+
 
         def _on_title_changed(self, title: str) -> None:
             if self._title_label is None:
