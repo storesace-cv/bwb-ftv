@@ -1,8 +1,6 @@
 """Offline fallback for the ReportBro document manager."""
 
 from __future__ import annotations
-
-import json
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -43,90 +41,9 @@ def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no 
         QListWidget,
         QListWidgetItem,
         QMessageBox,
-        QPlainTextEdit,
         QPushButton,
         QVBoxLayout,
     )
-
-    class TemplateEditorDialog(QDialog):
-        """Lightweight JSON editor for local ReportBro templates."""
-
-        def __init__(self, template_path: Path, parent_widget: "QWidget | None") -> None:
-            super().__init__(parent_widget)
-            self._template_path = template_path
-            self.setWindowTitle(f"Editar template — {template_path.name}")
-            self.resize(720, 520)
-
-            layout = QVBoxLayout(self)
-
-            header = QLabel(
-                "Revise o conteúdo JSON do template selecionado. "
-                "As alterações serão guardadas diretamente no ficheiro."
-            )
-            header.setWordWrap(True)
-            layout.addWidget(header)
-
-            path_label = QLabel(f"<code>{template_path}</code>")
-            path_label.setTextFormat(Qt.RichText)
-            layout.addWidget(path_label)
-
-            self._editor = QPlainTextEdit(self)
-            self._editor.setLineWrapMode(QPlainTextEdit.NoWrap)
-            layout.addWidget(self._editor, 1)
-
-            button_box = QDialogButtonBox(
-                QDialogButtonBox.Save | QDialogButtonBox.Cancel,
-                Qt.Horizontal,
-                self,
-            )
-            button_box.accepted.connect(self._save_and_close)
-            button_box.rejected.connect(self.reject)
-            layout.addWidget(button_box)
-
-            self._load_template()
-
-        def _load_template(self) -> None:
-            try:
-                content = self._template_path.read_text(encoding="utf-8")
-            except OSError as exc:
-                QMessageBox.warning(
-                    self,
-                    self.windowTitle(),
-                    "Não foi possível ler o template selecionado:\n" f"{exc}",
-                )
-                content = ""
-            self._editor.setPlainText(content)
-
-        def _save_and_close(self) -> None:
-            raw_content = self._editor.toPlainText()
-            try:
-                parsed = json.loads(raw_content)
-            except json.JSONDecodeError as exc:
-                QMessageBox.warning(
-                    self,
-                    self.windowTitle(),
-                    "O conteúdo não é JSON válido:\n"
-                    f"Linha {exc.lineno}, coluna {exc.colno}: {exc.msg}",
-                )
-                return
-
-            formatted = json.dumps(parsed, ensure_ascii=False, indent=2)
-            if not formatted.endswith("\n"):
-                formatted += "\n"
-
-            try:
-                self._template_path.write_text(formatted, encoding="utf-8")
-            except OSError as exc:
-                QMessageBox.critical(
-                    self,
-                    self.windowTitle(),
-                    "Não foi possível guardar o template:\n" f"{exc}",
-                )
-                return
-
-            self.accept()
-
-    class ReportBroEditorStubDialog(QDialog):
 
         """Simple dialog guiding the user while the real editor is unavailable."""
 
@@ -192,10 +109,6 @@ def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no 
             path = item.data(Qt.UserRole)
             if not isinstance(path, Path):
                 return
-
-            logger.info("[ReportBro] A editar template local: %s", path)
-            editor = TemplateEditorDialog(path, self)
-            editor.exec_()
 
         def _open_templates_directory(self) -> None:
             logger.info("[ReportBro] Abrir pasta de templates: %s", TEMPLATES_DIR)
