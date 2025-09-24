@@ -317,8 +317,7 @@ if QT_AVAILABLE:
                 f"""
                 (() => {{
                     const select = document.getElementById('template-select');
-                    const openButton = document.getElementById('btn-open');
-                    if (!select || !openButton) {{
+                    if (!select) {{
                         return false;
                     }}
                     const value = {json.dumps(template_name)};
@@ -328,7 +327,6 @@ if QT_AVAILABLE:
                     }}
                     select.value = value;
                     select.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                    openButton.click();
                     return true;
                 }})();
                 """

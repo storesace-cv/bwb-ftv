@@ -41,6 +41,20 @@ def _validate_template(template: dict[str, Any]) -> None:
         raise TemplateError("Template JSON inválido: faltam 'documentProperties'.")
 
 
+def _normalise_document_properties(template: dict[str, Any]) -> None:
+    properties = template.get("documentProperties")
+    if not isinstance(properties, dict):
+        return
+
+    page_format = properties.get("pageFormat")
+    if not isinstance(page_format, str) or not page_format.strip():
+        page_size = properties.get("pageSize")
+        if isinstance(page_size, str) and page_size.strip():
+            properties["pageFormat"] = page_size.strip()
+        else:
+            properties["pageFormat"] = "A4"
+
+
 def _load_default_data() -> dict[str, Any]:
     if not SAMPLE_DATA_PATH.exists():
         raise DataError(
@@ -62,6 +76,7 @@ def _build_context(template: dict[str, Any], data: dict[str, Any] | None) -> Ren
     if not isinstance(template, dict):
         raise TemplateError("Template JSON inválido.")
     _validate_template(template)
+    _normalise_document_properties(template)
     normalised_data = _normalise_data(data)
     if not isinstance(normalised_data, dict):
         raise DataError("Dados inválidos: deve ser um objeto JSON.")
