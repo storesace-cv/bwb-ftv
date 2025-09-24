@@ -159,6 +159,7 @@ from .models import (
 )
 from .qt_compat import exec_modal
 from .reportbro_stub import open_reportbro_stub_dialog
+from .reportbro_kiosk import open_reportbro_kiosk
 from . import reportbro_server
 from .utilities import (
     AlignmentVariant,
@@ -675,6 +676,13 @@ class FTApp(QWidget):
                 logger.exception("[ReportBro] Falha ao iniciar servidor integrado do ReportBro")
                 open_reportbro_stub_dialog(self)
                 return
+
+            try:
+                if open_reportbro_kiosk(self, endpoint):
+                    logger.info("[ReportBro] Editor integrado aberto em modo kiosk")
+                    return
+            except Exception:
+                logger.exception("[ReportBro] Falha ao abrir editor integrado em modo kiosk")
 
             url = QUrl(f"http://{endpoint.host}:{endpoint.port}/designer")
             logger.info("[ReportBro] A abrir editor integrado em %s", url.toString())
