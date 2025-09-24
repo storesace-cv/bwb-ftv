@@ -88,6 +88,7 @@
 import sys
 import json
 import logging
+import os
 import html as html_module
 import html.parser as html_parser
 import itertools
@@ -167,7 +168,11 @@ from .dialogs import (
     restore_database,
     edit_fcost_values,
 )
-from .printing import ExportCancelled, generate_ft_gestao_pdf
+from .printing import (
+    ExportCancelled,
+    generate_ft_gestao_pdf,
+    generate_ft_gestao_reportbro_pdf,
+)
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
 
@@ -640,11 +645,24 @@ class FTApp(QWidget):
         identifier = getattr(product, "code", None) or getattr(
             product, "name", "<desconhecido>"
         )
+        use_reportbro_flag = os.getenv("FTV_USE_REPORTBRO", "").strip().lower()
+        use_reportbro = use_reportbro_flag in {"1", "true", "yes"}
+        template_override = os.getenv("FTV_REPORTBRO_TEMPLATE") or None
+        if template_override:
+            use_reportbro = True
+
         try:
             logger.info(
                 "[Print] FT Gestão (Actual) solicitado para produto %s", identifier
             )
-            output_path = generate_ft_gestao_pdf(product, parent=self)
+            if use_reportbro:
+                output_path = generate_ft_gestao_reportbro_pdf(
+                    product,
+                    template_path=template_override,
+                    parent=self,
+                )
+            else:
+                output_path = generate_ft_gestao_pdf(product, parent=self)
         except ExportCancelled:
             logger.info(
                 "[Print] Exportação FT Gestão cancelada pelo utilizador (%s)",
