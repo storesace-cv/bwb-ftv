@@ -39,7 +39,6 @@ else:  # pragma: no cover - runtime fallback
 
 logger = logging.getLogger(__name__)
 
-
 if QT_AVAILABLE:
 
     class ReportBroKioskDialog(QDialog):
