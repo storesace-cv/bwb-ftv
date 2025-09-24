@@ -12,7 +12,7 @@ from dataclasses import dataclass
 import logging
 import shlex
 from pathlib import Path
-from typing import Iterable, TYPE_CHECKING
+from typing import Iterable, Sequence, TYPE_CHECKING
 
 from utils import get_project_root
 from utils import reportbro_installer
@@ -50,6 +50,42 @@ def discover_reportbro_templates(directory: Path | None = None) -> list[Path]:
 
 def _format_command(arguments: Iterable[str]) -> str:
     return " ".join(shlex.quote(arg) for arg in arguments)
+
+
+def get_offline_reportbro_explanation() -> str:
+    """Return the explanatory message shown when the editor URL is missing."""
+
+    return (
+        "A aplicação abre o \"Gestor de Documentos (modo offline)\" sempre "
+        "que não encontra a variável de ambiente FTV_REPORTBRO_EDITOR_URL. "
+        "Nessa situação, o botão \"Instalar ReportBro\" apenas reutiliza o "
+        "instalador Python (reportbro-lib); quando a biblioteca já está "
+        "presente, a própria janela confirma que não há nada para instalar e "
+        "mantém o modo offline disponível como alternativa temporária."
+    )
+
+
+def get_offline_reportbro_recommendations() -> list[str]:
+    """Return recommendations to restore access to the ReportBro Designer."""
+
+    return [
+        (
+            "Confirme com a equipa de operações/infrastrutura o endereço "
+            "correto do ReportBro Designer e configure a variável "
+            "FTV_REPORTBRO_EDITOR_URL (por exemplo via .env, variáveis de "
+            "sistema ou mecanismo equivalente)."
+        ),
+        (
+            "Depois de definir o URL válido, reinicie a aplicação para que o "
+            "Gestor de Documentos abra diretamente o ReportBro Designer sem "
+            "alertas adicionais."
+        ),
+    ]
+
+
+def _format_recommendations(items: Sequence[str]) -> str:
+    bullet_list = [f"• {item}" for item in items]
+    return "\n".join(bullet_list)
 
 
 def _build_installation_hint() -> str:
@@ -97,11 +133,7 @@ def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no 
             self.resize(620, 420)
             layout = QVBoxLayout(self)
 
-            intro = QLabel(
-                "O editor oficial do ReportBro não está configurado. Pode abrir os "
-                "templates locais para edição manual ou executar o script de "
-                "instalação automática para preparar o ambiente."
-            )
+            intro = QLabel(get_offline_reportbro_explanation())
             intro.setWordWrap(True)
             layout.addWidget(intro)
 
@@ -110,6 +142,13 @@ def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no 
             hint.setTextFormat(Qt.PlainText)
             hint.setObjectName("reportbroHintLabel")
             layout.addWidget(hint)
+
+            recommendations = QLabel(
+                _format_recommendations(get_offline_reportbro_recommendations())
+            )
+            recommendations.setWordWrap(True)
+            recommendations.setObjectName("reportbroRecommendationsLabel")
+            layout.addWidget(recommendations)
 
             self.templates_list = QListWidget(self)
             self.templates_list.itemDoubleClicked.connect(self._open_selected_template)
@@ -216,4 +255,6 @@ def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no 
 __all__ = [
     "open_reportbro_stub_dialog",
     "discover_reportbro_templates",
+    "get_offline_reportbro_explanation",
+    "get_offline_reportbro_recommendations",
 ]
