@@ -95,6 +95,8 @@ import itertools
 from collections.abc import Iterable
 import re
 from pathlib import Path
+
+from reporting import ReportBroIntegrationError
 try:  # PyQt 5.15.10 wheels omit QWIDGETSIZE_MAX on some platforms
     from PyQt5.QtCore import (
         Qt,
@@ -732,9 +734,20 @@ class FTApp(QWidget):
             product, "name", "<desconhecido>"
         )
         use_reportbro_flag = os.getenv("FTV_USE_REPORTBRO", "").strip().lower()
-        use_reportbro = use_reportbro_flag in {"1", "true", "yes"}
-        template_override = os.getenv("FTV_REPORTBRO_TEMPLATE") or None
-        if template_override:
+        template_override_env = os.getenv("FTV_REPORTBRO_TEMPLATE", "").strip()
+        template_override: Path | None = None
+        if template_override_env:
+            template_override = Path(template_override_env).expanduser()
+            if not template_override.is_absolute():
+                template_override = (Path.cwd() / template_override).resolve()
+
+        if template_override is not None:
+            use_reportbro = True
+        elif use_reportbro_flag in {"0", "false", "no"}:
+            use_reportbro = False
+        elif use_reportbro_flag in {"1", "true", "yes"}:
+            use_reportbro = True
+        else:
             use_reportbro = True
 
         try:
@@ -742,11 +755,25 @@ class FTApp(QWidget):
                 "[Print] FT Gestão (Actual) solicitado para produto %s", identifier
             )
             if use_reportbro:
-                output_path = generate_ft_gestao_reportbro_pdf(
-                    product,
-                    template_path=template_override,
-                    parent=self,
-                )
+                try:
+                    output_path = generate_ft_gestao_reportbro_pdf(
+                        product,
+                        template_path=template_override,
+                        parent=self,
+                    )
+                except ReportBroIntegrationError as exc:
+                    logger.warning(
+                        "[ReportBro] Falha ao gerar PDF para %s via ReportBro: %s",
+                        identifier,
+                        exc,
+                    )
+                    QMessageBox.warning(
+                        self,
+                        APP_TITLE,
+                        "Não foi possível gerar a ficha com o ReportBro."
+                        " Será utilizada a versão anterior.",
+                    )
+                    output_path = generate_ft_gestao_pdf(product, parent=self)
             else:
                 output_path = generate_ft_gestao_pdf(product, parent=self)
         except ExportCancelled:

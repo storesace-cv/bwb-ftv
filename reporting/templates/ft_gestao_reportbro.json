@@ -777,6 +777,38 @@
       "testDataImage": "",
       "testDataImageFilename": "",
       "testDataRichText": ""
+    },
+    {
+      "id": 17,
+      "name": "pricing_iva",
+      "type": "string",
+      "arrayItemType": "string",
+      "eval": false,
+      "nullable": true,
+      "pattern": "",
+      "expression": "",
+      "showOnlyNameType": false,
+      "testData": "",
+      "testDataBoolean": false,
+      "testDataImage": "",
+      "testDataImageFilename": "",
+      "testDataRichText": ""
+    },
+    {
+      "id": 18,
+      "name": "pricing_lines",
+      "type": "string",
+      "arrayItemType": "string",
+      "eval": false,
+      "nullable": true,
+      "pattern": "",
+      "expression": "",
+      "showOnlyNameType": false,
+      "testData": "",
+      "testDataBoolean": false,
+      "testDataImage": "",
+      "testDataImageFilename": "",
+      "testDataRichText": ""
     }
   ],
   "styles": [
@@ -843,6 +875,7 @@
   ],
   "watermarks": [],
   "documentProperties": {
+    "pageFormat": "A4",
     "pageSize": "A4",
     "orientation": "portrait",
     "unit": "mm",
