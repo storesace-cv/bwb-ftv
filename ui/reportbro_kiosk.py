@@ -5,6 +5,10 @@ from __future__ import annotations
 import importlib.util
 import json
 import logging
+# <<<<<<< codex/fix-reportbro-designer-fullscreen-issue-958y7r
+import textwrap
+# =======
+# >>>>>>> main
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Iterable
 from urllib import error, request
@@ -312,53 +316,78 @@ if QT_AVAILABLE:
             page = self._web_view.page()
             if page is None:
                 return
-            script = f"""
-(() => {{
-    const select = document.getElementById('template-select');
-    const openButton = document.getElementById('btn-open');
-    if (!select || !openButton) {{
-        return false;
-    }}
-    const value = {json.dumps(template_name)};
-    const option = Array.from(select.options).find((item) => item.value === value);
-    if (!option) {{
-        return false;
-    }}
-    select.value = value;
-    select.dispatchEvent(new Event('change', {{ bubbles: true }}));
-    openButton.click();
-    return true;
-}})();
-            """
-                """
-(() => {
-    const select = document.getElementById('template-select');
-    if (!select) {
-        return;
-    }
-    if (!select.dataset.rbKioskAutoload) {
-        select.addEventListener('change', () => {
-            if (select.value) {
-                document.getElementById('btn-open')?.click();
-            }
-        });
-        select.dataset.rbKioskAutoload = '1';
-    }
-    if (!select.value) {
-        select.focus();
-        if (typeof select.showPicker === 'function') {
-            select.showPicker();
-        } else {
-            const event = new MouseEvent('mousedown', { bubbles: true });
-            select.dispatchEvent(event);
-        }
-        return;
-    }
-    document.getElementById('btn-open')?.click();
-})();
+# <<<<<<< codex/fix-reportbro-designer-fullscreen-issue-958y7r
+
+            script = textwrap.dedent(
+                f"""
+                (() => {{
+                    const select = document.getElementById('template-select');
+                    const openButton = document.getElementById('btn-open');
+                    if (!select || !openButton) {{
+                        return false;
+                    }}
+                    const value = {json.dumps(template_name)};
+                    const option = Array.from(select.options).find((item) => item.value === value);
+                    if (!option) {{
+                        return false;
+                    }}
+                    select.value = value;
+                    select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                    openButton.click();
+                    return true;
+                }})();
                 """
             )
-
+            page.runJavaScript(script)
+# =======
+#             script = f"""
+# (() => {{
+#     const select = document.getElementById('template-select');
+#     const openButton = document.getElementById('btn-open');
+#     if (!select || !openButton) {{
+#         return false;
+#     }}
+#     const value = {json.dumps(template_name)};
+#     const option = Array.from(select.options).find((item) => item.value === value);
+#     if (!option) {{
+#         return false;
+#     }}
+#     select.value = value;
+#     select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+#     openButton.click();
+#     return true;
+# }})();
+#             """
+#                 """
+# (() => {
+#    const select = document.getElementById('template-select');
+#     if (!select) {
+#         return;
+#     }
+#     if (!select.dataset.rbKioskAutoload) {
+#         select.addEventListener('change', () => {
+#             if (select.value) {
+#                 document.getElementById('btn-open')?.click();
+#             }
+#         });
+#         select.dataset.rbKioskAutoload = '1';
+#     }
+#     if (!select.value) {
+#         select.focus();
+#         if (typeof select.showPicker === 'function') {
+#             select.showPicker();
+#         } else {
+#             const event = new MouseEvent('mousedown', { bubbles: true });
+#             select.dispatchEvent(event);
+#         }
+#         return;
+#     }
+#     document.getElementById('btn-open')?.click();
+# })();
+#                 """
+#             )
+# 
+# >>>>>>> main
 
         def _on_title_changed(self, title: str) -> None:
             if self._title_label is None:
