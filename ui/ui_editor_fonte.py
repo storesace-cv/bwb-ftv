@@ -96,12 +96,21 @@ from collections.abc import Iterable
 import re
 from pathlib import Path
 try:  # PyQt 5.15.10 wheels omit QWIDGETSIZE_MAX on some platforms
-    from PyQt5.QtCore import Qt, QTimer, QPoint, QWIDGETSIZE_MAX, QSize, pyqtSignal
+    from PyQt5.QtCore import (
+        Qt,
+        QTimer,
+        QPoint,
+        QWIDGETSIZE_MAX,
+        QSize,
+        pyqtSignal,
+        QUrl,
+    )
 except ImportError:  # pragma: no cover - fallback for stripped builds
-    from PyQt5.QtCore import Qt, QTimer, QPoint, QSize, pyqtSignal
+    from PyQt5.QtCore import Qt, QTimer, QPoint, QSize, pyqtSignal, QUrl
 
     QWIDGETSIZE_MAX = 16777215
 from PyQt5.QtGui import (
+    QDesktopServices,
     QFont,
     QIcon,
     QKeySequence,
@@ -630,6 +639,39 @@ class FTApp(QWidget):
         update_data(self, self.service, self._load_record, self.cur_index)
         self._refresh_datastore()
 
+    def _open_reportbro_editor(self) -> None:
+        """Open the ReportBro editor using the system's default browser."""
+
+        editor_target = os.getenv("FTV_REPORTBRO_EDITOR_URL", "").strip()
+        if editor_target:
+            path = Path(editor_target)
+            if path.exists():
+                if path.is_dir():
+                    path = path / "index.html"
+                url = QUrl.fromLocalFile(str(path))
+            else:
+                url = QUrl.fromUserInput(editor_target)
+        else:
+            url = QUrl.fromUserInput("https://app.reportbro.com/editor")
+
+        if not url.isValid() or url.isEmpty():
+            QMessageBox.warning(
+                self,
+                APP_TITLE,
+                "Não foi possível determinar o endereço do editor ReportBro.",
+            )
+            logger.warning("[ReportBro] URL inválida configurada: %s", editor_target)
+            return
+
+        logger.info("[ReportBro] A abrir editor em %s", url.toString())
+        if not QDesktopServices.openUrl(url):
+            QMessageBox.warning(
+                self,
+                APP_TITLE,
+                "Não foi possível abrir o editor ReportBro. Verifique a ligação.",
+            )
+            logger.warning("[ReportBro] Falha ao abrir editor em %s", url.toString())
+
     def _on_print_ft_gestao_actual(self) -> None:
         """Export the currently loaded product as FT Gestão (single record)."""
 
@@ -832,7 +874,10 @@ class FTApp(QWidget):
         self.mnuRoot.addMenu(mTab)
         mUtil = QMenu("Utilitários", self.mnuRoot)
         apply_menu_font(mUtil)
+        actDocManager = QAction("Gestor de Documentos", self)
         actTheme = QAction("Tema", self)
+        mUtil.addAction(actDocManager)
+        mUtil.addSeparator()
         mUtil.addAction(actTheme)
         self.mnuRoot.addMenu(mUtil)
         mConf = QMenu("Configurações", self.mnuRoot)
@@ -848,6 +893,7 @@ class FTApp(QWidget):
         actReload.triggered.connect(self._on_import_data)
         actPrintGestaoActual.triggered.connect(self._on_print_ft_gestao_actual)
         actUpdate.triggered.connect(self._on_update_data)
+        actDocManager.triggered.connect(self._open_reportbro_editor)
         actBackup.triggered.connect(lambda: backup_database(self, self.ds))
         actRestore.triggered.connect(
             lambda: restore_database(self, self.ds, self._after_restore)
