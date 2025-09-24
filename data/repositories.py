@@ -246,44 +246,65 @@ class IngredientesRepo:
         """
 
         cur = self.conn.cursor()
+        pragma_rows = self.conn.execute("PRAGMA table_info(FichasTecnicas)").fetchall()
+        known_columns = {row[1].lower() for row in pragma_rows}
+
+        has_peso = "peso" in known_columns
+        has_familia = "familiasubfamilia" in known_columns
+
+        peso_expression = "Peso" if has_peso else "NULL AS Peso"
+        familia_sub_expr = (
+            "FamiliaSubfamilia" if has_familia else "NULL AS FamiliaSubfamilia"
+        )
+        if has_familia:
+            familia_expr = """
+                TRIM(
+                    CASE
+                        WHEN instr(COALESCE(FamiliaSubfamilia, ''), '>') > 0 THEN SUBSTR(
+                            COALESCE(FamiliaSubfamilia, ''),
+                            1,
+                            instr(COALESCE(FamiliaSubfamilia, ''), '>') - 1
+                        )
+                        ELSE COALESCE(FamiliaSubfamilia, '')
+                    END
+                ) AS Familia
+            """
+            subfamilia_expr = """
+                TRIM(
+                    CASE
+                        WHEN instr(COALESCE(FamiliaSubfamilia, ''), '>') > 0 THEN SUBSTR(
+                            COALESCE(FamiliaSubfamilia, ''),
+                            instr(COALESCE(FamiliaSubfamilia, ''), '>') + 1
+                        )
+                        ELSE ''
+                    END
+                ) AS Subfamilia
+            """
+        else:
+            familia_expr = "NULL AS Familia"
+            subfamilia_expr = "NULL AS Subfamilia"
+
+        query = f"""
+            SELECT
+                ComponenteNome,
+                Qtd,
+                Unidade,
+                Ppu,
+                Preco,
+                {peso_expression},
+                ComponenteCodigo,
+                {familia_sub_expr},
+                {familia_expr},
+                {subfamilia_expr}
+            FROM FichasTecnicas
+            WHERE TRIM(ProdutoCodigo) = TRIM(?)
+            ORDER BY Familia, Subfamilia, Ordem, ComponenteNome
+        """
+
         try:
-            cur.execute(
-                """
-                SELECT
-                    ComponenteNome,
-                    Qtd,
-                    Unidade,
-                    Ppu,
-                    Preco,
-                    Peso,
-                    ComponenteCodigo,
-                    FamiliaSubfamilia,
-                    TRIM(
-                        CASE
-                            WHEN instr(COALESCE(FamiliaSubfamilia, ''), '>') > 0 THEN SUBSTR(
-                                COALESCE(FamiliaSubfamilia, ''),
-                                1,
-                                instr(COALESCE(FamiliaSubfamilia, ''), '>') - 1
-                            )
-                            ELSE COALESCE(FamiliaSubfamilia, '')
-                        END
-                    ) AS Familia,
-                    TRIM(
-                        CASE
-                            WHEN instr(COALESCE(FamiliaSubfamilia, ''), '>') > 0 THEN SUBSTR(
-                                COALESCE(FamiliaSubfamilia, ''),
-                                instr(COALESCE(FamiliaSubfamilia, ''), '>') + 1
-                            )
-                            ELSE ''
-                        END
-                    ) AS Subfamilia
-                FROM FichasTecnicas
-                WHERE TRIM(ProdutoCodigo) = TRIM(?)
-                ORDER BY Familia, Subfamilia, Ordem, ComponenteNome
-                """,
-                (codigo,),
-            )
+            cur.execute(query, (codigo,))
             rows = cur.fetchall()
+            columns = [col[0] for col in cur.description or []]
         except sqlite3.Error as exc:
             logger.error(
                 "[IngredientesRepo] listar_por_produto(%s) falhou: %s",
@@ -294,21 +315,8 @@ class IngredientesRepo:
             return []
 
         out = []
-        for r in rows:
-            out.append(
-                {
-                    "ComponenteNome": r[0],
-                    "Qtd": r[1],
-                    "Unidade": r[2],
-                    "Ppu": r[3],
-                    "Preco": r[4],
-                    "Peso": r[5],
-                    "ComponenteCodigo": r[6],
-                    "FamiliaSubfamilia": r[7],
-                    "Familia": r[8],
-                    "Subfamilia": r[9],
-                }
-            )
+        for row in rows:
+            out.append({name: row[idx] for idx, name in enumerate(columns)})
         return out
 
 

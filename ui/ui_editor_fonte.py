@@ -88,6 +88,7 @@
 import sys
 import json
 import logging
+import os
 import html as html_module
 import html.parser as html_parser
 import itertools
@@ -95,12 +96,21 @@ from collections.abc import Iterable
 import re
 from pathlib import Path
 try:  # PyQt 5.15.10 wheels omit QWIDGETSIZE_MAX on some platforms
-    from PyQt5.QtCore import Qt, QTimer, QPoint, QWIDGETSIZE_MAX, QSize, pyqtSignal
+    from PyQt5.QtCore import (
+        Qt,
+        QTimer,
+        QPoint,
+        QWIDGETSIZE_MAX,
+        QSize,
+        pyqtSignal,
+        QUrl,
+    )
 except ImportError:  # pragma: no cover - fallback for stripped builds
-    from PyQt5.QtCore import Qt, QTimer, QPoint, QSize, pyqtSignal
+    from PyQt5.QtCore import Qt, QTimer, QPoint, QSize, pyqtSignal, QUrl
 
     QWIDGETSIZE_MAX = 16777215
 from PyQt5.QtGui import (
+    QDesktopServices,
     QFont,
     QIcon,
     QKeySequence,
@@ -167,7 +177,11 @@ from .dialogs import (
     restore_database,
     edit_fcost_values,
 )
-from .printing import ExportCancelled, generate_ft_gestao_pdf
+from .printing import (
+    ExportCancelled,
+    generate_ft_gestao_pdf,
+    generate_ft_gestao_reportbro_pdf,
+)
 
 APP_TITLE = "Fichas Técnicas Valorizadas"
 
@@ -625,6 +639,39 @@ class FTApp(QWidget):
         update_data(self, self.service, self._load_record, self.cur_index)
         self._refresh_datastore()
 
+    def _open_reportbro_editor(self) -> None:
+        """Open the ReportBro editor using the system's default browser."""
+
+        editor_target = os.getenv("FTV_REPORTBRO_EDITOR_URL", "").strip()
+        if editor_target:
+            path = Path(editor_target)
+            if path.exists():
+                if path.is_dir():
+                    path = path / "index.html"
+                url = QUrl.fromLocalFile(str(path))
+            else:
+                url = QUrl.fromUserInput(editor_target)
+        else:
+            url = QUrl.fromUserInput("https://app.reportbro.com/editor")
+
+        if not url.isValid() or url.isEmpty():
+            QMessageBox.warning(
+                self,
+                APP_TITLE,
+                "Não foi possível determinar o endereço do editor ReportBro.",
+            )
+            logger.warning("[ReportBro] URL inválida configurada: %s", editor_target)
+            return
+
+        logger.info("[ReportBro] A abrir editor em %s", url.toString())
+        if not QDesktopServices.openUrl(url):
+            QMessageBox.warning(
+                self,
+                APP_TITLE,
+                "Não foi possível abrir o editor ReportBro. Verifique a ligação.",
+            )
+            logger.warning("[ReportBro] Falha ao abrir editor em %s", url.toString())
+
     def _on_print_ft_gestao_actual(self) -> None:
         """Export the currently loaded product as FT Gestão (single record)."""
 
@@ -640,11 +687,24 @@ class FTApp(QWidget):
         identifier = getattr(product, "code", None) or getattr(
             product, "name", "<desconhecido>"
         )
+        use_reportbro_flag = os.getenv("FTV_USE_REPORTBRO", "").strip().lower()
+        use_reportbro = use_reportbro_flag in {"1", "true", "yes"}
+        template_override = os.getenv("FTV_REPORTBRO_TEMPLATE") or None
+        if template_override:
+            use_reportbro = True
+
         try:
             logger.info(
                 "[Print] FT Gestão (Actual) solicitado para produto %s", identifier
             )
-            output_path = generate_ft_gestao_pdf(product, parent=self)
+            if use_reportbro:
+                output_path = generate_ft_gestao_reportbro_pdf(
+                    product,
+                    template_path=template_override,
+                    parent=self,
+                )
+            else:
+                output_path = generate_ft_gestao_pdf(product, parent=self)
         except ExportCancelled:
             logger.info(
                 "[Print] Exportação FT Gestão cancelada pelo utilizador (%s)",
@@ -814,7 +874,10 @@ class FTApp(QWidget):
         self.mnuRoot.addMenu(mTab)
         mUtil = QMenu("Utilitários", self.mnuRoot)
         apply_menu_font(mUtil)
+        actDocManager = QAction("Gestor de Documentos", self)
         actTheme = QAction("Tema", self)
+        mUtil.addAction(actDocManager)
+        mUtil.addSeparator()
         mUtil.addAction(actTheme)
         self.mnuRoot.addMenu(mUtil)
         mConf = QMenu("Configurações", self.mnuRoot)
@@ -830,6 +893,7 @@ class FTApp(QWidget):
         actReload.triggered.connect(self._on_import_data)
         actPrintGestaoActual.triggered.connect(self._on_print_ft_gestao_actual)
         actUpdate.triggered.connect(self._on_update_data)
+        actDocManager.triggered.connect(self._open_reportbro_editor)
         actBackup.triggered.connect(lambda: backup_database(self, self.ds))
         actRestore.triggered.connect(
             lambda: restore_database(self, self.ds, self._after_restore)

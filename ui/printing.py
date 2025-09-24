@@ -25,6 +25,11 @@ else:  # pragma: no cover - exercised in integration tests
 _USE_BASIC_PDF = False
 
 from domain.models import Product
+from reporting import (
+    build_reportbro_context,
+    load_template_definition,
+    render_pdf_to_path,
+)
 from services.products import calculate_food_cost, get_image_path
 from utils.formatting import parse_decimal
 
@@ -34,6 +39,13 @@ _DEFAULT_PAGE_SIZES = {
     "A4": (595.28, 841.89),
     "LETTER": (612.0, 792.0),
 }
+
+_DEFAULT_REPORTBRO_TEMPLATE = (
+    Path(__file__).resolve().parent.parent
+    / "reporting"
+    / "templates"
+    / "ft_gestao_reportbro.json"
+)
 
 
 class ExportCancelled(RuntimeError):
@@ -86,6 +98,37 @@ def generate_ft_gestao_pdf(
     logger.info(
         "[Print] FT Gestão criada com sucesso em %s",
         destination,
+    )
+    return destination
+
+
+def generate_ft_gestao_reportbro_pdf(
+    product: Product,
+    *,
+    template_path: str | Path | None = None,
+    destination: Path | None = None,
+    parent: QWidget | None = None,
+) -> Path | None:
+    """Generate the Gestão PDF using the ReportBro template pipeline."""
+
+    product_obj = _validate_product(product)
+    payload = _prepare_management_payload(product_obj)
+    dataset = build_reportbro_context(payload)
+
+    template_location = (
+        Path(template_path) if template_path else _DEFAULT_REPORTBRO_TEMPLATE
+    )
+    template = load_template_definition(template_location)
+
+    if destination is None:
+        destination = _prompt_pdf_destination(product_obj, parent=parent)
+
+    destination = Path(destination)
+    render_pdf_to_path(template, dataset, destination)
+    logger.info(
+        "[ReportBro] FT Gestão criada com sucesso em %s usando template %s",
+        destination,
+        template_location,
     )
     return destination
 
