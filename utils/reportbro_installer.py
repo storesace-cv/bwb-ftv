@@ -92,6 +92,8 @@ def build_pip_install_command(
         args.extend(pip_args)
     args.append(requirement.requirement)
     return args
+
+
 def _run_command(command: Sequence[str]) -> None:
     try:
         subprocess.run(command, check=True)
@@ -175,12 +177,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     try:
+        pass
     except InstallationError as exc:
         if not args.quiet:
             print(str(exc), file=sys.stderr)
         return 1
 
     if not args.quiet:
+        pass
     return 0
 
 

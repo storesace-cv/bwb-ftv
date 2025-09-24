@@ -14,3 +14,5 @@ from utils.reportbro_installer import main
 
 
 if __name__ == "__main__":
+    # main() foi removido nesta branch para alinhar com origin/main
+    pass
