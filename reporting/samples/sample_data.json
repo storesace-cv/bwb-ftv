@@ -1,11 +1,106 @@
 {
-  "invoice_title": "Fatura Comercial",
-  "invoice_number": "2024-001",
-  "invoice_date": "15-01-2024",
-  "company_name": "Empresa Exemplo, Lda.",
-  "company_address": "Rua das Flores 123\n4000-123 Porto",
-  "customer_name": "Cliente Demonstração",
-  "customer_address": "Av. da Liberdade 456\n1250-001 Lisboa",
-  "items_description": "Descrição\n-----------------------------\n1 x Serviço de consultoria (8h) ............ 320,00 €\n2 x Licença anual .......................... 240,00 €\n\nSubtotal .................................. 560,00 €\nIVA (23%) ................................. 128,80 €",
-  "total_due": "688,80 €"
+  "title": "Ficha Técnica de Gestão",
+  "subtitle": "PRD-001 — Bolo de Chocolate",
+  "metadata": "Gerado em 2024-05-10T14:30:00",
+  "product_details": "Produto\nCódigo: PRD-001\nNome: Bolo de Chocolate\nFamília: Pastelaria\nSubfamília: Bolos\nTipo de artigo (código): ACABADO\nValidade (código): 72H\nTemperatura (código): FRIO\nNotas adicionais:\nConservar em local fresco e seco.",
+  "pricing_details": "Preços e IVA\nIVA: 23,00 %\nPVP1: 15,00 € (Food cost: 22,50 %)\nPVP2: 18,50 € (Food cost: 18,00 %)",
+  "ingredients": "Ingredientes\n01. Farinha de trigo — Código: ING-001 | Qtd: 2,50 kg | PPU: 0,85 €/kg | Custo: 2,12 € | Peso: 2,50\n02. Açúcar — Código: ING-002 | Qtd: 1,80 kg | PPU: 0,95 €/kg | Custo: 1,71 € | Peso: 1,80\n03. Chocolate em pó — Código: ING-003 | Qtd: 0,750 kg | PPU: 3,40 €/kg | Custo: 2,55 € | Peso: 0,75\n04. Ovos — Código: ING-004 | Qtd: 30,00 un | PPU: 0,12 €/un | Custo: 3,60 € | Peso: 1,50",
+  "totals": "Totais\nCusto total: 10,00 €\nPeso total: 6,55\nNúmero de ingredientes: 4",
+  "product_data": {
+    "codigo": "PRD-001",
+    "nome": "Bolo de Chocolate",
+    "familia": "Pastelaria",
+    "subfamilia": "Bolos",
+    "informacao_adicional": "Conservar em local fresco e seco.",
+    "tipo_artigo_cod": "ACABADO",
+    "validade_cod": "72H",
+    "temperatura_cod": "FRIO",
+    "image_path": "/caminho/para/imagem.jpg"
+  },
+  "pricing_data": {
+    "iva": "23,00 %",
+    "rows": [
+      {
+        "label": "PVP1",
+        "pvp": "15,00 €",
+        "food_cost": "22,50 %"
+      },
+      {
+        "label": "PVP2",
+        "pvp": "18,50 €",
+        "food_cost": "18,00 %"
+      }
+    ]
+  },
+  "product_codigo": "PRD-001",
+  "product_nome": "Bolo de Chocolate",
+  "product_familia": "Pastelaria",
+  "product_subfamilia": "Bolos",
+  "product_tipo_artigo_cod": "ACABADO",
+  "product_validade_cod": "72H",
+  "product_temperatura_cod": "FRIO",
+  "product_informacao_adicional": "Conservar em local fresco e seco.",
+  "product_image_path": "/caminho/para/imagem.jpg",
+  "pricing_rows": [
+    {
+      "label": "PVP1",
+      "pvp": "15,00 €",
+      "food_cost": "22,50 %"
+    },
+    {
+      "label": "PVP2",
+      "pvp": "18,50 €",
+      "food_cost": "18,00 %"
+    }
+  ],
+  "pricing_lines": "PVP1: 15,00 € | Food cost: 22,50 %\nPVP2: 18,50 € | Food cost: 18,00 %",
+  "pricing_iva": "23,00 %",
+  "ingredients_data": [
+    {
+      "ordem": "1",
+      "nome": "Farinha de trigo",
+      "codigo": "ING-001",
+      "quantidade": "2,50 kg",
+      "ppu": "0,85 €",
+      "total": "2,12 €",
+      "peso": "2,50"
+    },
+    {
+      "ordem": "2",
+      "nome": "Açúcar",
+      "codigo": "ING-002",
+      "quantidade": "1,80 kg",
+      "ppu": "0,95 €",
+      "total": "1,71 €",
+      "peso": "1,80"
+    },
+    {
+      "ordem": "3",
+      "nome": "Chocolate em pó",
+      "codigo": "ING-003",
+      "quantidade": "0,750 kg",
+      "ppu": "3,40 €",
+      "total": "2,55 €",
+      "peso": "0,75"
+    },
+    {
+      "ordem": "4",
+      "nome": "Ovos",
+      "codigo": "ING-004",
+      "quantidade": "30,00 un",
+      "ppu": "0,12 €",
+      "total": "3,60 €",
+      "peso": "1,50"
+    }
+  ],
+  "ingredients_lines": "Ordem: 1 | Nome: Farinha de trigo | Código: ING-001 | Quantidade: 2,50 kg | PPU: 0,85 € | Custo: 2,12 € | Peso: 2,50\nOrdem: 2 | Nome: Açúcar | Código: ING-002 | Quantidade: 1,80 kg | PPU: 0,95 € | Custo: 1,71 € | Peso: 1,80\nOrdem: 3 | Nome: Chocolate em pó | Código: ING-003 | Quantidade: 0,750 kg | PPU: 3,40 € | Custo: 2,55 € | Peso: 0,75\nOrdem: 4 | Nome: Ovos | Código: ING-004 | Quantidade: 30,00 un | PPU: 0,12 € | Custo: 3,60 € | Peso: 1,50",
+  "totals_data": {
+    "custo_total": "10,00 €",
+    "peso_total": "6,55",
+    "num_ingredientes": "4"
+  },
+  "totals_lines": "Custo total: 10,00 €\nPeso total: 6,55\nNúmero de ingredientes: 4",
+  "totals_custo_total": "10,00 €",
+  "totals_peso_total": "6,55",
+  "totals_num_ingredientes": "4"
 }

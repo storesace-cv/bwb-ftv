@@ -363,7 +363,7 @@
         // Tenta lista do servidor (opcional); se falhar, segue com um novo.
         try {
           await refreshTemplates();
-          const def = templatesCache.find((t) => t.name === "exemplo_fatura");
+          const def = templatesCache.find((t) => t.name === "ft_gestao_reportbro");
           if (def) { await loadTemplate(def.name); selectElement.value = def.name; }
           else { handleNew(); }
         } catch {

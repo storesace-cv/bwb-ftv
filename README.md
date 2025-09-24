@@ -55,8 +55,8 @@ instalação, arranque a interface desktop:
 O servidor Flask expõe os endpoints `/designer`, `/templates/*` e `/rb/*` para
 gestão de templates e geração de PDF/XLSX. Os templates são armazenados em
 `reporting/templates` e os dados de exemplo em `reporting/samples`.
-Por omissão existe o template `exemplo_fatura.json` com dados coerentes em
-`sample_data.json`.
+Por omissão é carregado o template `ft_gestao_reportbro.json`, alimentado por
+`sample_data.json` com um exemplo realista de ficha técnica.
 
 > ⚠️ O ReportBro Designer está licenciado sob AGPL-3.0. Ao distribuir a
 > aplicação, garanta o cumprimento da licença e disponibilize o código-fonte das
