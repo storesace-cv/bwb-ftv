@@ -82,19 +82,20 @@
     <div id="designer"></div>
     <div id="toast" class="toast"></div>
     <script>
-      function normalizeDocumentProperties(report) {
-        if (
-          report &&
-          typeof report === "object" &&
-          report.documentProperties &&
-          typeof report.documentProperties === "object"
-        ) {
-          const properties = report.documentProperties;
-          if (typeof properties.contentHeight === "number") {
-            properties.contentHeight = String(properties.contentHeight);
-          }
-        }
-      }
+      const DEFAULT_DOCUMENT_PROPERTIES = {
+        pageFormat: "A4",
+        orientation: "portrait",
+        marginLeft: 15,
+        marginRight: 15,
+        marginTop: 15,
+        marginBottom: 15,
+        contentHeight: "",
+        header: false,
+        footer: false,
+        patternLocale: "pt_PT",
+        patternCurrencySymbol: "€",
+        patternNumberGroupSymbol: " ",
+      };
 
       const EMPTY_TEMPLATE = {
         version: 7,
@@ -102,21 +103,46 @@
         parameters: [],
         styles: [],
         watermarks: [],
-        documentProperties: {
-          pageFormat: "A4",
-          orientation: "portrait",
-          marginLeft: 15,
-          marginRight: 15,
-          marginTop: 15,
-          marginBottom: 15,
-          contentHeight: "",
-          header: false,
-          footer: false,
-          patternLocale: "pt_PT",
-          patternCurrencySymbol: "€",
-          patternNumberGroupSymbol: " ",
-        },
+        documentProperties: { ...DEFAULT_DOCUMENT_PROPERTIES },
       };
+
+      function normaliseTemplateSchema(report) {
+        if (!report || typeof report !== "object") {
+          return;
+        }
+
+        if (typeof report.version !== "number") {
+          report.version = 7;
+        }
+
+        if (!Array.isArray(report.docElements)) {
+          report.docElements = [];
+        }
+        if (!Array.isArray(report.parameters)) {
+          report.parameters = [];
+        }
+        if (!Array.isArray(report.styles)) {
+          report.styles = [];
+        }
+        if (!Array.isArray(report.watermarks)) {
+          report.watermarks = [];
+        }
+
+        let properties = report.documentProperties;
+        if (!properties || typeof properties !== "object") {
+          properties = {};
+        }
+
+        properties = { ...DEFAULT_DOCUMENT_PROPERTIES, ...properties };
+        if (typeof properties.contentHeight === "number") {
+          properties.contentHeight = String(properties.contentHeight);
+        }
+        if (typeof properties.contentHeight !== "string") {
+          properties.contentHeight = "";
+        }
+
+        report.documentProperties = properties;
+      }
 
       let designerInstance = null;
       let currentTemplateName = null;
@@ -174,7 +200,7 @@
           throw new Error(`Não foi possível carregar o template '${name}'.`);
         }
         const report = await response.json();
-        normalizeDocumentProperties(report);
+        normaliseTemplateSchema(report);
         designerInstance.load(report);
         designerInstance.setModified(false);
         currentTemplateName = name;
@@ -219,7 +245,7 @@
 
       async function persistTemplate(overwrite = false) {
         const report = designerInstance.getReport();
-        normalizeDocumentProperties(report);
+        normaliseTemplateSchema(report);
         let targetName = currentTemplateName;
         if (!targetName) {
           const input = window.prompt("Nome do template (slug em minúsculas):");
