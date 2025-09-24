@@ -1,3 +1,9 @@
+Flask>=3.0,<4
+pywebview>=4.4,<5
+python-barcode>=0.15.1
+qrcode>=7.4.0
+reportbro-fpdf2>=1.0.0
+XlsxWriter>=3.1.0
 pytest==8.3.3
 flake8==7.1.1
 black==24.8.0

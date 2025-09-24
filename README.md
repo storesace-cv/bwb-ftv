@@ -34,6 +34,34 @@ cp /caminho/para/PreçosTaxas_base.xlsx imports/
 python bwb-fichas_tecnicas.py
 ```
 
+## ReportBro Designer Offline
+
+Para editar e pré-visualizar templates de impressão com o ReportBro Designer execute:
+
+```bash
+python3 tools/bootstrap.py
+```
+
+O script cria um ambiente virtual local (`.venv`), instala todas as dependências
+necessárias (incluindo `reportbro-lib` e `pywebview`) e transfere automaticamente
+os assets do ReportBro Designer a partir do repositório oficial. Após a
+instalação, arranque a interface desktop:
+
+```bash
+.venv/bin/python -m app.ui.launcher
+# Windows: .venv\Scripts\python -m app.ui.launcher
+```
+
+O servidor Flask expõe os endpoints `/designer`, `/templates/*` e `/rb/*` para
+gestão de templates e geração de PDF/XLSX. Os templates são armazenados em
+`app/templates_store/templates` e os dados de exemplo em
+`app/templates_store/samples`. Por omissão existe o template
+`exemplo_fatura.json` com dados coerentes em `sample_data.json`.
+
+> ⚠️ O ReportBro Designer está licenciado sob AGPL-3.0. Ao distribuir a
+> aplicação, garanta o cumprimento da licença e disponibilize o código-fonte das
+> modificações efetuadas.
+
 **Windows**
 
 ```powershell
