@@ -13,7 +13,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback in dev without report
     from reporting._stubs.reportbro import Report, ReportBroError
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-SAMPLE_DATA_PATH = PROJECT_ROOT / "app" / "templates_store" / "samples" / "sample_data.json"
+SAMPLE_DATA_PATH = PROJECT_ROOT / "reporting" / "samples" / "sample_data.json"
 
 
 class TemplateError(ValueError):
