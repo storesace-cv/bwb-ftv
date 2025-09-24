@@ -364,6 +364,7 @@ def test_qt_pdf_font_sizes_respect_scale(qapp, tmp_path, monkeypatch):
     scale_y = page_rect_pixels.height() / page_rect_points.height()
 
     recorded_fonts: list[tuple[float, float, float]] = []
+    captured_text_rects: list[tuple[str, float, float]] = []
 
     original_scaled_font = _scaled_font
 
@@ -376,6 +377,28 @@ def test_qt_pdf_font_sizes_respect_scale(qapp, tmp_path, monkeypatch):
 
     monkeypatch.setattr("ui.printing._scaled_font", capture_scaled_font)
 
+    painter_cls = ui.printing.QPainter
+    rect_cls = ui.printing.QRectF
+    metrics_cls = ui.printing.QFontMetricsF
+
+    if painter_cls is not None and rect_cls is not None and metrics_cls is not None:
+        original_draw_text = painter_cls.drawText
+
+        def capture_draw_text(self, *args, **kwargs):
+            if args and isinstance(args[0], rect_cls):
+                rect = args[0]
+                text_arg = args[-1] if args else kwargs.get("text")
+                if isinstance(text_arg, str):
+                    device = self.device()
+                    if device is not None:
+                        metrics = metrics_cls(self.font(), device)
+                        captured_text_rects.append(
+                            (text_arg, rect.height(), metrics.lineSpacing())
+                        )
+            return original_draw_text(self, *args, **kwargs)
+
+        monkeypatch.setattr(painter_cls, "drawText", capture_draw_text)
+
     _render_pdf(payload, pdf_path, (595.28, 841.89))
 
     assert recorded_fonts, "expected fonts to be created during rendering"
@@ -386,6 +409,16 @@ def test_qt_pdf_font_sizes_respect_scale(qapp, tmp_path, monkeypatch):
 
     for point_size, local_scale, effective in recorded_fonts:
         assert effective == pytest.approx(point_size / local_scale, abs=0.1)
+
+    assert captured_text_rects, "expected to capture text rectangles"
+    descender_records = [
+        (height, device_spacing)
+        for text, height, device_spacing in captured_text_rects
+        if any(ch in text for ch in "gpqyç")
+    ]
+    assert descender_records, "expected to capture text with descenders"
+    for height, device_spacing in descender_records:
+        assert height * scale_y == pytest.approx(device_spacing, abs=0.6)
 
 
 def test_qt_pdf_embeds_product_image(qapp, tmp_path):
