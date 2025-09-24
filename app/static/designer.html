@@ -82,6 +82,20 @@
     <div id="designer"></div>
     <div id="toast" class="toast"></div>
     <script>
+      function normalizeDocumentProperties(report) {
+        if (
+          report &&
+          typeof report === "object" &&
+          report.documentProperties &&
+          typeof report.documentProperties === "object"
+        ) {
+          const properties = report.documentProperties;
+          if (typeof properties.contentHeight === "number") {
+            properties.contentHeight = String(properties.contentHeight);
+          }
+        }
+      }
+
       const EMPTY_TEMPLATE = {
         version: 7,
         docElements: [],
@@ -95,7 +109,7 @@
           marginRight: 15,
           marginTop: 15,
           marginBottom: 15,
-          contentHeight: 0,
+          contentHeight: "",
           header: false,
           footer: false,
           patternLocale: "pt_PT",
@@ -160,6 +174,7 @@
           throw new Error(`Não foi possível carregar o template '${name}'.`);
         }
         const report = await response.json();
+        normalizeDocumentProperties(report);
         designerInstance.load(report);
         designerInstance.setModified(false);
         currentTemplateName = name;
@@ -204,6 +219,7 @@
 
       async function persistTemplate(overwrite = false) {
         const report = designerInstance.getReport();
+        normalizeDocumentProperties(report);
         let targetName = currentTemplateName;
         if (!targetName) {
           const input = window.prompt("Nome do template (slug em minúsculas):");
