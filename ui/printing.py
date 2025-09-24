@@ -695,12 +695,17 @@ def _draw_block_b3(
     fcs = list(data.get("food_cost", []))
     iva = data.get("iva")
 
-    rows = []
-    for idx, pvp in enumerate(pvps, start=1):
-        fc = fcs[idx - 1] if idx - 1 < len(fcs) else None
-        rows.append((f"PVP{idx}", pvp, f"Food Cost", fc))
+    max_slots = 5
+    pvp_row: list[tuple[str, Any]] = []
+    food_row: list[tuple[str, Any]] = []
+    for idx in range(max_slots):
+        pvp_value = pvps[idx] if idx < len(pvps) else None
+        pvp_row.append((f"PVP{idx + 1}", pvp_value))
 
-    block_height = _estimate_food_cost_height(max(1, len(rows)), scale_y=scale_y)
+        fc_value = fcs[idx] if idx < len(fcs) else None
+        food_row.append((f"Food Cost {idx + 1}", fc_value))
+
+    block_height = _estimate_food_cost_height(scale_y=scale_y)
     block_rect = QRectF(rect.left(), rect.top(), rect.width(), block_height)
     _draw_block_background(painter, block_rect)
     inner = block_rect.adjusted(_BLOCK_PADDING, _BLOCK_PADDING, -_BLOCK_PADDING, -_BLOCK_PADDING)
@@ -728,9 +733,15 @@ def _draw_block_b3(
     painter.drawText(meta_rect, Qt.AlignLeft | Qt.AlignVCenter, f"IVA: {_format_measure(iva)}")
 
     rows_top = meta_rect.bottom() + 12
-    row_height = _FOOD_ROW_HEIGHT
-    table_rect = QRectF(inner.left(), rows_top, inner.width(), row_height * max(1, len(rows)))
-    _draw_food_cost_table(painter, table_rect, rows, scale_y=scale_y)
+    table_height = 2 * _FOOD_ROW_HEIGHT + _FOOD_ROW_GAP
+    table_rect = QRectF(inner.left(), rows_top, inner.width(), table_height)
+    _draw_food_cost_grid(
+        painter,
+        table_rect,
+        pvp_row,
+        food_row,
+        scale_y=scale_y,
+    )
 
     painter.restore()
     return block_rect.bottom()
@@ -833,10 +844,11 @@ def _draw_ingredient_table(
     painter.restore()
 
 
-def _draw_food_cost_table(
+def _draw_food_cost_grid(
     painter: QPainter,
     rect: QRectF,
-    rows: list[tuple[str, Any, str, Any]],
+    pvp_columns: list[tuple[str, Any]],
+    food_columns: list[tuple[str, Any]],
     *,
     scale_y: float = 1.0,
 ) -> None:
@@ -847,49 +859,54 @@ def _draw_food_cost_table(
     grid_pen = QPen(grid_color)
     grid_pen.setWidthF(0.8)
     grid_pen.setCosmetic(True)
-    painter.setPen(grid_pen)
 
-    row_font = _scaled_font(10, scale_y=scale_y)
-    painter.setFont(row_font)
+    label_font = _scaled_font(10, QFont.Bold, scale_y=scale_y)
+    value_font = _scaled_font(10, scale_y=scale_y)
 
-    col_width = rect.width() / 2
-    top = rect.top()
-    rows = rows or [("PVP1", None, "Food Cost", None)]
+    total_columns = max(len(pvp_columns), len(food_columns), 1)
+    column_width = rect.width() / float(total_columns)
 
-    for left_label, left_value, right_label, right_value in rows:
-        row_rect = QRectF(rect.left(), top, rect.width(), _FOOD_ROW_HEIGHT)
-        painter.setPen(grid_pen)
-        painter.drawRect(row_rect)
+    def _draw_row(entries: list[tuple[str, Any]], top: float, *, percentage: bool = False) -> None:
+        for column, (label, raw_value) in enumerate(entries):
+            left = rect.left() + column * column_width
+            cell_rect = QRectF(left, top, column_width, _FOOD_ROW_HEIGHT)
+            painter.setPen(grid_pen)
+            painter.drawRect(cell_rect)
 
-        painter.setPen(label_color)
-        painter.drawText(
-            QRectF(rect.left() + 6, top, col_width - 12, _FOOD_ROW_HEIGHT / 2),
-            Qt.AlignLeft | Qt.AlignVCenter,
-            left_label,
-        )
-        painter.drawText(
-            QRectF(rect.left() + col_width + 6, top, col_width - 12, _FOOD_ROW_HEIGHT / 2),
-            Qt.AlignLeft | Qt.AlignVCenter,
-            right_label,
-        )
-        painter.setPen(value_color)
-        painter.drawText(
-            QRectF(rect.left() + 6, top + _FOOD_ROW_HEIGHT / 2, col_width - 12, _FOOD_ROW_HEIGHT / 2),
-            Qt.AlignLeft | Qt.AlignVCenter,
-            _format_currency(left_value),
-        )
-        painter.drawText(
-            QRectF(
-                rect.left() + col_width + 6,
+            label_rect = QRectF(left + 6, top, column_width - 12, _FOOD_ROW_HEIGHT / 2)
+            value_rect = QRectF(
+                left + 6,
                 top + _FOOD_ROW_HEIGHT / 2,
-                col_width - 12,
+                column_width - 12,
                 _FOOD_ROW_HEIGHT / 2,
-            ),
-            Qt.AlignLeft | Qt.AlignVCenter,
-            _format_percentage(right_value),
-        )
-        top += _FOOD_ROW_HEIGHT
-        painter.setPen(grid_pen)
+            )
+
+            painter.setFont(label_font)
+            painter.setPen(label_color)
+            painter.drawText(label_rect, Qt.AlignLeft | Qt.AlignVCenter, label)
+
+            painter.setFont(value_font)
+            painter.setPen(value_color)
+            formatted = (
+                _format_percentage(raw_value)
+                if percentage
+                else _format_currency(raw_value)
+            )
+            painter.drawText(value_rect, Qt.AlignLeft | Qt.AlignVCenter, formatted)
+
+        for column in range(len(entries), total_columns):
+            left = rect.left() + column * column_width
+            cell_rect = QRectF(left, top, column_width, _FOOD_ROW_HEIGHT)
+            painter.setPen(grid_pen)
+            painter.drawRect(cell_rect)
+
+    pvp_entries = pvp_columns or [("PVP1", None)]
+    food_entries = food_columns or [("Food Cost 1", None)]
+
+    current_top = rect.top()
+    _draw_row(pvp_entries, current_top, percentage=False)
+    current_top += _FOOD_ROW_HEIGHT + _FOOD_ROW_GAP
+    _draw_row(food_entries, current_top, percentage=True)
 
     painter.restore()
 
@@ -957,7 +974,7 @@ def _estimate_table_block_height(num_rows: int, *, scale_y: float = 1.0) -> floa
     return base
 
 
-def _estimate_food_cost_height(num_rows: int, *, scale_y: float = 1.0) -> float:
+def _estimate_food_cost_height(*, scale_y: float = 1.0) -> float:
     base = 2 * _BLOCK_PADDING
     title_font = _scaled_font(16, QFont.Bold, scale_y=scale_y)
     fm_title = QFontMetricsF(title_font)
@@ -965,7 +982,7 @@ def _estimate_food_cost_height(num_rows: int, *, scale_y: float = 1.0) -> float:
     meta_font = _scaled_font(10, QFont.Bold, scale_y=scale_y)
     fm_meta = QFontMetricsF(meta_font)
     base += fm_meta.lineSpacing() + 12
-    base += num_rows * _FOOD_ROW_HEIGHT
+    base += 2 * _FOOD_ROW_HEIGHT + _FOOD_ROW_GAP
     return base
 
 
@@ -1023,6 +1040,7 @@ def _points_to_mm(*values: float) -> tuple[float, ...]:
 _PAGE_MARGIN = 36.0
 _BLOCK_PADDING = 16.0
 _TABLE_ROW_HEIGHT = 28.0
+_FOOD_ROW_GAP = 12.0
 _FOOD_ROW_HEIGHT = 36.0
 _B1_IMAGE_BOX_SIZE = 160.0
 _B1_IMAGE_SPACING = 16.0

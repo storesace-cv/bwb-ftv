@@ -128,6 +128,64 @@ def test_management_pdf_contains_brand_elements(qapp, tmp_path):
     assert combined.count(" re") >= 6
 
 
+def test_management_pdf_renders_pvps_on_single_row(qapp, tmp_path):
+    modules = require_real_qt_modules(
+        "PyQt5.QtWidgets", "PyQt5.QtGui", "PyQt5.QtPrintSupport"
+    )
+    if not modules:
+        pytest.skip("Real Qt modules are required")
+
+    product = Product(
+        code="PVP-LINE",
+        name="Produto PVPS",
+        familia="Família",
+        subfamilia="Sub",
+        informacao_adicional="Notas",
+        tipo_artigo_cod=2,
+        validade_cod=5,
+        temperatura_cod=3,
+        pvps=[10.0, 12.5, 15.0, 17.5, 20.0],
+        iva=23,
+        ingredients=[
+            Ingredient(
+                name="Ingrediente Único",
+                quantity=1.0,
+                unit="kg",
+                ppu=2.0,
+                total=2.0,
+                code="I500",
+                weight=1.0,
+            )
+        ],
+    )
+
+    payload = _prepare_management_payload(product)
+    pdf_path = tmp_path / "ft_gestao_pvps.pdf"
+    _render_pdf(payload, pdf_path, (595.28, 841.89))
+
+    assert pdf_path.exists()
+    streams = _extract_pdf_streams(pdf_path)
+    assert streams, "expected at least one PDF stream"
+
+    pattern = re.compile(
+        r"-?\d+(?:\.\d+)?\s+-?\d+(?:\.\d+)?\s+-?\d+(?:\.\d+)?\s+-?\d+(?:\.\d+)?\s+"
+        r"-?\d+(?:\.\d+)?\s+(-?\d+(?:\.\d+)?)\s+Tm\s+\((PVP\d)\)"
+    )
+    positions: dict[str, float] = {}
+    for stream in streams:
+        for match in pattern.finditer(stream):
+            label = match.group(2)
+            y_pos = float(match.group(1))
+            positions.setdefault(label, y_pos)
+
+    expected_labels = [f"PVP{i}" for i in range(1, 6)]
+    assert all(label in positions for label in expected_labels)
+
+    reference = positions[expected_labels[0]]
+    for label in expected_labels[1:]:
+        assert positions[label] == pytest.approx(reference, abs=0.5)
+
+
 def test_management_pdf_embeds_product_image(qapp, tmp_path, monkeypatch):
     modules = require_real_qt_modules(
         "PyQt5.QtWidgets", "PyQt5.QtGui", "PyQt5.QtPrintSupport"
