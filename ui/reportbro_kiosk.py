@@ -12,7 +12,7 @@ QT_WEBENGINE_AVAILABLE = bool(
 )
 
 if QT_AVAILABLE:
-    from PyQt5.QtCore import QEvent, QTimer, Qt, QUrl
+    from PyQt5.QtCore import QEvent, Qt, QUrl
     from PyQt5.QtGui import QKeyEvent
     from PyQt5.QtWidgets import (
         QDialog,
@@ -23,7 +23,7 @@ if QT_AVAILABLE:
         QWidget,
     )
 else:  # pragma: no cover - executed when Qt is not installed
-    QEvent = QTimer = Qt = QUrl = QKeyEvent = None  # type: ignore[assignment]
+    QEvent = Qt = QUrl = QKeyEvent = None  # type: ignore[assignment]
     QDialog = QHBoxLayout = QLabel = QPushButton = QVBoxLayout = QWidget = object  # type: ignore[assignment]
 
 if QT_AVAILABLE and QT_WEBENGINE_AVAILABLE:
@@ -44,19 +44,21 @@ if QT_AVAILABLE:
 
     class ReportBroKioskDialog(QDialog):
 
-        """Full-screen dialog embedding the ReportBro Designer."""
+        """Dialog embedding the ReportBro Designer."""
 
         def __init__(self, parent: QWidget | None, url: QUrl) -> None:
             super().__init__(parent)
             self._url = url
             self._title_label: QLabel | None = None
+            self._web_view: QWebEngineView | None = None
             self._build_ui()
 
         def _build_ui(self) -> None:
             self.setObjectName("reportbroKioskDialog")
             self.setWindowModality(Qt.ApplicationModal)
-            self.setWindowFlag(Qt.FramelessWindowHint, True)
             self.setAttribute(Qt.WA_DeleteOnClose, True)
+            self.setMinimumSize(960, 640)
+            self.resize(1280, 800)
 
             layout = QVBoxLayout(self)
             layout.setContentsMargins(0, 0, 0, 0)
@@ -75,6 +77,11 @@ if QT_AVAILABLE:
             self._title_label = title
 
             header_layout.addStretch(1)
+
+            open_button = QPushButton("Abrir", header)
+            open_button.setObjectName("reportbroKioskOpen")
+            open_button.clicked.connect(self._trigger_open)
+            header_layout.addWidget(open_button)
 
             close_button = QPushButton("Fechar", header)
             close_button.setObjectName("reportbroKioskClose")
@@ -97,6 +104,7 @@ if QT_AVAILABLE:
             web_view.setContextMenuPolicy(Qt.NoContextMenu)
             web_view.load(self._url)
             web_view.titleChanged.connect(self._on_title_changed)
+            self._web_view = web_view
             layout.addWidget(web_view, 1)
 
             self._apply_styles()
@@ -114,6 +122,18 @@ if QT_AVAILABLE:
                 #reportbroKioskTitle {
                     font-size: 16px;
                     font-weight: 600;
+                }
+                #reportbroKioskOpen {
+                    background-color: #2563eb;
+                    border-radius: 6px;
+                    padding: 6px 20px;
+                    color: #f9fafb;
+                }
+                #reportbroKioskOpen:hover {
+                    background-color: #1d4ed8;
+                }
+                #reportbroKioskOpen:pressed {
+                    background-color: #1e40af;
                 }
                 #reportbroKioskClose {
                     background-color: #ef4444;
@@ -133,13 +153,49 @@ if QT_AVAILABLE:
 
         def showEvent(self, event: QEvent) -> None:  # pragma: no cover - GUI runtime
             super().showEvent(event)
-            QTimer.singleShot(0, self.showFullScreen)
+            self.activateWindow()
 
         def keyPressEvent(self, event: QKeyEvent) -> None:  # pragma: no cover - GUI runtime
             if event.key() in {Qt.Key_Escape, Qt.Key_F11}:
                 self.accept()
                 return
             super().keyPressEvent(event)
+
+        def _trigger_open(self) -> None:
+            if self._web_view is None:
+                return
+            page = self._web_view.page()
+            if page is None:
+                return
+            page.runJavaScript(
+                """
+(() => {
+    const select = document.getElementById('template-select');
+    if (!select) {
+        return;
+    }
+    if (!select.dataset.rbKioskAutoload) {
+        select.addEventListener('change', () => {
+            if (select.value) {
+                document.getElementById('btn-open')?.click();
+            }
+        });
+        select.dataset.rbKioskAutoload = '1';
+    }
+    if (!select.value) {
+        select.focus();
+        if (typeof select.showPicker === 'function') {
+            select.showPicker();
+        } else {
+            const event = new MouseEvent('mousedown', { bubbles: true });
+            select.dispatchEvent(event);
+        }
+        return;
+    }
+    document.getElementById('btn-open')?.click();
+})();
+                """
+            )
 
         def _on_title_changed(self, title: str) -> None:
             if self._title_label is None:
@@ -160,7 +216,7 @@ else:  # pragma: no cover - executed when Qt is not installed
 
 def open_reportbro_kiosk(parent: QWidgetType | None, endpoint: "ReportBroEndpoint") -> bool:
 
-    """Open the ReportBro Designer in a full-screen kiosk dialog."""
+    """Open the ReportBro Designer in a modal dialog."""
 
     if not QT_AVAILABLE or QWebEngineView is None:
         logger.info("[ReportBro] QtWebEngine não está disponível para o modo kiosk.")
