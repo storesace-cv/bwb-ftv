@@ -16,8 +16,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 VENV_DIR = PROJECT_ROOT / ".venv"
 STATIC_DIR = PROJECT_ROOT / "app" / "static"
 DESIGNER_DIR = STATIC_DIR / "reportbro-designer"
-TEMPLATES_DIR = PROJECT_ROOT / "app" / "templates_store" / "templates"
-SAMPLES_DIR = PROJECT_ROOT / "app" / "templates_store" / "samples"
+TEMPLATES_DIR = PROJECT_ROOT / "reporting" / "templates"
+SAMPLES_DIR = PROJECT_ROOT / "reporting" / "samples"
 RELEASE_VERSION = "3.11.3"
 DESIGNER_PACKAGE_URL = (
     f"https://github.com/jobsta/reportbro-designer/releases/download/v{RELEASE_VERSION}/"

@@ -10,8 +10,8 @@ from flask import Flask, send_from_directory
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 STATIC_DIR = PROJECT_ROOT / "app" / "static"
-TEMPLATES_DIR = PROJECT_ROOT / "app" / "templates_store" / "templates"
-SAMPLES_DIR = PROJECT_ROOT / "app" / "templates_store" / "samples"
+TEMPLATES_DIR = PROJECT_ROOT / "reporting" / "templates"
+SAMPLES_DIR = PROJECT_ROOT / "reporting" / "samples"
 DESIGNER_HTML = STATIC_DIR / "designer.html"
 
 
