@@ -197,6 +197,7 @@ if QT_AVAILABLE:
                 """
             )
 
+
         def _on_title_changed(self, title: str) -> None:
             if self._title_label is None:
                 return
