@@ -7,6 +7,7 @@ import sys
 from typing import TYPE_CHECKING
 
 import qt_bootstrap
+from PyQt5.QtCore import QCoreApplication, Qt
 from PyQt5.QtGui import QFont, QFontDatabase
 from PyQt5.QtWidgets import QApplication
 
@@ -17,6 +18,25 @@ if TYPE_CHECKING:  # pragma: no cover - import for type checking only
 
 
 logger = logging.getLogger(__name__)
+
+
+def _ensure_qtwebengine_shared_contexts() -> None:
+    """Enable the OpenGL sharing attribute required by QtWebEngine."""
+
+    share_attribute = getattr(Qt, "AA_ShareOpenGLContexts", None)
+    if share_attribute is None:
+        return
+
+    if QCoreApplication.testAttribute(share_attribute):
+        return
+
+    if QCoreApplication.instance() is not None:
+        logger.warning(
+            "[QT] QtWebEngine requer Qt.AA_ShareOpenGLContexts antes da criação da QApplication"
+        )
+        return
+
+    QCoreApplication.setAttribute(share_attribute, True)
 
 
 def _apply_global_theme(app: QApplication) -> None:
@@ -39,6 +59,7 @@ def ensure_ftv_app() -> QApplication:
 
     app = QApplication.instance()
     if app is None:
+        _ensure_qtwebengine_shared_contexts()
         app = QApplication(sys.argv)
         qt_bootstrap.log_qt_library_paths(app)
 
