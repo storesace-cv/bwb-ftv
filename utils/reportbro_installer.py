@@ -98,12 +98,17 @@ def build_pip_install_command(
     return args
 
 
+def _format_command(command: Sequence[str]) -> str:
+    return " ".join(shlex.quote(arg) for arg in command)
+
+
 def _run_command(command: Sequence[str]) -> None:
     try:
         subprocess.run(command, check=True)
     except subprocess.CalledProcessError as exc:  # pragma: no cover - pip failures
         raise InstallationError(
-            f"A execução do pip falhou com o código {exc.returncode}."
+            "A execução do pip falhou (código "
+            f"{exc.returncode}) para o comando: {_format_command(command)}"
         ) from exc
 
 
@@ -127,11 +132,29 @@ def ensure_reportbro_installed(
 
     if not force and is_requirement_satisfied(requirement):
         return False
+
+    pip_arguments = list(pip_args or [])
+    primary_command = build_pip_install_command(requirement, pip_arguments)
+
+    try:
+        _run_command(primary_command)
+    except InstallationError as primary_error:
+        if "--user" in pip_arguments:
+            raise primary_error
+
+        fallback_arguments = [*pip_arguments, "--user"]
+        fallback_command = build_pip_install_command(requirement, fallback_arguments)
+        try:
+            _run_command(fallback_command)
+        except InstallationError as fallback_error:
+            raise InstallationError(
+                "Não foi possível instalar automaticamente o ReportBro. "
+                "Tente executar manualmente um dos seguintes comandos:\n"
+                f"  {_format_command(primary_command)}\n"
+                f"  {_format_command(fallback_command)}"
+            ) from fallback_error
+
     return True
-
-
-def _format_command(command: Sequence[str]) -> str:
-    return " ".join(shlex.quote(arg) for arg in command)
 
 
 def _build_arg_parser() -> argparse.ArgumentParser:
@@ -176,19 +199,30 @@ def main(argv: Sequence[str] | None = None) -> int:
         requirement = load_reportbro_requirement(args.requirements)
     except InstallationError as exc:
         parser.error(str(exc))
+
+    pip_args = args.pip_args or []
+    command = build_pip_install_command(requirement, pip_args)
+
     if args.dry_run:
         print(_format_command(command))
         return 0
 
     try:
-        pass
+        installed = ensure_reportbro_installed(
+            requirements_path=args.requirements,
+            pip_args=pip_args,
+            force=args.force,
+        )
     except InstallationError as exc:
         if not args.quiet:
             print(str(exc), file=sys.stderr)
         return 1
 
     if not args.quiet:
-        pass
+        if installed:
+            print("Instalação do ReportBro concluída com sucesso.")
+        else:
+            print("O ReportBro já se encontra instalado na versão requerida.")
     return 0
 
 
@@ -198,7 +232,6 @@ __all__ = [
     "REPORTBRO_REQUIREMENT",
     "DEFAULT_REQUIREMENTS_PATH",
     "build_pip_install_command",
-    "default_pip_args",
     "ensure_reportbro_installed",
     "is_requirement_satisfied",
     "load_reportbro_requirement",
