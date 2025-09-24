@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from ui.reportbro_stub import discover_reportbro_templates
-
-
 def test_discover_reportbro_templates_lists_existing_templates(tmp_path, monkeypatch):
     template_a = tmp_path / "a_template.json"
     template_b = tmp_path / "b_template.json"

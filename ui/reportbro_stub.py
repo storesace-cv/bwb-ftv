@@ -1,7 +1,6 @@
 """Offline fallback for the ReportBro document manager."""
 
 from __future__ import annotations
-import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -27,7 +26,6 @@ def discover_reportbro_templates(directory: Path | None = None) -> list[Path]:
         if path.is_file()
     )
 
-
 def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no cover - GUI
     """Show the ReportBro stub dialog modally."""
 
@@ -52,7 +50,6 @@ def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no 
             self.setWindowTitle("Gestor de Documentos (modo offline)")
             self.setModal(True)
             self.resize(560, 360)
-
             layout = QVBoxLayout(self)
 
             intro = QLabel(
@@ -109,7 +106,6 @@ def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no 
             path = item.data(Qt.UserRole)
             if not isinstance(path, Path):
                 return
-
         def _open_templates_directory(self) -> None:
             logger.info("[ReportBro] Abrir pasta de templates: %s", TEMPLATES_DIR)
             if not QDesktopServices.openUrl(QUrl.fromLocalFile(str(TEMPLATES_DIR))):

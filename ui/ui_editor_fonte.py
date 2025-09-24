@@ -182,8 +182,6 @@ from .printing import (
     generate_ft_gestao_pdf,
     generate_ft_gestao_reportbro_pdf,
 )
-from .reportbro_stub import open_reportbro_stub_dialog
-
 APP_TITLE = "Fichas Técnicas Valorizadas"
 
 APP_STYLESHEET = (
@@ -648,16 +646,8 @@ class FTApp(QWidget):
             logger.info("[ReportBro] A abrir editor offline (stub incluído)")
             open_reportbro_stub_dialog(self)
             return
-
-        path = Path(editor_target)
-        if path.exists():
-            if path.is_dir():
-                path = path / "index.html"
-            url = QUrl.fromLocalFile(str(path))
-        else:
-            url = QUrl.fromUserInput(editor_target)
-
-        if not url.isValid() or url.isEmpty():
+        url = resolve_reportbro_url(editor_target)
+        if url is None:
             QMessageBox.warning(
                 self,
                 APP_TITLE,
