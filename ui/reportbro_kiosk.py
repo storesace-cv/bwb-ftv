@@ -313,7 +313,6 @@ if QT_AVAILABLE:
             page = self._web_view.page()
             if page is None:
                 return
-
             script = textwrap.dedent(
                 f"""
                 (() => {{
