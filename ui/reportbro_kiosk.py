@@ -28,6 +28,7 @@ else:  # pragma: no cover - executed when Qt is not installed
 
 if QT_AVAILABLE and QT_WEBENGINE_AVAILABLE:
     from PyQt5.QtWebEngineWidgets import QWebEngineView
+
 else:  # pragma: no cover - executed when QtWebEngine is not installed
     QWebEngineView = None  # type: ignore[assignment]
 
@@ -125,6 +126,7 @@ if QT_AVAILABLE:
                 #reportbroKioskClose:pressed {
                     background-color: #b91c1c;
                 }
+
             """
             )
 
