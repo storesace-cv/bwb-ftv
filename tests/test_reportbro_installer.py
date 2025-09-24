@@ -1,11 +1,7 @@
 from __future__ import annotations
-
 from importlib import metadata
-
 import pytest
-
 from utils import reportbro_installer
-
 
 def test_load_reportbro_requirement_parses_version(tmp_path):
     requirements = tmp_path / "requirements.txt"

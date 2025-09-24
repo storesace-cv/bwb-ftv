@@ -53,18 +53,16 @@ def _format_command(arguments: Iterable[str]) -> str:
 
 
 def _build_installation_hint() -> str:
-    pip_args = reportbro_installer.default_pip_args()
-    command = reportbro_installer.build_pip_install_command(
-        reportbro_installer.REPORTBRO_REQUIREMENT,
-        pip_args,
     )
     return (
         "Execute o script abaixo numa consola com permissões de utilizador para "
         "instalar o ReportBro automaticamente e ativar o editor oficial.\n\n"
         f"    python {INSTALL_SCRIPT}\n\n"
-        "O script aplica internamente o seguinte comando:\n\n"
+        "O script tenta primeiro uma instalação padrão e, se necessário, "
+        "repete com a flag --user. O comando inicial é:\n\n"
         f"    {_format_command(command)}"
     )
+
 
 
 def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no cover - GUI
@@ -201,12 +199,6 @@ def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no 
                 )
 
         def _run_installer(self) -> _InstallResult:
-            pip_args = reportbro_installer.default_pip_args()
-            try:
-                logger.info("[ReportBro] A executar instalador com args %s", pip_args)
-                installed = reportbro_installer.ensure_reportbro_installed(
-                    pip_args=pip_args,
-                )
             except reportbro_installer.InstallationError as exc:
                 logger.warning("[ReportBro] Instalação falhou: %s", exc)
                 return _InstallResult("error", str(exc))

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import argparse
 import shlex
 import subprocess
@@ -98,12 +97,6 @@ def build_pip_install_command(
     return args
 
 
-def default_pip_args() -> tuple[str, ...]:
-    """Return the default pip arguments for local installations."""
-
-    return ("--user",)
-
-
 def _run_command(command: Sequence[str]) -> None:
     try:
         subprocess.run(command, check=True)
@@ -133,9 +126,6 @@ def ensure_reportbro_installed(
 
     if not force and is_requirement_satisfied(requirement):
         return False
-
-    command = build_pip_install_command(requirement, pip_args)
-    _run_command(command)
     return True
 
 
@@ -181,34 +171,23 @@ def _build_arg_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _build_arg_parser()
     args = parser.parse_args(argv)
-    pip_args = tuple(args.pip_args or default_pip_args())
 
     try:
         requirement = load_reportbro_requirement(args.requirements)
     except InstallationError as exc:
         parser.error(str(exc))
 
-    command = build_pip_install_command(requirement, pip_args)
-
-    satisfied = is_requirement_satisfied(requirement)
-    if satisfied and not args.force:
-        if not args.quiet:
-            print("O ReportBro já se encontra instalado.")
-        return 0
-
     if args.dry_run:
         print(_format_command(command))
         return 0
 
     try:
-        _run_command(command)
     except InstallationError as exc:
         if not args.quiet:
             print(str(exc), file=sys.stderr)
         return 1
 
     if not args.quiet:
-        print("Instalação concluída com sucesso.")
     return 0
 
 
