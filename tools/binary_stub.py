@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Ferramenta auxiliar para preparar ficheiros binários antes do commit.
 
 Esta "stub" cria uma representação textual ou um pacote comprimido de um
 ficheiro binário, permitindo contornar políticas que bloqueiem o envio
@@ -9,11 +8,6 @@ incluído no controlo de versões e, mais tarde, reconstruído no destino.
 from __future__ import annotations
 
 import argparse
-import base64
-from pathlib import Path
-import textwrap
-import zipfile
-
 
 def prepare_binary_stub(path: Path, strategy: str = "base64") -> Path:
     """Transforma ``path`` segundo ``strategy`` e devolve o caminho resultante.
@@ -58,24 +52,17 @@ def prepare_binary_stub(path: Path, strategy: str = "base64") -> Path:
 
     msg = "estratégia desconhecida: {} (use 'base64' ou 'zip')".format(strategy)
     raise ValueError(msg)
-
-
-def _build_arg_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="Stub para preparar ficheiros binários antes do commit"
-    )
-    parser.add_argument(
         "ficheiro",
         type=Path,
         help="caminho para o ficheiro binário que precisa de ser transformado",
     )
-    parser.add_argument(
         "--estrategia",
         "-e",
         choices=("base64", "zip"),
         default="base64",
         help="método a aplicar (base64 cria texto, zip comprime)",
     )
+    
     return parser
 
 
@@ -85,16 +72,10 @@ def _format_instructions(output_path: Path, strategy: str) -> str:
             f"""
             Ficheiro preparado: {output_path}
             Para restaurar o binário original:
-              base64 --decode {output_path} > {output_path.with_suffix('')}
-            (em Windows pode usar `certutil -decode`).
-            """
-        ).strip()
-
     return textwrap.dedent(
         f"""
         Ficheiro preparado: {output_path}
         Para restaurar o binário original:
-          unzip {output_path}
         """
     ).strip()
 
@@ -102,9 +83,6 @@ def _format_instructions(output_path: Path, strategy: str) -> str:
 def main() -> None:
     parser = _build_arg_parser()
     args = parser.parse_args()
-    output_path = prepare_binary_stub(args.ficheiro, args.estrategia)
-    print(_format_instructions(output_path, args.estrategia))
-
 
 if __name__ == "__main__":
     main()
