@@ -3,12 +3,8 @@
 from __future__ import annotations
 
 import importlib.util
-import json
 import logging
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
-
-logger = logging.getLogger(__name__)
 
 QT_AVAILABLE = importlib.util.find_spec("PyQt5") is not None
 QT_WEBENGINE_AVAILABLE = bool(
@@ -16,32 +12,23 @@ QT_WEBENGINE_AVAILABLE = bool(
 )
 
 if QT_AVAILABLE:
-    from PyQt5.QtCore import Qt, QUrl
+    from PyQt5.QtCore import QEvent, QTimer, Qt, QUrl
     from PyQt5.QtGui import QKeyEvent
     from PyQt5.QtWidgets import (
         QDialog,
-        QFileDialog,
         QHBoxLayout,
         QLabel,
-        QMessageBox,
         QPushButton,
         QVBoxLayout,
         QWidget,
     )
 else:  # pragma: no cover - executed when Qt is not installed
-    Qt = QUrl = QKeyEvent = None  # type: ignore[assignment]
-    QFileDialog = QMessageBox = None  # type: ignore[assignment]
+    QEvent = QTimer = Qt = QUrl = QKeyEvent = None  # type: ignore[assignment]
     QDialog = QHBoxLayout = QLabel = QPushButton = QVBoxLayout = QWidget = object  # type: ignore[assignment]
 
 if QT_AVAILABLE and QT_WEBENGINE_AVAILABLE:
-    try:  # pragma: no cover - heavy import guarded for runtime availability
-        from PyQt5.QtWebEngineWidgets import QWebEngineView
-    except ImportError as exc:  # pragma: no cover - runtime guard on misconfiguration
-        logger.warning(
-            "[ReportBro] QtWebEngine indisponível: %s", exc,
-        )
-        QT_WEBENGINE_AVAILABLE = False
-        QWebEngineView = None  # type: ignore[assignment]
+    from PyQt5.QtWebEngineWidgets import QWebEngineView
+
 else:  # pragma: no cover - executed when QtWebEngine is not installed
     QWebEngineView = None  # type: ignore[assignment]
 
@@ -51,71 +38,18 @@ if TYPE_CHECKING:
 else:  # pragma: no cover - runtime fallback
     QWidgetType = Any
 
-_PROJECT_ROOT = Path(__file__).resolve().parents[1]
-
-
-def _resolve_default_templates_dir(project_root: Path | None = None) -> Path:
-    """Discover the most relevant directory to initialise file dialogs."""
-
-    base = project_root or _PROJECT_ROOT
-    candidates = [
-        base / "app" / "templates_store" / "templates",
-        base / "reporting" / "templates",
-    ]
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate
-    return base
-
-
-def _build_template_injection_script(report: dict[str, Any], source_label: str) -> str:
-    """Prepare a JavaScript snippet that loads a template inside the designer."""
-
-    serialized_report = json.dumps(report, ensure_ascii=False)
-    label_literal = json.dumps(source_label)
-    return """
-        (function() {
-            if (typeof designerInstance === 'undefined' || !designerInstance) {
-                return {status: 'error', message: 'Designer ainda não está pronto. Tente novamente.'};
-            }
-            try {
-                const report = {report_payload};
-                designerInstance.load(report);
-                if (typeof designerInstance.setModified === 'function') {
-                    designerInstance.setModified(false);
-                }
-                if (typeof currentTemplateName !== 'undefined') {
-                    currentTemplateName = null;
-                }
-                if (typeof selectElement !== 'undefined' && selectElement) {
-                    selectElement.value = "";
-                }
-                if (typeof setStatus === 'function') {
-                    setStatus('Template carregado de ficheiro: ' + {label});
-                }
-                if (typeof showToast === 'function') {
-                    showToast('Template carregado a partir de ficheiro.');
-                }
-                return {status: 'ok'};
-            } catch (error) {
-                const message = error && error.message ? error.message : String(error);
-                return {status: 'error', message};
-            }
-        })();
-    """.replace("{report_payload}", serialized_report).replace("{label}", label_literal)
-
+logger = logging.getLogger(__name__)
 
 if QT_AVAILABLE:
 
     class ReportBroKioskDialog(QDialog):
-        """Modal dialog embedding the ReportBro Designer."""
+
+        """Full-screen dialog embedding the ReportBro Designer."""
 
         def __init__(self, parent: QWidget | None, url: QUrl) -> None:
             super().__init__(parent)
             self._url = url
             self._title_label: QLabel | None = None
-            self._web_view: QWebEngineView | None = None
-            self._templates_dir = _resolve_default_templates_dir()
             self._build_ui()
 
         def _build_ui(self) -> None:
@@ -123,7 +57,6 @@ if QT_AVAILABLE:
             self.setWindowModality(Qt.ApplicationModal)
             self.setWindowFlag(Qt.FramelessWindowHint, True)
             self.setAttribute(Qt.WA_DeleteOnClose, True)
-            self.resize(1280, 800)
 
             layout = QVBoxLayout(self)
             layout.setContentsMargins(0, 0, 0, 0)
@@ -142,11 +75,6 @@ if QT_AVAILABLE:
             self._title_label = title
 
             header_layout.addStretch(1)
-
-            open_file_button = QPushButton("Abrir ficheiro…", header)
-            open_file_button.setObjectName("reportbroKioskOpenFile")
-            open_file_button.clicked.connect(self._on_open_file_clicked)
-            header_layout.addWidget(open_file_button)
 
             close_button = QPushButton("Fechar", header)
             close_button.setObjectName("reportbroKioskClose")
@@ -170,7 +98,6 @@ if QT_AVAILABLE:
             web_view.load(self._url)
             web_view.titleChanged.connect(self._on_title_changed)
             layout.addWidget(web_view, 1)
-            self._web_view = web_view
 
             self._apply_styles()
 
@@ -200,20 +127,13 @@ if QT_AVAILABLE:
                 #reportbroKioskClose:pressed {
                     background-color: #b91c1c;
                 }
-                #reportbroKioskOpenFile {
-                    background-color: #2563eb;
-                    border-radius: 6px;
-                    padding: 6px 20px;
-                    color: #f9fafb;
-                }
-                #reportbroKioskOpenFile:hover {
-                    background-color: #1d4ed8;
-                }
-                #reportbroKioskOpenFile:pressed {
-                    background-color: #1e40af;
-                }
+
             """
             )
+
+        def showEvent(self, event: QEvent) -> None:  # pragma: no cover - GUI runtime
+            super().showEvent(event)
+            QTimer.singleShot(0, self.showFullScreen)
 
         def keyPressEvent(self, event: QKeyEvent) -> None:  # pragma: no cover - GUI runtime
             if event.key() in {Qt.Key_Escape, Qt.Key_F11}:
@@ -229,63 +149,6 @@ if QT_AVAILABLE:
             else:
                 self._title_label.setText("ReportBro Designer")
 
-        def _on_open_file_clicked(self) -> None:
-            if self._web_view is None:
-                return
-            initial_dir = self._templates_dir if self._templates_dir.exists() else Path.home()
-            filename, _ = QFileDialog.getOpenFileName(
-                self,
-                "Abrir ficheiro ReportBro",
-                str(initial_dir),
-                "Templates ReportBro (*.json);;Todos os ficheiros (*)",
-            )
-            if not filename:
-                return
-
-            path = Path(filename)
-            try:
-                content = path.read_text(encoding="utf-8")
-            except OSError as exc:
-                logger.warning("[ReportBro] Falha ao ler ficheiro seleccionado: %s", exc)
-                QMessageBox.warning(
-                    self,
-                    "ReportBro",
-                    "Não foi possível ler o ficheiro seleccionado.",
-                )
-                return
-
-            try:
-                report = json.loads(content)
-            except json.JSONDecodeError:
-                QMessageBox.warning(
-                    self,
-                    "ReportBro",
-                    "O ficheiro seleccionado não contém JSON válido.",
-                )
-                return
-
-            if not isinstance(report, dict):
-                QMessageBox.warning(
-                    self,
-                    "ReportBro",
-                    "O ficheiro seleccionado não contém um template ReportBro válido.",
-                )
-                return
-
-            script = _build_template_injection_script(report, path.name)
-
-            def _handle_result(result: Any) -> None:
-                if isinstance(result, dict) and result.get("status") != "ok":
-                    QMessageBox.warning(
-                        self,
-                        "ReportBro",
-                        result.get("message", "Não foi possível carregar o template."),
-                    )
-                    return
-                self._templates_dir = path.parent
-
-            self._web_view.page().runJavaScript(script, _handle_result)
-
 else:  # pragma: no cover - executed when Qt is not installed
 
     class ReportBroKioskDialog:  # type: ignore[too-many-ancestors]
@@ -296,7 +159,8 @@ else:  # pragma: no cover - executed when Qt is not installed
 
 
 def open_reportbro_kiosk(parent: QWidgetType | None, endpoint: "ReportBroEndpoint") -> bool:
-    """Open the ReportBro Designer in a kiosk dialog."""
+
+    """Open the ReportBro Designer in a full-screen kiosk dialog."""
 
     if not QT_AVAILABLE or QWebEngineView is None:
         logger.info("[ReportBro] QtWebEngine não está disponível para o modo kiosk.")
