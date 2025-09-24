@@ -1,7 +1,6 @@
 """Offline fallback for the ReportBro document manager."""
 
 from __future__ import annotations
-
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -46,7 +45,6 @@ def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no 
         QVBoxLayout,
     )
 
-    class ReportBroEditorStubDialog(QDialog):
         """Simple dialog guiding the user while the real editor is unavailable."""
 
         def __init__(self, parent_widget: "QWidget | None" = None) -> None:
@@ -111,14 +109,6 @@ def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no 
             path = item.data(Qt.UserRole)
             if not isinstance(path, Path):
                 return
-
-            logger.info("[ReportBro] Abrir template local: %s", path)
-            if not QDesktopServices.openUrl(QUrl.fromLocalFile(str(path))):
-                QMessageBox.warning(
-                    self,
-                    self.windowTitle(),
-                    "Não foi possível abrir o template selecionado no editor padrão.",
-                )
 
         def _open_templates_directory(self) -> None:
             logger.info("[ReportBro] Abrir pasta de templates: %s", TEMPLATES_DIR)
