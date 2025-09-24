@@ -601,7 +601,7 @@ def _draw_block_b1(
                 scaled.width(),
                 scaled.height(),
             )
-            painter.drawPixmap(target, scaled)
+            painter.drawPixmap(target.toAlignedRect(), scaled)
 
     painter.restore()
     return block_rect.bottom()
