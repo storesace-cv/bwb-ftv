@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 if QT_AVAILABLE:
 
     class ReportBroKioskDialog(QDialog):
+
         """Full-screen dialog embedding the ReportBro Designer."""
 
         def __init__(self, parent: QWidget | None, url: QUrl) -> None:
@@ -158,6 +159,7 @@ else:  # pragma: no cover - executed when Qt is not installed
 
 
 def open_reportbro_kiosk(parent: QWidgetType | None, endpoint: "ReportBroEndpoint") -> bool:
+
     """Open the ReportBro Designer in a full-screen kiosk dialog."""
 
     if not QT_AVAILABLE or QWebEngineView is None:
