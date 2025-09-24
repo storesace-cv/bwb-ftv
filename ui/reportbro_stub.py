@@ -59,12 +59,14 @@ def get_offline_reportbro_explanation() -> str:
     """Return the explanatory message shown when the editor URL is missing."""
 
     return (
-        "A aplicação abre o \"Gestor de Documentos (modo offline)\" sempre "
-        "que não encontra a variável de ambiente FTV_REPORTBRO_EDITOR_URL. "
-        "Nessa situação, o botão \"Instalar ReportBro\" apenas reutiliza o "
-        "instalador Python (reportbro-lib); quando a biblioteca já está "
-        "presente, a própria janela confirma que não há nada para instalar e "
-        "mantém o modo offline disponível como alternativa temporária."
+        "A aplicação tenta iniciar automaticamente o ReportBro Designer "
+        "integrado em http://127.0.0.1:55255/designer. Quando os assets não "
+        "estão prontos ou o servidor local falha, apresenta o \"Gestor de "
+        "Documentos (modo offline)\" como alternativa temporária. Os botões "
+        "\"Instalar ReportBro\" e \"Instalar editor ReportBro\" reaplicam as "
+        "dependências Python e os assets estáticos necessários. Caso necessite "
+        "de apontar para um servidor remoto, configure a variável "
+        "FTV_REPORTBRO_EDITOR_URL."
     )
 
 
@@ -73,15 +75,14 @@ def get_offline_reportbro_recommendations() -> list[str]:
 
     return [
         (
-            "Confirme com a equipa de operações/infrastrutura o endereço "
-            "correto do ReportBro Designer e configure a variável "
-            "FTV_REPORTBRO_EDITOR_URL (por exemplo via .env, variáveis de "
-            "sistema ou mecanismo equivalente)."
+            "Execute novamente os scripts de instalação caso o editor "
+            "integrado não abra automaticamente:"
+            f"\n    python {INSTALL_SCRIPT}\n    python {EDITOR_INSTALL_SCRIPT}"
         ),
         (
-            "Depois de definir o URL válido, reinicie a aplicação para que o "
-            "Gestor de Documentos abra diretamente o ReportBro Designer sem "
-            "alertas adicionais."
+            "Para ligar a uma instância remota, defina a variável "
+            "FTV_REPORTBRO_EDITOR_URL e reinicie a aplicação; caso contrário "
+            "será usado o servidor local integrado."
         ),
     ]
 

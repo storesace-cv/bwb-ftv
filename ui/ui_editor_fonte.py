@@ -159,6 +159,7 @@ from .models import (
 )
 from .qt_compat import exec_modal
 from .reportbro_stub import open_reportbro_stub_dialog
+from . import reportbro_server
 from .utilities import (
     AlignmentVariant,
     FIELD_STYLE,
@@ -668,8 +669,25 @@ class FTApp(QWidget):
 
         editor_target = os.getenv("FTV_REPORTBRO_EDITOR_URL", "").strip()
         if not editor_target:
-            logger.info("[ReportBro] A abrir editor offline (stub incluído)")
-            open_reportbro_stub_dialog(self)
+            try:
+                endpoint = reportbro_server.ensure_reportbro_server()
+            except Exception:
+                logger.exception("[ReportBro] Falha ao iniciar servidor integrado do ReportBro")
+                open_reportbro_stub_dialog(self)
+                return
+
+            url = QUrl(f"http://{endpoint.host}:{endpoint.port}/designer")
+            logger.info("[ReportBro] A abrir editor integrado em %s", url.toString())
+            if not QDesktopServices.openUrl(url):
+                QMessageBox.warning(
+                    self,
+                    APP_TITLE,
+                    "Não foi possível abrir o editor ReportBro integrado.",
+                )
+                logger.warning(
+                    "[ReportBro] Falha ao abrir editor integrado em %s",
+                    url.toString(),
+                )
             return
         url = resolve_reportbro_url(editor_target)
         if url is None:
