@@ -65,6 +65,7 @@ def _build_installation_hint() -> str:
 
 
 
+
 def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no cover - GUI
     """Show the ReportBro stub dialog modally."""
 

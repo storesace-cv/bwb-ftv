@@ -3,9 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import shlex
-import subprocess
-import sys
 from importlib import metadata
 from pathlib import Path
 from typing import Sequence
@@ -95,8 +92,6 @@ def build_pip_install_command(
         args.extend(pip_args)
     args.append(requirement.requirement)
     return args
-
-
 def _run_command(command: Sequence[str]) -> None:
     try:
         subprocess.run(command, check=True)
@@ -171,12 +166,10 @@ def _build_arg_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _build_arg_parser()
     args = parser.parse_args(argv)
-
     try:
         requirement = load_reportbro_requirement(args.requirements)
     except InstallationError as exc:
         parser.error(str(exc))
-
     if args.dry_run:
         print(_format_command(command))
         return 0
