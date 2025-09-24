@@ -313,7 +313,7 @@ if QT_AVAILABLE:
             page = self._web_view.page()
             if page is None:
                 return
-
+              
             script = textwrap.dedent(
                 f"""
                 (() => {{
@@ -335,7 +335,7 @@ if QT_AVAILABLE:
                 """
             )
             page.runJavaScript(script)
-
+            
         def _on_title_changed(self, title: str) -> None:
             if self._title_label is None:
                 return
