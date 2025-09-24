@@ -6,8 +6,6 @@ import importlib.util
 import logging
 from typing import TYPE_CHECKING, Any
 
-logger = logging.getLogger(__name__)
-
 QT_AVAILABLE = importlib.util.find_spec("PyQt5") is not None
 QT_WEBENGINE_AVAILABLE = bool(
     QT_AVAILABLE and importlib.util.find_spec("PyQt5.QtWebEngineWidgets") is not None
@@ -29,14 +27,7 @@ else:  # pragma: no cover - executed when Qt is not installed
     QDialog = QHBoxLayout = QLabel = QPushButton = QVBoxLayout = QWidget = object  # type: ignore[assignment]
 
 if QT_AVAILABLE and QT_WEBENGINE_AVAILABLE:
-    try:  # pragma: no cover - heavy import guarded for runtime availability
-        from PyQt5.QtWebEngineWidgets import QWebEngineView
-    except ImportError as exc:  # pragma: no cover - runtime guard on misconfiguration
-        logger.warning(
-            "[ReportBro] QtWebEngine indisponível: %s", exc,
-        )
-        QT_WEBENGINE_AVAILABLE = False
-        QWebEngineView = None  # type: ignore[assignment]
+    from PyQt5.QtWebEngineWidgets import QWebEngineView
 else:  # pragma: no cover - executed when QtWebEngine is not installed
     QWebEngineView = None  # type: ignore[assignment]
 
@@ -45,6 +36,8 @@ if TYPE_CHECKING:
     from PyQt5.QtWidgets import QWidget as QWidgetType
 else:  # pragma: no cover - runtime fallback
     QWidgetType = Any
+
+logger = logging.getLogger(__name__)
 
 if QT_AVAILABLE:
 
