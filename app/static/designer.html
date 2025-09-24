@@ -345,6 +345,20 @@
         openFileInput.addEventListener("change", handleOpenFromDisk);
         document.getElementById("btn-save").addEventListener("click", () => persistTemplate(false));
         document.getElementById("btn-preview").addEventListener("click", () => previewTemplate());
+        selectElement.addEventListener("change", async (event) => {
+          const select = event.target;
+          if (!(select instanceof HTMLSelectElement)) return;
+          const name = select.value;
+          if (!name) return;
+          try {
+            await loadTemplate(name);
+          } catch (error) {
+            console.error(error);
+            const message = error?.message || "Falha ao carregar o template.";
+            showToast(message, "error");
+            select.value = "";
+          }
+        });
 
         // Tenta lista do servidor (opcional); se falhar, segue com um novo.
         try {
