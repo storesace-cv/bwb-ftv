@@ -126,6 +126,7 @@ def test_management_pdf_contains_brand_elements(qapp, tmp_path):
     assert "0.933333333 0.960784313 1 scn" in combined
     assert "0.290196078 0.435294117 0.647058823 scn" in combined
     assert combined.count(" re") >= 6
+    assert "IVA: 23.00%" in combined
 
 
 def test_management_pdf_renders_pvps_on_single_row(qapp, tmp_path):

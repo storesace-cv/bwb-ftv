@@ -730,7 +730,11 @@ def _draw_block_b3(
         inner.width(),
         meta_height,
     )
-    painter.drawText(meta_rect, Qt.AlignLeft | Qt.AlignVCenter, f"IVA: {_format_measure(iva)}")
+    painter.drawText(
+        meta_rect,
+        Qt.AlignLeft | Qt.AlignVCenter,
+        f"IVA: {_format_percentage(iva)}",
+    )
 
     rows_top = meta_rect.bottom() + 12
     table_height = 2 * _FOOD_ROW_HEIGHT + _FOOD_ROW_GAP
