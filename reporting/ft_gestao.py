@@ -66,6 +66,22 @@ def _build_product_section(block: Mapping[str, Any]) -> str:
     return _join_lines(lines)
 
 
+def _build_product_data(block: Mapping[str, Any]) -> dict[str, str]:
+    return {
+        "codigo": _format_optional(block.get("codigo")),
+        "nome": _format_optional(block.get("nome")),
+        "familia": _format_optional(block.get("familia")),
+        "subfamilia": _format_optional(block.get("subfamilia")),
+        "informacao_adicional": _format_optional(
+            block.get("informacao_adicional")
+        ),
+        "tipo_artigo_cod": _format_optional(block.get("tipo_artigo_cod")),
+        "validade_cod": _format_optional(block.get("validade_cod")),
+        "temperatura_cod": _format_optional(block.get("temperatura_cod")),
+        "image_path": _format_optional(block.get("image_path")),
+    }
+
+
 def _build_pricing_section(block: Mapping[str, Any]) -> str:
     lines = ["Preços e IVA"]
 
@@ -86,6 +102,36 @@ def _build_pricing_section(block: Mapping[str, Any]) -> str:
         lines.append(entry)
 
     return _join_lines(lines)
+
+
+def _build_pricing_rows(block: Mapping[str, Any]) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    pvps = list(block.get("pvps") or [])
+    food_cost = list(block.get("food_cost") or [])
+    for index, pvp in enumerate(pvps, start=1):
+        try:
+            fc_value = food_cost[index - 1]
+        except IndexError:
+            fc_value = None
+        rows.append(
+            {
+                "label": f"PVP{index}",
+                "pvp": _format_currency(pvp),
+                "food_cost": _format_percentage(fc_value),
+            }
+        )
+    return rows
+
+
+def _build_pricing_lines(rows: Iterable[Mapping[str, str]]) -> str:
+    lines: list[str] = []
+    for row in rows:
+        entry = f"{row.get('label')}: {row.get('pvp')}"
+        food_cost = row.get("food_cost")
+        if food_cost and food_cost != "—":
+            entry += f" | Food cost: {food_cost}"
+        lines.append(entry)
+    return "\n".join(lines) if lines else "—"
 
 
 def _build_ingredients_section(block: Mapping[str, Any]) -> str:
@@ -128,6 +174,71 @@ def _build_ingredients_section(block: Mapping[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _format_ingredient_quantity(quantity: Any, unit: Any) -> str:
+    if quantity is None and not unit:
+        return "—"
+    decimals = 2
+    try:
+        number = float(quantity)
+    except (TypeError, ValueError):
+        number = None
+    else:
+        if abs(number) < 1:
+            decimals = 3
+    formatted = _format_number(number, decimals=decimals) if number is not None else "—"
+    if formatted == "—":
+        return _format_optional(unit)
+    if unit:
+        return f"{formatted} {unit}".strip()
+    return formatted
+
+
+def _build_ingredients_rows(block: Mapping[str, Any]) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    ingredients = list(block.get("ingredientes") or [])
+    for entry in ingredients:
+        order = entry.get("ordem")
+        order_text = _format_optional(order)
+        if order_text != "—":
+            try:
+                order_text = f"{int(float(order))}"
+            except (TypeError, ValueError):
+                pass
+        rows.append(
+            {
+                "ordem": order_text,
+                "nome": _format_optional(entry.get("nome") or entry.get("codigo")),
+                "codigo": _format_optional(entry.get("codigo")),
+                "quantidade": _format_ingredient_quantity(
+                    entry.get("quantidade"), entry.get("unidade")
+                ),
+                "ppu": _format_currency(entry.get("ppu")),
+                "total": _format_currency(entry.get("total")),
+                "peso": _format_number(entry.get("peso")),
+            }
+        )
+    return rows
+
+
+def _build_ingredients_lines(rows: Iterable[Mapping[str, str]]) -> str:
+    lines: list[str] = []
+    for row in rows:
+        lines.append(
+            " | ".join(
+                [
+                    f"Ordem: {row.get('ordem')}",
+                    f"Nome: {row.get('nome')}",
+                    f"Código: {row.get('codigo')}",
+                    f"Quantidade: {row.get('quantidade')}",
+                    f"PPU: {row.get('ppu')}",
+                    f"Custo: {row.get('total')}",
+                    f"Peso: {row.get('peso')}",
+                ]
+            )
+        )
+    return "\n".join(lines) if lines else "—"
+
+
 def _build_totals_section(block: Mapping[str, Any]) -> str:
     lines = ["Totais"]
     totals = block.get("totais") or {}
@@ -137,6 +248,24 @@ def _build_totals_section(block: Mapping[str, Any]) -> str:
         f"Número de ingredientes: {_format_optional(totals.get('num_ingredientes'))}"
     )
     return _join_lines(lines)
+
+
+def _build_totals_data(block: Mapping[str, Any]) -> dict[str, str]:
+    return {
+        "custo_total": _format_currency(block.get("custo_total")),
+        "peso_total": _format_number(block.get("peso_total")),
+        "num_ingredientes": _format_optional(block.get("num_ingredientes")),
+    }
+
+
+def _build_totals_lines(totals: Mapping[str, str]) -> str:
+    return "\n".join(
+        [
+            f"Custo total: {totals.get('custo_total')}",
+            f"Peso total: {totals.get('peso_total')}",
+            f"Número de ingredientes: {totals.get('num_ingredientes')}",
+        ]
+    )
 
 
 def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, str]:
@@ -153,6 +282,14 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, str]:
     ]
     subtitle = " — ".join(part for part in subtitle_parts if part != "—")
 
+    product_data = _build_product_data(block_b1)
+    pricing_rows = _build_pricing_rows(block_b3)
+    pricing_lines = _build_pricing_lines(pricing_rows)
+    ingredients_rows = _build_ingredients_rows(block_b2)
+    ingredients_lines = _build_ingredients_lines(ingredients_rows)
+    totals_data = _build_totals_data(block_b2.get("totais") or {})
+    totals_lines = _build_totals_lines(totals_data)
+
     return {
         "title": payload.get("page_title", "Ficha Técnica"),
         "subtitle": subtitle or _format_optional(payload.get("identifier")),
@@ -161,4 +298,28 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, str]:
         "pricing_details": _build_pricing_section(block_b3),
         "ingredients": _build_ingredients_section(block_b2),
         "totals": _build_totals_section(block_b2),
+        "product_data": product_data,
+        "pricing_data": {
+            "iva": _format_percentage(block_b3.get("iva")),
+            "rows": pricing_rows,
+        },
+        "product_codigo": product_data["codigo"],
+        "product_nome": product_data["nome"],
+        "product_familia": product_data["familia"],
+        "product_subfamilia": product_data["subfamilia"],
+        "product_tipo_artigo_cod": product_data["tipo_artigo_cod"],
+        "product_validade_cod": product_data["validade_cod"],
+        "product_temperatura_cod": product_data["temperatura_cod"],
+        "product_informacao_adicional": product_data["informacao_adicional"],
+        "product_image_path": product_data["image_path"],
+        "pricing_rows": pricing_rows,
+        "pricing_lines": pricing_lines,
+        "pricing_iva": _format_percentage(block_b3.get("iva")),
+        "ingredients_data": ingredients_rows,
+        "ingredients_lines": ingredients_lines,
+        "totals_data": totals_data,
+        "totals_lines": totals_lines,
+        "totals_custo_total": totals_data["custo_total"],
+        "totals_peso_total": totals_data["peso_total"],
+        "totals_num_ingredientes": totals_data["num_ingredientes"],
     }
