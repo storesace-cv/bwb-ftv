@@ -306,7 +306,7 @@
       "image": "",
       "imageFilename": "",
       "link": "",
-      "printIf": null,
+      "printIf": "",
       "removeEmptyElement": false,
       "source": "product_image",
       "spreadsheet_addEmptyRow": false,
