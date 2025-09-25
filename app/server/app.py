@@ -10,7 +10,8 @@ from flask import Flask, send_from_directory
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 STATIC_DIR = PROJECT_ROOT / "app" / "static"
-TEMPLATES_DIR = PROJECT_ROOT / "reporting" / "templates"
+TEMPLATES_STORE_DIR = PROJECT_ROOT / "app" / "templates_store" / "templates"
+TEMPLATES_RUNTIME_DIR = PROJECT_ROOT / "reporting" / "templates"
 SAMPLES_DIR = PROJECT_ROOT / "reporting" / "samples"
 DESIGNER_HTML = STATIC_DIR / "designer.html"
 
@@ -27,7 +28,7 @@ def _configure_logging() -> None:
 
 def _ensure_directories() -> None:
     """Ensure that runtime directories required by the server exist."""
-    for directory in (STATIC_DIR, TEMPLATES_DIR, SAMPLES_DIR):
+    for directory in (STATIC_DIR, TEMPLATES_RUNTIME_DIR, SAMPLES_DIR):
         directory.mkdir(parents=True, exist_ok=True)
 
 
@@ -43,7 +44,8 @@ def create_app() -> Flask:
     )
 
     app.config.update(
-        TEMPLATES_DIR=TEMPLATES_DIR,
+        TEMPLATES_STORE_DIR=TEMPLATES_STORE_DIR,
+        TEMPLATES_RUNTIME_DIR=TEMPLATES_RUNTIME_DIR,
         SAMPLES_DIR=SAMPLES_DIR,
         DESIGNER_HTML=DESIGNER_HTML,
         MAX_CONTENT_LENGTH=5 * 1024 * 1024,  # 5 MB upload limit
