@@ -2472,9 +2472,83 @@
       "containerId": "0_content",
       "x": 360,
       "y": 408,
-      "width": 152,
+      "width": 88,
       "height": 18,
-      "content": "Custo Total: ${totals_custo_total}",
+      "content": "Custo Total:",
+      "richText": false,
+      "richTextContent": null,
+      "richTextHtml": "",
+      "eval": false,
+      "styleId": 2,
+      "bold": true,
+      "italic": false,
+      "underline": false,
+      "strikethrough": false,
+      "horizontalAlignment": "left",
+      "verticalAlignment": "top",
+      "textColor": "#000000",
+      "backgroundColor": "",
+      "font": "Helvetica",
+      "fontSize": 12,
+      "lineSpacing": 1,
+      "borderColor": "#000000",
+      "borderWidth": 0,
+      "borderAll": false,
+      "borderLeft": false,
+      "borderTop": false,
+      "borderRight": false,
+      "borderBottom": false,
+      "paddingLeft": 0,
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 0,
+      "printIf": "",
+      "removeEmptyElement": false,
+      "alwaysPrintOnSamePage": true,
+      "pattern": "",
+      "link": "",
+      "cs_condition": "",
+      "cs_styleId": "",
+      "cs_additionalRules": "",
+      "cs_bold": true,
+      "cs_italic": false,
+      "cs_underline": false,
+      "cs_strikethrough": false,
+      "cs_horizontalAlignment": "left",
+      "cs_verticalAlignment": "top",
+      "cs_textColor": "#000000",
+      "cs_backgroundColor": "",
+      "cs_font": "Helvetica",
+      "cs_fontSize": 12,
+      "cs_lineSpacing": 1,
+      "cs_borderColor": "#000000",
+      "cs_borderWidth": "0",
+      "cs_borderAll": false,
+      "cs_borderLeft": false,
+      "cs_borderTop": false,
+      "cs_borderRight": false,
+      "cs_borderBottom": false,
+      "cs_paddingLeft": 0,
+      "cs_paddingTop": 0,
+      "cs_paddingRight": 0,
+      "cs_paddingBottom": 0,
+      "spreadsheet_hide": false,
+      "spreadsheet_column": "",
+      "spreadsheet_colspan": "",
+      "spreadsheet_addEmptyRow": false,
+      "spreadsheet_type": "",
+      "spreadsheet_pattern": "",
+      "spreadsheet_textWrap": false
+    },
+    {
+      "elementType": "text",
+      "id": 54,
+      "containerId": "0_content",
+      "x": 450,
+      "y": 408,
+      "width": 62,
+      "height": 18,
+      "content": "${totals_custo_total}",
       "richText": false,
       "richTextContent": null,
       "richTextHtml": "",
@@ -3888,7 +3962,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Título"
     },
     {
       "id": 2,
@@ -3904,7 +3979,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Subtítulo"
     },
     {
       "id": 3,
@@ -3920,7 +3996,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Metadados"
     },
     {
       "id": 4,
@@ -3936,7 +4013,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Código do artigo"
     },
     {
       "id": 5,
@@ -3952,7 +4030,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Nome do artigo"
     },
     {
       "id": 6,
@@ -3968,7 +4047,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Família"
     },
     {
       "id": 7,
@@ -3984,7 +4064,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Subfamília"
     },
     {
       "id": 8,
@@ -4000,7 +4081,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Tipo de artigo (código)"
     },
     {
       "id": 9,
@@ -4016,7 +4098,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Validade (código)"
     },
     {
       "id": 10,
@@ -4032,7 +4115,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Temperatura (código)"
     },
     {
       "id": 11,
@@ -4048,7 +4132,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Informação adicional"
     },
     {
       "id": 12,
@@ -4064,7 +4149,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Caminho da imagem do artigo"
     },
     {
       "id": 13,
@@ -4080,7 +4166,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Linhas de ingredientes"
     },
     {
       "id": 14,
@@ -4096,7 +4183,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Custo total"
     },
     {
       "id": 15,
@@ -4112,7 +4200,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Peso total"
     },
     {
       "id": 16,
@@ -4128,7 +4217,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Número de ingredientes"
     },
     {
       "id": 17,
@@ -4144,7 +4234,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Taxa de IVA"
     },
     {
       "id": 18,
@@ -4160,7 +4251,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Linhas de preços"
     },
     {
       "id": 19,
@@ -4176,7 +4268,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Imagem do artigo"
     }
   ],
   "styles": [
