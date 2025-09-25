@@ -3962,7 +3962,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Título"
     },
     {
       "id": 2,
@@ -3978,7 +3979,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Subtítulo"
     },
     {
       "id": 3,
@@ -3994,7 +3996,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Metadados"
     },
     {
       "id": 4,
@@ -4010,7 +4013,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Código do artigo"
     },
     {
       "id": 5,
@@ -4026,7 +4030,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Nome do artigo"
     },
     {
       "id": 6,
@@ -4042,7 +4047,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Família"
     },
     {
       "id": 7,
@@ -4058,7 +4064,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Subfamília"
     },
     {
       "id": 8,
@@ -4074,7 +4081,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Tipo de artigo (código)"
     },
     {
       "id": 9,
@@ -4090,7 +4098,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Validade (código)"
     },
     {
       "id": 10,
@@ -4106,7 +4115,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Temperatura (código)"
     },
     {
       "id": 11,
@@ -4122,7 +4132,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Informação adicional"
     },
     {
       "id": 12,
@@ -4138,7 +4149,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Caminho da imagem do artigo"
     },
     {
       "id": 13,
@@ -4154,7 +4166,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Linhas de ingredientes"
     },
     {
       "id": 14,
@@ -4170,7 +4183,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Custo total"
     },
     {
       "id": 15,
@@ -4186,7 +4200,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Peso total"
     },
     {
       "id": 16,
@@ -4202,7 +4217,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Número de ingredientes"
     },
     {
       "id": 17,
@@ -4218,7 +4234,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Taxa de IVA"
     },
     {
       "id": 18,
@@ -4234,7 +4251,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Linhas de preços"
     },
     {
       "id": 19,
@@ -4250,7 +4268,8 @@
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",
-      "testDataRichText": ""
+      "testDataRichText": "",
+      "label": "Imagem do artigo"
     }
   ],
   "styles": [

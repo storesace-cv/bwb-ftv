@@ -13,8 +13,6 @@ try:  # pragma: no cover - exercised only when the dependency is available
 except ModuleNotFoundError:  # pragma: no cover - fallback used in CI and dev without reportbro-lib
     from ._stubs.reportbro import Report, ReportBroError
 
-from ._stubs.designer_template import sanitise_template_in_place
-
 logger = logging.getLogger(__name__)
 
 
@@ -190,7 +188,6 @@ def render_pdf_bytes(
     """Return the PDF bytes rendered from *template_definition* using *data*."""
 
     template = deepcopy(dict(template_definition))
-    sanitise_template_in_place(template)
     _normalise_document_properties(template)
     _normalise_parameter_ids(template)
     _normalise_image_sources(template)

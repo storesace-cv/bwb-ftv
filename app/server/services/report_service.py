@@ -12,8 +12,6 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - fallback in dev without reportbro-lib
     from reporting._stubs.reportbro import Report, ReportBroError
 
-from reporting._stubs.designer_template import sanitise_template_in_place
-
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 SAMPLE_DATA_PATH = PROJECT_ROOT / "reporting" / "samples" / "sample_data.json"
 
@@ -165,7 +163,6 @@ def _normalise_data(data: dict[str, Any] | None) -> dict[str, Any]:
 def _build_context(template: dict[str, Any], data: dict[str, Any] | None) -> RenderContext:
     if not isinstance(template, dict):
         raise TemplateError("Template JSON inválido.")
-    sanitise_template_in_place(template)
     _validate_template(template)
     _normalise_document_properties(template)
     _normalise_parameter_ids(template)
