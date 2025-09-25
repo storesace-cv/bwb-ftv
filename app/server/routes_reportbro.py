@@ -35,8 +35,24 @@ class TemplateMetadata:
     size_bytes: int
 
 
-def _get_templates_dir() -> Path:
-    return Path(current_app.config["TEMPLATES_DIR"])
+def _get_templates_store_dir() -> Path:
+    return Path(current_app.config["TEMPLATES_STORE_DIR"])
+
+
+def _get_templates_runtime_dir() -> Path:
+    return Path(current_app.config["TEMPLATES_RUNTIME_DIR"])
+
+
+def _resolve_template_path(name: str) -> Path:
+    """Return the runtime path for *name* inside the reporting directory."""
+
+    return _get_templates_runtime_dir() / f"{name}.json"
+
+
+def _resolve_store_template_path(name: str) -> Path:
+    """Return the immutable template path from the template store."""
+
+    return _get_templates_store_dir() / f"{name}.json"
 
 
 def _read_json_file(path: Path) -> dict[str, Any]:
@@ -84,14 +100,23 @@ def _serialize_metadata(items: Iterable[TemplateMetadata]) -> list[dict[str, Any
 
 @reportbro_blueprint.route("/templates/list", methods=["GET"])
 def list_templates() -> Response:
-    templates_dir = _get_templates_dir()
+    runtime_dir = _get_templates_runtime_dir()
+    store_dir = _get_templates_store_dir()
+
+    combined: dict[str, Path] = {}
+    for path in store_dir.glob("*.json"):
+        combined[path.stem] = path
+    for path in runtime_dir.glob("*.json"):
+        combined[path.stem] = path
+
     templates: list[TemplateMetadata] = []
-    for path in sorted(templates_dir.glob("*.json")):
+    for name in sorted(combined):
+        path = combined[name]
         stat = path.stat()
         updated_at = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat()
         templates.append(
             TemplateMetadata(
-                name=path.stem,
+                name=name,
                 updated_at=updated_at,
                 size_bytes=stat.st_size,
             )
@@ -102,8 +127,11 @@ def list_templates() -> Response:
 @reportbro_blueprint.route("/templates/<string:name>", methods=["GET"])
 def get_template(name: str) -> Response:
     _validate_template_name(name)
-    path = _get_templates_dir() / f"{name}.json"
-    template = _read_json_file(path)
+    runtime_path = _resolve_template_path(name)
+    if runtime_path.exists():
+        template = _read_json_file(runtime_path)
+    else:
+        template = _read_json_file(_resolve_store_template_path(name))
     return jsonify(template)
 
 
@@ -111,7 +139,7 @@ def get_template(name: str) -> Response:
 def save_template(name: str) -> Response:
     _validate_template_name(name)
     overwrite = request.args.get("overwrite") == "1"
-    path = _get_templates_dir() / f"{name}.json"
+    path = _resolve_template_path(name)
     if path.exists() and not overwrite:
         return (
             jsonify(
