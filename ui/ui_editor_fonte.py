@@ -160,7 +160,7 @@ from .models import (
     update_fichas_tecnicas_model,
 )
 from .qt_compat import exec_modal
-from .reportbro_stub import open_reportbro_stub_dialog
+from .reportbro_stub import open_reportbro_stub_dialog, open_reportbro_template_from_label
 from .reportbro_kiosk import open_reportbro_kiosk
 from . import reportbro_server
 from .utilities import (
@@ -718,6 +718,21 @@ class FTApp(QWidget):
             )
             logger.warning("[ReportBro] Falha ao abrir editor em %s", url.toString())
 
+    def _open_reportbro_template(self, template_label: str) -> None:
+        """Open the ReportBro template associated with ``template_label``."""
+
+        try:
+            open_reportbro_template_from_label(template_label, self)
+        except Exception:
+            logger.exception(
+                "[ReportBro] Falha ao abrir modelo activo para a ação '%s'", template_label
+            )
+            QMessageBox.warning(
+                self,
+                APP_TITLE,
+                "Não foi possível abrir o modelo seleccionado. Consulte os registos para mais detalhes.",
+            )
+
     def _on_print_ft_gestao_actual(self) -> None:
         """Export the currently loaded product as FT Gestão (single record)."""
 
@@ -903,9 +918,11 @@ class FTApp(QWidget):
         menu_font = QFont()
         menu_font.setPointSize(12)
 
-        def apply_menu_font(widget: QWidget) -> None:
-            widget.setFont(menu_font)
-            widget.setStyleSheet("font-size: 12pt;")
+        def apply_menu_font(widget: QWidget | QAction) -> None:
+            if hasattr(widget, "setFont"):
+                widget.setFont(menu_font)
+            if hasattr(widget, "setStyleSheet"):
+                widget.setStyleSheet("font-size: 12pt;")
 
         apply_menu_font(self.btPrintMenu)
         apply_menu_font(self.btMenu)
@@ -945,10 +962,29 @@ class FTApp(QWidget):
         self.mnuRoot.addMenu(mTab)
         mUtil = QMenu("Utilitários", self.mnuRoot)
         apply_menu_font(mUtil)
-        actDocManager = QAction("Gestor de Documentos", self)
-        actTheme = QAction("Tema", self)
-        mUtil.addAction(actDocManager)
+        gestao_docs_menu = QMenu("Gestão de Documentos", mUtil)
+        apply_menu_font(gestao_docs_menu)
+        actDocEditor = QAction("Editor de Documentos", self)
+        apply_menu_font(actDocEditor)
+        gestao_docs_menu.addAction(actDocEditor)
+        modelos_ativos_menu = gestao_docs_menu.addMenu("Modelos Activos")
+        apply_menu_font(modelos_ativos_menu)
+        for action_label in (
+            "FT's Gestão (filtro)",
+            "FT's Gestão (Actual)",
+            "FT's Operacionais (filtro)",
+            "FT's Operacionais (Actual)",
+        ):
+            action = QAction(action_label, self)
+            apply_menu_font(action)
+            modelos_ativos_menu.addAction(action)
+            action.triggered.connect(
+                lambda _checked=False, label=action_label: self._open_reportbro_template(label)
+            )
+        mUtil.addMenu(gestao_docs_menu)
         mUtil.addSeparator()
+        actTheme = QAction("Tema", self)
+        apply_menu_font(actTheme)
         mUtil.addAction(actTheme)
         self.mnuRoot.addMenu(mUtil)
         mConf = QMenu("Configurações", self.mnuRoot)
@@ -964,7 +1000,7 @@ class FTApp(QWidget):
         actReload.triggered.connect(self._on_import_data)
         actPrintGestaoActual.triggered.connect(self._on_print_ft_gestao_actual)
         actUpdate.triggered.connect(self._on_update_data)
-        actDocManager.triggered.connect(self._open_reportbro_editor)
+        actDocEditor.triggered.connect(self._open_reportbro_editor)
         actBackup.triggered.connect(lambda: backup_database(self, self.ds))
         actRestore.triggered.connect(
             lambda: restore_database(self, self.ds, self._after_restore)

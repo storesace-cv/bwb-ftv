@@ -27,7 +27,7 @@ def test_discover_reportbro_templates_default_directory_contains_fixture():
 
 def test_offline_explanation_mentions_environment_variable():
     explanation = get_offline_reportbro_explanation()
-    assert "Gestor de Documentos (modo offline)" in explanation
+    assert "Editor de Documentos (modo offline)" in explanation
     assert "FTV_REPORTBRO_EDITOR_URL" in explanation
 
 
