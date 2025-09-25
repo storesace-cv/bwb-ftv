@@ -40,11 +40,18 @@ _DEFAULT_PAGE_SIZES = {
     "LETTER": (612.0, 792.0),
 }
 
-_DEFAULT_REPORTBRO_TEMPLATE = (
+_REPORTBRO_RUNTIME_TEMPLATE_DIR = (
+    Path(__file__).resolve().parent.parent / "reporting" / "templates"
+)
+_REPORTBRO_STORE_TEMPLATE_DIR = (
     Path(__file__).resolve().parent.parent
-    / "reporting"
+    / "app"
+    / "templates_store"
     / "templates"
-    / "ft_gestao_reportbro.json"
+)
+_DEFAULT_REPORTBRO_TEMPLATE_NAME = "ft_gestao_reportbro.json"
+_DEFAULT_REPORTBRO_TEMPLATE = (
+    _REPORTBRO_RUNTIME_TEMPLATE_DIR / _DEFAULT_REPORTBRO_TEMPLATE_NAME
 )
 
 
@@ -115,9 +122,7 @@ def generate_ft_gestao_reportbro_pdf(
     payload = _prepare_management_payload(product_obj)
     dataset = build_reportbro_context(payload)
 
-    template_location = (
-        Path(template_path) if template_path else _DEFAULT_REPORTBRO_TEMPLATE
-    )
+    template_location = _resolve_reportbro_template_location(template_path)
     template = load_template_definition(template_location)
 
     if destination is None:
@@ -131,6 +136,31 @@ def generate_ft_gestao_reportbro_pdf(
         template_location,
     )
     return destination
+
+
+def _resolve_reportbro_template_location(
+    template_path: str | Path | None,
+) -> Path:
+    """Resolve the template path, falling back to the template store if needed."""
+
+    if template_path:
+        return Path(template_path)
+
+    runtime_template = _DEFAULT_REPORTBRO_TEMPLATE
+    if runtime_template.exists():
+        return runtime_template
+
+    store_template = _REPORTBRO_STORE_TEMPLATE_DIR / _DEFAULT_REPORTBRO_TEMPLATE_NAME
+    if store_template.exists():
+        logger.debug(
+            "[ReportBro] Template %s não encontrado em %s, a usar store %s",
+            _DEFAULT_REPORTBRO_TEMPLATE_NAME,
+            runtime_template.parent,
+            store_template,
+        )
+        return store_template
+
+    return runtime_template
 
 
 def _validate_product(product: Product) -> Product:
