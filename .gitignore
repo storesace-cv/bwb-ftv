@@ -16,6 +16,9 @@ app/static/reportbro-designer/
 logs/
 reports/
 
+# Workspace-only exchange folder
+Internal/
+
 # Generated previews
 *.pdf
 
