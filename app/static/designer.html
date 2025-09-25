@@ -242,7 +242,9 @@
       }
 
       async function persistTemplate(overwrite = false) {
-        const report = designerInstance.getReport();
+        // ReportBro devolve uma referência interna com getReport(); criamos uma
+        // cópia independente para que a normalização não altere o estado da UI.
+        const report = cloneTemplate(designerInstance.getReport());
         normaliseTemplateSchema(report);
         let targetName = currentTemplateName;
         if (!targetName) {
