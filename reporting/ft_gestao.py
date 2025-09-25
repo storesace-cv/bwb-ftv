@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+from base64 import b64encode
+from os import PathLike
+from pathlib import Path
 from typing import Any, Iterable, Mapping
+
+from utils.paths import get_project_root
 
 
 def _format_number(value: Any, *, decimals: int = 2) -> str:
@@ -80,6 +85,49 @@ def _build_product_data(block: Mapping[str, Any]) -> dict[str, str]:
         "temperatura_cod": _format_optional(block.get("temperatura_cod")),
         "image_path": _format_optional(block.get("image_path")),
     }
+
+
+def _load_product_image(path_value: Any) -> str | None:
+    """Return a base64-encoded data URI for ``path_value`` with fallbacks."""
+
+    root = get_project_root()
+    candidates: list[Path] = []
+
+    if isinstance(path_value, (str, PathLike)):
+        raw = Path(path_value)
+        if raw.is_absolute():
+            candidates.append(raw)
+            relative = str(raw).lstrip("/")
+            if relative:
+                candidates.append(root / relative)
+        else:
+            candidates.append(root / raw)
+
+    fallback = root / "ui" / "no-image-thumb.png"
+    candidates.append(fallback)
+
+    seen: set[Path] = set()
+    for candidate in candidates:
+        resolved = candidate.resolve(strict=False)
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        if resolved.exists():
+            try:
+                data = resolved.read_bytes()
+            except OSError:
+                continue
+
+            suffix = resolved.suffix.lower().lstrip(".")
+            if suffix == "jpg":
+                mime = "jpeg"
+            elif suffix in {"png", "jpeg", "gif", "bmp", "webp"}:
+                mime = suffix
+            else:
+                mime = "png"
+            data_uri = f"data:image/{mime};base64,{b64encode(data).decode('ascii')}"
+            return data_uri
+    return None
 
 
 def _build_pricing_section(block: Mapping[str, Any]) -> str:
@@ -289,6 +337,7 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, str]:
     ingredients_lines = _build_ingredients_lines(ingredients_rows)
     totals_data = _build_totals_data(block_b2.get("totais") or {})
     totals_lines = _build_totals_lines(totals_data)
+    product_image_bytes = _load_product_image(block_b1.get("image_path"))
 
     return {
         "title": payload.get("page_title", "Ficha Técnica"),
@@ -312,6 +361,7 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, str]:
         "product_temperatura_cod": product_data["temperatura_cod"],
         "product_informacao_adicional": product_data["informacao_adicional"],
         "product_image_path": product_data["image_path"],
+        "product_image": product_image_bytes,
         "pricing_rows": pricing_rows,
         "pricing_lines": pricing_lines,
         "pricing_iva": _format_percentage(block_b3.get("iva")),
