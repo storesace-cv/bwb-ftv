@@ -21,7 +21,7 @@ from utils import reportbro_installer
 
 logger = logging.getLogger(__name__)
 
-TEMPLATES_DIR = get_project_root() / "reporting" / "templates"
+TEMPLATES_DIR = get_project_root() / "app" / "templates_store" / "templates"
 
 INSTALL_SCRIPT = Path("tools") / "install_reportbro.py"
 EDITOR_INSTALL_SCRIPT = Path("tools") / "bootstrap.py"
@@ -195,7 +195,7 @@ def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no 
             templates = discover_reportbro_templates()
             if not templates:
                 empty_item = QListWidgetItem(
-                    "Nenhum template encontrado em reporting/templates/"
+                    f"Nenhum template encontrado em {TEMPLATES_DIR}/"
                 )
                 empty_item.setFlags(Qt.NoItemFlags)
                 self.templates_list.addItem(empty_item)

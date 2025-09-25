@@ -16,7 +16,7 @@ def flask_client():
 
 
 def _load_template(name: str) -> dict:
-    template_path = Path("reporting/templates") / f"{name}.json"
+    template_path = Path("app/templates_store/templates") / f"{name}.json"
     return json.loads(template_path.read_text(encoding="utf-8"))
 
 

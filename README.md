@@ -54,7 +54,7 @@ instalação, arranque a interface desktop:
 
 O servidor Flask expõe os endpoints `/designer`, `/templates/*` e `/rb/*` para
 gestão de templates e geração de PDF/XLSX. Os templates são armazenados em
-`reporting/templates` e os dados de exemplo em `reporting/samples`.
+`app/templates_store/templates` e os dados de exemplo em `reporting/samples`.
 Por omissão é carregado o template `ft_gestao_reportbro.json`, alimentado por
 `sample_data.json` com um exemplo realista de ficha técnica.
 

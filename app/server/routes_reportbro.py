@@ -15,6 +15,7 @@ from typing import Any, Iterable
 
 from flask import Blueprint, Response, current_app, jsonify, request
 
+from reporting._stubs.designer_template import sanitise_template_in_place
 from .services import DataError, RenderError, TemplateError, generate_pdf, generate_xlsx
 
 LOGGER = logging.getLogger(__name__)
@@ -128,6 +129,8 @@ def save_template(name: str) -> Response:
         template = _normalise_template_payload(payload)
     except TemplateError as exc:
         return jsonify({"error": str(exc)}), 400
+
+    sanitise_template_in_place(template)
 
     path.write_text(json.dumps(template, ensure_ascii=False, indent=2), encoding="utf-8")
     stat = path.stat()

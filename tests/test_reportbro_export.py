@@ -115,7 +115,9 @@ def test_reportbro_pdf_generation(tmp_path):
     payload = _prepare_management_payload(_sample_product())
     dataset = build_reportbro_context(payload)
 
-    template = load_template_definition(Path("reporting/templates/ft_gestao_reportbro.json"))
+    template = load_template_definition(
+        Path("app/templates_store/templates/ft_gestao_reportbro.json")
+    )
     destination = tmp_path / "gestao_reportbro.pdf"
 
     render_pdf_to_path(template, dataset, destination)
