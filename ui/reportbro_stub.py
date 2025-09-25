@@ -26,6 +26,16 @@ TEMPLATES_DIR = get_project_root() / "reporting" / "templates"
 INSTALL_SCRIPT = Path("tools") / "install_reportbro.py"
 EDITOR_INSTALL_SCRIPT = Path("tools") / "bootstrap.py"
 
+EDITOR_MENU_TITLE = "Editor de Documentos"
+EDITOR_OFFLINE_TITLE = f"{EDITOR_MENU_TITLE} (modo offline)"
+
+TEMPLATE_ACTION_MAP = {
+    "FT's Gestão (filtro)": Path("ft_gestao_reportbro.json"),
+    "FT's Gestão (Actual)": Path("ft_gestao_reportbro.json"),
+    "FT's Operacionais (filtro)": Path("ft_operacional_reportbro.json"),
+    "FT's Operacionais (Actual)": Path("ft_operacional_reportbro.json"),
+}
+
 if TYPE_CHECKING:  # pragma: no cover - imported lazily for runtime environments
     from PyQt5.QtWidgets import QWidget
 
@@ -51,6 +61,60 @@ def discover_reportbro_templates(directory: Path | None = None) -> list[Path]:
     return sorted(candidates)
 
 
+def open_reportbro_template_from_label(
+    action_label: str, parent: "QWidget | None" = None
+) -> None:  # pragma: no cover - GUI helper
+    """Open a ReportBro template associated with a UI action label."""
+
+    template_relative = TEMPLATE_ACTION_MAP.get(action_label)
+    if template_relative is None:
+        logger.warning("[ReportBro] Nenhum modelo registado para a ação '%s'", action_label)
+        if parent is not None:
+            from PyQt5.QtWidgets import QMessageBox
+
+            QMessageBox.information(
+                parent,
+                EDITOR_MENU_TITLE,
+                "Não existe um modelo associado a esta ação no momento.",
+            )
+        return
+
+    template_path = (TEMPLATES_DIR / template_relative).resolve()
+    if not template_path.exists():
+        logger.warning(
+            "[ReportBro] Modelo '%s' não encontrado em %s", template_relative, TEMPLATES_DIR
+        )
+        if parent is not None:
+            from PyQt5.QtWidgets import QMessageBox
+
+            QMessageBox.warning(
+                parent,
+                EDITOR_MENU_TITLE,
+                (
+                    "O modelo associado não foi encontrado na pasta de templates."
+                    f" Esperado: {template_relative.name}"
+                ),
+            )
+        return
+
+    from PyQt5.QtCore import QUrl
+    from PyQt5.QtGui import QDesktopServices
+
+    logger.info("[ReportBro] Abrir modelo activo: %s", template_path)
+    if not QDesktopServices.openUrl(QUrl.fromLocalFile(str(template_path))):
+        logger.warning(
+            "[ReportBro] Falha ao abrir modelo activo em %s", template_path
+        )
+        if parent is not None:
+            from PyQt5.QtWidgets import QMessageBox
+
+            QMessageBox.warning(
+                parent,
+                EDITOR_MENU_TITLE,
+                "Não foi possível abrir o modelo seleccionado no gestor de ficheiros.",
+            )
+
+
 def _format_command(arguments: Iterable[str]) -> str:
     return " ".join(shlex.quote(arg) for arg in arguments)
 
@@ -61,7 +125,7 @@ def get_offline_reportbro_explanation() -> str:
     return (
         "A aplicação tenta iniciar automaticamente o ReportBro Designer "
         "integrado em http://127.0.0.1:55255/designer. Quando os assets não "
-        "estão prontos ou o servidor local falha, apresenta o \"Gestor de "
+        "estão prontos ou o servidor local falha, apresenta o \"Editor de "
         "Documentos (modo offline)\" como alternativa temporária. Os botões "
         "\"Instalar ReportBro\" e \"Instalar editor ReportBro\" reaplicam as "
         "dependências Python e os assets estáticos necessários. Caso necessite "
@@ -135,7 +199,7 @@ def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no 
 
         def __init__(self, parent_widget: "QWidget | None" = None) -> None:
             super().__init__(parent_widget)
-            self.setWindowTitle("Gestor de Documentos (modo offline)")
+            self.setWindowTitle(EDITOR_OFFLINE_TITLE)
             self.setModal(True)
             self.resize(620, 420)
             layout = QVBoxLayout(self)
@@ -239,7 +303,7 @@ def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no 
                 QMessageBox.information(
                     self,
                     self.windowTitle(),
-                    "Instalação concluída. Reinicie o gestor para usar o editor oficial.",
+                    "Instalação concluída. Reinicie o editor para usar o ReportBro oficial.",
                 )
             else:
                 QMessageBox.critical(
@@ -324,7 +388,7 @@ def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no 
                 QMessageBox.information(
                     self,
                     self.windowTitle(),
-                    "Editor instalado com sucesso. Reinicie o gestor para usar o ReportBro oficial.",
+                    "Editor instalado com sucesso. Reinicie o editor para usar o ReportBro oficial.",
                 )
                 return
 
@@ -342,6 +406,7 @@ def open_reportbro_stub_dialog(parent: "QWidget | None") -> None:  # pragma: no 
 
 __all__ = [
     "open_reportbro_stub_dialog",
+    "open_reportbro_template_from_label",
     "discover_reportbro_templates",
     "get_offline_reportbro_explanation",
     "get_offline_reportbro_recommendations",
