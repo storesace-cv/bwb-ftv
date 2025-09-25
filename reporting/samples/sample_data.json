@@ -41,6 +41,7 @@
   "product_temperatura_cod": "FRIO",
   "product_informacao_adicional": "Conservar em local fresco e seco.",
   "product_image_path": "/caminho/para/imagem.jpg",
+  "product_image": null,
   "pricing_rows": [
     {
       "label": "PVP1",

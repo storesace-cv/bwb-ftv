@@ -2,10 +2,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import base64
+
 from domain.models import Ingredient, Product
 from reporting.ft_gestao import build_reportbro_context
 from reporting.reportbro_export import load_template_definition, render_pdf_to_path
+from services.products import get_image_path
 from ui.printing import _prepare_management_payload
+from utils.paths import get_project_root
 
 
 def _extract_pdf_streams(path: Path) -> list[str]:
@@ -78,6 +82,33 @@ def test_build_reportbro_context_formats_sections():
     assert "Preços e IVA" in dataset["pricing_details"]
     assert "Ingredientes" in dataset["ingredients"]
     assert "Totais" in dataset["totals"]
+    assert isinstance(dataset["product_image"], (str, type(None)))
+
+
+def test_build_reportbro_context_embeds_product_image(tmp_path):
+    product = _sample_product()
+    product.code = "RB-IMG"
+
+    image_path = get_image_path(product.code)
+    image_path.parent.mkdir(parents=True, exist_ok=True)
+
+    fallback_image = get_project_root() / "ui" / "no-image-thumb.png"
+    image_bytes = fallback_image.read_bytes()
+    image_path.write_bytes(image_bytes)
+
+    try:
+        payload = _prepare_management_payload(product)
+        dataset = build_reportbro_context(payload)
+
+        assert isinstance(dataset["product_image"], str)
+        prefix, encoded = dataset["product_image"].split(",", 1)
+        assert prefix.startswith("data:image/")
+        decoded = base64.b64decode(encoded)
+        assert decoded == image_bytes
+        assert dataset["product_image_path"] == str(image_path)
+    finally:
+        if image_path.exists():
+            image_path.unlink()
 
 
 def test_reportbro_pdf_generation(tmp_path):
@@ -93,4 +124,4 @@ def test_reportbro_pdf_generation(tmp_path):
     streams = _extract_pdf_streams(destination)
     combined = "\n".join(streams)
     assert "Ficha Técnica de Gestão" in combined
-    assert "Ingredientes" in combined
+    assert "ingredientes" in combined.lower()

@@ -3861,8 +3861,10 @@
       "rotation": 0,
       "opacity": 1,
       "keepAspectRatio": true,
+      "horizontalAlignment": "center",
+      "verticalAlignment": "middle",
       "sourceType": "parameter",
-      "source": "product_image",
+      "source": "${product_image}",
       "border": {
         "width": 0,
         "color": "#000000"
