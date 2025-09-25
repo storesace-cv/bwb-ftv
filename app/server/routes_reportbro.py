@@ -33,6 +33,7 @@ class TemplateMetadata:
     name: str
     updated_at: str
     size_bytes: int
+    origin: str
 
 
 def _get_templates_store_dir() -> Path:
@@ -93,6 +94,7 @@ def _serialize_metadata(items: Iterable[TemplateMetadata]) -> list[dict[str, Any
             "name": item.name,
             "updated_at": item.updated_at,
             "size_bytes": item.size_bytes,
+            "origin": item.origin,
         }
         for item in items
     ]
@@ -103,15 +105,15 @@ def list_templates() -> Response:
     runtime_dir = _get_templates_runtime_dir()
     store_dir = _get_templates_store_dir()
 
-    combined: dict[str, Path] = {}
+    combined: dict[str, tuple[Path, str]] = {}
     for path in store_dir.glob("*.json"):
-        combined[path.stem] = path
+        combined[path.stem] = (path, "store")
     for path in runtime_dir.glob("*.json"):
-        combined[path.stem] = path
+        combined[path.stem] = (path, "runtime")
 
     templates: list[TemplateMetadata] = []
     for name in sorted(combined):
-        path = combined[name]
+        path, origin = combined[name]
         stat = path.stat()
         updated_at = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat()
         templates.append(
@@ -119,6 +121,7 @@ def list_templates() -> Response:
                 name=name,
                 updated_at=updated_at,
                 size_bytes=stat.st_size,
+                origin=origin,
             )
         )
     return jsonify(_serialize_metadata(templates))
@@ -163,6 +166,7 @@ def save_template(name: str) -> Response:
         name=path.stem,
         updated_at=datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
         size_bytes=stat.st_size,
+        origin="runtime",
     )
     return jsonify({"saved": True, "template": template, "metadata": metadata.__dict__})
 

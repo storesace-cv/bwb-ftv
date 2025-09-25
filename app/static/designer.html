@@ -63,6 +63,79 @@
       }
       .toast.show { display: block; }
       .toast.error { background: #b91c1c; }
+      #template-dialog {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.65);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9998;
+        padding: 1.5rem;
+      }
+      #template-dialog.show {
+        display: flex;
+      }
+      #template-dialog .dialog-panel {
+        background: #fff;
+        color: #0f172a;
+        border-radius: 10px;
+        box-shadow: 0 24px 48px rgba(15, 23, 42, 0.35);
+        max-width: 480px;
+        width: min(100%, 480px);
+        padding: 1.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      #template-dialog h2 {
+        margin: 0;
+        font-size: 1.35rem;
+      }
+      #template-dialog p {
+        margin: 0;
+        font-size: 0.95rem;
+        color: #475569;
+      }
+      #template-dialog label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        font-weight: 600;
+      }
+      #template-dialog select {
+        border: 1px solid #cbd5f5;
+        border-radius: 6px;
+        padding: 0.55rem 0.75rem;
+        font-size: 0.95rem;
+      }
+      #template-dialog .dialog-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      #template-dialog .dialog-actions .spacer {
+        flex: 1 1 auto;
+      }
+      #template-dialog button {
+        border: none;
+        border-radius: 6px;
+        padding: 0.5rem 0.85rem;
+        font-size: 0.95rem;
+        cursor: pointer;
+      }
+      #template-dialog button.primary {
+        background: #2563eb;
+        color: #fff;
+      }
+      #template-dialog button.secondary {
+        background: #e2e8f0;
+        color: #1f2937;
+      }
+      #template-dialog button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
     </style>
     <script src="/static/reportbro-designer/reportbro.js"></script>
   </head>
@@ -82,6 +155,28 @@
 
     <div id="designer"></div>
     <div id="toast" class="toast"></div>
+    <div
+      id="template-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="template-dialog-title"
+      hidden
+    >
+      <div class="dialog-panel">
+        <h2 id="template-dialog-title">Escolher template</h2>
+        <p>Selecione um template existente ou crie um novo em branco.</p>
+        <label for="template-dialog-select">
+          Templates disponíveis
+          <select id="template-dialog-select"></select>
+        </label>
+        <div class="dialog-actions">
+          <button id="template-dialog-new" class="secondary" type="button">Novo em branco</button>
+          <span class="spacer"></span>
+          <button id="template-dialog-cancel" class="secondary" type="button">Cancelar</button>
+          <button id="template-dialog-open" class="primary" type="button">Abrir template</button>
+        </div>
+      </div>
+    </div>
 
     <script>
       const DEFAULT_DOCUMENT_PROPERTIES = {
@@ -149,6 +244,11 @@
       const selectElement = document.getElementById("template-select");
       const openFileInput = document.getElementById("open-file");
       const btnOpen = document.getElementById("btn-open");
+      const dialogElement = document.getElementById("template-dialog");
+      const dialogSelect = document.getElementById("template-dialog-select");
+      const dialogOpenButton = document.getElementById("template-dialog-open");
+      const dialogCancelButton = document.getElementById("template-dialog-cancel");
+      const dialogNewButton = document.getElementById("template-dialog-new");
 
       let currentLocationDescriptor = "";
 
@@ -195,12 +295,83 @@
       function setStatus(message) { statusBar.textContent = message || ""; }
       function cloneTemplate(tpl) { return JSON.parse(JSON.stringify(tpl)); }
 
+      function resetDesigner(message = "") {
+        if (!designerInstance) return;
+        designerInstance.load(cloneTemplate(EMPTY_TEMPLATE));
+        designerInstance.setModified(false);
+        currentTemplateName = null;
+        selectElement.value = "";
+        setStatus(message);
+        setLocationDescriptor("");
+      }
+
+      function sortTemplatesForDisplay(items) {
+        return [...items].sort((a, b) => {
+          const originRankA = a.origin === "store" ? 0 : 1;
+          const originRankB = b.origin === "store" ? 0 : 1;
+          if (originRankA !== originRankB) return originRankA - originRankB;
+          return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+        });
+      }
+
+      function populateTemplateDialog() {
+        dialogSelect.innerHTML = "";
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "-- selecionar --";
+        dialogSelect.appendChild(placeholder);
+
+        const sorted = sortTemplatesForDisplay(templatesCache);
+        for (const template of sorted) {
+          const option = document.createElement("option");
+          option.value = template.name;
+          const originLabel = template.origin === "store" ? "Modelo base" : "Personalizado";
+          option.textContent = `${template.name} · ${originLabel}`;
+          dialogSelect.appendChild(option);
+        }
+
+        if (currentTemplateName) {
+          dialogSelect.value = currentTemplateName;
+        } else {
+          const preferred = sorted.find((tpl) => tpl.origin === "store") || sorted[0];
+          if (preferred) dialogSelect.value = preferred.name;
+        }
+        dialogOpenButton.disabled = !dialogSelect.value;
+      }
+
+      function openTemplateDialog() {
+        if (dialogElement.classList.contains("show")) return;
+        populateTemplateDialog();
+        dialogElement.hidden = false;
+        dialogElement.classList.add("show");
+        setTimeout(() => {
+          dialogSelect.focus();
+        }, 50);
+      }
+
+      function closeTemplateDialog() {
+        dialogElement.classList.remove("show");
+        dialogElement.hidden = true;
+      }
+
+      function promptTemplateSelection() {
+        if (!templatesCache.length) {
+          resetDesigner("Sem templates disponíveis. Utilize 'Novo' para criar um em branco.");
+          return;
+        }
+        resetDesigner("Selecione um template para começar.");
+        openTemplateDialog();
+      }
+
       // ---------------- lista (opcional, servidor) ----------------
       async function refreshTemplates() {
         try {
           const response = await fetch("/templates/list");
           if (!response.ok) throw new Error();
-          templatesCache = await response.json();
+          const payload = await response.json();
+          templatesCache = Array.isArray(payload)
+            ? payload.map((item) => ({ ...item, origin: item.origin === "store" ? "store" : "runtime" }))
+            : [];
         } catch {
           templatesCache = []; // segue sem lista
         }
@@ -213,7 +384,8 @@
         placeholder.value = "";
         placeholder.textContent = "-- escolher template (servidor) --";
         selectElement.appendChild(placeholder);
-        for (const template of templatesCache) {
+        const sorted = sortTemplatesForDisplay(templatesCache);
+        for (const template of sorted) {
           const option = document.createElement("option");
           option.value = template.name;
           option.textContent = `${template.name} (${new Date(template.updated_at).toLocaleString()})`;
@@ -233,6 +405,7 @@
         setStatus(`Template activo: ${name}`);
         showToast(`Template '${name}' carregado.`);
         setLocationDescriptor(buildServerLocation(name));
+        closeTemplateDialog();
       }
 
       // ---------------- Abrir do DISCO ----------------
@@ -332,13 +505,10 @@
       }
 
       function handleNew() {
-        designerInstance.load(cloneTemplate(EMPTY_TEMPLATE));
-        designerInstance.setModified(false);
-        currentTemplateName = null;
-        selectElement.value = "";
-        setStatus("Template novo (por guardar)");
+        resetDesigner("Template novo (por guardar)");
         showToast("Template em branco criado.");
         setLocationDescriptor("");
+        closeTemplateDialog();
       }
 
       // ---------- autodeteção do construtor do Designer ----------
@@ -387,6 +557,30 @@
         openFileInput.addEventListener("change", handleOpenFromDisk);
         document.getElementById("btn-save").addEventListener("click", () => persistTemplate(false));
         document.getElementById("btn-preview").addEventListener("click", () => previewTemplate());
+        dialogSelect.addEventListener("change", () => {
+          dialogOpenButton.disabled = !dialogSelect.value;
+        });
+        dialogCancelButton.addEventListener("click", () => {
+          closeTemplateDialog();
+          setStatus("Selecione um template para começar.");
+        });
+        dialogNewButton.addEventListener("click", () => {
+          closeTemplateDialog();
+          handleNew();
+        });
+        dialogOpenButton.addEventListener("click", async () => {
+          const name = dialogSelect.value;
+          if (!name) return;
+          try {
+            await loadTemplate(name);
+            selectElement.value = name;
+          } catch (error) {
+            console.error(error);
+            const message = error?.message || "Falha ao carregar o template.";
+            showToast(message, "error");
+          }
+        });
+
         selectElement.addEventListener("change", async (event) => {
           const select = event.target;
           if (!(select instanceof HTMLSelectElement)) return;
@@ -402,15 +596,9 @@
           }
         });
 
-        // Tenta lista do servidor (opcional); se falhar, segue com um novo.
-        try {
-          await refreshTemplates();
-          const def = templatesCache.find((t) => t.name === "ft_gestao_reportbro");
-          if (def) { await loadTemplate(def.name); selectElement.value = def.name; }
-          else { handleNew(); }
-        } catch {
-          handleNew();
-        }
+        resetDesigner("Selecione um template para começar.");
+        await refreshTemplates();
+        promptTemplateSelection();
       }
 
       window.addEventListener("DOMContentLoaded", bootstrap);
