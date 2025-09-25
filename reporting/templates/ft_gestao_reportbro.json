@@ -158,7 +158,7 @@
       "y": 88,
       "width": 169,
       "height": 18,
-      "content": "${F-product_codigo}",
+      "content": "${product_codigo}",
       "richText": false,
       "richTextContent": null,
       "richTextHtml": "",
@@ -232,7 +232,7 @@
       "y": 100,
       "width": 160,
       "height": 140,
-      "source": "F-product_image",
+      "source": "product_image",
       "image": "",
       "imageFilename": "",
       "styleId": "",
@@ -328,7 +328,7 @@
       "y": 112,
       "width": 169,
       "height": 18,
-      "content": "${F-product_nome}",
+      "content": "${product_nome}",
       "richText": false,
       "richTextContent": null,
       "richTextHtml": "",
@@ -476,7 +476,7 @@
       "y": 136,
       "width": 169,
       "height": 18,
-      "content": "${F-product_familia}",
+      "content": "${product_familia}",
       "richText": false,
       "richTextContent": null,
       "richTextHtml": "",
@@ -624,7 +624,7 @@
       "y": 160,
       "width": 169,
       "height": 18,
-      "content": "${F-product_subfamilia}",
+      "content": "${product_subfamilia}",
       "richText": false,
       "richTextContent": null,
       "richTextHtml": "",
@@ -920,7 +920,7 @@
       "y": 206,
       "width": 100,
       "height": 18,
-      "content": "${F-product_tipo_artigo_cod}",
+      "content": "${product_tipo_artigo_cod}",
       "richText": false,
       "richTextContent": null,
       "richTextHtml": "",
@@ -994,7 +994,7 @@
       "y": 206,
       "width": 100,
       "height": 18,
-      "content": "${F-product_validade_cod}",
+      "content": "${product_validade_cod}",
       "richText": false,
       "richTextContent": null,
       "richTextHtml": "",
@@ -1068,7 +1068,7 @@
       "y": 206,
       "width": 100,
       "height": 18,
-      "content": "${F-product_temperatura_cod}",
+      "content": "${product_temperatura_cod}",
       "richText": false,
       "richTextContent": null,
       "richTextHtml": "",
@@ -2400,7 +2400,7 @@
       "y": 344,
       "width": 515,
       "height": 54,
-      "content": "${F-ingredients_lines}",
+      "content": "${ingredients_lines}",
       "richText": false,
       "richTextContent": null,
       "richTextHtml": "",
@@ -2548,7 +2548,7 @@
       "y": 408,
       "width": 62,
       "height": 18,
-      "content": "${F-totals_custo_total}",
+      "content": "${totals_custo_total}",
       "richText": false,
       "richTextContent": null,
       "richTextHtml": "",
@@ -3732,7 +3732,7 @@
       "y": 554,
       "width": 515,
       "height": 16,
-      "content": "${F-metadata}",
+      "content": "${metadata}",
       "richText": false,
       "richTextContent": null,
       "richTextHtml": "",
@@ -3806,7 +3806,7 @@
       "y": 6,
       "width": 515,
       "height": 18,
-      "content": "${F-title}",
+      "content": "${title}",
       "richText": false,
       "richTextContent": null,
       "richTextHtml": "",
@@ -3880,7 +3880,7 @@
       "y": 16,
       "width": 515,
       "height": 10,
-      "content": "${F-subtitle}",
+      "content": "${subtitle}",
       "richText": false,
       "richTextContent": null,
       "richTextHtml": "",
@@ -3950,7 +3950,7 @@
   "parameters": [
     {
       "id": 1,
-      "name": "F-title",
+      "name": "title",
       "type": "string",
       "arrayItemType": "string",
       "eval": false,
@@ -3963,11 +3963,11 @@
       "testDataImage": "",
       "testDataImageFilename": "",
       "testDataRichText": "",
-      "label": "L-Título"
+      "label": "Título"
     },
     {
       "id": 2,
-      "name": "F-subtitle",
+      "name": "subtitle",
       "type": "string",
       "arrayItemType": "string",
       "eval": false,
@@ -3980,11 +3980,11 @@
       "testDataImage": "",
       "testDataImageFilename": "",
       "testDataRichText": "",
-      "label": "L-Subtítulo"
+      "label": "Subtítulo"
     },
     {
       "id": 3,
-      "name": "F-metadata",
+      "name": "metadata",
       "type": "string",
       "arrayItemType": "string",
       "eval": false,
@@ -3997,11 +3997,11 @@
       "testDataImage": "",
       "testDataImageFilename": "",
       "testDataRichText": "",
-      "label": "L-Metadados"
+      "label": "Metadados"
     },
     {
       "id": 4,
-      "name": "F-product_codigo",
+      "name": "product_codigo",
       "type": "string",
       "arrayItemType": "string",
       "eval": false,
@@ -4014,11 +4014,11 @@
       "testDataImage": "",
       "testDataImageFilename": "",
       "testDataRichText": "",
-      "label": "L-Código do artigo"
+      "label": "Código do artigo"
     },
     {
       "id": 5,
-      "name": "F-product_nome",
+      "name": "product_nome",
       "type": "string",
       "arrayItemType": "string",
       "eval": false,
@@ -4031,11 +4031,11 @@
       "testDataImage": "",
       "testDataImageFilename": "",
       "testDataRichText": "",
-      "label": "L-Nome do artigo"
+      "label": "Nome do artigo"
     },
     {
       "id": 6,
-      "name": "F-product_familia",
+      "name": "product_familia",
       "type": "string",
       "arrayItemType": "string",
       "eval": false,
@@ -4048,11 +4048,11 @@
       "testDataImage": "",
       "testDataImageFilename": "",
       "testDataRichText": "",
-      "label": "L-Família"
+      "label": "Família"
     },
     {
       "id": 7,
-      "name": "F-product_subfamilia",
+      "name": "product_subfamilia",
       "type": "string",
       "arrayItemType": "string",
       "eval": false,
@@ -4065,11 +4065,11 @@
       "testDataImage": "",
       "testDataImageFilename": "",
       "testDataRichText": "",
-      "label": "L-Subfamília"
+      "label": "Subfamília"
     },
     {
       "id": 8,
-      "name": "F-product_tipo_artigo_cod",
+      "name": "product_tipo_artigo_cod",
       "type": "string",
       "arrayItemType": "string",
       "eval": false,
@@ -4082,11 +4082,11 @@
       "testDataImage": "",
       "testDataImageFilename": "",
       "testDataRichText": "",
-      "label": "L-Tipo de artigo (código)"
+      "label": "Tipo de artigo (código)"
     },
     {
       "id": 9,
-      "name": "F-product_validade_cod",
+      "name": "product_validade_cod",
       "type": "string",
       "arrayItemType": "string",
       "eval": false,
@@ -4099,11 +4099,11 @@
       "testDataImage": "",
       "testDataImageFilename": "",
       "testDataRichText": "",
-      "label": "L-Validade (código)"
+      "label": "Validade (código)"
     },
     {
       "id": 10,
-      "name": "F-product_temperatura_cod",
+      "name": "product_temperatura_cod",
       "type": "string",
       "arrayItemType": "string",
       "eval": false,
@@ -4116,11 +4116,11 @@
       "testDataImage": "",
       "testDataImageFilename": "",
       "testDataRichText": "",
-      "label": "L-Temperatura (código)"
+      "label": "Temperatura (código)"
     },
     {
       "id": 11,
-      "name": "F-product_informacao_adicional",
+      "name": "product_informacao_adicional",
       "type": "string",
       "arrayItemType": "string",
       "eval": false,
@@ -4133,11 +4133,11 @@
       "testDataImage": "",
       "testDataImageFilename": "",
       "testDataRichText": "",
-      "label": "L-Informação adicional"
+      "label": "Informação adicional"
     },
     {
       "id": 12,
-      "name": "F-product_image_path",
+      "name": "product_image_path",
       "type": "string",
       "arrayItemType": "string",
       "eval": false,
@@ -4150,11 +4150,11 @@
       "testDataImage": "",
       "testDataImageFilename": "",
       "testDataRichText": "",
-      "label": "L-Caminho da imagem do artigo"
+      "label": "Caminho da imagem do artigo"
     },
     {
       "id": 13,
-      "name": "F-ingredients_lines",
+      "name": "ingredients_lines",
       "type": "string",
       "arrayItemType": "string",
       "eval": false,
@@ -4167,11 +4167,11 @@
       "testDataImage": "",
       "testDataImageFilename": "",
       "testDataRichText": "",
-      "label": "L-Linhas de ingredientes"
+      "label": "Linhas de ingredientes"
     },
     {
       "id": 14,
-      "name": "F-totals_custo_total",
+      "name": "totals_custo_total",
       "type": "string",
       "arrayItemType": "string",
       "eval": false,
@@ -4184,11 +4184,11 @@
       "testDataImage": "",
       "testDataImageFilename": "",
       "testDataRichText": "",
-      "label": "L-Custo total"
+      "label": "Custo total"
     },
     {
       "id": 15,
-      "name": "F-totals_peso_total",
+      "name": "totals_peso_total",
       "type": "string",
       "arrayItemType": "string",
       "eval": false,
@@ -4201,11 +4201,11 @@
       "testDataImage": "",
       "testDataImageFilename": "",
       "testDataRichText": "",
-      "label": "L-Peso total"
+      "label": "Peso total"
     },
     {
       "id": 16,
-      "name": "F-totals_num_ingredientes",
+      "name": "totals_num_ingredientes",
       "type": "string",
       "arrayItemType": "string",
       "eval": false,
@@ -4218,11 +4218,11 @@
       "testDataImage": "",
       "testDataImageFilename": "",
       "testDataRichText": "",
-      "label": "L-Número de ingredientes"
+      "label": "Número de ingredientes"
     },
     {
       "id": 17,
-      "name": "F-pricing_iva",
+      "name": "pricing_iva",
       "type": "string",
       "arrayItemType": "string",
       "eval": false,
@@ -4235,11 +4235,11 @@
       "testDataImage": "",
       "testDataImageFilename": "",
       "testDataRichText": "",
-      "label": "L-Taxa de IVA"
+      "label": "Taxa de IVA"
     },
     {
       "id": 18,
-      "name": "F-pricing_lines",
+      "name": "pricing_lines",
       "type": "string",
       "arrayItemType": "string",
       "eval": false,
@@ -4252,11 +4252,11 @@
       "testDataImage": "",
       "testDataImageFilename": "",
       "testDataRichText": "",
-      "label": "L-Linhas de preços"
+      "label": "Linhas de preços"
     },
     {
       "id": 19,
-      "name": "F-product_image",
+      "name": "product_image",
       "type": "image",
       "arrayItemType": "string",
       "eval": false,
@@ -4269,7 +4269,7 @@
       "testDataImage": "",
       "testDataImageFilename": "",
       "testDataRichText": "",
-      "label": "L-Imagem do artigo"
+      "label": "Imagem do artigo"
     }
   ],
   "styles": [
