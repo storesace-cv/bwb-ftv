@@ -740,25 +740,17 @@ class FTApp(QWidget):
         default_folder = printing_models.PROJECT_ROOT / "reporting" / "templates"
         default_folder.mkdir(parents=True, exist_ok=True)
 
-        folder = QFileDialog.getExistingDirectory(
-            self,
-            "Selecionar pasta base do modelo",
-            str(default_folder),
-        )
-        if not folder:
-            return
-
-        folder_path = Path(folder)
         template_path_str, _ = QFileDialog.getOpenFileName(
             self,
             "Selecionar template ReportBro",
-            str(folder_path),
+            str(default_folder),
             "Modelos ReportBro (*.json)",
         )
         if not template_path_str:
             return
 
         template_path = Path(template_path_str)
+        folder_path = template_path.parent
         try:
             printing_models.save_active_model(kind, folder_path, template_path)
         except Exception as exc:  # pragma: no cover - safeguard against unexpected failures
