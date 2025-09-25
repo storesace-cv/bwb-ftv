@@ -1,0 +1,11 @@
+{
+  "invoice_title": "Fatura Comercial",
+  "invoice_number": "2024-001",
+  "invoice_date": "15-01-2024",
+  "company_name": "Empresa Exemplo, Lda.",
+  "company_address": "Rua das Flores 123\n4000-123 Porto",
+  "customer_name": "Cliente Demonstração",
+  "customer_address": "Av. da Liberdade 456\n1250-001 Lisboa",
+  "items_description": "Descrição\n-----------------------------\n1 x Serviço de consultoria (8h) ............ 320,00 €\n2 x Licença anual .......................... 240,00 €\n\nSubtotal .................................. 560,00 €\nIVA (23%) ................................. 128,80 €",
+  "total_due": "688,80 €"
+}
