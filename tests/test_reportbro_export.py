@@ -125,5 +125,6 @@ def test_reportbro_pdf_generation(tmp_path):
     assert destination.exists()
     streams = _extract_pdf_streams(destination)
     combined = "\n".join(streams)
-    assert "Ficha Técnica de Gestão" in combined
+    assert "FICHA DE ARTIGO" in combined
+    assert "Produto ReportBro" in combined
     assert "ingredientes" in combined.lower()
