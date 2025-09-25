@@ -150,6 +150,42 @@
       const openFileInput = document.getElementById("open-file");
       const btnOpen = document.getElementById("btn-open");
 
+      let currentLocationDescriptor = "";
+
+      function buildServerLocation(name) {
+        if (!name) return "";
+        const encoded = encodeURIComponent(name);
+        return new URL(`/templates/${encoded}.json`, window.location.origin).toString();
+      }
+
+      function setLocationDescriptor(value) {
+        currentLocationDescriptor = value || "";
+      }
+
+      window.bwbGetCurrentLocation = () => currentLocationDescriptor;
+
+      window.bwbExportCurrentTemplate = () => {
+        if (!designerInstance || typeof designerInstance.getReport !== "function") {
+          return { success: false, error: "ReportBro Designer indisponível." };
+        }
+        try {
+          const report = cloneTemplate(designerInstance.getReport());
+          normaliseTemplateSchema(report);
+          return {
+            success: true,
+            report,
+            name: currentTemplateName || "",
+            location: currentLocationDescriptor,
+          };
+        } catch (error) {
+          console.error(error);
+          return {
+            success: false,
+            error: error?.message || "Falha ao exportar o template actual.",
+          };
+        }
+      };
+
       function showToast(message, variant = "info") {
         toastElement.textContent = message;
         toastElement.className = `toast ${variant === "error" ? "error" : ""} show`;
@@ -196,6 +232,7 @@
         currentTemplateName = name;
         setStatus(`Template activo: ${name}`);
         showToast(`Template '${name}' carregado.`);
+        setLocationDescriptor(buildServerLocation(name));
       }
 
       // ---------------- Abrir do DISCO ----------------
@@ -217,6 +254,7 @@
           selectElement.value = ""; // limpa seleção do servidor
           setStatus(`Template aberto do disco: ${file.name}`);
           showToast(`Aberto: ${file.name}`);
+          setLocationDescriptor(file.name);
         } catch (err) {
           console.error(err);
           showToast("Ficheiro inválido ou JSON malformado.", "error");
@@ -264,6 +302,7 @@
           await refreshTemplates();
           setStatus(`Template activo: ${targetName}`);
           showToast("Template guardado com sucesso.");
+          setLocationDescriptor(buildServerLocation(targetName));
         } catch (error) {
           console.error(error);
           showToast(error.message, "error");
@@ -299,6 +338,7 @@
         selectElement.value = "";
         setStatus("Template novo (por guardar)");
         showToast("Template em branco criado.");
+        setLocationDescriptor("");
       }
 
       // ---------- autodeteção do construtor do Designer ----------

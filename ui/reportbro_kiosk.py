@@ -16,13 +16,15 @@ QT_WEBENGINE_AVAILABLE = bool(
 )
 
 if QT_AVAILABLE:
-    from PyQt5.QtCore import QEvent, Qt, QUrl
+    from PyQt5.QtCore import QDir, QEvent, Qt, QUrl
     from PyQt5.QtGui import QKeyEvent
     from PyQt5.QtWidgets import (
+        QFileDialog,
         QDialog,
         QDialogButtonBox,
         QHBoxLayout,
         QLabel,
+        QLineEdit,
         QListWidget,
         QListWidgetItem,
         QMessageBox,
@@ -31,13 +33,17 @@ if QT_AVAILABLE:
         QWidget,
     )
 else:  # pragma: no cover - executed when Qt is not installed
-    QEvent = Qt = QUrl = QKeyEvent = None  # type: ignore[assignment]
+    QDir = QEvent = Qt = QUrl = QKeyEvent = None  # type: ignore[assignment]
     QDialog = (
         QDialogButtonBox
     ) = (  # type: ignore[assignment]
         QHBoxLayout
     ) = (
         QLabel
+    ) = (
+        QFileDialog
+    ) = (
+        QLineEdit
     ) = (
         QListWidget
     ) = (
@@ -134,6 +140,7 @@ if QT_AVAILABLE:
             self._url = url
             self._title_label: QLabel | None = None
             self._web_view: QWebEngineView | None = None
+            self._location_bar: QLineEdit | None = None
             self._build_ui()
 
         def _build_ui(self) -> None:
@@ -161,10 +168,23 @@ if QT_AVAILABLE:
 
             header_layout.addStretch(1)
 
+            location_bar = QLineEdit(header)
+            location_bar.setObjectName("reportbroKioskLocation")
+            location_bar.setPlaceholderText("Localização do template")
+            location_bar.setReadOnly(True)
+            location_bar.setFocusPolicy(Qt.NoFocus)
+            header_layout.addWidget(location_bar, 2)
+            self._location_bar = location_bar
+
             open_button = QPushButton("Abrir", header)
             open_button.setObjectName("reportbroKioskOpen")
             open_button.clicked.connect(self._show_template_picker)
             header_layout.addWidget(open_button)
+
+            save_as_button = QPushButton("Salvar como", header)
+            save_as_button.setObjectName("reportbroKioskSaveAs")
+            save_as_button.clicked.connect(self._save_current_template_as)
+            header_layout.addWidget(save_as_button)
 
             close_button = QPushButton("Fechar", header)
             close_button.setObjectName("reportbroKioskClose")
@@ -187,6 +207,7 @@ if QT_AVAILABLE:
             web_view.setContextMenuPolicy(Qt.NoContextMenu)
             web_view.load(self._url)
             web_view.titleChanged.connect(self._on_title_changed)
+            web_view.loadFinished.connect(lambda _: self._refresh_location_bar())
             self._web_view = web_view
             layout.addWidget(web_view, 1)
 
@@ -218,6 +239,18 @@ if QT_AVAILABLE:
                 #reportbroKioskOpen:pressed {
                     background-color: #1e40af;
                 }
+                #reportbroKioskSaveAs {
+                    background-color: #10b981;
+                    border-radius: 6px;
+                    padding: 6px 20px;
+                    color: #f9fafb;
+                }
+                #reportbroKioskSaveAs:hover {
+                    background-color: #0f9f72;
+                }
+                #reportbroKioskSaveAs:pressed {
+                    background-color: #0a7a56;
+                }
                 #reportbroKioskClose {
                     background-color: #ef4444;
                     border-radius: 6px;
@@ -229,6 +262,15 @@ if QT_AVAILABLE:
                 }
                 #reportbroKioskClose:pressed {
                     background-color: #b91c1c;
+                }
+
+                #reportbroKioskLocation {
+                    background-color: #1f2937;
+                    border: 1px solid #1e293b;
+                    border-radius: 6px;
+                    padding: 6px 12px;
+                    color: #e2e8f0;
+                    selection-background-color: #2563eb;
                 }
 
             """
@@ -243,6 +285,77 @@ if QT_AVAILABLE:
                 self.accept()
                 return
             super().keyPressEvent(event)
+
+        def _set_location_bar(self, value: str | None) -> None:
+            if self._location_bar is None:
+                return
+            self._location_bar.setText((value or "").strip())
+
+        def _refresh_location_bar(self) -> None:
+            if self._web_view is None:
+                return
+            page = self._web_view.page()
+            if page is None:
+                return
+            script = "window.bwbGetCurrentLocation && window.bwbGetCurrentLocation();"
+
+            def _apply(value: Any) -> None:
+                if isinstance(value, str):
+                    self._set_location_bar(value)
+
+            page.runJavaScript(script, _apply)
+
+        def _save_current_template_as(self) -> None:
+            if self._web_view is None:
+                return
+
+            target_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "Salvar template como",
+                "",
+                "Templates ReportBro (*.json)",
+            )
+            if not target_path:
+                return
+
+            if not target_path.lower().endswith(".json"):
+                target_path = f"{target_path}.json"
+
+            page = self._web_view.page()
+            if page is None:
+                return
+
+            script = "window.bwbExportCurrentTemplate && window.bwbExportCurrentTemplate();"
+
+            def _handle_export(result: Any) -> None:
+                if not isinstance(result, dict) or not result.get("success"):
+                    message = result.get("error") if isinstance(result, dict) else None
+                    logger.error("[ReportBro] Falha ao exportar template para salvar: %s", message)
+                    QMessageBox.critical(
+                        self,
+                        "Salvar template",
+                        message or "Não foi possível obter o template actual.",
+                    )
+                    return
+
+                report = result.get("report")
+                try:
+                    payload = json.dumps(report, ensure_ascii=False, indent=2)
+                    with open(target_path, "w", encoding="utf-8") as handle:
+                        handle.write(payload)
+                except OSError as exc:
+                    logger.error("[ReportBro] Falha ao escrever ficheiro '%s': %s", target_path, exc)
+                    QMessageBox.critical(
+                        self,
+                        "Salvar template",
+                        "Não foi possível guardar o ficheiro seleccionado.",
+                    )
+                    return
+
+                QMessageBox.information(self, "Salvar template", "Template guardado com sucesso.")
+                self._set_location_bar(QDir.toNativeSeparators(target_path))
+
+            page.runJavaScript(script, _handle_export)
 
         def _show_template_picker(self) -> None:
             templates = self._fetch_templates()
@@ -332,6 +445,14 @@ if QT_AVAILABLE:
                 """
             )
             page.runJavaScript(script)
+            self._set_location_bar(self._build_server_location(template_name))
+
+        def _build_server_location(self, name: str) -> str:
+            base = self._url
+            if not base.isValid():
+                return ""
+            resolved = base.resolved(QUrl(f"/templates/{request.pathname2url(name)}.json"))
+            return resolved.toString()
 
         def _on_title_changed(self, title: str) -> None:
             if self._title_label is None:
@@ -340,6 +461,7 @@ if QT_AVAILABLE:
                 self._title_label.setText(f"ReportBro Designer — {title}")
             else:
                 self._title_label.setText("ReportBro Designer")
+            self._refresh_location_bar()
 
 else:  # pragma: no cover - executed when Qt is not installed
 
