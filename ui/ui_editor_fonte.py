@@ -187,6 +187,7 @@ from .printing import (
     generate_ft_gestao_pdf,
     generate_ft_gestao_reportbro_pdf,
 )
+from . import printing_models
 APP_TITLE = "Fichas Técnicas Valorizadas"
 
 
@@ -733,6 +734,53 @@ class FTApp(QWidget):
                 "Não foi possível abrir o modelo seleccionado. Consulte os registos para mais detalhes.",
             )
 
+    def _on_select_active_model(self, kind: str) -> None:
+        """Allow the user to select and persist an active ReportBro template."""
+
+        folder = QFileDialog.getExistingDirectory(
+            self,
+            "Selecionar pasta base do modelo",
+            str(Path.home()),
+        )
+        if not folder:
+            return
+
+        folder_path = Path(folder)
+        template_path_str, _ = QFileDialog.getOpenFileName(
+            self,
+            "Selecionar template ReportBro",
+            str(folder_path),
+            "Modelos ReportBro (*.json)",
+        )
+        if not template_path_str:
+            return
+
+        template_path = Path(template_path_str)
+        try:
+            printing_models.save_active_model(kind, folder_path, template_path)
+        except Exception as exc:  # pragma: no cover - safeguard against unexpected failures
+            logger.exception(
+                "[ReportBro] Falha ao guardar modelo activo '%s' em %s", kind, template_path
+            )
+            QMessageBox.critical(
+                self,
+                APP_TITLE,
+                "Não foi possível guardar o modelo selecionado."
+                " Verifique as permissões da pasta e tente novamente."
+                f"\nErro: {exc}",
+            )
+            return
+
+        logger.info(
+            "[ReportBro] Modelo activo '%s' actualizado para %s", kind, template_path
+        )
+        QMessageBox.information(
+            self,
+            APP_TITLE,
+            "Modelo activo actualizado com sucesso:\n"
+            f"{template_path}",
+        )
+
     def _on_print_ft_gestao_actual(self) -> None:
         """Export the currently loaded product as FT Gestão (single record)."""
 
@@ -750,11 +798,16 @@ class FTApp(QWidget):
         )
         use_reportbro_flag = os.getenv("FTV_USE_REPORTBRO", "").strip().lower()
         template_override_env = os.getenv("FTV_REPORTBRO_TEMPLATE", "").strip()
-        template_override: Path | None = None
+        active_template = printing_models.resolve_active_model_template(
+            "ft_gestao_actual"
+        )
+        env_template: Path | None = None
         if template_override_env:
-            template_override = Path(template_override_env).expanduser()
-            if not template_override.is_absolute():
-                template_override = (Path.cwd() / template_override).resolve()
+            env_template = Path(template_override_env).expanduser()
+            if not env_template.is_absolute():
+                env_template = (Path.cwd() / env_template).resolve()
+
+        template_override: Path | None = active_template or env_template
 
         if template_override is not None:
             use_reportbro = True
@@ -969,17 +1022,18 @@ class FTApp(QWidget):
         gestao_docs_menu.addAction(actDocEditor)
         modelos_ativos_menu = gestao_docs_menu.addMenu("Modelos Activos")
         apply_menu_font(modelos_ativos_menu)
-        for action_label in (
-            "FT's Gestão (filtro)",
-            "FT's Gestão (Actual)",
-            "FT's Operacionais (filtro)",
-            "FT's Operacionais (Actual)",
-        ):
+        modelos_ativos_actions = {
+            "FT's Gestão (filtro)": "ft_gestao_filtro",
+            "FT's Gestão (Actual)": "ft_gestao_actual",
+            "FT's Operacionais (filtro)": "ft_operacionais_filtro",
+            "FT's Operacionais (Actual)": "ft_operacionais_actual",
+        }
+        for action_label, key in modelos_ativos_actions.items():
             action = QAction(action_label, self)
             apply_menu_font(action)
             modelos_ativos_menu.addAction(action)
             action.triggered.connect(
-                lambda _checked=False, label=action_label: self._open_reportbro_template(label)
+                lambda _checked=False, kind=key: self._on_select_active_model(kind)
             )
         mUtil.addMenu(gestao_docs_menu)
         mUtil.addSeparator()
