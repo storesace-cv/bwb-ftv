@@ -737,10 +737,13 @@ class FTApp(QWidget):
     def _on_select_active_model(self, kind: str) -> None:
         """Allow the user to select and persist an active ReportBro template."""
 
+        default_folder = printing_models.PROJECT_ROOT / "reporting" / "templates"
+        default_folder.mkdir(parents=True, exist_ok=True)
+
         folder = QFileDialog.getExistingDirectory(
             self,
             "Selecionar pasta base do modelo",
-            str(Path.home()),
+            str(default_folder),
         )
         if not folder:
             return
