@@ -40,12 +40,8 @@ class Product:
     subfamilia: str | None = None
     informacao_adicional: str | None = None
     tipo_artigo_cod: int | None = None
-    tipo_artigo_desc: str | None = None
     validade_cod: int | None = None
-    validade_desc: str | None = None
     temperatura_cod: int | None = None
-    temperatura_desc: str | None = None
-    produto_preparacao_html: str | None = None
     pvps: List[float | None] = field(default_factory=list)
     iva: float | None = None
     ingredients: List[Ingredient] = field(default_factory=list)
