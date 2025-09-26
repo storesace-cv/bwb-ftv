@@ -26,3 +26,14 @@ def test_preview_endpoint_returns_pdf(flask_client):
     assert response.status_code == 200
     assert response.headers["Content-Type"].startswith("application/pdf")
     assert len(response.data) > 0
+
+
+def test_preview_put_accepts_empty_string_data(flask_client):
+    template = _load_template("ft_gestao_02")
+    response = flask_client.put(
+        "/rb/preview",
+        json={"report": {"template": template}, "data": ""},
+    )
+    assert response.status_code == 200
+    assert response.mimetype == "text/plain"
+    assert response.get_data(as_text=True).startswith("key:")
