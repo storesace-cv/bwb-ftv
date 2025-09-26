@@ -4,10 +4,12 @@ from pathlib import Path
 
 import pytest
 
+from data.datastore import DataStore
 from domain.models import Ingredient, Product
 from reporting.ft_gestao import build_reportbro_context
 from reporting.reportbro_export import load_template_definition
 from reporting.reportbro_normalizer import STATIC_SECTION_PARAMETER
+from services.products import get_product_info
 from ui.printing import _prepare_management_payload, _validate_reportbro_inputs
 from utils.paths import get_project_root
 
@@ -193,6 +195,55 @@ def test_invalid_date_coerces_to_empty():
     assert "invalid-date" in reasons
 
 
+def test_datastore_product_populates_auxiliary_descriptions():
+    with DataStore(db_path=":memory:") as ds:
+        conn = ds.conn
+        assert conn is not None
+
+        conn.execute(
+            "INSERT INTO TiposArtigos (Cod, Descricao, Ativo) VALUES (?, ?, 1)",
+            (7, "Tipo proveniente da BD"),
+        )
+        conn.execute(
+            "INSERT INTO Validade (Cod, Descricao, Ativo) VALUES (?, ?, 1)",
+            (12, "Validade fresca"),
+        )
+        conn.execute(
+            "INSERT INTO Temperaturas (Cod, Descricao, Ativo) VALUES (?, ?, 1)",
+            (3, "Frio positivo"),
+        )
+        conn.execute(
+            "INSERT INTO Produtos (Codigo, Produto, TipoArtigo, Validade, Temperatura) "
+            "VALUES (?, ?, ?, ?, ?)",
+            ("DB-001", "Produto BD", 7, 12, 3),
+        )
+        conn.execute(
+            "INSERT INTO FichasTecnicas (ProdutoCodigo, ProdutoNome, ComponenteCodigo, "
+            "ComponenteNome, Qtd, Unidade, Ppu, Preco, Peso, Ordem) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            ("DB-001", "Produto BD", "ING-1", "Ingrediente 1", 1.0, "kg", 2.5, 2.5, 1.0, 1),
+        )
+        conn.execute(
+            "INSERT INTO PrecosTaxas (Codigo, Loja, Preco1, Iva1) VALUES (?, ?, ?, ?)",
+            ("DB-001", "Loja Central", 10.0, 23.0),
+        )
+        conn.commit()
+
+        product = get_product_info(ds, "DB-001")
+        dataset, warnings = _build_dataset(product)
+
+    assert dataset["TiposArtigos_Cod"] == 7
+    assert dataset["TiposArtigos_Descricao"] == "Tipo proveniente da BD"
+    assert dataset["Validade_Cod"] == 12
+    assert dataset["Validade_Descricao"] == "Validade fresca"
+    assert dataset["Temperaturas_Cod"] == 3
+    assert dataset["Temperaturas_Descricao"] == "Frio positivo"
+    warning_fields = {entry.get("field") for entry in warnings}
+    assert "TiposArtigos_Descricao" not in warning_fields
+    assert "Validade_Descricao" not in warning_fields
+    assert "Temperaturas_Descricao" not in warning_fields
+
+
 def test_product_image_filename_with_existing_file(caplog):
     product = _make_product(code="IMG-VALID")
     root = get_project_root()
@@ -217,7 +268,6 @@ def test_product_image_filename_with_existing_file(caplog):
             if record.levelno == logging.WARNING
         ]
         assert not warning_messages
-
         printing_info = [
             record.getMessage()
             for record in caplog.records

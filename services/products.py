@@ -749,6 +749,27 @@ def get_product_info(ds: DataStore, codigo: str) -> Product:
 
     ingredients = [_row_to_ingredient(row, codigo) for row in ing_rows]
 
+    tipos_artigos_row = None
+    validade_row = None
+    temperaturas_row = None
+    if ds and isinstance(info, dict):
+        tipo_cod = info.get("tipoartigo")
+        validade_cod = info.get("validade")
+        temperatura_cod = info.get("temperatura")
+
+        if tipo_cod not in (None, ""):
+            lookup = ds.get_tipos_artigos_row(tipo_cod)
+            if lookup:
+                tipos_artigos_row = lookup
+        if validade_cod not in (None, ""):
+            lookup = ds.get_validade_row(validade_cod)
+            if lookup:
+                validade_row = lookup
+        if temperatura_cod not in (None, ""):
+            lookup = ds.get_temperaturas_row(temperatura_cod)
+            if lookup:
+                temperaturas_row = lookup
+
     additional_info = None
     if isinstance(info, dict):
         normalized_keys: dict[str, Any] = {}
@@ -785,6 +806,9 @@ def get_product_info(ds: DataStore, codigo: str) -> Product:
         precos_taxas_row=dict(precos_taxas_row)
         if isinstance(precos_taxas_row, dict)
         else None,
+        tipos_artigos_row=tipos_artigos_row,
+        validade_row=validade_row,
+        temperaturas_row=temperaturas_row,
     )
 
 
