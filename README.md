@@ -106,6 +106,23 @@ Main features:
 - Base de dados local em SQLite com suporte a backups e migrações de esquema.
   Local SQLite database with backup and schema migration support.
 
+
+## Imagem do Produto / Product Image
+
+O template padrão `ft_gestao_02.json` inclui um elemento de imagem para o produto.
+Este elemento está ligado ao parâmetro `product_image_filename`.
+
+Regras para preencher este parâmetro:
+- Diretório fixo: `/databases/images`
+- Extensão fixa: `.png`
+- Nome do ficheiro = código do produto (`Produtos_Codigo`)
+
+Exemplo: `/databases/images/ABC123.png`
+
+A aplicação utiliza o resolver `resolve_product_image` para construir este caminho antes da impressão.
+Se o ficheiro não existir, a aplicação gera aviso (warning) mas não interrompe a impressão.
+
+---
 ## Tecnologias / Technologies
 
 - **Python 3 / PyQt5** - Interface gráfica da aplicação.
