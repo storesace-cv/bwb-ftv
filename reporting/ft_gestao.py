@@ -291,9 +291,11 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
             if isinstance(provided, Mapping):
                 parameters.update(provided)
 
+    image_parameter_names = {"product_image_filename", "product_image_uri"}
     for name in FT_GESTAO_PARAMETER_DEFINITIONS:
+        if name in image_parameter_names:
+            continue
         parameters.setdefault(name, default_for_parameter(name))
-    parameters.setdefault("product_image_uri", "")
 
     blocks = payload.get("blocks", {})
     block_b1 = blocks.get("B1", {})
@@ -314,21 +316,29 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
     ingredients_lines = _build_ingredients_lines(ingredients_rows)
     totals_data = _build_totals_data(block_b2.get("totais") or {})
     totals_lines = _build_totals_lines(totals_data)
-    raw_image_filename = payload.get("product_image_filename", "")
-    if isinstance(raw_image_filename, str):
-        product_image_filename = raw_image_filename
-    elif raw_image_filename is None:
-        product_image_filename = ""
-    else:
-        product_image_filename = str(raw_image_filename)
+    def _normalise_image_value(value: Any) -> str | None:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            stripped = value.strip()
+            return stripped or None
+        return str(value)
 
-    raw_image_uri = payload.get("product_image_uri", "")
-    if isinstance(raw_image_uri, str):
-        product_image_uri = raw_image_uri
-    elif raw_image_uri is None:
-        product_image_uri = ""
+    raw_image_filename = payload.get("product_image_filename")
+    product_image_filename = _normalise_image_value(raw_image_filename)
+
+    raw_image_uri = payload.get("product_image_uri")
+    product_image_uri = _normalise_image_value(raw_image_uri)
+
+    if product_image_filename:
+        parameters["product_image_filename"] = product_image_filename
+        if product_image_uri:
+            parameters["product_image_uri"] = product_image_uri
+        else:
+            parameters.pop("product_image_uri", None)
     else:
-        product_image_uri = str(raw_image_uri)
+        parameters.pop("product_image_filename", None)
+        parameters.pop("product_image_uri", None)
 
     logger.info(
         "[ReportBro] product_image_filename dataset: entrada=%r -> product_image_filename=%r, product_image_path=%r, product_image_uri=%r",
@@ -346,8 +356,7 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
     )
 
     dataset: dict[str, Any] = dict(parameters)
-    dataset.update(
-        {
+    dataset_update = {
             "title": page_title,
             "subtitle": subtitle or _format_optional(payload.get("identifier")),
             "metadata": metadata,
@@ -369,8 +378,6 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
             "product_temperatura_cod": product_data["temperatura_cod"],
             "product_informacao_adicional": product_data["informacao_adicional"],
             "product_image_path": product_data["image_path"],
-            "product_image_filename": product_image_filename,
-            "product_image_uri": product_image_uri,
             "pricing_rows": pricing_rows,
             "pricing_lines": pricing_lines,
             "pricing_iva": _format_percentage(block_b3.get("iva")),
@@ -382,6 +389,11 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
             "totals_peso_total": totals_data["peso_total"],
             "totals_num_ingredientes": totals_data["num_ingredientes"],
         }
-    )
+
+    if product_image_filename:
+        dataset_update["product_image_filename"] = product_image_filename
+        if product_image_uri:
+            dataset_update["product_image_uri"] = product_image_uri
+    dataset.update(dataset_update)
     dataset[STATIC_SECTION_PARAMETER] = [{}]
     return dataset
