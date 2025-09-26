@@ -7,7 +7,12 @@ from tests._qt import install_stub_if_missing
 
 install_stub_if_missing()
 
-from PyQt5.QtWidgets import QWidget
+import pytest
+
+try:
+    from PyQt5.QtWidgets import QWidget
+except ImportError:  # pragma: no cover - handled by pytest skip when Qt stub is active
+    pytest.skip("PyQt5 QtWidgets is unavailable", allow_module_level=True)
 
 from domain import Product
 
@@ -113,3 +118,56 @@ def test_print_ft_gestao_uses_active_template(monkeypatch, tmp_path, qapp):
     assert any(kind == "info" for kind, *_ in _StubMessageBox.last_messages)
 
     ft_app.deleteLater()
+
+
+def test_active_models_dialog_lists_templates(monkeypatch, tmp_path, qapp):
+    import ui.dialogs as dialogs_module
+
+    template_dir = tmp_path / "templates"
+    template_dir.mkdir()
+    template_a = template_dir / "ft_custom_a.json"
+    template_b = template_dir / "ft_custom_b.json"
+    for template in (template_a, template_b):
+        template.write_text("{}", encoding="utf-8")
+
+    discovered = [template_a, template_b]
+
+    monkeypatch.setattr(dialogs_module, "discover_reportbro_templates", lambda: discovered)
+    monkeypatch.setattr(dialogs_module.printing_models, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(dialogs_module.printing_models, "load_active_models", lambda: {})
+
+    saved_calls: list[tuple[str, object, object]] = []
+
+    def fake_save(identifier, folder, template):
+        saved_calls.append((identifier, folder, template))
+
+    monkeypatch.setattr(dialogs_module.printing_models, "save_active_model", fake_save)
+
+    dialog = dialogs_module.ActiveModelsDialog()
+    combos = dialog.combo_boxes
+
+    assert set(combos) == {
+        "ft_gestao_filtro",
+        "ft_gestao_actual",
+        "ft_operacionais_filtro",
+        "ft_operacionais_actual",
+    }
+
+    expected_paths = {str(path.resolve()) for path in discovered}
+    for combo in combos.values():
+        item_data = {combo.itemData(index) for index in range(combo.count())}
+        assert "" in item_data
+        assert expected_paths <= item_data
+        item_texts = {combo.itemText(index) for index in range(combo.count())}
+        assert "FT Custom A" in item_texts
+        assert "FT Custom B" in item_texts
+
+    dialog.accept()
+    assert len(saved_calls) == len(combos)
+    for identifier, folder, template in saved_calls:
+        assert identifier in combos
+        if template is None:
+            assert folder is None
+        else:
+            assert str(Path(template)) in expected_paths
+            assert Path(template).exists()

@@ -3,13 +3,29 @@ import sqlite3
 from collections.abc import Callable
 from pathlib import Path
 
-from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox, QToolTip
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QFileDialog,
+    QFrame,
+    QHeaderView,
+    QMessageBox,
+    QTableWidget,
+    QTableWidgetItem,
+    QToolTip,
+    QVBoxLayout,
+)
 from ui.utilities import DEFAULT_TOOLTIP_DURATION_MS
 from utils.paths import get_project_root
 from utils.formatting import format_pt_number
 from data import create_backup, restore_backup
 from services.products import IMPORT_FILE_BASENAMES
 from .qt_compat import exec_modal
+from .reportbro_stub import discover_reportbro_templates
+from . import printing_models
 
 logger = logging.getLogger(__name__)
 
@@ -131,6 +147,142 @@ def restore_database(parent, datastore, on_restore: Callable | None = None):
     except Exception as exc:  # pragma: no cover - UI feedback only
         logger.exception("Restore failed", exc_info=exc)
         QMessageBox.critical(parent, "Reposição", f"Falha na reposição: {exc}")
+
+
+class ActiveModelsDialog(QDialog):
+    """Manage active ReportBro templates for each supported document."""
+
+    _MODEL_IDENTIFIERS: list[tuple[str, str]] = [
+        ("FT's Gestão (filtro)", "ft_gestao_filtro"),
+        ("FT's Gestão (Actual)", "ft_gestao_actual"),
+        ("FT's Operacionais (filtro)", "ft_operacionais_filtro"),
+        ("FT's Operacionais (Actual)", "ft_operacionais_actual"),
+    ]
+
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)
+        self.setWindowTitle("Modelos Activos")
+        self._initialising = True
+        self._combo_boxes: dict[str, QComboBox] = {}
+
+        main_layout = QVBoxLayout(self)
+
+        self._table = QTableWidget(len(self._MODEL_IDENTIFIERS), 2, self)
+        self._table.setFrameShape(QFrame.NoFrame)
+        self._table.setHorizontalHeaderLabels(["Relatório", "Template"])
+        header = self._table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.Stretch)
+        self._table.verticalHeader().setVisible(False)
+        self._table.setShowGrid(False)
+        main_layout.addWidget(self._table)
+
+        button_box = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+        main_layout.addWidget(button_box)
+
+        self._populate_rows()
+        self._initialising = False
+
+    @property
+    def combo_boxes(self) -> dict[str, QComboBox]:
+        """Return a copy of the combo box mapping for tests."""
+
+        return dict(self._combo_boxes)
+
+    def _populate_rows(self) -> None:
+        templates = [path.resolve() for path in discover_reportbro_templates()]
+        saved_models = printing_models.load_active_models()
+
+        for row, (label, identifier) in enumerate(self._MODEL_IDENTIFIERS):
+            item = QTableWidgetItem(label)
+            item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+            self._table.setItem(row, 0, item)
+
+            combo = QComboBox(self)
+            combo.addItem("— Seleccionar —", "")
+
+            for template_path in templates:
+                friendly_name = self._format_template_label(template_path)
+                combo.addItem(friendly_name, str(template_path))
+                index = combo.count() - 1
+                combo.setItemData(index, str(template_path), Qt.ToolTipRole)
+
+            saved_template = saved_models.get(identifier, {}).get("template", "")
+            saved_template = saved_template or ""
+            if saved_template and saved_template not in {
+                combo.itemData(i) for i in range(combo.count())
+            }:
+                missing_label = self._format_missing_template_label(Path(saved_template))
+                combo.addItem(missing_label, saved_template)
+                index = combo.count() - 1
+                combo.setItemData(index, saved_template, Qt.ToolTipRole)
+
+            combo.currentIndexChanged.connect(
+                lambda _idx, ident=identifier: self._on_combo_changed(ident)
+            )
+
+            if saved_template:
+                combo.blockSignals(True)
+                index = combo.findData(saved_template)
+                if index >= 0:
+                    combo.setCurrentIndex(index)
+                combo.blockSignals(False)
+
+            self._combo_boxes[identifier] = combo
+            self._table.setCellWidget(row, 1, combo)
+
+    def _format_template_label(self, template_path: Path) -> str:
+        friendly = template_path.stem.replace("_", " ").strip()
+        friendly = friendly.title()
+        friendly = friendly.replace("Ft", "FT")
+        return friendly or template_path.name
+
+    def _format_missing_template_label(self, template_path: Path) -> str:
+        try:
+            relative = template_path.resolve().relative_to(printing_models.PROJECT_ROOT)
+            display_path = str(relative)
+        except ValueError:
+            display_path = str(template_path)
+        return f"[Indisponível] {display_path}"
+
+    def _on_combo_changed(self, identifier: str) -> None:
+        if self._initialising:
+            return
+        self._persist_selection(identifier)
+
+    def _persist_selection(self, identifier: str) -> None:
+        combo = self._combo_boxes.get(identifier)
+        if combo is None:
+            return
+
+        data = combo.currentData()
+        if not data:
+            folder = template = None
+        else:
+            template_path = Path(str(data))
+            folder = template_path.parent
+            template = template_path
+
+        try:
+            printing_models.save_active_model(identifier, folder, template)
+        except Exception as exc:  # pragma: no cover - defensive UI feedback
+            logger.exception(
+                "[ReportBro] Falha ao guardar modelo activo '%s'", identifier
+            )
+            QMessageBox.critical(
+                self,
+                "Modelos Activos",
+                "Não foi possível guardar o modelo selecionado."
+                " Verifique as permissões da pasta e tente novamente."
+                f"\nErro: {exc}",
+            )
+
+    def accept(self) -> None:  # pragma: no cover - requires UI interaction
+        for identifier in self._combo_boxes:
+            self._persist_selection(identifier)
+        super().accept()
 
 
 def edit_fcost_values(parent, repo) -> None:
