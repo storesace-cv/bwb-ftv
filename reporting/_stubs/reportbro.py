@@ -20,7 +20,9 @@ the existing unit tests to parse and assert on its contents.
 
 from __future__ import annotations
 
+import numbers
 from dataclasses import dataclass, field
+from decimal import Decimal
 from typing import Any, Iterable, Mapping
 
 
@@ -56,6 +58,12 @@ def _escape_pdf_text(text: str) -> str:
 def _gather_strings(value: Any) -> Iterable[str]:
     if isinstance(value, str):
         yield value
+        return
+    if isinstance(value, Decimal):
+        yield str(value)
+        return
+    if isinstance(value, numbers.Number) and not isinstance(value, bool):
+        yield str(value)
         return
     if isinstance(value, Mapping):
         for item in value.values():
