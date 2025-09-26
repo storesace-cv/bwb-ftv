@@ -55,8 +55,18 @@ instalação, arranque a interface desktop:
 O servidor Flask expõe os endpoints `/designer`, `/templates/*` e `/rb/*` para
 gestão de templates e geração de PDF/XLSX. Os templates são armazenados em
 `reporting/templates` e os dados de exemplo em `reporting/samples`.
-Por omissão é carregado o template `ft_gestao_reportbro.json`, alimentado por
+Por omissão é carregado o template `ft_gestao_02.json`, alimentado por
 `sample_data.json` com um exemplo realista de ficha técnica.
+
+Para promover novas versões do template de Gestão:
+
+1. Exporte o JSON a partir do ReportBro Designer para
+   `app/templates_store/templates/` com um novo sufixo incremental (por
+   exemplo, `ft_gestao_03.json`).
+2. Copie o ficheiro aprovado para `reporting/templates/` e atualize a constante
+   `_DEFAULT_REPORTBRO_TEMPLATE_NAME` em `ui/printing.py`.
+3. Ajuste os testes em `tests/test_reportbro_export.py` e no stub do editor
+   para referenciar o novo nome e valide a geração de PDF com `pytest`.
 
 > ⚠️ O ReportBro Designer está licenciado sob AGPL-3.0. Ao distribuir a
 > aplicação, garanta o cumprimento da licença e disponibilize o código-fonte das

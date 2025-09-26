@@ -10,6 +10,7 @@ from app.server.routes_reportbro import _normalise_template_payload
 from domain.models import Ingredient, Product
 from reporting.ft_gestao import build_reportbro_context
 from reporting.reportbro_export import load_template_definition, render_pdf_to_path
+from reporting.reportbro_normalizer import STATIC_SECTION_PARAMETER
 from services.products import get_image_path
 from ui.printing import _prepare_management_payload
 from utils.paths import get_project_root
@@ -150,6 +151,7 @@ def test_build_reportbro_context_formats_sections():
     assert dataset["Produtos_Descontinuado"] == "2024-05-01"
     assert dataset["FichasTecnicas_ComponenteNome"] == "Ingrediente A"
     assert dataset["PrecosTaxas_Preco1"] == pytest.approx(10.0)
+    assert dataset[STATIC_SECTION_PARAMETER] == [{}]
 
 
 def test_build_reportbro_context_embeds_product_image(tmp_path):
@@ -182,7 +184,7 @@ def test_reportbro_pdf_generation(tmp_path):
     payload = _prepare_management_payload(_sample_product())
     dataset = build_reportbro_context(payload)
 
-    template = load_template_definition(Path("reporting/templates/ft_gestao_reportbro.json"))
+    template = load_template_definition(Path("reporting/templates/ft_gestao_02.json"))
     destination = tmp_path / "gestao_reportbro.pdf"
 
     render_pdf_to_path(template, dataset, destination)
@@ -190,8 +192,8 @@ def test_reportbro_pdf_generation(tmp_path):
     assert destination.exists()
     streams = _extract_pdf_streams(destination)
     combined = "\n".join(streams)
-    assert "Ficha Técnica de Gestão" in combined
-    assert "ingredientes" in combined.lower()
+    assert "CÓDIGO" in combined
+    assert "NOME DO ARTIGO" in combined
 
 
 def test_load_template_definition_normalises_ft_gestao_template():
@@ -228,3 +230,52 @@ def test_template_payload_normalisation_discards_extra_metadata():
         for element in template.get("docElements", [])
         if isinstance(element, dict)
     )
+
+
+def test_resolve_reportbro_template_prefers_runtime(tmp_path, monkeypatch):
+    from ui import printing
+
+    runtime = tmp_path / "runtime" / printing._DEFAULT_REPORTBRO_TEMPLATE_NAME
+    runtime.parent.mkdir(parents=True)
+    runtime.write_text("{}", encoding="utf-8")
+
+    monkeypatch.setattr(printing, "_DEFAULT_REPORTBRO_TEMPLATE", runtime)
+    monkeypatch.setattr(printing, "_REPORTBRO_STORE_TEMPLATE_DIR", tmp_path / "store")
+
+    resolved = printing._resolve_reportbro_template_location(None)
+
+    assert resolved == runtime
+
+
+def test_resolve_reportbro_template_falls_back_to_store(tmp_path, monkeypatch):
+    from ui import printing
+
+    runtime = tmp_path / "runtime" / printing._DEFAULT_REPORTBRO_TEMPLATE_NAME
+    store_dir = tmp_path / "store"
+    store = store_dir / printing._DEFAULT_REPORTBRO_TEMPLATE_NAME
+    store_dir.mkdir(parents=True)
+    store.write_text("{}", encoding="utf-8")
+
+    monkeypatch.setattr(printing, "_DEFAULT_REPORTBRO_TEMPLATE", runtime)
+    monkeypatch.setattr(printing, "_REPORTBRO_STORE_TEMPLATE_DIR", store_dir)
+
+    resolved = printing._resolve_reportbro_template_location(None)
+
+    assert resolved == store
+
+
+def test_resolve_reportbro_template_missing_raises_friendly(tmp_path, monkeypatch):
+    from ui import printing
+
+    runtime = tmp_path / "runtime" / printing._DEFAULT_REPORTBRO_TEMPLATE_NAME
+    store_dir = tmp_path / "store"
+
+    monkeypatch.setattr(printing, "_DEFAULT_REPORTBRO_TEMPLATE", runtime)
+    monkeypatch.setattr(printing, "_REPORTBRO_STORE_TEMPLATE_DIR", store_dir)
+
+    with pytest.raises(FileNotFoundError) as exc:
+        printing._resolve_reportbro_template_location(None)
+
+    message = str(exc.value)
+    assert "Não foi possível localizar o template ReportBro" in message
+    assert printing._DEFAULT_REPORTBRO_TEMPLATE_NAME in message

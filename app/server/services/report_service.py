@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
+from reporting.reportbro_normalizer import STATIC_SECTION_PARAMETER, normalise_template
+
 try:
     from reportbro import Report, ReportBroError
 except ModuleNotFoundError:  # pragma: no cover - fallback in dev without reportbro-lib
@@ -163,7 +165,9 @@ def _normalise_data(data: dict[str, Any] | None) -> dict[str, Any]:
 def _build_context(template: dict[str, Any], data: dict[str, Any] | None) -> RenderContext:
     if not isinstance(template, dict):
         raise TemplateError("Template JSON inválido.")
-    _validate_template(template)
+    normalised_template, _ = normalise_template(template)
+    _validate_template(normalised_template)
+    template = normalised_template
     _normalise_document_properties(template)
     _normalise_parameter_ids(template)
     _normalise_image_sources(template)
@@ -171,6 +175,13 @@ def _build_context(template: dict[str, Any], data: dict[str, Any] | None) -> Ren
     normalised_data = _normalise_data(data)
     if not isinstance(normalised_data, dict):
         raise DataError("Dados inválidos: deve ser um objeto JSON.")
+    required_parameters = {
+        param.get("name")
+        for param in template.get("parameters", [])
+        if isinstance(param, dict)
+    }
+    if STATIC_SECTION_PARAMETER in required_parameters:
+        normalised_data.setdefault(STATIC_SECTION_PARAMETER, [{}])
     return RenderContext(template=template, data=normalised_data)
 
 
