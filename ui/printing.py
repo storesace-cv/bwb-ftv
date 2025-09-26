@@ -34,7 +34,8 @@ from reporting.ft_gestao_schema import (
     FT_GESTAO_PARAMETER_DEFINITIONS,
     default_for_parameter,
 )
-from services.products import calculate_food_cost, get_image_path
+from services.products import calculate_food_cost
+from utils.paths import get_project_root
 from utils.formatting import parse_decimal
 
 logger = logging.getLogger(__name__)
@@ -492,6 +493,56 @@ def _build_reportbro_parameters(
     return parameters, warnings
 
 
+_MISSING_CODE_WARNING = (
+    "[ReportBro] Produtos_Codigo em falta; 'product_image_filename' não foi definido."
+)
+_MISSING_FILE_WARNING = (
+    "[ReportBro] Imagem de produto inexistente para Produtos_Codigo %s em %s"
+)
+
+
+def resolve_product_image(
+    payload: MutableMappingABC[str, Any] | Mapping[str, Any],
+    *,
+    parameters: MutableMappingABC[str, Any] | Mapping[str, Any] | None = None,
+    check_exists: bool = True,
+) -> str:
+    """Populate ``product_image_filename`` in ``payload`` based on ``Produtos_Codigo``."""
+
+    params: Mapping[str, Any] | None = parameters
+    if params is None and isinstance(payload, Mapping):
+        reportbro_section = payload.get("reportbro")
+        if isinstance(reportbro_section, Mapping):
+            maybe_params = reportbro_section.get("parameters")
+            if isinstance(maybe_params, Mapping):
+                params = maybe_params
+
+    code_value = None
+    if isinstance(params, Mapping):
+        code_value = params.get("Produtos_Codigo")
+
+    code = str(code_value).strip() if code_value is not None else ""
+    filename = ""
+    if not code:
+        logger.warning(_MISSING_CODE_WARNING)
+    else:
+        root = get_project_root()
+        candidate = root / "databases" / "images" / f"{code}.png"
+        if check_exists and not candidate.exists():
+            logger.warning(_MISSING_FILE_WARNING, code, candidate)
+        else:
+            filename = str(candidate)
+
+    if isinstance(payload, MutableMappingABC):
+        payload["product_image_filename"] = filename
+    if isinstance(parameters, MutableMappingABC):
+        parameters["product_image_filename"] = filename
+    elif isinstance(params, MutableMappingABC):
+        params["product_image_filename"] = filename
+
+    return filename
+
+
 def _prepare_management_payload(product: Product) -> dict[str, Any]:
     identifier = product.code or product.name or "<desconhecido>"
     generated_at = datetime.now().isoformat(timespec="seconds")
@@ -507,13 +558,6 @@ def _prepare_management_payload(product: Product) -> dict[str, Any]:
         totals.get("custo_total"), pvps_numeric, _safe_float(iva_raw), identifier
     )
 
-    fallback_image = Path(__file__).resolve().parent / "no-image-thumb.png"
-    image_path = fallback_image
-    if product.code:
-        candidate = get_image_path(product.code)
-        if candidate.exists():
-            image_path = candidate
-
     blocks = {
         "B1": {
             "codigo": product.code,
@@ -524,7 +568,7 @@ def _prepare_management_payload(product: Product) -> dict[str, Any]:
             "tipo_artigo_cod": product.tipo_artigo_cod,
             "validade_cod": product.validade_cod,
             "temperatura_cod": product.temperatura_cod,
-            "image_path": str(image_path),
+            "image_path": "",
         },
         "B2": {
             "ingredientes": ing_data,
@@ -544,8 +588,7 @@ def _prepare_management_payload(product: Product) -> dict[str, Any]:
         raw_fichas=getattr(product, "fichas_tecnicas_rows", None),
         raw_precos=getattr(product, "precos_taxas_row", None),
     )
-
-    return {
+    payload = {
         "identifier": identifier,
         "generated_at": generated_at,
         "page_title": "Ficha Técnica de Gestão",
@@ -555,6 +598,10 @@ def _prepare_management_payload(product: Product) -> dict[str, Any]:
             "warnings": reportbro_warnings,
         },
     }
+
+    image_filename = resolve_product_image(payload, parameters=reportbro_params)
+    blocks["B1"]["image_path"] = image_filename or ""
+    return payload
 
 
 def _normalise_ingredients(ingredients: Iterable[Any]) -> tuple[list[dict[str, Any]], dict[str, Any]]:

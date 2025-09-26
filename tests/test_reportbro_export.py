@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import base64
 import json
 import logging
 from datetime import datetime
@@ -12,7 +11,6 @@ from domain.models import Ingredient, Product
 from reporting.ft_gestao import build_reportbro_context
 from reporting.reportbro_export import load_template_definition, render_pdf_to_path
 from reporting.reportbro_normalizer import STATIC_SECTION_PARAMETER
-from services.products import get_image_path
 from ui.printing import _prepare_management_payload, generate_ft_gestao_reportbro_pdf
 from utils.paths import get_project_root
 
@@ -146,7 +144,7 @@ def test_build_reportbro_context_formats_sections():
     assert "Preços e IVA" in dataset["pricing_details"]
     assert "Ingredientes" in dataset["ingredients"]
     assert "Totais" in dataset["totals"]
-    assert isinstance(dataset["product_image"], (str, type(None)))
+    assert dataset["product_image_filename"] == ""
     assert dataset["Produtos_Codigo"] == "RB-01"
     assert dataset["Produtos_PCU"] == pytest.approx(12.5)
     assert dataset["Produtos_Descontinuado"] == "2024-05-01"
@@ -155,14 +153,18 @@ def test_build_reportbro_context_formats_sections():
     assert dataset[STATIC_SECTION_PARAMETER] == [{}]
 
 
-def test_build_reportbro_context_embeds_product_image(tmp_path):
+def test_build_reportbro_context_includes_product_image_filename(tmp_path):
     product = _sample_product()
     product.code = "RB-IMG"
+    product.produtos_row["codigo"] = product.code
+    product.precos_taxas_row["codigo"] = product.code
+    product.fichas_tecnicas_rows[0]["produtocodigo"] = product.code
 
-    image_path = get_image_path(product.code)
+    root = get_project_root()
+    image_path = root / "databases" / "images" / f"{product.code}.png"
     image_path.parent.mkdir(parents=True, exist_ok=True)
 
-    fallback_image = get_project_root() / "ui" / "no-image-thumb.png"
+    fallback_image = root / "ui" / "no-image-thumb.png"
     image_bytes = fallback_image.read_bytes()
     image_path.write_bytes(image_bytes)
 
@@ -170,11 +172,7 @@ def test_build_reportbro_context_embeds_product_image(tmp_path):
         payload = _prepare_management_payload(product)
         dataset = build_reportbro_context(payload)
 
-        assert isinstance(dataset["product_image"], str)
-        prefix, encoded = dataset["product_image"].split(",", 1)
-        assert prefix.startswith("data:image/")
-        decoded = base64.b64decode(encoded)
-        assert decoded == image_bytes
+        assert dataset["product_image_filename"] == str(image_path)
         assert dataset["product_image_path"] == str(image_path)
     finally:
         if image_path.exists():
@@ -182,24 +180,93 @@ def test_build_reportbro_context_embeds_product_image(tmp_path):
 
 
 def test_reportbro_pdf_generation(tmp_path):
-    payload = _prepare_management_payload(_sample_product())
-    dataset = build_reportbro_context(payload)
+    product = _sample_product()
+    root = get_project_root()
+    image_path = root / "databases" / "images" / f"{product.code}.png"
+    image_path.parent.mkdir(parents=True, exist_ok=True)
+    fallback_image = root / "ui" / "no-image-thumb.png"
+    image_path.write_bytes(fallback_image.read_bytes())
 
-    template = load_template_definition(Path("reporting/templates/ft_gestao_02.json"))
-    destination = tmp_path / "gestao_reportbro.pdf"
+    try:
+        payload = _prepare_management_payload(product)
+        dataset = build_reportbro_context(payload)
 
-    render_pdf_to_path(template, dataset, destination)
+        template = load_template_definition(Path("reporting/templates/ft_gestao_02.json"))
+        destination = tmp_path / "gestao_reportbro.pdf"
 
-    assert destination.exists()
-    streams = _extract_pdf_streams(destination)
-    combined = "\n".join(streams)
-    assert "CÓDIGO" in combined
-    assert "NOME:" in combined
+        render_pdf_to_path(template, dataset, destination)
+
+        assert destination.exists()
+        streams = _extract_pdf_streams(destination)
+        combined = "\n".join(streams)
+        assert "CÓDIGO" in combined
+        assert "NOME:" in combined
+    finally:
+        if image_path.exists():
+            image_path.unlink()
+
+
+def test_reportbro_template_without_image_element(tmp_path, caplog):
+    product = _sample_product()
+    product.code = "RB-TEMPLATE"
+    product.produtos_row["codigo"] = product.code
+    product.precos_taxas_row["codigo"] = product.code
+    product.fichas_tecnicas_rows[0]["produtocodigo"] = product.code
+
+    root = get_project_root()
+    image_path = root / "databases" / "images" / f"{product.code}.png"
+    image_path.parent.mkdir(parents=True, exist_ok=True)
+    fallback_image = root / "ui" / "no-image-thumb.png"
+    image_path.write_bytes(fallback_image.read_bytes())
+
+    template_path = Path("app/templates_store/templates/ft_gestao_02.json")
+    template = json.loads(template_path.read_text())
+    template["docElements"] = [
+        element
+        for element in template.get("docElements", [])
+        if not (
+            isinstance(element, dict)
+            and element.get("elementType") == "image"
+            and element.get("imageFilename", "").strip() == "${product_image_filename}"
+        )
+    ]
+
+    stripped_template_path = tmp_path / "ft_gestao_no_image.json"
+    stripped_template_path.write_text(json.dumps(template))
+
+    destination = tmp_path / "gestao_no_image.pdf"
+    caplog.set_level(logging.WARNING, logger="ui.printing")
+
+    try:
+        result = generate_ft_gestao_reportbro_pdf(
+            product,
+            template_path=stripped_template_path,
+            destination=destination,
+        )
+
+        assert destination.exists()
+        assert result == destination
+        warning_messages = [
+            record.getMessage() for record in caplog.records if record.levelno == logging.WARNING
+        ]
+        assert not any(
+            "Imagem de produto inexistente" in message
+            or "Produtos_Codigo em falta" in message
+            for message in warning_messages
+        )
+    finally:
+        if image_path.exists():
+            image_path.unlink()
 
 
 def test_reportbro_pdf_generation_with_extra_template_parameter(tmp_path, caplog):
     caplog.set_level(logging.WARNING)
     product = _sample_product()
+    root = get_project_root()
+    image_path = root / "databases" / "images" / f"{product.code}.png"
+    image_path.parent.mkdir(parents=True, exist_ok=True)
+    fallback_image = root / "ui" / "no-image-thumb.png"
+    image_path.write_bytes(fallback_image.read_bytes())
 
     template_path = Path("app/templates_store/templates/ft_gestao_02.json")
     template = json.loads(template_path.read_text())
@@ -211,16 +278,20 @@ def test_reportbro_pdf_generation_with_extra_template_parameter(tmp_path, caplog
     custom_template_path.write_text(json.dumps(template))
 
     destination = tmp_path / "gestao_reportbro_extra.pdf"
-    result = generate_ft_gestao_reportbro_pdf(
-        product,
-        template_path=custom_template_path,
-        destination=destination,
-    )
+    try:
+        result = generate_ft_gestao_reportbro_pdf(
+            product,
+            template_path=custom_template_path,
+            destination=destination,
+        )
 
-    assert destination.exists()
-    assert result == destination
-    warnings = [record for record in caplog.records if record.levelno == logging.WARNING]
-    assert any("Extra_Parameter" in record.getMessage() for record in warnings)
+        assert destination.exists()
+        assert result == destination
+        warnings = [record for record in caplog.records if record.levelno == logging.WARNING]
+        assert any("Extra_Parameter" in record.getMessage() for record in warnings)
+    finally:
+        if image_path.exists():
+            image_path.unlink()
 
 
 def test_load_template_definition_normalises_ft_gestao_template():
