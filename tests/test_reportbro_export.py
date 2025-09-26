@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import base64
+import json
+from datetime import datetime
 from pathlib import Path
 
-import base64
-from datetime import datetime
-
 import pytest
+from app.server.routes_reportbro import _normalise_template_payload
 from domain.models import Ingredient, Product
 from reporting.ft_gestao import build_reportbro_context
 from reporting.reportbro_export import load_template_definition, render_pdf_to_path
@@ -191,3 +192,39 @@ def test_reportbro_pdf_generation(tmp_path):
     combined = "\n".join(streams)
     assert "Ficha Técnica de Gestão" in combined
     assert "ingredientes" in combined.lower()
+
+
+def test_load_template_definition_normalises_ft_gestao_template():
+    template_path = Path("app/templates_store/templates/ft_gestao_02.json")
+    template = load_template_definition(template_path)
+
+    assert all(isinstance(style.get("id"), str) for style in template.get("styles", []))
+
+    text_elements = [
+        element
+        for element in template.get("docElements", [])
+        if isinstance(element, dict) and element.get("elementType") == "text"
+    ]
+    assert text_elements, "expected at least one text element"
+    for element in text_elements:
+        assert isinstance(element.get("styleId", ""), str)
+        assert isinstance(element.get("printIf", ""), str)
+        assert element.get("richTextContent", "") == ""
+        assert isinstance(element.get("richTextHtml", ""), str)
+
+
+def test_template_payload_normalisation_discards_extra_metadata():
+    raw_template = json.loads(Path("app/templates_store/templates/ft_gestao_02.json").read_text())
+    raw_template["designerState"] = {"zoom": 125}
+
+    payload = {"template": raw_template, "other": "ignored"}
+    template, extras = _normalise_template_payload(payload)
+
+    assert "designerState" not in template
+    assert extras == {"designerState": {"zoom": 125}}
+    assert all(isinstance(style.get("id"), str) for style in template.get("styles", []))
+    assert all(
+        isinstance(element.get("styleId", ""), str)
+        for element in template.get("docElements", [])
+        if isinstance(element, dict)
+    )

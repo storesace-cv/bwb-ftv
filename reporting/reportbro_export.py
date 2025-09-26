@@ -13,6 +13,8 @@ try:  # pragma: no cover - exercised only when the dependency is available
 except ModuleNotFoundError:  # pragma: no cover - fallback used in CI and dev without reportbro-lib
     from ._stubs.reportbro import Report, ReportBroError
 
+from .reportbro_normalizer import normalise_template
+
 logger = logging.getLogger(__name__)
 
 
@@ -39,7 +41,8 @@ def load_template_definition(source: str | Path | Mapping[str, Any]) -> dict[str
     """
 
     if isinstance(source, Mapping):
-        return dict(source)
+        normalised, _ = normalise_template(source)
+        return normalised
 
     path = Path(source)
     try:
@@ -59,7 +62,8 @@ def load_template_definition(source: str | Path | Mapping[str, Any]) -> dict[str
             f"ReportBro template {path} must be a JSON object"
         )
 
-    return template
+    normalised, _ = normalise_template(template)
+    return normalised
 
 
 def _format_errors(errors: list[Any]) -> str:
