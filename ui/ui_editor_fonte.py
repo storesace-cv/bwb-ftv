@@ -181,6 +181,7 @@ from .dialogs import (
     backup_database,
     restore_database,
     edit_fcost_values,
+    ActiveModelsDialog,
 )
 from .printing import (
     ExportCancelled,
@@ -748,47 +749,23 @@ class FTApp(QWidget):
                 "Não foi possível abrir o modelo seleccionado. Consulte os registos para mais detalhes.",
             )
 
-    def _on_select_active_model(self, kind: str) -> None:
-        """Allow the user to select and persist an active ReportBro template."""
+    def _open_active_models_dialog(self) -> None:
+        """Open the Active Models dialog modally."""
 
-        default_folder = printing_models.PROJECT_ROOT / "reporting" / "templates"
-        default_folder.mkdir(parents=True, exist_ok=True)
-
-        template_path_str, _ = QFileDialog.getOpenFileName(
-            self,
-            "Selecionar template ReportBro",
-            str(default_folder),
-            "Modelos ReportBro (*.json)",
-        )
-        if not template_path_str:
-            return
-
-        template_path = Path(template_path_str)
-        folder_path = template_path.parent
         try:
-            printing_models.save_active_model(kind, folder_path, template_path)
-        except Exception as exc:  # pragma: no cover - safeguard against unexpected failures
-            logger.exception(
-                "[ReportBro] Falha ao guardar modelo activo '%s' em %s", kind, template_path
-            )
+            dialog = ActiveModelsDialog(self)
+        except Exception as exc:  # pragma: no cover - defensive safeguard
+            logger.exception("[ReportBro] Falha ao criar diálogo de modelos activos")
             QMessageBox.critical(
                 self,
                 APP_TITLE,
-                "Não foi possível guardar o modelo selecionado."
-                " Verifique as permissões da pasta e tente novamente."
+                "Não foi possível abrir o diálogo de modelos activos."
+                " Consulte os registos para mais detalhes."
                 f"\nErro: {exc}",
             )
             return
 
-        logger.info(
-            "[ReportBro] Modelo activo '%s' actualizado para %s", kind, template_path
-        )
-        QMessageBox.information(
-            self,
-            APP_TITLE,
-            "Modelo activo actualizado com sucesso:\n"
-            f"{template_path}",
-        )
+        exec_modal(dialog)
 
     def _on_print_ft_gestao_actual(self) -> None:
         """Export the currently loaded product as FT Gestão (single record)."""
@@ -1029,21 +1006,9 @@ class FTApp(QWidget):
         actDocEditor = QAction("Editor de Documentos", self)
         apply_menu_font(actDocEditor)
         gestao_docs_menu.addAction(actDocEditor)
-        modelos_ativos_menu = gestao_docs_menu.addMenu("Modelos Activos")
-        apply_menu_font(modelos_ativos_menu)
-        modelos_ativos_actions = {
-            "FT's Gestão (filtro)": "ft_gestao_filtro",
-            "FT's Gestão (Actual)": "ft_gestao_actual",
-            "FT's Operacionais (filtro)": "ft_operacionais_filtro",
-            "FT's Operacionais (Actual)": "ft_operacionais_actual",
-        }
-        for action_label, key in modelos_ativos_actions.items():
-            action = QAction(action_label, self)
-            apply_menu_font(action)
-            modelos_ativos_menu.addAction(action)
-            action.triggered.connect(
-                lambda _checked=False, kind=key: self._on_select_active_model(kind)
-            )
+        actActiveModels = QAction("Modelos Activos", self)
+        apply_menu_font(actActiveModels)
+        gestao_docs_menu.addAction(actActiveModels)
         mUtil.addMenu(gestao_docs_menu)
         mUtil.addSeparator()
         actTheme = QAction("Tema", self)
@@ -1064,6 +1029,7 @@ class FTApp(QWidget):
         actPrintGestaoActual.triggered.connect(self._on_print_ft_gestao_actual)
         actUpdate.triggered.connect(self._on_update_data)
         actDocEditor.triggered.connect(self._open_reportbro_editor)
+        actActiveModels.triggered.connect(self._open_active_models_dialog)
         actBackup.triggered.connect(lambda: backup_database(self, self.ds))
         actRestore.triggered.connect(
             lambda: restore_database(self, self.ds, self._after_restore)
