@@ -860,6 +860,72 @@ class DataStore:
 
         return {}
 
+    def _lookup_aux_row(self, table: str, codigo: Any) -> dict[str, Any]:
+        """Lookup ``(Cod, Descricao)`` from an auxiliary table.
+
+        The *table* argument must reference a known auxiliary table. Results
+        are normalised with lowercase keys so that downstream consumers receive
+        ``{"cod": ..., "descricao": ...}`` regardless of the SQLite casing.
+        """
+
+        if codigo in (None, ""):
+            return {}
+
+        conn = getattr(self, "conn", None)
+        if conn is None:
+            return {}
+
+        allowed_tables = {
+            "TiposArtigos": "[DataStore] get_tipos_artigos_row",
+            "Validade": "[DataStore] get_validade_row",
+            "Temperaturas": "[DataStore] get_temperaturas_row",
+        }
+        log_label = allowed_tables.get(table)
+        if log_label is None:
+            return {}
+
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                f"SELECT Cod, Descricao FROM {table} WHERE Cod = ? ORDER BY rowid LIMIT 1",
+                (codigo,),
+            )
+            row = cur.fetchone()
+        except sqlite3.Error as exc:
+            logger.error("%s(%s) falhou: %s", log_label, codigo, exc, exc_info=True)
+            return {}
+
+        if not row:
+            return {}
+
+        if hasattr(row, "keys"):
+            return {key.lower(): row[key] for key in row.keys() if key}
+
+        try:
+            columns = [col[0].lower() for col in cur.description or []]
+        except Exception:
+            columns = []
+
+        if columns and isinstance(row, tuple):
+            return {columns[idx]: value for idx, value in enumerate(row)}
+
+        return {}
+
+    def get_tipos_artigos_row(self, codigo: Any) -> dict[str, Any]:
+        """Return ``{"cod", "descricao"}`` for ``TiposArtigos``."""
+
+        return self._lookup_aux_row("TiposArtigos", codigo)
+
+    def get_validade_row(self, codigo: Any) -> dict[str, Any]:
+        """Return ``{"cod", "descricao"}`` for ``Validade``."""
+
+        return self._lookup_aux_row("Validade", codigo)
+
+    def get_temperaturas_row(self, codigo: Any) -> dict[str, Any]:
+        """Return ``{"cod", "descricao"}`` for ``Temperaturas``."""
+
+        return self._lookup_aux_row("Temperaturas", codigo)
+
     def get_ingredientes(self, codigo: str):
         if not self.ingredientes:
             return []
