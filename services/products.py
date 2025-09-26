@@ -742,6 +742,7 @@ def get_product_info(ds: DataStore, codigo: str) -> Product:
     pvps: dict[str, list[float | None] | float | None] = (
         ds.get_pvps(codigo) if ds else {}
     )
+    precos_taxas_row = ds.get_precos_taxas_row(codigo) if ds else {}
     prices = pvps.get("pvps") or []
     iva = pvps.get("iva")
     ing_rows = ds.get_ingredientes(codigo) if ds else []
@@ -779,6 +780,11 @@ def get_product_info(ds: DataStore, codigo: str) -> Product:
         pvps=prices,
         iva=iva,
         ingredients=ingredients,
+        produtos_row=dict(info) if isinstance(info, dict) else None,
+        fichas_tecnicas_rows=list(ing_rows),
+        precos_taxas_row=dict(precos_taxas_row)
+        if isinstance(precos_taxas_row, dict)
+        else None,
     )
 
 

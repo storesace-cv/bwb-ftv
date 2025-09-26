@@ -3,7 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import base64
+from datetime import datetime
 
+import pytest
 from domain.models import Ingredient, Product
 from reporting.ft_gestao import build_reportbro_context
 from reporting.reportbro_export import load_template_definition, render_pdf_to_path
@@ -39,7 +41,7 @@ def _extract_pdf_streams(path: Path) -> list[str]:
 
 
 def _sample_product() -> Product:
-    return Product(
+    product = Product(
         code="RB-01",
         name="Produto ReportBro",
         familia="Família",
@@ -72,6 +74,65 @@ def _sample_product() -> Product:
         ],
     )
 
+    product.produtos_row = {
+        "codigo": "RB-01",
+        "produto": "Produto ReportBro",
+        "familia": "Família",
+        "subfamilia": "Sub",
+        "afetastk": "Sim",
+        "menu": "Principal",
+        "codbarras": "1234567890123",
+        "tipomercad": "Canal",
+        "tipovenda": "Direta",
+        "tipoproducao": "Manual",
+        "tipogener": "G",
+        "unstockvmpg": "kg",
+        "unvendavmv": "kg",
+        "uninvvmmpg": "kg",
+        "unproduftpv": "kg",
+        "codauxiliar": "AUX1",
+        "codauxiliar2": "AUX2",
+        "pcu": "12,5",
+        "pcm": 8.75,
+        "descontinuado": datetime(2024, 5, 1),
+        "displojas": "Loja A",
+        "tipoartigo": 2,
+        "validade": 5,
+        "temperatura": 3,
+    }
+    product.fichas_tecnicas_rows = [
+        {
+            "familiasubfamilia": "Família>Sub",
+            "produtocodigo": "RB-01",
+            "produtonome": "Produto ReportBro",
+            "componentecodigo": "IA-01",
+            "componentenome": "Ingrediente A",
+            "qtd": 1.25,
+            "unidade": "kg",
+            "ppu": 2.5,
+            "preco": 3.125,
+            "peso": 1.25,
+            "ordem": 1,
+        }
+    ]
+    product.precos_taxas_row = {
+        "codigo": "RB-01",
+        "loja": "Loja Central",
+        "ativo": "Sim",
+        "preco1": 10.0,
+        "preco2": 15.5,
+        "preco3": None,
+        "preco4": None,
+        "preco5": None,
+        "iva1": 23,
+        "iva2": 6,
+        "isencaoiva": "",
+        "nomeprodvenda": "Produto ReportBro",
+        "familia": "Família",
+        "subfamilia": "Sub",
+    }
+    return product
+
 
 def test_build_reportbro_context_formats_sections():
     payload = _prepare_management_payload(_sample_product())
@@ -83,6 +144,11 @@ def test_build_reportbro_context_formats_sections():
     assert "Ingredientes" in dataset["ingredients"]
     assert "Totais" in dataset["totals"]
     assert isinstance(dataset["product_image"], (str, type(None)))
+    assert dataset["Produtos_Codigo"] == "RB-01"
+    assert dataset["Produtos_PCU"] == pytest.approx(12.5)
+    assert dataset["Produtos_Descontinuado"] == "2024-05-01"
+    assert dataset["FichasTecnicas_ComponenteNome"] == "Ingrediente A"
+    assert dataset["PrecosTaxas_Preco1"] == pytest.approx(10.0)
 
 
 def test_build_reportbro_context_embeds_product_image(tmp_path):
