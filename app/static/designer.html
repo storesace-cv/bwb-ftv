@@ -199,6 +199,7 @@
         version: 7,
         docElements: [],
         parameters: [],
+        dataSets: [],
         styles: [],
         watermarks: [],
         documentProperties: { ...DEFAULT_DOCUMENT_PROPERTIES },
@@ -210,6 +211,7 @@
         if (typeof report.version !== "number") report.version = 7;
         if (!Array.isArray(report.docElements)) report.docElements = [];
         if (!Array.isArray(report.parameters)) report.parameters = [];
+        if (!Array.isArray(report.dataSets)) report.dataSets = [];
         if (!Array.isArray(report.styles)) report.styles = [];
         if (!Array.isArray(report.watermarks)) report.watermarks = [];
 
