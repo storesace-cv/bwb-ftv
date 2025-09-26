@@ -823,6 +823,43 @@ class DataStore:
             )
             return {"pvps": [], "iva": None}
 
+    def get_precos_taxas_row(self, codigo: str) -> dict[str, Any]:
+        conn = getattr(self, "conn", None)
+        if conn is None:
+            return {}
+
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT * FROM PrecosTaxas WHERE Codigo = ? ORDER BY rowid LIMIT 1",
+                (codigo,),
+            )
+            row = cur.fetchone()
+        except sqlite3.Error as exc:
+            logger.error(
+                "[DataStore] get_precos_taxas_row(%s) falhou: %s",
+                codigo,
+                exc,
+                exc_info=True,
+            )
+            return {}
+
+        if not row:
+            return {}
+
+        if hasattr(row, "keys"):
+            return {k.lower(): row[k] for k in row.keys()}
+
+        try:
+            columns = [col[1].lower() for col in cur.description or []]
+        except Exception:
+            columns = []
+
+        if columns and isinstance(row, tuple):
+            return {columns[idx]: value for idx, value in enumerate(row)}
+
+        return {}
+
     def get_ingredientes(self, codigo: str):
         if not self.ingredientes:
             return []

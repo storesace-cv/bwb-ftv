@@ -6,9 +6,9 @@ import json
 import logging
 import re
 from collections.abc import Iterable as IterableABC
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 try:  # pragma: no cover - import guard depends on environment
     from PyQt5.QtCore import QRectF, QSizeF, Qt
@@ -29,6 +29,10 @@ from reporting import (
     build_reportbro_context,
     load_template_definition,
     render_pdf_to_path,
+)
+from reporting.ft_gestao_schema import (
+    FT_GESTAO_PARAMETER_DEFINITIONS,
+    default_for_parameter,
 )
 from services.products import calculate_food_cost, get_image_path
 from utils.formatting import parse_decimal
@@ -109,6 +113,38 @@ def generate_ft_gestao_pdf(
     return destination
 
 
+def _validate_reportbro_inputs(
+    template: Mapping[str, Any],
+    dataset: Mapping[str, Any],
+    warnings: Iterable[Mapping[str, Any]] | None,
+) -> None:
+    expected: set[str] = {
+        param.get("name")
+        for param in template.get("parameters", [])
+        if isinstance(param, Mapping) and isinstance(param.get("name"), str)
+    }
+    missing = sorted(name for name in expected if name not in dataset)
+    if missing:
+        raise ValueError(
+            "Dados em falta para os parâmetros ReportBro: " + ", ".join(missing)
+        )
+
+    for warning in warnings or []:
+        field = warning.get("field")
+        reason = warning.get("reason")
+        original = warning.get("original")
+        normalised = warning.get("normalised")
+        if not field or not reason:
+            continue
+        logger.warning(
+            "[ReportBro] Valor normalizado para %s: %r → %r (%s)",
+            field,
+            original,
+            normalised,
+            reason,
+        )
+
+
 def generate_ft_gestao_reportbro_pdf(
     product: Product,
     *,
@@ -124,6 +160,14 @@ def generate_ft_gestao_reportbro_pdf(
 
     template_location = _resolve_reportbro_template_location(template_path)
     template = load_template_definition(template_location)
+
+    reportbro_metadata = payload.get("reportbro", {}) if isinstance(payload, Mapping) else {}
+    warnings = (
+        reportbro_metadata.get("warnings")
+        if isinstance(reportbro_metadata, Mapping)
+        else []
+    )
+    _validate_reportbro_inputs(template, dataset, warnings)
 
     if destination is None:
         destination = _prompt_pdf_destination(product_obj, parent=parent)
@@ -181,6 +225,251 @@ def _validate_product(product: Product) -> Product:
     return product
 
 
+def _normalise_mapping(record: Any) -> dict[str, Any]:
+    if not isinstance(record, Mapping):
+        return {}
+    return {str(key).lower(): value for key, value in record.items() if isinstance(key, str)}
+
+
+def _normalise_rows(rows: Iterable[Any]) -> list[dict[str, Any]]:
+    normalised: list[dict[str, Any]] = []
+    for row in rows or []:
+        normalised.append(_normalise_mapping(row))
+    return normalised
+
+
+def _build_produtos_fallback(product: Product) -> dict[str, Any]:
+    fallback: dict[str, Any] = {}
+    if product.code:
+        fallback["codigo"] = product.code
+    if product.name:
+        fallback["produto"] = product.name
+    if product.familia:
+        fallback["familia"] = product.familia
+    if product.subfamilia:
+        fallback["subfamilia"] = product.subfamilia
+    if product.tipo_artigo_cod is not None:
+        fallback["tipoartigo"] = product.tipo_artigo_cod
+    if product.validade_cod is not None:
+        fallback["validade"] = product.validade_cod
+    if product.temperatura_cod is not None:
+        fallback["temperatura"] = product.temperatura_cod
+    return fallback
+
+
+def _build_precos_fallback(product: Product) -> dict[str, Any]:
+    fallback: dict[str, Any] = {}
+    if product.code:
+        fallback["codigo"] = product.code
+    if product.name:
+        fallback["nomeprodvenda"] = product.name
+    if product.familia:
+        fallback["familia"] = product.familia
+    if product.subfamilia:
+        fallback["subfamilia"] = product.subfamilia
+
+    pvps = list(getattr(product, "pvps", []) or [])
+    for idx in range(1, 6):
+        try:
+            price = pvps[idx - 1]
+        except IndexError:
+            price = None
+        if price in (None, ""):
+            continue
+        fallback[f"preco{idx}"] = price
+
+    iva = getattr(product, "iva", None)
+    if iva not in (None, ""):
+        fallback["iva1"] = iva
+
+    return fallback
+
+
+def _build_ficha_fallback(
+    product: Product, ingredient_rows: Iterable[Mapping[str, Any]]
+) -> dict[str, Any]:
+    fallback: dict[str, Any] = {}
+    if product.code:
+        fallback["produtocodigo"] = product.code
+    if product.name:
+        fallback["produtonome"] = product.name
+
+    familia = product.familia or ""
+    subfamilia = product.subfamilia or ""
+    if familia and subfamilia:
+        fallback["familiasubfamilia"] = f"{familia}>{subfamilia}"
+    elif familia or subfamilia:
+        fallback["familiasubfamilia"] = familia or subfamilia
+
+    ingredient_list = list(ingredient_rows or [])
+    if ingredient_list:
+        first = ingredient_list[0]
+        name = first.get("nome")
+        if name:
+            fallback["componentenome"] = name
+        code = first.get("codigo")
+        if code:
+            fallback["componentecodigo"] = code
+        for src_key, dst_key in [
+            ("quantidade", "qtd"),
+            ("unidade", "unidade"),
+            ("ppu", "ppu"),
+            ("total", "preco"),
+            ("peso", "peso"),
+            ("ordem", "ordem"),
+        ]:
+            if first.get(src_key) not in (None, ""):
+                fallback[dst_key] = first.get(src_key)
+
+    return fallback
+
+
+def _coerce_text_value(value: Any) -> tuple[str, str | None]:
+    if value is None:
+        return "", "missing-text"
+    if isinstance(value, (date, datetime)):
+        return value.strftime("%Y-%m-%d"), None
+    text = str(value).strip()
+    if not text:
+        return "", "missing-text"
+    return text, None
+
+
+def _parse_date_string(value: str) -> date | None:
+    cleaned = value.strip()
+    if not cleaned:
+        return None
+    if not any(ch.isdigit() for ch in cleaned):
+        return None
+
+    try:
+        parsed = datetime.fromisoformat(cleaned)
+    except ValueError:
+        parsed = None
+    if parsed is not None:
+        return parsed.date()
+
+    for pattern in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y"):
+        try:
+            parsed_dt = datetime.strptime(cleaned, pattern)
+        except ValueError:
+            continue
+        return parsed_dt.date()
+
+    return None
+
+
+def _normalise_date_value(value: Any) -> tuple[str, str | None]:
+    if value is None:
+        return "", "missing-date"
+    if isinstance(value, datetime):
+        return value.date().isoformat(), None
+    if isinstance(value, date):
+        return value.isoformat(), None
+    text = str(value).strip()
+    if not text:
+        return "", "missing-date"
+    parsed = _parse_date_string(text)
+    if parsed is None:
+        # Preserve text that clearly isn't a date (e.g. "Sim")
+        if not any(ch.isdigit() for ch in text):
+            return text, None
+        return "", "invalid-date"
+    return parsed.isoformat(), None
+
+
+def _coerce_number_value(
+    value: Any, numeric_type: str | None
+) -> tuple[int | float, str | None]:
+    if value in (None, ""):
+        default = 0 if numeric_type != "int" else 0
+        return default, "missing-number"
+
+    if isinstance(value, bool):
+        value = int(value)
+
+    if isinstance(value, (int, float)):
+        number = float(value)
+    else:
+        candidate = value
+        if isinstance(candidate, str):
+            candidate = parse_decimal(candidate)
+        try:
+            number = float(candidate)
+        except (TypeError, ValueError):
+            number = None
+
+    if number is None:
+        default = 0 if numeric_type != "int" else 0
+        return default, "invalid-number"
+
+    if numeric_type == "int":
+        try:
+            return int(round(number)), None
+        except (TypeError, ValueError):
+            return 0, "invalid-number"
+
+    return float(number), None
+
+
+def _build_reportbro_parameters(
+    product: Product,
+    ingredient_rows: Iterable[Mapping[str, Any]],
+    *,
+    raw_produtos: Mapping[str, Any] | None = None,
+    raw_fichas: Iterable[Mapping[str, Any]] | None = None,
+    raw_precos: Mapping[str, Any] | None = None,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    produtos = _build_produtos_fallback(product)
+    produtos.update(_normalise_mapping(raw_produtos))
+
+    precos = _build_precos_fallback(product)
+    precos.update(_normalise_mapping(raw_precos))
+
+    fichas_normalised = _normalise_rows(raw_fichas or [])
+    ficha_base = _build_ficha_fallback(product, ingredient_rows)
+    if fichas_normalised:
+        ficha_base.update(fichas_normalised[0])
+
+    parameters: dict[str, Any] = {}
+    warnings: list[dict[str, Any]] = []
+
+    for name, meta in FT_GESTAO_PARAMETER_DEFINITIONS.items():
+        section = meta.get("section")
+        field = meta.get("field")
+        if section == "produtos":
+            raw_value = produtos.get(field)
+        elif section == "fichas_tecnicas":
+            raw_value = ficha_base.get(field)
+        elif section == "precos_taxas":
+            raw_value = precos.get(field)
+        else:
+            raw_value = None
+
+        if meta.get("format") == "date":
+            coerced, reason = _normalise_date_value(raw_value)
+        elif meta.get("type") == "number":
+            coerced, reason = _coerce_number_value(raw_value, meta.get("numeric_type"))
+        else:
+            coerced, reason = _coerce_text_value(raw_value)
+
+        parameters[name] = coerced
+        if reason:
+            warnings.append(
+                {
+                    "field": name,
+                    "original": raw_value,
+                    "normalised": coerced,
+                    "reason": reason,
+                }
+            )
+
+    for name in FT_GESTAO_PARAMETER_DEFINITIONS:
+        parameters.setdefault(name, default_for_parameter(name))
+
+    return parameters, warnings
+
+
 def _prepare_management_payload(product: Product) -> dict[str, Any]:
     identifier = product.code or product.name or "<desconhecido>"
     generated_at = datetime.now().isoformat(timespec="seconds")
@@ -226,11 +515,23 @@ def _prepare_management_payload(product: Product) -> dict[str, Any]:
         },
     }
 
+    reportbro_params, reportbro_warnings = _build_reportbro_parameters(
+        product,
+        ing_data,
+        raw_produtos=getattr(product, "produtos_row", None),
+        raw_fichas=getattr(product, "fichas_tecnicas_rows", None),
+        raw_precos=getattr(product, "precos_taxas_row", None),
+    )
+
     return {
         "identifier": identifier,
         "generated_at": generated_at,
         "page_title": "Ficha Técnica de Gestão",
         "blocks": blocks,
+        "reportbro": {
+            "parameters": reportbro_params,
+            "warnings": reportbro_warnings,
+        },
     }
 
 

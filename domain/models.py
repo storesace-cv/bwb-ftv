@@ -1,7 +1,7 @@
 """Domain models for FTV project."""
 
 from dataclasses import dataclass, field
-from typing import List
+from typing import Any, List
 
 
 @dataclass
@@ -45,3 +45,6 @@ class Product:
     pvps: List[float | None] = field(default_factory=list)
     iva: float | None = None
     ingredients: List[Ingredient] = field(default_factory=list)
+    produtos_row: dict[str, Any] | None = None
+    fichas_tecnicas_rows: List[dict[str, Any]] = field(default_factory=list)
+    precos_taxas_row: dict[str, Any] | None = None

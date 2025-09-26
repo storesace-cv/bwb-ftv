@@ -9,6 +9,11 @@ from typing import Any, Iterable, Mapping
 
 from utils.paths import get_project_root
 
+from .ft_gestao_schema import (
+    FT_GESTAO_PARAMETER_DEFINITIONS,
+    default_for_parameter,
+)
+
 
 def _format_number(value: Any, *, decimals: int = 2) -> str:
     try:
@@ -316,8 +321,19 @@ def _build_totals_lines(totals: Mapping[str, str]) -> str:
     )
 
 
-def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, str]:
+def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
     """Convert ``generate_ft_gestao`` payload to the ReportBro dataset structure."""
+
+    parameters: dict[str, Any] = {}
+    if isinstance(payload, Mapping):
+        reportbro_section = payload.get("reportbro")
+        if isinstance(reportbro_section, Mapping):
+            provided = reportbro_section.get("parameters")
+            if isinstance(provided, Mapping):
+                parameters.update(provided)
+
+    for name in FT_GESTAO_PARAMETER_DEFINITIONS:
+        parameters.setdefault(name, default_for_parameter(name))
 
     blocks = payload.get("blocks", {})
     block_b1 = blocks.get("B1", {})
@@ -347,37 +363,41 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, str]:
         else page_title
     )
 
-    return {
-        "title": page_title,
-        "subtitle": subtitle or _format_optional(payload.get("identifier")),
-        "metadata": metadata,
-        "product_details": _build_product_section(block_b1),
-        "pricing_details": _build_pricing_section(block_b3),
-        "ingredients": _build_ingredients_section(block_b2),
-        "totals": _build_totals_section(block_b2),
-        "product_data": product_data,
-        "pricing_data": {
-            "iva": _format_percentage(block_b3.get("iva")),
-            "rows": pricing_rows,
-        },
-        "product_codigo": product_data["codigo"],
-        "product_nome": product_data["nome"],
-        "product_familia": product_data["familia"],
-        "product_subfamilia": product_data["subfamilia"],
-        "product_tipo_artigo_cod": product_data["tipo_artigo_cod"],
-        "product_validade_cod": product_data["validade_cod"],
-        "product_temperatura_cod": product_data["temperatura_cod"],
-        "product_informacao_adicional": product_data["informacao_adicional"],
-        "product_image_path": product_data["image_path"],
-        "product_image": product_image_bytes,
-        "pricing_rows": pricing_rows,
-        "pricing_lines": pricing_lines,
-        "pricing_iva": _format_percentage(block_b3.get("iva")),
-        "ingredients_data": ingredients_rows,
-        "ingredients_lines": ingredients_lines,
-        "totals_data": totals_data,
-        "totals_lines": totals_lines,
-        "totals_custo_total": totals_data["custo_total"],
-        "totals_peso_total": totals_data["peso_total"],
-        "totals_num_ingredientes": totals_data["num_ingredientes"],
-    }
+    dataset: dict[str, Any] = dict(parameters)
+    dataset.update(
+        {
+            "title": page_title,
+            "subtitle": subtitle or _format_optional(payload.get("identifier")),
+            "metadata": metadata,
+            "product_details": _build_product_section(block_b1),
+            "pricing_details": _build_pricing_section(block_b3),
+            "ingredients": _build_ingredients_section(block_b2),
+            "totals": _build_totals_section(block_b2),
+            "product_data": product_data,
+            "pricing_data": {
+                "iva": _format_percentage(block_b3.get("iva")),
+                "rows": pricing_rows,
+            },
+            "product_codigo": product_data["codigo"],
+            "product_nome": product_data["nome"],
+            "product_familia": product_data["familia"],
+            "product_subfamilia": product_data["subfamilia"],
+            "product_tipo_artigo_cod": product_data["tipo_artigo_cod"],
+            "product_validade_cod": product_data["validade_cod"],
+            "product_temperatura_cod": product_data["temperatura_cod"],
+            "product_informacao_adicional": product_data["informacao_adicional"],
+            "product_image_path": product_data["image_path"],
+            "product_image": product_image_bytes,
+            "pricing_rows": pricing_rows,
+            "pricing_lines": pricing_lines,
+            "pricing_iva": _format_percentage(block_b3.get("iva")),
+            "ingredients_data": ingredients_rows,
+            "ingredients_lines": ingredients_lines,
+            "totals_data": totals_data,
+            "totals_lines": totals_lines,
+            "totals_custo_total": totals_data["custo_total"],
+            "totals_peso_total": totals_data["peso_total"],
+            "totals_num_ingredientes": totals_data["num_ingredientes"],
+        }
+    )
+    return dataset
