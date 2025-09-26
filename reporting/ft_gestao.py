@@ -9,6 +9,8 @@ from typing import Any, Iterable, Mapping
 
 from utils.paths import get_project_root
 
+from .reportbro_normalizer import STATIC_SECTION_PARAMETER
+
 from .ft_gestao_schema import (
     FT_GESTAO_PARAMETER_DEFINITIONS,
     default_for_parameter,
@@ -400,4 +402,5 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
             "totals_num_ingredientes": totals_data["num_ingredientes"],
         }
     )
+    dataset[STATIC_SECTION_PARAMETER] = [{}]
     return dataset

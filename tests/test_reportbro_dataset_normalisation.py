@@ -7,6 +7,7 @@ import pytest
 from domain.models import Ingredient, Product
 from reporting.ft_gestao import build_reportbro_context
 from reporting.reportbro_export import load_template_definition
+from reporting.reportbro_normalizer import STATIC_SECTION_PARAMETER
 from ui.printing import _prepare_management_payload, _validate_reportbro_inputs
 
 
@@ -123,6 +124,7 @@ def test_reportbro_dataset_with_complete_data():
     assert dataset["FichasTecnicas_Qtd"] == pytest.approx(1.0)
     assert dataset["PrecosTaxas_Loja"] == "Loja X"
     assert not warnings
+    assert dataset[STATIC_SECTION_PARAMETER] == [{}]
 
 
 def test_missing_text_normalises_to_empty(caplog):

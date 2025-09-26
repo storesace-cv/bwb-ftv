@@ -22,7 +22,7 @@ def test_discover_reportbro_templates_lists_existing_templates(tmp_path, monkeyp
 def test_discover_reportbro_templates_default_directory_contains_fixture():
     discovered = discover_reportbro_templates()
     names = {path.name for path in discovered}
-    assert "ft_gestao_reportbro.json" in names
+    assert "ft_gestao_02.json" in names
 
 
 def test_offline_explanation_mentions_environment_variable():

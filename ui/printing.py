@@ -53,7 +53,7 @@ _REPORTBRO_STORE_TEMPLATE_DIR = (
     / "templates_store"
     / "templates"
 )
-_DEFAULT_REPORTBRO_TEMPLATE_NAME = "ft_gestao_reportbro.json"
+_DEFAULT_REPORTBRO_TEMPLATE_NAME = "ft_gestao_02.json"
 _DEFAULT_REPORTBRO_TEMPLATE = (
     _REPORTBRO_RUNTIME_TEMPLATE_DIR / _DEFAULT_REPORTBRO_TEMPLATE_NAME
 )
@@ -188,7 +188,15 @@ def _resolve_reportbro_template_location(
     """Resolve the template path, falling back to the template store if needed."""
 
     if template_path:
-        return Path(template_path)
+        candidate = Path(template_path)
+        if candidate.exists():
+            return candidate
+        message = (
+            "Não foi possível encontrar o template ReportBro solicitado em "
+            f"{candidate}."
+        )
+        logger.error("[ReportBro] %s", message)
+        raise FileNotFoundError(message)
 
     runtime_template = _DEFAULT_REPORTBRO_TEMPLATE
     if runtime_template.exists():
@@ -204,7 +212,14 @@ def _resolve_reportbro_template_location(
         )
         return store_template
 
-    return runtime_template
+    message = (
+        "Não foi possível localizar o template ReportBro "
+        f"'{_DEFAULT_REPORTBRO_TEMPLATE_NAME}'. "
+        "Confirme se o ficheiro existe em "
+        f"{runtime_template.parent} ou {store_template.parent}."
+    )
+    logger.error("[ReportBro] %s", message)
+    raise FileNotFoundError(message)
 
 
 def _validate_product(product: Product) -> Product:

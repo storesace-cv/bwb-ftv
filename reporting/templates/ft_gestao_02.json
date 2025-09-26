@@ -1,0 +1,599 @@
+{
+  "docElements": [
+    {
+      "containerId": "0_content",
+      "contentData": {
+        "alternateBackgroundColor": "",
+        "alwaysPrintOnSamePage": true,
+        "backgroundColor": "",
+        "containerId": "0_content",
+        "elementType": "none",
+        "height": 100,
+        "id": 7,
+        "linkedContainerId": 8,
+        "shrinkToContentHeight": false,
+        "styleId": ""
+      },
+      "dataSource": "",
+      "elementType": "section",
+      "footer": false,
+      "footerData": {
+        "alwaysPrintOnSamePage": true,
+        "backgroundColor": "",
+        "containerId": "0_content",
+        "elementType": "none",
+        "height": 100,
+        "id": 9,
+        "linkedContainerId": 10,
+        "shrinkToContentHeight": false,
+        "styleId": ""
+      },
+      "header": false,
+      "headerData": {
+        "backgroundColor": "",
+        "containerId": "0_content",
+        "elementType": "none",
+        "height": 100,
+        "id": 5,
+        "linkedContainerId": 6,
+        "repeatHeader": false,
+        "shrinkToContentHeight": false,
+        "styleId": ""
+      },
+      "id": 4,
+      "label": "Ficha de Artigo",
+      "printIf": "",
+      "y": 10
+    },
+    {
+      "alwaysPrintOnSamePage": true,
+      "backgroundColor": "",
+      "bold": true,
+      "borderAll": false,
+      "borderBottom": true,
+      "borderColor": "#000000",
+      "borderLeft": false,
+      "borderRight": false,
+      "borderTop": false,
+      "borderWidth": 1,
+      "containerId": 8,
+      "content": "CÓDIGO:",
+      "cs_additionalRules": "",
+      "cs_backgroundColor": "",
+      "cs_bold": false,
+      "cs_borderAll": false,
+      "cs_borderBottom": false,
+      "cs_borderColor": "#000000",
+      "cs_borderLeft": false,
+      "cs_borderRight": false,
+      "cs_borderTop": false,
+      "cs_borderWidth": "1",
+      "cs_condition": "",
+      "cs_font": "helvetica",
+      "cs_fontSize": 12,
+      "cs_horizontalAlignment": "left",
+      "cs_italic": false,
+      "cs_lineSpacing": 1,
+      "cs_paddingBottom": 2,
+      "cs_paddingLeft": 2,
+      "cs_paddingRight": 2,
+      "cs_paddingTop": 2,
+      "cs_strikethrough": false,
+      "cs_styleId": "",
+      "cs_textColor": "#000000",
+      "cs_underline": false,
+      "cs_verticalAlignment": "top",
+      "elementType": "text",
+      "eval": false,
+      "font": "helvetica",
+      "fontSize": 12,
+      "height": 20,
+      "horizontalAlignment": "right",
+      "id": 11,
+      "italic": false,
+      "lineSpacing": 1,
+      "link": "",
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "paddingRight": 0,
+      "paddingTop": 0,
+      "pattern": "",
+      "printIf": "",
+      "removeEmptyElement": false,
+      "richText": false,
+      "richTextContent": null,
+      "richTextHtml": "",
+      "spreadsheet_addEmptyRow": false,
+      "spreadsheet_colspan": "",
+      "spreadsheet_column": "",
+      "spreadsheet_hide": false,
+      "spreadsheet_pattern": "",
+      "spreadsheet_textWrap": false,
+      "spreadsheet_type": "",
+      "strikethrough": false,
+      "styleId": "1",
+      "textColor": "#000000",
+      "underline": false,
+      "verticalAlignment": "middle",
+      "width": 120,
+      "x": 10,
+      "y": 10
+    },
+    {
+      "alwaysPrintOnSamePage": true,
+      "backgroundColor": "",
+      "bold": true,
+      "borderAll": false,
+      "borderBottom": true,
+      "borderColor": "#000000",
+      "borderLeft": false,
+      "borderRight": false,
+      "borderTop": false,
+      "borderWidth": 1,
+      "containerId": 8,
+      "content": "NOME DO ARTIGO:",
+      "cs_additionalRules": "",
+      "cs_backgroundColor": "",
+      "cs_bold": false,
+      "cs_borderAll": false,
+      "cs_borderBottom": false,
+      "cs_borderColor": "#000000",
+      "cs_borderLeft": false,
+      "cs_borderRight": false,
+      "cs_borderTop": false,
+      "cs_borderWidth": "1",
+      "cs_condition": "",
+      "cs_font": "helvetica",
+      "cs_fontSize": 12,
+      "cs_horizontalAlignment": "left",
+      "cs_italic": false,
+      "cs_lineSpacing": 1,
+      "cs_paddingBottom": 2,
+      "cs_paddingLeft": 2,
+      "cs_paddingRight": 2,
+      "cs_paddingTop": 2,
+      "cs_strikethrough": false,
+      "cs_styleId": "",
+      "cs_textColor": "#000000",
+      "cs_underline": false,
+      "cs_verticalAlignment": "top",
+      "elementType": "text",
+      "eval": false,
+      "font": "helvetica",
+      "fontSize": 12,
+      "height": 20,
+      "horizontalAlignment": "right",
+      "id": 12,
+      "italic": false,
+      "lineSpacing": 1,
+      "link": "",
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "paddingRight": 0,
+      "paddingTop": 0,
+      "pattern": "",
+      "printIf": "",
+      "removeEmptyElement": false,
+      "richText": false,
+      "richTextContent": null,
+      "richTextHtml": "",
+      "spreadsheet_addEmptyRow": false,
+      "spreadsheet_colspan": "",
+      "spreadsheet_column": "",
+      "spreadsheet_hide": false,
+      "spreadsheet_pattern": "",
+      "spreadsheet_textWrap": false,
+      "spreadsheet_type": "",
+      "strikethrough": false,
+      "styleId": "1",
+      "textColor": "#000000",
+      "underline": false,
+      "verticalAlignment": "middle",
+      "width": 120,
+      "x": 10,
+      "y": 30
+    }
+  ],
+  "documentProperties": {
+    "contentHeight": "",
+    "footer": true,
+    "footerDisplay": "always",
+    "footerSize": 20,
+    "header": true,
+    "headerDisplay": "always",
+    "headerSize": 30,
+    "marginBottom": 20,
+    "marginLeft": 20,
+    "marginRight": 20,
+    "marginTop": 20,
+    "orientation": "portrait",
+    "pageHeight": "",
+    "pageSize": "A4",
+    "pageWidth": "",
+    "patternCurrencySymbol": "€",
+    "patternLocale": "pt_PT",
+    "patternNumberGroupSymbol": " ",
+    "unit": "mm",
+    "watermark": false
+  },
+  "parameters": [
+    {
+      "name": "Produtos_Codigo",
+      "type": "text",
+      "testData": "{Produtos_Codigo}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_Produto",
+      "type": "text",
+      "testData": "{Produtos_Produto}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_Familia",
+      "type": "text",
+      "testData": "{Produtos_Familia}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_SubFamilia",
+      "type": "text",
+      "testData": "{Produtos_SubFamilia}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_AfetaStk",
+      "type": "text",
+      "testData": "{Produtos_AfetaStk}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_Menu",
+      "type": "text",
+      "testData": "{Produtos_Menu}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_CodBarras",
+      "type": "text",
+      "testData": "{Produtos_CodBarras}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_TipoMercad",
+      "type": "text",
+      "testData": "{Produtos_TipoMercad}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_TipoVenda",
+      "type": "text",
+      "testData": "{Produtos_TipoVenda}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_TipoProducao",
+      "type": "text",
+      "testData": "{Produtos_TipoProducao}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_TipoGener",
+      "type": "text",
+      "testData": "{Produtos_TipoGener}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_UnStockVMPG",
+      "type": "text",
+      "testData": "{Produtos_UnStockVMPG}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_UnVendaVMV",
+      "type": "text",
+      "testData": "{Produtos_UnVendaVMV}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_UnInvVMMMPG",
+      "type": "text",
+      "testData": "{Produtos_UnInvVMMMPG}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_UnProduFtPV",
+      "type": "text",
+      "testData": "{Produtos_UnProduFtPV}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_CodAuxiliar",
+      "type": "text",
+      "testData": "{Produtos_CodAuxiliar}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_CodAuxiliar2",
+      "type": "text",
+      "testData": "{Produtos_CodAuxiliar2}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_PCU",
+      "type": "number",
+      "testData": 0.0,
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_PCM",
+      "type": "number",
+      "testData": 0.0,
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_Descontinuado",
+      "type": "text",
+      "testData": "{Produtos_Descontinuado}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_DispLojas",
+      "type": "text",
+      "testData": "{Produtos_DispLojas}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_TipoArtigo",
+      "type": "number",
+      "testData": 0,
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_Validade",
+      "type": "number",
+      "testData": 0,
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "Produtos_Temperatura",
+      "type": "number",
+      "testData": 0,
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "FichasTecnicas_FamiliaSubfamilia",
+      "type": "text",
+      "testData": "{FichasTecnicas_FamiliaSubfamilia}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "FichasTecnicas_ProdutoCodigo",
+      "type": "text",
+      "testData": "{FichasTecnicas_ProdutoCodigo}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "FichasTecnicas_ProdutoNome",
+      "type": "text",
+      "testData": "{FichasTecnicas_ProdutoNome}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "FichasTecnicas_ComponenteCodigo",
+      "type": "text",
+      "testData": "{FichasTecnicas_ComponenteCodigo}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "FichasTecnicas_ComponenteNome",
+      "type": "text",
+      "testData": "{FichasTecnicas_ComponenteNome}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "FichasTecnicas_Qtd",
+      "type": "number",
+      "testData": 0.0,
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "FichasTecnicas_Unidade",
+      "type": "text",
+      "testData": "{FichasTecnicas_Unidade}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "FichasTecnicas_Ppu",
+      "type": "number",
+      "testData": 0.0,
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "FichasTecnicas_Preco",
+      "type": "number",
+      "testData": 0.0,
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "FichasTecnicas_Peso",
+      "type": "number",
+      "testData": 0.0,
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "FichasTecnicas_Ordem",
+      "type": "number",
+      "testData": 0,
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "PrecosTaxas_Codigo",
+      "type": "text",
+      "testData": "{PrecosTaxas_Codigo}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "PrecosTaxas_Loja",
+      "type": "text",
+      "testData": "{PrecosTaxas_Loja}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "PrecosTaxas_Ativo",
+      "type": "text",
+      "testData": "{PrecosTaxas_Ativo}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "PrecosTaxas_Preco1",
+      "type": "number",
+      "testData": 0.0,
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "PrecosTaxas_Preco2",
+      "type": "number",
+      "testData": 0.0,
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "PrecosTaxas_Preco3",
+      "type": "number",
+      "testData": 0.0,
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "PrecosTaxas_Preco4",
+      "type": "number",
+      "testData": 0.0,
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "PrecosTaxas_Preco5",
+      "type": "number",
+      "testData": 0.0,
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "PrecosTaxas_Iva1",
+      "type": "number",
+      "testData": 0.0,
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "PrecosTaxas_Iva2",
+      "type": "number",
+      "testData": 0.0,
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "PrecosTaxas_IsencaoIva",
+      "type": "text",
+      "testData": "{PrecosTaxas_IsencaoIva}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "PrecosTaxas_NomeProdVenda",
+      "type": "text",
+      "testData": "{PrecosTaxas_NomeProdVenda}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "PrecosTaxas_Familia",
+      "type": "text",
+      "testData": "{PrecosTaxas_Familia}",
+      "testDataRichText": false,
+      "eval": false
+    },
+    {
+      "name": "PrecosTaxas_SubFamilia",
+      "type": "text",
+      "testData": "{PrecosTaxas_SubFamilia}",
+      "testDataRichText": false,
+      "eval": false
+    }
+  ],
+  "reportId": "id-1758846115877-d5613f6650271",
+  "styles": [
+    {
+      "alternateBackgroundColor": "",
+      "backgroundColor": "",
+      "bold": true,
+      "border": "grid",
+      "borderAll": false,
+      "borderBottom": true,
+      "borderColor": "#000000",
+      "borderLeft": false,
+      "borderRight": false,
+      "borderTop": false,
+      "borderWidth": "1",
+      "color": "#000000",
+      "font": "helvetica",
+      "fontSize": 12,
+      "horizontalAlignment": "right",
+      "id": 1,
+      "italic": false,
+      "lineSpacing": 1,
+      "name": "Label-Style1",
+      "paddingBottom": "",
+      "paddingLeft": "",
+      "paddingRight": "",
+      "paddingTop": "",
+      "strikethrough": false,
+      "textColor": "#000000",
+      "type": "text",
+      "underline": false,
+      "verticalAlignment": "middle"
+    }
+  ],
+  "version": 6,
+  "watermarks": []
+}

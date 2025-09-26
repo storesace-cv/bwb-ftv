@@ -38,6 +38,14 @@ _STRING_FIELDS = {
     "textColor",
 }
 
+STATIC_SECTION_PARAMETER = "__reportbro_static_section_rows__"
+
+_PARAMETER_TYPE_ALIASES = {
+    "text": "string",
+    "decimal": "number",
+    "float": "number",
+}
+
 _CS_STRING_FIELDS = {
     "cs_additionalRules",
     "cs_backgroundColor",
@@ -110,15 +118,30 @@ def _normalise_mapping(node: Mapping[str, Any]) -> dict[str, Any]:
     return normalised
 
 
-def _normalise_doc_elements(entries: Any) -> list[dict[str, Any]]:
+def _normalise_doc_elements(entries: Any) -> tuple[list[dict[str, Any]], set[str]]:
     if not isinstance(entries, Iterable):
-        return []
+        return [], set()
 
     normalised: list[dict[str, Any]] = []
+    static_sources: set[str] = set()
     for entry in entries:
-        if isinstance(entry, Mapping):
-            normalised.append(_normalise_mapping(entry))
-    return normalised
+        if not isinstance(entry, Mapping):
+            continue
+
+        element = _normalise_mapping(entry)
+        element_type = element.get("elementType")
+        if element_type == "section":
+            data_source = element.get("dataSource")
+            if isinstance(data_source, str):
+                cleaned = data_source.strip()
+                if cleaned:
+                    element["dataSource"] = cleaned
+                else:
+                    element["dataSource"] = STATIC_SECTION_PARAMETER
+                    static_sources.add(STATIC_SECTION_PARAMETER)
+        normalised.append(element)
+
+    return normalised, static_sources
 
 
 def _normalise_parameters(entries: Any) -> list[dict[str, Any]]:
@@ -132,6 +155,11 @@ def _normalise_parameters(entries: Any) -> list[dict[str, Any]]:
         parameter = _normalise_mapping(entry)
         if "styleId" in parameter:
             parameter["styleId"] = _ensure_style_id(parameter.get("styleId"))
+        param_type = parameter.get("type")
+        if isinstance(param_type, str):
+            normalised_type = _PARAMETER_TYPE_ALIASES.get(param_type.lower())
+            if normalised_type:
+                parameter["type"] = normalised_type
         normalised.append(parameter)
     return normalised
 
@@ -163,8 +191,26 @@ def normalise_template(template: Mapping[str, Any]) -> Tuple[dict[str, Any], dic
         if key not in ALLOWED_TEMPLATE_KEYS:
             extras[key] = working.pop(key)
 
-    working["docElements"] = _normalise_doc_elements(working.get("docElements"))
+    doc_elements, static_sources = _normalise_doc_elements(working.get("docElements"))
+    working["docElements"] = doc_elements
+
+    raw_parameters = list(working.get("parameters", []) or [])
+    if static_sources:
+        existing_names = {
+            param.get("name")
+            for param in raw_parameters
+            if isinstance(param, Mapping)
+        }
+        if STATIC_SECTION_PARAMETER not in existing_names:
+            raw_parameters.append(
+                {
+                    "name": STATIC_SECTION_PARAMETER,
+                    "type": "array",
+                    "children": [],
+                }
+            )
+
     working["styles"] = _normalise_styles(working.get("styles"))
-    working["parameters"] = _normalise_parameters(working.get("parameters"))
+    working["parameters"] = _normalise_parameters(raw_parameters)
 
     return working, extras
