@@ -139,6 +139,11 @@ def _normalise_doc_elements(entries: Any) -> tuple[list[dict[str, Any]], set[str
                 else:
                     element["dataSource"] = STATIC_SECTION_PARAMETER
                     static_sources.add(STATIC_SECTION_PARAMETER)
+        elif element_type == "image":
+            if not element.get("horizontalAlignment"):
+                element["horizontalAlignment"] = "left"
+            if not element.get("verticalAlignment"):
+                element["verticalAlignment"] = "top"
         normalised.append(element)
 
     return normalised, static_sources

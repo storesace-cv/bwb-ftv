@@ -185,6 +185,54 @@ def _ensure_title_binding(template: dict[str, Any]) -> None:
             return
 
 
+def _clamp_image_heights(template: dict[str, Any]) -> None:
+    elements = template.get("docElements")
+    if not isinstance(elements, Iterable):
+        return
+
+    capacities: dict[str, float] = {}
+
+    for entry in elements:
+        if not isinstance(entry, Mapping):
+            continue
+        element_type = entry.get("elementType")
+        if element_type == "section":
+            for key in ("headerData", "contentData", "footerData"):
+                block = entry.get(key)
+                if not isinstance(block, Mapping):
+                    continue
+                linked = block.get("linkedContainerId")
+                height = block.get("height")
+                if isinstance(height, (int, float)) and linked is not None:
+                    capacities[str(linked)] = max(capacities.get(str(linked), 0.0), float(height))
+        elif element_type == "frame":
+            container_id = entry.get("id")
+            height = entry.get("height")
+            if isinstance(height, (int, float)) and container_id is not None:
+                capacities[str(container_id)] = max(capacities.get(str(container_id), 0.0), float(height))
+
+    for entry in elements:
+        if not isinstance(entry, Mapping):
+            continue
+        if entry.get("elementType") != "image":
+            continue
+        container_id = entry.get("containerId")
+        capacity = capacities.get(str(container_id)) if container_id is not None else None
+        if capacity is None:
+            continue
+        try:
+            y_value = float(entry.get("y", 0) or 0)
+        except (TypeError, ValueError):
+            y_value = 0.0
+        try:
+            height_value = float(entry.get("height", 0) or 0)
+        except (TypeError, ValueError):
+            height_value = 0.0
+        max_height = max(capacity - y_value, 0.0)
+        if height_value > max_height:
+            entry["height"] = max_height
+
+
 def render_pdf_bytes(
     template_definition: Mapping[str, Any],
     data: Mapping[str, Any],
@@ -196,6 +244,7 @@ def render_pdf_bytes(
     _normalise_parameter_ids(template)
     _normalise_image_sources(template)
     _ensure_title_binding(template)
+    _clamp_image_heights(template)
 
     payload = dict(data)
     try:

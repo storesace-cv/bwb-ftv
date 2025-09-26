@@ -9,6 +9,7 @@ from reporting.ft_gestao import build_reportbro_context
 from reporting.reportbro_export import load_template_definition
 from reporting.reportbro_normalizer import STATIC_SECTION_PARAMETER
 from ui.printing import _prepare_management_payload, _validate_reportbro_inputs
+from utils.paths import get_project_root
 
 
 def _make_product(**overrides) -> Product:
@@ -137,7 +138,7 @@ def test_missing_text_normalises_to_empty(caplog):
     template = load_template_definition(
         Path("app/templates_store/templates/ft_gestao_02.json")
     )
-    caplog.set_level(logging.WARNING)
+    caplog.set_level(logging.WARNING, logger="ui.printing")
     _validate_reportbro_inputs(template, dataset, payload["reportbro"]["warnings"])
 
     assert any("Produtos_Menu" in record.message for record in caplog.records)
@@ -163,14 +164,65 @@ def test_invalid_date_coerces_to_empty():
     assert "invalid-date" in reasons
 
 
-def test_missing_image_uses_fallback_string():
-    product = _make_product(code="NO-IMG")
+def test_product_image_filename_with_existing_file(caplog):
+    product = _make_product(code="IMG-VALID")
+    root = get_project_root()
+    image_path = root / "databases" / "images" / f"{product.code}.png"
+    image_path.parent.mkdir(parents=True, exist_ok=True)
+    image_path.write_bytes(b"binary-image-data")
+
+    caplog.set_level(logging.WARNING, logger="ui.printing")
+    try:
+        payload = _prepare_management_payload(product)
+        dataset = build_reportbro_context(payload)
+
+        assert payload["product_image_filename"] == str(image_path)
+        assert dataset["product_image_filename"] == str(image_path)
+        warning_messages = [
+            record.getMessage()
+            for record in caplog.records
+            if record.levelno == logging.WARNING
+        ]
+        assert not warning_messages
+    finally:
+        if image_path.exists():
+            image_path.unlink()
+
+
+def test_product_image_filename_missing_code_logs_warning(caplog):
+    product = _make_product(code=" ")
+    product.produtos_row["codigo"] = "   "
+
+    caplog.set_level(logging.WARNING, logger="ui.printing")
     payload = _prepare_management_payload(product)
     dataset = build_reportbro_context(payload)
 
-    image_value = dataset["product_image"]
-    assert isinstance(image_value, str)
-    assert image_value.startswith("data:image/")
+    assert payload["product_image_filename"] == ""
+    assert dataset["product_image_filename"] == ""
+    warning_messages = [
+        record.getMessage() for record in caplog.records if record.levelno == logging.WARNING
+    ]
+    assert any("Produtos_Codigo em falta" in message for message in warning_messages)
+
+
+def test_product_image_filename_missing_file_logs_warning(caplog):
+    product = _make_product(code="IMG-NOFILE")
+
+    root = get_project_root()
+    image_path = root / "databases" / "images" / f"{product.code}.png"
+    if image_path.exists():
+        image_path.unlink()
+
+    caplog.set_level(logging.WARNING)
+    payload = _prepare_management_payload(product)
+    dataset = build_reportbro_context(payload)
+
+    assert payload["product_image_filename"] == ""
+    assert dataset["product_image_filename"] == ""
+    warning_messages = [
+        record.getMessage() for record in caplog.records if record.levelno == logging.WARNING
+    ]
+    assert any("Imagem de produto inexistente" in message for message in warning_messages)
 
 
 def test_validation_accepts_string_style_id():
