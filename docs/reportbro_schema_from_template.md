@@ -96,3 +96,11 @@
 | `image` | str | 1.9% | .. |
 | `imageFilename` | str | 1.9% | .. |
 | `source` | str | 1.9% | product_image |
+
+> ℹ️ **FT Gestão e imagens de produto** — o template atualizado deixa de
+> depender da `source` "product_image" e passa a recorrer ao atributo
+> `imageFilename`. O resolver `resolve_product_image` define esse valor com base
+> no código do produto, produzindo o caminho absoluto
+> `/databases/images/{Produtos_Codigo}.png`. Ao introduzir novos elementos de
+> imagem, garanta que apontam para o mesmo padrão de ficheiro através desse
+> resolver.
