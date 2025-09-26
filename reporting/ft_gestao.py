@@ -324,6 +324,7 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, str]:
     block_b2 = blocks.get("B2", {})
     block_b3 = blocks.get("B3", {})
 
+    page_title = payload.get("page_title", "Ficha Técnica")
     subtitle_parts = [
         _format_optional(block_b1.get("codigo")),
         _format_optional(block_b1.get("nome")),
@@ -339,10 +340,17 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, str]:
     totals_lines = _build_totals_lines(totals_data)
     product_image_bytes = _load_product_image(block_b1.get("image_path"))
 
+    generated_at = _format_optional(payload.get("generated_at"))
+    metadata = (
+        f"{page_title} — Gerado em {generated_at}"
+        if generated_at != "—"
+        else page_title
+    )
+
     return {
-        "title": payload.get("page_title", "Ficha Técnica"),
+        "title": page_title,
         "subtitle": subtitle or _format_optional(payload.get("identifier")),
-        "metadata": f"Gerado em {_format_optional(payload.get('generated_at'))}",
+        "metadata": metadata,
         "product_details": _build_product_section(block_b1),
         "pricing_details": _build_pricing_section(block_b3),
         "ingredients": _build_ingredients_section(block_b2),
