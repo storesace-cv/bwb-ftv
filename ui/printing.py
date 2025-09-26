@@ -125,9 +125,16 @@ def _validate_reportbro_inputs(
         if isinstance(param, Mapping) and isinstance(param.get("name"), str)
     }
     missing = sorted(name for name in expected if name not in dataset)
+    skip_fallback = {"product_image_filename", "product_image_uri"}
     if missing:
         mutable_dataset = dataset if isinstance(dataset, MutableMappingABC) else None
         for name in missing:
+            if name in skip_fallback:
+                logger.debug(
+                    "[ReportBro] parâmetro %s ausente; não será preenchido automaticamente",
+                    name,
+                )
+                continue
             fallback = default_for_parameter(name)
             if mutable_dataset is not None:
                 mutable_dataset[name] = fallback
@@ -506,8 +513,13 @@ def resolve_product_image(
     *,
     parameters: MutableMappingABC[str, Any] | Mapping[str, Any] | None = None,
     check_exists: bool = True,
-) -> str:
-    """Populate ``product_image_filename`` in ``payload`` based on ``Produtos_Codigo``."""
+) -> str | None:
+    """Populate ``product_image_filename`` in ``payload`` based on ``Produtos_Codigo``.
+
+    When the product code is missing or the image file is unavailable the
+    function clears ``product_image_filename``/``product_image_uri`` so downstream
+    consumers can detect the absence of an image.
+    """
 
     params: Mapping[str, Any] | None = parameters
     if params is None and isinstance(payload, Mapping):
@@ -522,8 +534,8 @@ def resolve_product_image(
         code_value = params.get("Produtos_Codigo")
 
     code = str(code_value).strip() if code_value is not None else ""
-    filename = ""
-    uri = ""
+    filename: str | None = None
+    uri: str | None = None
     if not code:
         logger.warning(_MISSING_CODE_WARNING)
     else:
@@ -539,10 +551,22 @@ def resolve_product_image(
                 uri = candidate.resolve(strict=False).as_uri()
 
     targets: list[str] = []
+    has_image = filename is not None
+
+    def _apply_target(target: MutableMappingABC[str, Any], label: str) -> None:
+        if has_image:
+            target["product_image_filename"] = filename
+            if uri is None:
+                target.pop("product_image_uri", None)
+            else:
+                target["product_image_uri"] = uri
+        else:
+            target.pop("product_image_filename", None)
+            target.pop("product_image_uri", None)
+        targets.append(label)
+
     if isinstance(payload, MutableMappingABC):
-        payload["product_image_filename"] = filename
-        payload["product_image_uri"] = uri
-        targets.append("payload")
+        _apply_target(payload, "payload")
 
     target_parameters: MutableMappingABC[str, Any] | None = None
     if isinstance(parameters, MutableMappingABC):
@@ -551,9 +575,7 @@ def resolve_product_image(
         target_parameters = params
 
     if target_parameters is not None:
-        target_parameters["product_image_filename"] = filename
-        target_parameters["product_image_uri"] = uri
-        targets.append("parameters")
+        _apply_target(target_parameters, "parameters")
 
     destination = "+".join(sorted(set(targets))) or "none"
     logger.info(

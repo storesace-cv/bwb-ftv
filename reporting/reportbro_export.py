@@ -42,6 +42,7 @@ def load_template_definition(source: str | Path | Mapping[str, Any]) -> dict[str
 
     if isinstance(source, Mapping):
         normalised, _ = normalise_template(source)
+        _normalise_image_sources(normalised)
         return normalised
 
     path = Path(source)
@@ -63,6 +64,7 @@ def load_template_definition(source: str | Path | Mapping[str, Any]) -> dict[str
         )
 
     normalised, _ = normalise_template(template)
+    _normalise_image_sources(normalised)
     return normalised
 
 
@@ -153,6 +155,13 @@ def _normalise_image_sources(template: dict[str, Any]) -> None:
                         stripped = stripped.lstrip("@")
                     if stripped in parameters and stripped:
                         mutable["source"] = f"${{{stripped}}}"
+                if (
+                    not stripped
+                    and "product_image_uri" in parameters
+                    and isinstance(mutable.get("imageFilename"), str)
+                    and mutable["imageFilename"].strip() == "${product_image_filename}"
+                ):
+                    mutable["source"] = "${product_image_uri}"
         normalised_elements.append(mutable)
 
     template["docElements"] = normalised_elements

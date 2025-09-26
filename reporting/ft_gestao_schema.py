@@ -261,5 +261,7 @@ def default_for_parameter(name: str) -> Any:
     meta = FT_GESTAO_PARAMETER_DEFINITIONS.get(name, {})
     if meta.get("type") == "number":
         return 0
+    if name.endswith("_Cod"):
+        return 0
     return ""
 

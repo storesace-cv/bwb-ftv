@@ -4,6 +4,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Mapping
 
 import pytest
 from app.server.routes_reportbro import _normalise_template_payload
@@ -144,8 +145,8 @@ def test_build_reportbro_context_formats_sections():
     assert "Preços e IVA" in dataset["pricing_details"]
     assert "Ingredientes" in dataset["ingredients"]
     assert "Totais" in dataset["totals"]
-    assert dataset["product_image_filename"] == ""
-    assert dataset["product_image_uri"] == ""
+    assert "product_image_filename" not in dataset
+    assert "product_image_uri" not in dataset
     assert dataset["Produtos_Codigo"] == "RB-01"
     assert dataset["Produtos_PCU"] == pytest.approx(12.5)
     assert dataset["Produtos_Descontinuado"] == "2024-05-01"
@@ -180,6 +181,47 @@ def test_build_reportbro_context_includes_product_image_filename(tmp_path):
     finally:
         if image_path.exists():
             image_path.unlink()
+
+
+def test_reportbro_pdf_generation_ignores_missing_image(monkeypatch, tmp_path):
+    product = _sample_product()
+    root = get_project_root()
+    image_path = root / "databases" / "images" / f"{product.code}.png"
+    if image_path.exists():
+        image_path.unlink()
+
+    from reporting import reportbro_export
+
+    captured: dict[str, Any] = {}
+
+    class GuardedReport:
+        def __init__(self, template: Any, data: Mapping[str, Any]):
+            self.template = template
+            self.data = dict(data)
+            self.errors: list[Any] = []
+
+        def generate_pdf(self) -> bytes:
+            filename = self.data.get("product_image_filename")
+            if filename == "":
+                raise RuntimeError("empty filename should not be used")
+            captured["dataset"] = dict(self.data)
+            return b"%PDF-1.4\n%guarded\n"
+
+    monkeypatch.setattr(reportbro_export, "Report", GuardedReport)
+
+    destination = tmp_path / "gestao_reportbro_missing_image.pdf"
+    result = generate_ft_gestao_reportbro_pdf(
+        product,
+        destination=destination,
+    )
+
+    assert destination.exists()
+    assert result == destination
+    assert "dataset" in captured
+    assert captured["dataset"].get("product_image_filename") is None
+    assert captured["dataset"].get("product_image_uri") is None
+    assert "product_image_filename" not in captured["dataset"]
+    assert "product_image_uri" not in captured["dataset"]
 
 
 def test_reportbro_pdf_generation(tmp_path):
