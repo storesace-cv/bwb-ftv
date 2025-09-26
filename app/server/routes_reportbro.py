@@ -235,11 +235,24 @@ def _preview_store_from_designer() -> Response:
     if not isinstance(payload, dict):
         return jsonify({"errors": ["Corpo do pedido deve ser JSON."]}), 400
 
-    template = payload.get("report")
-    data = payload.get("data")
+    report_payload = payload.get("report", payload)
     try:
-        if isinstance(data, str):
-            data = json.loads(data)
+        template, _ = _normalise_template_payload(report_payload)
+    except TemplateError as exc:
+        return jsonify({"errors": [str(exc)]}), 400
+
+    raw_data = payload.get("data")
+    if isinstance(raw_data, str) and raw_data.strip() == "":
+        data = None
+    else:
+        try:
+            data = _parse_json_or_dict(payload, "data")
+        except DataError as exc:
+            return jsonify({"errors": [str(exc)]}), 400
+        except (json.JSONDecodeError, ValueError, TypeError) as exc:
+            return jsonify({"errors": [f"Campo 'data' não contém JSON válido: {exc}."]}), 400
+
+    try:
         pdf_bytes = generate_pdf(template, data)
     except (TemplateError, DataError) as exc:
         return jsonify({"errors": [str(exc)]}), 400
