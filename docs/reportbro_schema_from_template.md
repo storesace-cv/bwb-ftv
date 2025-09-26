@@ -104,3 +104,9 @@
 > `/databases/images/{Produtos_Codigo}.png`. Ao introduzir novos elementos de
 > imagem, garanta que apontam para o mesmo padrão de ficheiro através desse
 > resolver.
+
+## Campos de imagem
+
+- **product_image_filename** (string) — caminho absoluto da imagem do produto, construído como `/databases/images/{Produtos_Codigo}.png`.
+- Não usar `source` para este caso. O binding deve ser sempre `imageFilename`.
+
