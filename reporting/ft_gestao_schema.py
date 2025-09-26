@@ -112,6 +112,49 @@ FT_GESTAO_PARAMETER_DEFINITIONS: dict[str, ParameterDefinition] = {
         "type": "number",
         "numeric_type": "int",
     },
+    "TiposArtigos_Cod": {
+        "section": "produtos",
+        "field": "tipoartigo",
+        "type": "number",
+        "numeric_type": "int",
+    },
+    "TiposArtigos_Descricao": {
+        "section": "produtos",
+        "field": "tiposartigos_descricao",
+        "type": "text",
+    },
+    "Validade_Cod": {
+        "section": "produtos",
+        "field": "validade",
+        "type": "number",
+        "numeric_type": "int",
+    },
+    "Validade_Descricao": {
+        "section": "produtos",
+        "field": "validade_descricao",
+        "type": "text",
+    },
+    "Temperaturas_Cod": {
+        "section": "produtos",
+        "field": "temperatura",
+        "type": "number",
+        "numeric_type": "int",
+    },
+    "Temperaturas_Descricao": {
+        "section": "produtos",
+        "field": "temperaturas_descricao",
+        "type": "text",
+    },
+    "ProdutoPreparacao_ProdutoCodigo": {
+        "section": "produtos",
+        "field": "produtopreparacao_produtocodigo",
+        "type": "text",
+    },
+    "ProdutoPreparacao_Html": {
+        "section": "produtos",
+        "field": "produtopreparacao_html",
+        "type": "text",
+    },
     # Fichas Técnicas
     "FichasTecnicas_FamiliaSubfamilia": {
         "section": "fichas_tecnicas",
