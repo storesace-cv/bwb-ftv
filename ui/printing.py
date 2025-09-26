@@ -523,6 +523,7 @@ def resolve_product_image(
 
     code = str(code_value).strip() if code_value is not None else ""
     filename = ""
+    uri = ""
     if not code:
         logger.warning(_MISSING_CODE_WARNING)
     else:
@@ -532,10 +533,15 @@ def resolve_product_image(
             logger.warning(_MISSING_FILE_WARNING, code, candidate)
         else:
             filename = str(candidate)
+            try:
+                uri = candidate.as_uri()
+            except ValueError:
+                uri = candidate.resolve(strict=False).as_uri()
 
     targets: list[str] = []
     if isinstance(payload, MutableMappingABC):
         payload["product_image_filename"] = filename
+        payload["product_image_uri"] = uri
         targets.append("payload")
 
     target_parameters: MutableMappingABC[str, Any] | None = None
@@ -546,14 +552,16 @@ def resolve_product_image(
 
     if target_parameters is not None:
         target_parameters["product_image_filename"] = filename
+        target_parameters["product_image_uri"] = uri
         targets.append("parameters")
 
     destination = "+".join(sorted(set(targets))) or "none"
     logger.info(
-        "[ReportBro] product_image_filename resolvido: Produtos_Codigo=%r normalizado=%r caminho=%r destino=%s",
+        "[ReportBro] product_image_filename resolvido: Produtos_Codigo=%r normalizado=%r caminho=%r uri=%r destino=%s",
         code_value,
         code,
         filename,
+        uri,
         destination,
     )
 
