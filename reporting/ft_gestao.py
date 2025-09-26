@@ -61,21 +61,12 @@ def _build_product_section(block: Mapping[str, Any]) -> str:
 
     lines.append(f"Família: {_format_optional(block.get('familia'))}")
     lines.append(f"Subfamília: {_format_optional(block.get('subfamilia'))}")
-    tipo_desc = block.get("tipo_artigo_desc")
-    if tipo_desc:
-        lines.append(f"Tipo de artigo: {tipo_desc}")
     lines.append(
         f"Tipo de artigo (código): {_format_optional(block.get('tipo_artigo_cod'))}"
     )
-    validade_desc = block.get("validade_desc")
-    if validade_desc:
-        lines.append(f"Validade: {validade_desc}")
     lines.append(
         f"Validade (código): {_format_optional(block.get('validade_cod'))}"
     )
-    temperatura_desc = block.get("temperatura_desc")
-    if temperatura_desc:
-        lines.append(f"Temperatura: {temperatura_desc}")
     lines.append(
         f"Temperatura (código): {_format_optional(block.get('temperatura_cod'))}"
     )
@@ -97,14 +88,8 @@ def _build_product_data(block: Mapping[str, Any]) -> dict[str, str]:
             block.get("informacao_adicional")
         ),
         "tipo_artigo_cod": _format_optional(block.get("tipo_artigo_cod")),
-        "tipo_artigo_desc": _format_optional(block.get("tipo_artigo_desc")),
         "validade_cod": _format_optional(block.get("validade_cod")),
-        "validade_desc": _format_optional(block.get("validade_desc")),
         "temperatura_cod": _format_optional(block.get("temperatura_cod")),
-        "temperatura_desc": _format_optional(block.get("temperatura_desc")),
-        "produto_preparacao_html": _format_optional(
-            block.get("produto_preparacao_html")
-        ),
         "image_path": _format_optional(block.get("image_path")),
     }
 

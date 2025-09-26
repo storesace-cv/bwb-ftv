@@ -265,7 +265,6 @@ def _build_produtos_fallback(product: Product) -> dict[str, Any]:
     fallback: dict[str, Any] = {}
     if product.code:
         fallback["codigo"] = product.code
-        fallback["produtopreparacao_produtocodigo"] = product.code
     if product.name:
         fallback["produto"] = product.name
     if product.familia:
@@ -274,20 +273,10 @@ def _build_produtos_fallback(product: Product) -> dict[str, Any]:
         fallback["subfamilia"] = product.subfamilia
     if product.tipo_artigo_cod is not None:
         fallback["tipoartigo"] = product.tipo_artigo_cod
-    fallback["tiposartigos_descricao"] = (
-        getattr(product, "tipo_artigo_desc", None) or ""
-    )
     if product.validade_cod is not None:
         fallback["validade"] = product.validade_cod
-    fallback["validade_descricao"] = getattr(product, "validade_desc", None) or ""
     if product.temperatura_cod is not None:
         fallback["temperatura"] = product.temperatura_cod
-    fallback["temperaturas_descricao"] = (
-        getattr(product, "temperatura_desc", None) or ""
-    )
-    fallback["produtopreparacao_html"] = (
-        getattr(product, "produto_preparacao_html", None) or ""
-    )
     return fallback
 
 
@@ -602,14 +591,8 @@ def _prepare_management_payload(product: Product) -> dict[str, Any]:
             "subfamilia": product.subfamilia,
             "informacao_adicional": product.informacao_adicional,
             "tipo_artigo_cod": product.tipo_artigo_cod,
-            "tipo_artigo_desc": getattr(product, "tipo_artigo_desc", None),
             "validade_cod": product.validade_cod,
-            "validade_desc": getattr(product, "validade_desc", None),
             "temperatura_cod": product.temperatura_cod,
-            "temperatura_desc": getattr(product, "temperatura_desc", None),
-            "produto_preparacao_html": (
-                getattr(product, "produto_preparacao_html", None) or ""
-            ),
             "image_path": "",
         },
         "B2": {

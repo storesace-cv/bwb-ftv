@@ -49,12 +49,8 @@ def _sample_product() -> Product:
         subfamilia="Sub",
         informacao_adicional="Notas adicionais",
         tipo_artigo_cod=2,
-        tipo_artigo_desc="Produto acabado",
         validade_cod=5,
-        validade_desc="5 dias",
         temperatura_cod=3,
-        temperatura_desc="Frio positivo",
-        produto_preparacao_html="<p>Preparação detalhada</p>",
         pvps=[10.0, 15.5],
         iva=23,
         ingredients=[
@@ -102,11 +98,8 @@ def _sample_product() -> Product:
         "descontinuado": datetime(2024, 5, 1),
         "displojas": "Loja A",
         "tipoartigo": 2,
-        "tiposartigos_descricao": "Produto acabado",
         "validade": 5,
-        "validade_descricao": "5 dias",
         "temperatura": 3,
-        "temperaturas_descricao": "Frio positivo",
     }
     product.fichas_tecnicas_rows = [
         {
@@ -139,8 +132,6 @@ def _sample_product() -> Product:
         "familia": "Família",
         "subfamilia": "Sub",
     }
-    product.produtos_row["produtopreparacao_produtocodigo"] = product.code
-    product.produtos_row["produtopreparacao_html"] = product.produto_preparacao_html
     return product
 
 
@@ -161,16 +152,6 @@ def test_build_reportbro_context_formats_sections():
     assert dataset["FichasTecnicas_ComponenteNome"] == "Ingrediente A"
     assert dataset["PrecosTaxas_Preco1"] == pytest.approx(10.0)
     assert dataset[STATIC_SECTION_PARAMETER] == [{}]
-    assert dataset["TiposArtigos_Cod"] == 2
-    assert dataset["TiposArtigos_Descricao"] == "Produto acabado"
-    assert dataset["Validade_Cod"] == 5
-    assert dataset["Validade_Descricao"] == "5 dias"
-    assert dataset["Temperaturas_Cod"] == 3
-    assert dataset["Temperaturas_Descricao"] == "Frio positivo"
-    assert (
-        dataset["ProdutoPreparacao_Html"] == "<p>Preparação detalhada</p>"
-    )
-    assert dataset["ProdutoPreparacao_ProdutoCodigo"] == "RB-01"
 
 
 def test_build_reportbro_context_includes_product_image_filename(tmp_path):
@@ -227,36 +208,6 @@ def test_reportbro_pdf_generation(tmp_path):
     finally:
         if image_path.exists():
             image_path.unlink()
-
-
-def test_reportbro_parameters_missing_lookup_and_preparation():
-    product = Product(
-        code="RB-MISS",
-        tipo_artigo_cod=99,
-        validade_cod=12,
-        temperatura_cod=None,
-    )
-
-    payload = _prepare_management_payload(product)
-    params = payload["reportbro"]["parameters"]
-
-    assert params["TiposArtigos_Cod"] == 99
-    assert params["TiposArtigos_Descricao"] == ""
-    assert params["Validade_Cod"] == 12
-    assert params["Validade_Descricao"] == ""
-    assert params["Temperaturas_Cod"] == 0
-    assert params["Temperaturas_Descricao"] == ""
-    assert params["ProdutoPreparacao_ProdutoCodigo"] == "RB-MISS"
-    assert params["ProdutoPreparacao_Html"] == ""
-
-    dataset = build_reportbro_context(payload)
-    assert dataset["TiposArtigos_Cod"] == 99
-    assert dataset["TiposArtigos_Descricao"] == ""
-    assert dataset["Validade_Cod"] == 12
-    assert dataset["Validade_Descricao"] == ""
-    assert dataset["Temperaturas_Cod"] == 0
-    assert dataset["Temperaturas_Descricao"] == ""
-    assert dataset["ProdutoPreparacao_Html"] == ""
 
 
 def test_reportbro_template_without_image_element(tmp_path, caplog):
