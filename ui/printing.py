@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import re
-from collections.abc import Iterable as IterableABC
+from collections.abc import Iterable as IterableABC, MutableMapping as MutableMappingABC
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Iterable, Mapping
@@ -125,9 +125,16 @@ def _validate_reportbro_inputs(
     }
     missing = sorted(name for name in expected if name not in dataset)
     if missing:
-        raise ValueError(
-            "Dados em falta para os parâmetros ReportBro: " + ", ".join(missing)
-        )
+        mutable_dataset = dataset if isinstance(dataset, MutableMappingABC) else None
+        for name in missing:
+            fallback = default_for_parameter(name)
+            if mutable_dataset is not None:
+                mutable_dataset[name] = fallback
+            logger.warning(
+                "[ReportBro] Dados em falta para o parâmetro %s; a usar valor por omissão %r",
+                name,
+                fallback,
+            )
 
     for warning in warnings or []:
         field = warning.get("field")

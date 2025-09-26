@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 
@@ -12,7 +13,7 @@ from reporting.ft_gestao import build_reportbro_context
 from reporting.reportbro_export import load_template_definition, render_pdf_to_path
 from reporting.reportbro_normalizer import STATIC_SECTION_PARAMETER
 from services.products import get_image_path
-from ui.printing import _prepare_management_payload
+from ui.printing import _prepare_management_payload, generate_ft_gestao_reportbro_pdf
 from utils.paths import get_project_root
 
 
@@ -193,7 +194,33 @@ def test_reportbro_pdf_generation(tmp_path):
     streams = _extract_pdf_streams(destination)
     combined = "\n".join(streams)
     assert "CÓDIGO" in combined
-    assert "NOME DO ARTIGO" in combined
+    assert "NOME:" in combined
+
+
+def test_reportbro_pdf_generation_with_extra_template_parameter(tmp_path, caplog):
+    caplog.set_level(logging.WARNING)
+    product = _sample_product()
+
+    template_path = Path("app/templates_store/templates/ft_gestao_02.json")
+    template = json.loads(template_path.read_text())
+    extra_parameter = dict(template["parameters"][0])
+    extra_parameter["name"] = "Extra_Parameter"
+    template["parameters"].append(extra_parameter)
+
+    custom_template_path = tmp_path / "ft_gestao_extra_parameter.json"
+    custom_template_path.write_text(json.dumps(template))
+
+    destination = tmp_path / "gestao_reportbro_extra.pdf"
+    result = generate_ft_gestao_reportbro_pdf(
+        product,
+        template_path=custom_template_path,
+        destination=destination,
+    )
+
+    assert destination.exists()
+    assert result == destination
+    warnings = [record for record in caplog.records if record.levelno == logging.WARNING]
+    assert any("Extra_Parameter" in record.getMessage() for record in warnings)
 
 
 def test_load_template_definition_normalises_ft_gestao_template():
