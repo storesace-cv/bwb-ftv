@@ -533,12 +533,29 @@ def resolve_product_image(
         else:
             filename = str(candidate)
 
+    targets: list[str] = []
     if isinstance(payload, MutableMappingABC):
         payload["product_image_filename"] = filename
+        targets.append("payload")
+
+    target_parameters: MutableMappingABC[str, Any] | None = None
     if isinstance(parameters, MutableMappingABC):
-        parameters["product_image_filename"] = filename
+        target_parameters = parameters
     elif isinstance(params, MutableMappingABC):
-        params["product_image_filename"] = filename
+        target_parameters = params
+
+    if target_parameters is not None:
+        target_parameters["product_image_filename"] = filename
+        targets.append("parameters")
+
+    destination = "+".join(sorted(set(targets))) or "none"
+    logger.info(
+        "[ReportBro] product_image_filename resolvido: Produtos_Codigo=%r normalizado=%r caminho=%r destino=%s",
+        code_value,
+        code,
+        filename,
+        destination,
+    )
 
     return filename
 

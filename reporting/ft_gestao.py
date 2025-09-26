@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from typing import Any, Iterable, Mapping
 
 from .reportbro_normalizer import STATIC_SECTION_PARAMETER
@@ -10,6 +12,9 @@ from .ft_gestao_schema import (
     FT_GESTAO_PARAMETER_DEFINITIONS,
     default_for_parameter,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 def _format_number(value: Any, *, decimals: int = 2) -> str:
@@ -315,6 +320,13 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
         product_image_filename = ""
     else:
         product_image_filename = str(raw_image_filename)
+
+    logger.info(
+        "[ReportBro] product_image_filename dataset: entrada=%r -> product_image_filename=%r, product_image_path=%r",
+        raw_image_filename,
+        product_image_filename,
+        product_data.get("image_path"),
+    )
 
     generated_at = _format_optional(payload.get("generated_at"))
     metadata = (

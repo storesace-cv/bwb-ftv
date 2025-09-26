@@ -171,7 +171,8 @@ def test_product_image_filename_with_existing_file(caplog):
     image_path.parent.mkdir(parents=True, exist_ok=True)
     image_path.write_bytes(b"binary-image-data")
 
-    caplog.set_level(logging.WARNING, logger="ui.printing")
+    caplog.set_level(logging.INFO, logger="ui.printing")
+    caplog.set_level(logging.INFO, logger="reporting.ft_gestao")
     try:
         payload = _prepare_management_payload(product)
         dataset = build_reportbro_context(payload)
@@ -184,6 +185,30 @@ def test_product_image_filename_with_existing_file(caplog):
             if record.levelno == logging.WARNING
         ]
         assert not warning_messages
+
+        printing_info = [
+            record.getMessage()
+            for record in caplog.records
+            if record.name == "ui.printing" and record.levelno == logging.INFO
+        ]
+        assert any(
+            product.code in message
+            and str(image_path) in message
+            and "payload" in message
+            for message in printing_info
+        )
+
+        gestao_info = [
+            record.getMessage()
+            for record in caplog.records
+            if record.name == "reporting.ft_gestao" and record.levelno == logging.INFO
+        ]
+        assert any(
+            "product_image_filename" in message
+            and str(image_path) in message
+            and "product_image_path" in message
+            for message in gestao_info
+        )
     finally:
         if image_path.exists():
             image_path.unlink()
@@ -193,7 +218,8 @@ def test_product_image_filename_missing_code_logs_warning(caplog):
     product = _make_product(code=" ")
     product.produtos_row["codigo"] = "   "
 
-    caplog.set_level(logging.WARNING, logger="ui.printing")
+    caplog.set_level(logging.INFO, logger="ui.printing")
+    caplog.set_level(logging.INFO, logger="reporting.ft_gestao")
     payload = _prepare_management_payload(product)
     dataset = build_reportbro_context(payload)
 
@@ -204,6 +230,21 @@ def test_product_image_filename_missing_code_logs_warning(caplog):
     ]
     assert any("Produtos_Codigo em falta" in message for message in warning_messages)
 
+    printing_info = [
+        record.getMessage()
+        for record in caplog.records
+        if record.name == "ui.printing" and record.levelno == logging.INFO
+    ]
+    assert any("normalizado=''" in message for message in printing_info)
+    assert any("destino=" in message for message in printing_info)
+
+    gestao_info = [
+        record.getMessage()
+        for record in caplog.records
+        if record.name == "reporting.ft_gestao" and record.levelno == logging.INFO
+    ]
+    assert any("product_image_filename" in message and "''" in message for message in gestao_info)
+
 
 def test_product_image_filename_missing_file_logs_warning(caplog):
     product = _make_product(code="IMG-NOFILE")
@@ -213,7 +254,8 @@ def test_product_image_filename_missing_file_logs_warning(caplog):
     if image_path.exists():
         image_path.unlink()
 
-    caplog.set_level(logging.WARNING)
+    caplog.set_level(logging.INFO, logger="ui.printing")
+    caplog.set_level(logging.INFO, logger="reporting.ft_gestao")
     payload = _prepare_management_payload(product)
     dataset = build_reportbro_context(payload)
 
@@ -223,6 +265,20 @@ def test_product_image_filename_missing_file_logs_warning(caplog):
         record.getMessage() for record in caplog.records if record.levelno == logging.WARNING
     ]
     assert any("Imagem de produto inexistente" in message for message in warning_messages)
+
+    printing_info = [
+        record.getMessage()
+        for record in caplog.records
+        if record.name == "ui.printing" and record.levelno == logging.INFO
+    ]
+    assert any(product.code in message and "caminho=''" in message for message in printing_info)
+
+    gestao_info = [
+        record.getMessage()
+        for record in caplog.records
+        if record.name == "reporting.ft_gestao" and record.levelno == logging.INFO
+    ]
+    assert any("product_image_filename" in message and "''" in message for message in gestao_info)
 
 
 def test_validation_accepts_string_style_id():
