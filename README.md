@@ -72,6 +72,14 @@ Para promover novas versões do template de Gestão:
 > aplicação, garanta o cumprimento da licença e disponibilize o código-fonte das
 > modificações efetuadas.
 
+> ℹ️ **Resumo rápido** — (1) exporte o template aprovado para
+> `app/templates_store/templates/`; (2) promova-o para `reporting/templates/` e
+> atualize `_DEFAULT_REPORTBRO_TEMPLATE_NAME`; (3) sincronize os testes. O
+> template FT Gestão obtém a imagem do produto através de
+> `ui.printing.resolve_product_image`, que preenche `imageFilename` com o
+> caminho `/databases/images/{Produtos_Codigo}.png`; mantenha este fluxo em
+> futuras alterações.
+
 **Windows**
 
 ```powershell
