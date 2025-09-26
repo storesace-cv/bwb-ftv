@@ -16,6 +16,7 @@ from typing import Any, Iterable
 from flask import Blueprint, Response, current_app, jsonify, request
 
 from .services import DataError, RenderError, TemplateError, generate_pdf, generate_xlsx
+from reporting.reportbro_normalizer import normalise_template
 
 LOGGER = logging.getLogger(__name__)
 reportbro_blueprint = Blueprint("reportbro", __name__)
@@ -59,19 +60,26 @@ def _resolve_store_template_path(name: str) -> Path:
 def _read_json_file(path: Path) -> dict[str, Any]:
     try:
         content = path.read_text(encoding="utf-8")
-        return json.loads(content)
+        template = json.loads(content)
     except FileNotFoundError as exc:
         raise TemplateError(f"Template '{path.stem}' não existe.") from exc
     except json.JSONDecodeError as exc:
         raise TemplateError(f"Template '{path.stem}' está corrompido: {exc}.") from exc
 
+    if not isinstance(template, dict):
+        raise TemplateError(f"Template '{path.stem}' está corrompido: JSON inválido.")
 
-def _normalise_template_payload(payload: Any) -> dict[str, Any]:
+    normalised, _ = normalise_template(template)
+    return normalised
+
+
+def _normalise_template_payload(payload: Any) -> tuple[dict[str, Any], dict[str, Any]]:
     if isinstance(payload, dict) and "template" in payload:
         payload = payload["template"]
     if not isinstance(payload, dict):
         raise TemplateError("O corpo do pedido deve conter um JSON de template válido.")
-    return payload
+    normalised, extras = normalise_template(payload)
+    return normalised, extras
 
 
 def _parse_json_or_dict(payload: Any, field: str) -> dict[str, Any] | None:
@@ -156,7 +164,7 @@ def save_template(name: str) -> Response:
 
     payload = request.get_json(force=True, silent=False)
     try:
-        template = _normalise_template_payload(payload)
+        template, extras = _normalise_template_payload(payload)
     except TemplateError as exc:
         return jsonify({"error": str(exc)}), 400
 
@@ -168,7 +176,14 @@ def save_template(name: str) -> Response:
         size_bytes=stat.st_size,
         origin="runtime",
     )
-    return jsonify({"saved": True, "template": template, "metadata": metadata.__dict__})
+    response_payload: dict[str, Any] = {
+        "saved": True,
+        "template": template,
+        "metadata": metadata.__dict__,
+    }
+    if extras:
+        response_payload["designer_metadata"] = extras
+    return jsonify(response_payload)
 
 
 @reportbro_blueprint.route("/rb/preview", methods=["GET", "POST", "PUT"])
