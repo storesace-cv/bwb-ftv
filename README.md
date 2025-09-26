@@ -122,6 +122,31 @@ Exemplo: `/databases/images/ABC123.png`
 A aplicação utiliza o resolver `resolve_product_image` para construir este caminho antes da impressão.
 Se o ficheiro não existir, a aplicação gera aviso (warning) mas não interrompe a impressão.
 
+### Lookups auxiliares para o template FT Gestão
+
+O template `app/templates_store/templates/ft_gestao_02.json` espera que a camada de
+preparação de dados resolva as descrições humanas associadas às chaves
+estrangeiras do produto. Antes de imprimir, a aplicação deve popular os
+parâmetros:
+
+- `TiposArtigos_Cod` / `TiposArtigos_Descricao`
+- `Validade_Cod` / `Validade_Descricao`
+- `Temperaturas_Cod` / `Temperaturas_Descricao`
+
+Os campos `_Cod` transportam o valor numérico original proveniente de
+`Produtos`, enquanto os campos `_Descricao` devem receber o texto da coluna
+`Descricao` das tabelas auxiliares (`TiposArtigos`, `Validade`, `Temperaturas`).
+Quando um código não existir nessas tabelas, a aplicação deve enviar `""`
+(string vazia) para o parâmetro de descrição, sem bloquear a impressão. Consulte
+`/docs/SCHEMA BD - REPORTBRO.md` para o mapeamento completo das tabelas de
+apoio.
+
+Além disso, o template expõe a secção de preparação (`ProdutoPreparacao`). A
+aplicação deve preencher `ProdutoPreparacao_ProdutoCodigo` com o código do
+produto (`Produtos.Codigo`) e `ProdutoPreparacao_Html` com o conteúdo HTML da
+tabela `ProdutoPreparacao`. Se não existir registo, utilize `""` (string vazia)
+como fallback para o campo HTML.
+
 ---
 ## Tecnologias / Technologies
 

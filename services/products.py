@@ -768,15 +768,67 @@ def get_product_info(ds: DataStore, codigo: str) -> Product:
                 additional_info = normalized_keys.get(alias)
                 break
 
+    tipo_artigo_cod = info.get("tipoartigo") if isinstance(info, Mapping) else None
+    validade_cod = info.get("validade") if isinstance(info, Mapping) else None
+    temperatura_cod = info.get("temperatura") if isinstance(info, Mapping) else None
+
+    def _lookup_description(table: str, value: Any) -> str:
+        if value in (None, ""):
+            return ""
+        conn = getattr(ds, "conn", None)
+        if conn is None:
+            return ""
+        try:
+            cur = conn.execute(
+                f"SELECT Descricao FROM {table} WHERE Cod = ?", (value,)
+            )
+            row = cur.fetchone()
+        except sqlite3.Error as exc:
+            logger.debug(
+                "[ProductService] lookup falhou em %s para valor %r: %s",
+                table,
+                value,
+                exc,
+                exc_info=True,
+            )
+            return ""
+        if not row:
+            return ""
+        try:
+            description = row["Descricao"]
+        except (KeyError, TypeError):
+            try:
+                description = row[0]
+            except (IndexError, TypeError):
+                description = None
+        return str(description) if description not in (None, "") else ""
+
+    preparacao_html = ""
+    if ds:
+        try:
+            html_value = ds.get_preparacao_html(codigo)
+        except Exception:  # pragma: no cover - defensive guard
+            html_value = ""
+        if isinstance(html_value, str):
+            preparacao_html = html_value
+        elif html_value is None:
+            preparacao_html = ""
+        else:
+            preparacao_html = str(html_value)
+
     return Product(
         code=info.get("codigo") or codigo,
         name=info.get("produto"),
         familia=info.get("familia"),
         subfamilia=info.get("subfamilia"),
         informacao_adicional=additional_info,
-        tipo_artigo_cod=info.get("tipoartigo"),
-        validade_cod=info.get("validade"),
-        temperatura_cod=info.get("temperatura"),
+        tipo_artigo_cod=tipo_artigo_cod,
+        tipo_artigo_desc=_lookup_description("TiposArtigos", tipo_artigo_cod),
+        validade_cod=validade_cod,
+        validade_desc=_lookup_description("Validade", validade_cod),
+        temperatura_cod=temperatura_cod,
+        temperatura_desc=_lookup_description("Temperaturas", temperatura_cod),
+        produto_preparacao_html=preparacao_html,
         pvps=prices,
         iva=iva,
         ingredients=ingredients,
