@@ -145,6 +145,7 @@ def test_build_reportbro_context_formats_sections():
     assert "Ingredientes" in dataset["ingredients"]
     assert "Totais" in dataset["totals"]
     assert dataset["product_image_filename"] == ""
+    assert dataset["product_image_uri"] == ""
     assert dataset["Produtos_Codigo"] == "RB-01"
     assert dataset["Produtos_PCU"] == pytest.approx(12.5)
     assert dataset["Produtos_Descontinuado"] == "2024-05-01"
@@ -174,6 +175,8 @@ def test_build_reportbro_context_includes_product_image_filename(tmp_path):
 
         assert dataset["product_image_filename"] == str(image_path)
         assert dataset["product_image_path"] == str(image_path)
+        assert dataset["product_image_uri"] == image_path.as_uri()
+        assert payload["product_image_uri"] == image_path.as_uri()
     finally:
         if image_path.exists():
             image_path.unlink()
@@ -197,6 +200,7 @@ def test_reportbro_pdf_generation(tmp_path):
         render_pdf_to_path(template, dataset, destination)
 
         assert destination.exists()
+        assert dataset["product_image_uri"] == image_path.as_uri()
         streams = _extract_pdf_streams(destination)
         combined = "\n".join(streams)
         assert "CÓDIGO" in combined
@@ -311,6 +315,16 @@ def test_load_template_definition_normalises_ft_gestao_template():
         assert isinstance(element.get("printIf", ""), str)
         assert element.get("richTextContent", "") == ""
         assert isinstance(element.get("richTextHtml", ""), str)
+
+    image_elements = [
+        element
+        for element in template.get("docElements", [])
+        if isinstance(element, dict) and element.get("elementType") == "image"
+    ]
+    assert image_elements, "expected at least one image element"
+    for element in image_elements:
+        assert element.get("source") == "${product_image_uri}"
+        assert element.get("imageFilename", "").strip() == "${product_image_filename}"
 
 
 def test_template_payload_normalisation_discards_extra_metadata():

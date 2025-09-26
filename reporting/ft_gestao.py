@@ -293,6 +293,7 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
 
     for name in FT_GESTAO_PARAMETER_DEFINITIONS:
         parameters.setdefault(name, default_for_parameter(name))
+    parameters.setdefault("product_image_uri", "")
 
     blocks = payload.get("blocks", {})
     block_b1 = blocks.get("B1", {})
@@ -321,11 +322,20 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
     else:
         product_image_filename = str(raw_image_filename)
 
+    raw_image_uri = payload.get("product_image_uri", "")
+    if isinstance(raw_image_uri, str):
+        product_image_uri = raw_image_uri
+    elif raw_image_uri is None:
+        product_image_uri = ""
+    else:
+        product_image_uri = str(raw_image_uri)
+
     logger.info(
-        "[ReportBro] product_image_filename dataset: entrada=%r -> product_image_filename=%r, product_image_path=%r",
+        "[ReportBro] product_image_filename dataset: entrada=%r -> product_image_filename=%r, product_image_path=%r, product_image_uri=%r",
         raw_image_filename,
         product_image_filename,
         product_data.get("image_path"),
+        product_image_uri,
     )
 
     generated_at = _format_optional(payload.get("generated_at"))
@@ -360,6 +370,7 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
             "product_informacao_adicional": product_data["informacao_adicional"],
             "product_image_path": product_data["image_path"],
             "product_image_filename": product_image_filename,
+            "product_image_uri": product_image_uri,
             "pricing_rows": pricing_rows,
             "pricing_lines": pricing_lines,
             "pricing_iva": _format_percentage(block_b3.get("iva")),

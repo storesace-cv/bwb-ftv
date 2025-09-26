@@ -126,6 +126,7 @@ def test_reportbro_dataset_with_complete_data():
     assert dataset["PrecosTaxas_Loja"] == "Loja X"
     assert not warnings
     assert dataset[STATIC_SECTION_PARAMETER] == [{}]
+    assert dataset["product_image_uri"] == ""
 
 
 def test_missing_text_normalises_to_empty(caplog):
@@ -176,9 +177,12 @@ def test_product_image_filename_with_existing_file(caplog):
     try:
         payload = _prepare_management_payload(product)
         dataset = build_reportbro_context(payload)
+        expected_uri = image_path.as_uri()
 
         assert payload["product_image_filename"] == str(image_path)
+        assert payload["product_image_uri"] == expected_uri
         assert dataset["product_image_filename"] == str(image_path)
+        assert dataset["product_image_uri"] == expected_uri
         warning_messages = [
             record.getMessage()
             for record in caplog.records
@@ -195,6 +199,7 @@ def test_product_image_filename_with_existing_file(caplog):
             product.code in message
             and str(image_path) in message
             and "payload" in message
+            and expected_uri in message
             for message in printing_info
         )
 
@@ -207,6 +212,8 @@ def test_product_image_filename_with_existing_file(caplog):
             "product_image_filename" in message
             and str(image_path) in message
             and "product_image_path" in message
+            and "product_image_uri" in message
+            and expected_uri in message
             for message in gestao_info
         )
     finally:
@@ -224,7 +231,9 @@ def test_product_image_filename_missing_code_logs_warning(caplog):
     dataset = build_reportbro_context(payload)
 
     assert payload["product_image_filename"] == ""
+    assert payload["product_image_uri"] == ""
     assert dataset["product_image_filename"] == ""
+    assert dataset["product_image_uri"] == ""
     warning_messages = [
         record.getMessage() for record in caplog.records if record.levelno == logging.WARNING
     ]
@@ -235,7 +244,7 @@ def test_product_image_filename_missing_code_logs_warning(caplog):
         for record in caplog.records
         if record.name == "ui.printing" and record.levelno == logging.INFO
     ]
-    assert any("normalizado=''" in message for message in printing_info)
+    assert any("normalizado=''" in message and "uri=''" in message for message in printing_info)
     assert any("destino=" in message for message in printing_info)
 
     gestao_info = [
@@ -244,6 +253,7 @@ def test_product_image_filename_missing_code_logs_warning(caplog):
         if record.name == "reporting.ft_gestao" and record.levelno == logging.INFO
     ]
     assert any("product_image_filename" in message and "''" in message for message in gestao_info)
+    assert any("product_image_uri" in message and "''" in message for message in gestao_info)
 
 
 def test_product_image_filename_missing_file_logs_warning(caplog):
@@ -260,7 +270,9 @@ def test_product_image_filename_missing_file_logs_warning(caplog):
     dataset = build_reportbro_context(payload)
 
     assert payload["product_image_filename"] == ""
+    assert payload["product_image_uri"] == ""
     assert dataset["product_image_filename"] == ""
+    assert dataset["product_image_uri"] == ""
     warning_messages = [
         record.getMessage() for record in caplog.records if record.levelno == logging.WARNING
     ]
@@ -271,7 +283,10 @@ def test_product_image_filename_missing_file_logs_warning(caplog):
         for record in caplog.records
         if record.name == "ui.printing" and record.levelno == logging.INFO
     ]
-    assert any(product.code in message and "caminho=''" in message for message in printing_info)
+    assert any(
+        product.code in message and "caminho=''" in message and "uri=''" in message
+        for message in printing_info
+    )
 
     gestao_info = [
         record.getMessage()
@@ -279,6 +294,7 @@ def test_product_image_filename_missing_file_logs_warning(caplog):
         if record.name == "reporting.ft_gestao" and record.levelno == logging.INFO
     ]
     assert any("product_image_filename" in message and "''" in message for message in gestao_info)
+    assert any("product_image_uri" in message and "''" in message for message in gestao_info)
 
 
 def test_validation_accepts_string_style_id():
