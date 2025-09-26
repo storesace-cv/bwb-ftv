@@ -66,6 +66,18 @@ def _make_product(**overrides) -> Product:
     produtos_row.update(overrides.get("produtos_row", {}))
     product.produtos_row = produtos_row
 
+    tipos_row = {"cod": 2, "descricao": "Tipo padrão"}
+    tipos_row.update(overrides.get("tipos_artigos_row", {}))
+    product.tipos_artigos_row = tipos_row
+
+    validade_row = {"cod": 5, "descricao": "Validade padrão"}
+    validade_row.update(overrides.get("validade_row", {}))
+    product.validade_row = validade_row
+
+    temperaturas_row = {"cod": 3, "descricao": "Frio"}
+    temperaturas_row.update(overrides.get("temperaturas_row", {}))
+    product.temperaturas_row = temperaturas_row
+
     ficha_row = {
         "familiasubfamilia": "Família>Sub",
         "produtocodigo": product.code,
@@ -101,6 +113,13 @@ def _make_product(**overrides) -> Product:
     precos_row.update(overrides.get("precos_row", {}))
     product.precos_taxas_row = precos_row
 
+    preparacao_row = {
+        "produtocodigo": product.code,
+        "html": "<p>Preparação padrão.</p>",
+    }
+    preparacao_row.update(overrides.get("produto_preparacao_row", {}))
+    product.produto_preparacao_row = preparacao_row
+
     return product
 
 
@@ -124,6 +143,14 @@ def test_reportbro_dataset_with_complete_data():
     assert dataset["Produtos_Descontinuado"] == "2024-01-15"
     assert dataset["FichasTecnicas_Qtd"] == pytest.approx(1.0)
     assert dataset["PrecosTaxas_Loja"] == "Loja X"
+    assert dataset["TiposArtigos_Cod"] == 2
+    assert dataset["TiposArtigos_Descricao"] == "Tipo padrão"
+    assert dataset["Validade_Cod"] == 5
+    assert dataset["Validade_Descricao"] == "Validade padrão"
+    assert dataset["Temperaturas_Cod"] == 3
+    assert dataset["Temperaturas_Descricao"] == "Frio"
+    assert dataset["ProdutoPreparacao_ProdutoCodigo"] == "TEST-01"
+    assert dataset["ProdutoPreparacao_Html"] == "<p>Preparação padrão.</p>"
     assert not warnings
     assert dataset[STATIC_SECTION_PARAMETER] == [{}]
     assert "product_image_uri" not in dataset

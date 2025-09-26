@@ -449,6 +449,10 @@ def _build_reportbro_parameters(
     raw_produtos: Mapping[str, Any] | None = None,
     raw_fichas: Iterable[Mapping[str, Any]] | None = None,
     raw_precos: Mapping[str, Any] | None = None,
+    raw_tipos_artigos: Mapping[str, Any] | None = None,
+    raw_validade: Mapping[str, Any] | None = None,
+    raw_temperaturas: Mapping[str, Any] | None = None,
+    raw_preparacao: Mapping[str, Any] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     produtos = _build_produtos_fallback(product)
     produtos.update(_normalise_mapping(raw_produtos))
@@ -461,20 +465,44 @@ def _build_reportbro_parameters(
     if fichas_normalised:
         ficha_base.update(fichas_normalised[0])
 
+    tipos_artigos = {}
+    if product.tipo_artigo_cod is not None:
+        tipos_artigos["cod"] = product.tipo_artigo_cod
+    tipos_artigos.update(_normalise_mapping(raw_tipos_artigos))
+
+    validade = {}
+    if product.validade_cod is not None:
+        validade["cod"] = product.validade_cod
+    validade.update(_normalise_mapping(raw_validade))
+
+    temperaturas = {}
+    if product.temperatura_cod is not None:
+        temperaturas["cod"] = product.temperatura_cod
+    temperaturas.update(_normalise_mapping(raw_temperaturas))
+
+    preparacao = {}
+    if product.code:
+        preparacao["produtocodigo"] = product.code
+    preparacao.update(_normalise_mapping(raw_preparacao))
+
     parameters: dict[str, Any] = {}
     warnings: list[dict[str, Any]] = []
+
+    section_map: dict[str, Mapping[str, Any]] = {
+        "produtos": produtos,
+        "fichas_tecnicas": ficha_base,
+        "precos_taxas": precos,
+        "tipos_artigos": tipos_artigos,
+        "validade": validade,
+        "temperaturas": temperaturas,
+        "produto_preparacao": preparacao,
+    }
 
     for name, meta in FT_GESTAO_PARAMETER_DEFINITIONS.items():
         section = meta.get("section")
         field = meta.get("field")
-        if section == "produtos":
-            raw_value = produtos.get(field)
-        elif section == "fichas_tecnicas":
-            raw_value = ficha_base.get(field)
-        elif section == "precos_taxas":
-            raw_value = precos.get(field)
-        else:
-            raw_value = None
+        record = section_map.get(section, {})
+        raw_value = record.get(field) if isinstance(record, Mapping) else None
 
         if meta.get("format") == "date":
             coerced, reason = _normalise_date_value(raw_value)
@@ -489,6 +517,24 @@ def _build_reportbro_parameters(
                 {
                     "field": name,
                     "original": raw_value,
+                    "normalised": coerced,
+                    "reason": reason,
+                }
+            )
+
+    legacy_numeric_aliases = {
+        "Produtos_TipoArtigo": (tipos_artigos.get("cod"), "int"),
+        "Produtos_Validade": (validade.get("cod"), "int"),
+        "Produtos_Temperatura": (temperaturas.get("cod"), "int"),
+    }
+    for alias, (source_value, numeric_type) in legacy_numeric_aliases.items():
+        coerced, reason = _coerce_number_value(source_value, numeric_type)
+        parameters[alias] = coerced
+        if reason:
+            warnings.append(
+                {
+                    "field": alias,
+                    "original": source_value,
                     "normalised": coerced,
                     "reason": reason,
                 }
@@ -634,6 +680,10 @@ def _prepare_management_payload(product: Product) -> dict[str, Any]:
         raw_produtos=getattr(product, "produtos_row", None),
         raw_fichas=getattr(product, "fichas_tecnicas_rows", None),
         raw_precos=getattr(product, "precos_taxas_row", None),
+        raw_tipos_artigos=getattr(product, "tipos_artigos_row", None),
+        raw_validade=getattr(product, "validade_row", None),
+        raw_temperaturas=getattr(product, "temperaturas_row", None),
+        raw_preparacao=getattr(product, "produto_preparacao_row", None),
     )
     payload = {
         "identifier": identifier,

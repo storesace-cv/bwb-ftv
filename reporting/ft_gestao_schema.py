@@ -94,23 +94,48 @@ FT_GESTAO_PARAMETER_DEFINITIONS: dict[str, ParameterDefinition] = {
         "field": "displojas",
         "type": "text",
     },
-    "Produtos_TipoArtigo": {
-        "section": "produtos",
-        "field": "tipoartigo",
+    "TiposArtigos_Cod": {
+        "section": "tipos_artigos",
+        "field": "cod",
         "type": "number",
         "numeric_type": "int",
     },
-    "Produtos_Validade": {
-        "section": "produtos",
-        "field": "validade",
+    "TiposArtigos_Descricao": {
+        "section": "tipos_artigos",
+        "field": "descricao",
+        "type": "text",
+    },
+    "Validade_Cod": {
+        "section": "validade",
+        "field": "cod",
         "type": "number",
         "numeric_type": "int",
     },
-    "Produtos_Temperatura": {
-        "section": "produtos",
-        "field": "temperatura",
+    "Validade_Descricao": {
+        "section": "validade",
+        "field": "descricao",
+        "type": "text",
+    },
+    "Temperaturas_Cod": {
+        "section": "temperaturas",
+        "field": "cod",
         "type": "number",
         "numeric_type": "int",
+    },
+    "Temperaturas_Descricao": {
+        "section": "temperaturas",
+        "field": "descricao",
+        "type": "text",
+    },
+    "ProdutoPreparacao_ProdutoCodigo": {
+        "section": "produto_preparacao",
+        "field": "produtocodigo",
+        "type": "text",
+    },
+    "ProdutoPreparacao_Html": {
+        "section": "produto_preparacao",
+        "field": "html",
+        "type": "text",
     },
     # Fichas Técnicas
     "FichasTecnicas_FamiliaSubfamilia": {

@@ -102,6 +102,13 @@ def _sample_product() -> Product:
         "validade": 5,
         "temperatura": 3,
     }
+    product.tipos_artigos_row = {"cod": 2, "descricao": "Produto acabado"}
+    product.validade_row = {"cod": 5, "descricao": "72 horas"}
+    product.temperaturas_row = {"cod": 3, "descricao": "Frio"}
+    product.produto_preparacao_row = {
+        "produtocodigo": "RB-01",
+        "html": "<p>Preparar e servir.</p>",
+    }
     product.fichas_tecnicas_rows = [
         {
             "familiasubfamilia": "Família>Sub",
@@ -152,6 +159,14 @@ def test_build_reportbro_context_formats_sections():
     assert dataset["Produtos_Descontinuado"] == "2024-05-01"
     assert dataset["FichasTecnicas_ComponenteNome"] == "Ingrediente A"
     assert dataset["PrecosTaxas_Preco1"] == pytest.approx(10.0)
+    assert dataset["TiposArtigos_Cod"] == 2
+    assert dataset["TiposArtigos_Descricao"] == "Produto acabado"
+    assert dataset["Validade_Cod"] == 5
+    assert dataset["Validade_Descricao"] == "72 horas"
+    assert dataset["Temperaturas_Cod"] == 3
+    assert dataset["Temperaturas_Descricao"] == "Frio"
+    assert dataset["ProdutoPreparacao_ProdutoCodigo"] == "RB-01"
+    assert dataset["ProdutoPreparacao_Html"] == "<p>Preparar e servir.</p>"
     assert dataset[STATIC_SECTION_PARAMETER] == [{}]
 
 
@@ -161,6 +176,7 @@ def test_build_reportbro_context_includes_product_image_filename(tmp_path):
     product.produtos_row["codigo"] = product.code
     product.precos_taxas_row["codigo"] = product.code
     product.fichas_tecnicas_rows[0]["produtocodigo"] = product.code
+    product.produto_preparacao_row["produtocodigo"] = product.code
 
     root = get_project_root()
     image_path = root / "databases" / "images" / f"{product.code}.png"
@@ -258,6 +274,7 @@ def test_reportbro_template_without_image_element(tmp_path, caplog):
     product.produtos_row["codigo"] = product.code
     product.precos_taxas_row["codigo"] = product.code
     product.fichas_tecnicas_rows[0]["produtocodigo"] = product.code
+    product.produto_preparacao_row["produtocodigo"] = product.code
 
     root = get_project_root()
     image_path = root / "databases" / "images" / f"{product.code}.png"

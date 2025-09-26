@@ -48,3 +48,7 @@ class Product:
     produtos_row: dict[str, Any] | None = None
     fichas_tecnicas_rows: List[dict[str, Any]] = field(default_factory=list)
     precos_taxas_row: dict[str, Any] | None = None
+    tipos_artigos_row: dict[str, Any] | None = None
+    validade_row: dict[str, Any] | None = None
+    temperaturas_row: dict[str, Any] | None = None
+    produto_preparacao_row: dict[str, Any] | None = None
