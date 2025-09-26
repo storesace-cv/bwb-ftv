@@ -149,6 +149,14 @@
       <input id="open-file" type="file" accept=".json,application/json" style="display:none" aria-hidden="true" />
 
       <button id="btn-save">Guardar</button>
+      <button id="btn-save-as" class="secondary" title="Exportar template para JSON">Guardar como</button>
+      <button
+        id="btn-reopen-server"
+        class="secondary"
+        title="Reabrir seleção de templates do servidor"
+      >
+        Templates do servidor
+      </button>
       <button id="btn-preview" class="secondary">Preview PDF</button>
       <div id="status-bar"></div>
     </div>
@@ -251,6 +259,9 @@
       const dialogOpenButton = document.getElementById("template-dialog-open");
       const dialogCancelButton = document.getElementById("template-dialog-cancel");
       const dialogNewButton = document.getElementById("template-dialog-new");
+      const downloadLink = document.createElement("a");
+      downloadLink.style.display = "none";
+      document.body.appendChild(downloadLink);
 
       let currentLocationDescriptor = "";
 
@@ -416,6 +427,42 @@
         openFileInput.click();
       }
 
+      function buildDownloadName(baseName = "") {
+        const sanitized = String(baseName || "")
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9_-]+/g, "-")
+          .replace(/-+/g, "-")
+          .replace(/^-|-$/g, "");
+        if (sanitized) return `${sanitized}.json`;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        return `template-${timestamp}.json`;
+      }
+
+      function handleExportToDisk() {
+        const result = window.bwbExportCurrentTemplate?.();
+        if (!result?.success) {
+          const message = result?.error || "Não foi possível exportar o template actual.";
+          showToast(message, "error");
+          return;
+        }
+        try {
+          const payload = JSON.stringify(result.report, null, 2);
+          const blob = new Blob([payload], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const filename = buildDownloadName(result.name || result.location);
+          downloadLink.href = url;
+          downloadLink.download = filename;
+          downloadLink.click();
+          setTimeout(() => URL.revokeObjectURL(url), 2500);
+          setStatus(`Template exportado para download: ${filename}`);
+          showToast(`Download de '${filename}' iniciado.`);
+        } catch (error) {
+          console.error(error);
+          showToast("Falha ao preparar o download do template.", "error");
+        }
+      }
+
       async function handleOpenFromDisk(ev) {
         const file = ev.target.files?.[0];
         if (!file) return;
@@ -434,6 +481,19 @@
           console.error(err);
           showToast("Ficheiro inválido ou JSON malformado.", "error");
         }
+      }
+
+      async function handleReopenServerDialog() {
+        if (!templatesCache.length) {
+          await refreshTemplates();
+        }
+        if (!templatesCache.length) {
+          setStatus("Sem templates do servidor disponíveis.");
+          showToast("Não há templates do servidor para seleccionar.", "error");
+          return;
+        }
+        setStatus("Selecione um template do servidor.");
+        openTemplateDialog();
       }
 
       // ---------------- guardar/preview ----------------
@@ -558,6 +618,12 @@
         btnOpen.addEventListener("click", triggerOpenFromDisk);
         openFileInput.addEventListener("change", handleOpenFromDisk);
         document.getElementById("btn-save").addEventListener("click", () => persistTemplate(false));
+        document.getElementById("btn-save-as").addEventListener("click", () => handleExportToDisk());
+        document
+          .getElementById("btn-reopen-server")
+          .addEventListener("click", () => {
+            void handleReopenServerDialog();
+          });
         document.getElementById("btn-preview").addEventListener("click", () => previewTemplate());
         dialogSelect.addEventListener("change", () => {
           dialogOpenButton.disabled = !dialogSelect.value;
