@@ -672,6 +672,12 @@ class FTApp(QWidget):
         """Open the ReportBro editor or fall back to the bundled stub."""
 
         editor_target = os.getenv("FTV_REPORTBRO_EDITOR_URL", "").strip()
+        kiosk_opt_in = os.getenv("FTV_REPORTBRO_EDITOR_KIOSK", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
         if not editor_target:
             try:
                 endpoint = reportbro_server.ensure_reportbro_server()
@@ -680,15 +686,23 @@ class FTApp(QWidget):
                 open_reportbro_stub_dialog(self)
                 return
 
-            try:
-                if open_reportbro_kiosk(self, endpoint):
-                    logger.info("[ReportBro] Editor integrado aberto em modo kiosk")
-                    return
-            except Exception:
-                logger.exception("[ReportBro] Falha ao abrir editor integrado em modo kiosk")
-
             url = QUrl(f"http://{endpoint.host}:{endpoint.port}/designer")
-            logger.info("[ReportBro] A abrir editor integrado em %s", url.toString())
+            if kiosk_opt_in:
+                try:
+                    if open_reportbro_kiosk(self, endpoint):
+                        logger.info(
+                            "[ReportBro] Editor integrado aberto em modo kiosk (via FTV_REPORTBRO_EDITOR_KIOSK)"
+                        )
+                        return
+                except Exception:
+                    logger.exception(
+                        "[ReportBro] Falha ao abrir editor integrado em modo kiosk (FTV_REPORTBRO_EDITOR_KIOSK)"
+                    )
+
+            logger.info(
+                "[ReportBro] A abrir editor integrado no navegador predefinido em %s",
+                url.toString(),
+            )
             if not QDesktopServices.openUrl(url):
                 QMessageBox.warning(
                     self,
@@ -696,7 +710,7 @@ class FTApp(QWidget):
                     "Não foi possível abrir o editor ReportBro integrado.",
                 )
                 logger.warning(
-                    "[ReportBro] Falha ao abrir editor integrado em %s",
+                    "[ReportBro] Falha ao abrir editor integrado no navegador em %s",
                     url.toString(),
                 )
             return
