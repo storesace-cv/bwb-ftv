@@ -445,24 +445,64 @@
         return `template-${timestamp}.json`;
       }
 
-      function handleExportToDisk() {
+      async function handleExportToDisk() {
         const result = window.bwbExportCurrentTemplate?.();
         if (!result?.success) {
           const message = result?.error || "Não foi possível exportar o template actual.";
           showToast(message, "error");
           return;
         }
+        const payload = JSON.stringify(result.report, null, 2);
+        const filename = buildDownloadName(result.name || result.location);
+        const hasFilePicker = typeof window.showSaveFilePicker === "function";
+        let pickerFailed = false;
+
+        if (hasFilePicker) {
+          try {
+            const fileHandle = await window.showSaveFilePicker({
+              suggestedName: filename,
+              types: [
+                {
+                  description: "Ficheiros JSON",
+                  accept: {
+                    "application/json": [".json"],
+                  },
+                },
+              ],
+            });
+            const writable = await fileHandle.createWritable();
+            await writable.write(payload);
+            await writable.close();
+            const savedName = fileHandle?.name || filename;
+            setStatus(`Template guardado com o diálogo do sistema: ${savedName}`);
+            showToast(`Template guardado como '${savedName}'.`);
+            return;
+          } catch (pickerError) {
+            if (pickerError?.name === "AbortError") {
+              setStatus("Exportação cancelada pelo utilizador.");
+              showToast("Exportação cancelada.");
+              return;
+            }
+            console.warn("Falha ao usar showSaveFilePicker, a recuar para download.", pickerError);
+            pickerFailed = true;
+          }
+        }
+
         try {
-          const payload = JSON.stringify(result.report, null, 2);
           const blob = new Blob([payload], { type: "application/json" });
           const url = URL.createObjectURL(blob);
-          const filename = buildDownloadName(result.name || result.location);
           downloadLink.href = url;
           downloadLink.download = filename;
           downloadLink.click();
           setTimeout(() => URL.revokeObjectURL(url), 2500);
-          setStatus(`Template exportado para download: ${filename}`);
-          showToast(`Download de '${filename}' iniciado.`);
+          const statusMessage = pickerFailed
+            ? `Diálogo do sistema indisponível; download directo iniciado: ${filename}`
+            : `Download directo do template iniciado: ${filename}`;
+          setStatus(statusMessage);
+          const toastMessage = pickerFailed
+            ? `Download directo de '${filename}' iniciado após falha do diálogo do sistema.`
+            : `Download de '${filename}' iniciado.`;
+          showToast(toastMessage);
         } catch (error) {
           console.error(error);
           showToast("Falha ao preparar o download do template.", "error");
