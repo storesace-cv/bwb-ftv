@@ -91,8 +91,8 @@ def test_generate_ft_gestao_pdf_accepts_missing_identifier(
 
     original_prepare = ui.printing._prepare_management_payload
 
-    def capture_prepare(product):
-        payload = original_prepare(product)
+    def capture_prepare(product, **kwargs):
+        payload = original_prepare(product, **kwargs)
         assert payload["identifier"] == "<desconhecido>"
         return payload
 
@@ -121,14 +121,14 @@ def test_generate_ft_gestao_reportbro_pdf_accepts_missing_identifier(
 
     original_prepare = ui.printing._prepare_management_payload
 
-    def capture_prepare(product):
-        payload = original_prepare(product)
+    def capture_prepare(product, **kwargs):
+        payload = original_prepare(product, **kwargs)
         assert payload["identifier"] == "<desconhecido>"
         return payload
 
     monkeypatch.setattr("ui.printing._prepare_management_payload", capture_prepare)
 
-    def fake_render(template, dataset, output_path):
+    def fake_render(template, dataset, output_path, **kwargs):
         output_path.write_text("%PDF-1.4\n%mock\n")
 
     monkeypatch.setattr("ui.printing.render_pdf_to_path", fake_render)
@@ -580,3 +580,39 @@ def test_basic_pdf_preserves_unicode(tmp_path, monkeypatch):
     assert "Bolo de Maçã" in content
     assert "Feito com maçã e canela" in content
     assert '"name": "Bolo de Maçã"' in content or '"nome": "Bolo de Maçã"' in content
+
+
+def test_generate_ft_gestao_pdf_uses_locale(monkeypatch, tmp_path):
+    product = Product(
+        code="US-01",
+        name="Locale Test",
+        pvps=[1234.5],
+        iva=0,
+        ingredients=[],
+    )
+
+    locale_info = {"currency_symbol": "$", "currency_code": "USD", "locale_code": "en_US"}
+
+    destination = tmp_path / "ft_locale.pdf"
+    monkeypatch.setattr(
+        "ui.printing._prompt_pdf_destination",
+        lambda _product, parent=None: destination,
+    )
+
+    captured: dict[str, object] = {}
+
+    def fake_render(payload, output_path, page_metrics):
+        captured["payload"] = payload
+        captured["lines"] = list(ui.printing._build_pdf_lines(payload))
+        output_path.write_text("%PDF-1.4\n%mock\n", encoding="utf-8")
+
+    monkeypatch.setattr("ui.printing._render_pdf", fake_render)
+
+    result_path = generate_ft_gestao_pdf(product, locale=locale_info)
+
+    assert result_path == destination
+    lines = "\n".join(captured.get("lines", []))
+    assert "$1,234.50" in lines
+    payload = captured.get("payload", {})
+    assert isinstance(payload, dict)
+    assert payload.get("currency_code") == "USD"

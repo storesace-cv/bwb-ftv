@@ -13,13 +13,37 @@ from .ft_gestao_schema import (
     default_for_parameter,
 )
 
-from utils.formatting import parse_decimal
+from utils.formatting import (
+    format_currency_locale,
+    normalise_currency_context,
+    parse_decimal,
+)
 
 
 logger = logging.getLogger(__name__)
 
 
 EMPTY_FIELD = "--/--"
+
+
+_DEFAULT_CURRENCY_CONTEXT = {
+    "currency": "EUR",
+    "currency_code": "EUR",
+    "currency_symbol": "€",
+    "locale_code": "pt_PT",
+}
+
+_CURRENCY_CONTEXT = normalise_currency_context({}, defaults=_DEFAULT_CURRENCY_CONTEXT)
+
+
+def set_currency_context(context: Any | None) -> dict[str, Any]:
+    """Update the currency context used by formatting helpers."""
+
+    global _CURRENCY_CONTEXT
+    _CURRENCY_CONTEXT = normalise_currency_context(
+        context, defaults=_DEFAULT_CURRENCY_CONTEXT
+    )
+    return _CURRENCY_CONTEXT
 
 
 def _should_use_empty_field(value: Any) -> bool:
@@ -71,9 +95,19 @@ def _format_description_with_fallback(description: Any, code: Any) -> str:
     return _format_optional(code)
 
 
-def _format_currency(value: Any) -> str:
-    formatted = _format_number(value)
-    return formatted if formatted == EMPTY_FIELD else f"{formatted} €"
+def _format_currency(value: Any, currency: Mapping[str, Any] | None = None) -> str:
+    numeric = _normalise_numeric_value(value)
+    if numeric is None:
+        return EMPTY_FIELD
+    if numeric == 0:
+        return EMPTY_FIELD
+    context = currency or _CURRENCY_CONTEXT
+    return format_currency_locale(
+        numeric,
+        locale_code=context.get("locale_code"),
+        currency_symbol=context.get("currency_symbol"),
+        currency_code=context.get("currency_code"),
+    )
 
 
 def _format_percentage(value: Any) -> str:
@@ -379,12 +413,16 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
     """Convert ``generate_ft_gestao`` payload to the ReportBro dataset structure."""
 
     parameters: dict[str, Any] = {}
+    payload_currency: Any | None = None
     if isinstance(payload, Mapping):
+        payload_currency = payload.get("currency")
         reportbro_section = payload.get("reportbro")
         if isinstance(reportbro_section, Mapping):
             provided = reportbro_section.get("parameters")
             if isinstance(provided, Mapping):
                 parameters.update(provided)
+
+    currency_context = set_currency_context(payload_currency)
 
     image_parameter_names = {"product_image_filename", "product_image_uri"}
     for name in FT_GESTAO_PARAMETER_DEFINITIONS:
@@ -501,10 +539,14 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
 
     dataset: dict[str, Any] = dict(parameters)
     dataset_update = {
-            "title": page_title,
-            "subtitle": subtitle or _format_optional(payload.get("identifier")),
-            "metadata": metadata,
-            "product_details": product_details,
+        "currency": dict(currency_context),
+        "currency_symbol": currency_context.get("currency_symbol"),
+        "currency_code": currency_context.get("currency_code"),
+        "locale_code": currency_context.get("locale_code"),
+        "title": page_title,
+        "subtitle": subtitle or _format_optional(payload.get("identifier")),
+        "metadata": metadata,
+        "product_details": product_details,
             "pricing_details": _build_pricing_section(block_b3),
             "ingredients": _build_ingredients_section(block_b2),
             "ingredientes": ingredientes_table,

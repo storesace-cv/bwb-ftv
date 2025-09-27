@@ -229,27 +229,27 @@ def test_delete_temperatura():
 
 def test_localizacao_crud_and_activation():
     conn, repo = _make_repo()
-    lid1 = repo.add_localizacao("Portugal", "PT", "Euro", "€", "€ {:.2f}")
+    lid1 = repo.add_localizacao("Portugal", "PT", "EUR", "€", "pt_PT")
     assert lid1 == 1
-    lid2 = repo.add_localizacao("Espanha", "ES", "Euro", "€", "€ {:.2f}")
+    lid2 = repo.add_localizacao("Espanha", "ES", "EUR", "€", "es_ES")
     rows = repo.list_localizacao_admin()
     assert rows == [
-        (1, "Portugal", "PT", "Euro", "€", "€ {:.2f}", 0),
-        (2, "Espanha", "ES", "Euro", "€", "€ {:.2f}", 0),
+        (1, "Portugal", "PT", "EUR", "€", "pt_PT", 0),
+        (2, "Espanha", "ES", "EUR", "€", "es_ES", 0),
     ]
 
-    assert repo.update_localizacao(lid1, currency="EUR", fmt="{:.2f} €") is True
+    assert repo.update_localizacao(lid1, currency="EUR", fmt="en_GB") is True
     updated = repo.list_localizacao_admin()[0]
-    assert updated[3:6] == ("EUR", "€", "{:.2f} €")
+    assert updated[3:6] == ("EUR", "€", "en_GB")
 
     assert repo.set_localizacao_ativo(lid2) is True
     assert repo.get_localizacao_ativa() == (
         2,
         "Espanha",
         "ES",
-        "Euro",
+        "EUR",
         "€",
-        "€ {:.2f}",
+        "es_ES",
         1,
     )
 
@@ -264,13 +264,13 @@ def test_localizacao_activation_handles_missing_and_invalid():
     lid = repo.add_localizacao(
         "Brasil",
         "BR",
-        "Real",
+        "BRL",
         "R$",
-        "R$ {:.2f}",
+        "pt_BR",
         active=1,
     )
     assert lid == 1
-    lid2 = repo.add_localizacao("Chile", "CL", "Peso", "$", "$ {:.2f}")
+    lid2 = repo.add_localizacao("Chile", "CL", "CLP", "$", "es_CL")
     assert repo.set_localizacao_ativo(lid2) is True
     rows = repo.list_localizacao_admin()
     assert [row[-1] for row in rows] == [0, 1]

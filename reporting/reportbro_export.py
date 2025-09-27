@@ -20,6 +20,7 @@ from .ft_gestao import (
     _format_currency,
     _format_ingredient_quantity,
     _format_optional,
+    set_currency_context,
 )
 
 logger = logging.getLogger(__name__)
@@ -108,6 +109,8 @@ def _is_invalid_size_error(entry: Any) -> bool:
 
 
 def _render_fallback_pdf(data: Mapping[str, Any]) -> bytes:
+    set_currency_context(data.get("currency"))
+
     try:
         from ._stubs.reportbro import _build_pdf_bytes
     except ModuleNotFoundError as exc:  # pragma: no cover - defensive guard

@@ -200,8 +200,12 @@ def test_build_reportbro_context_formats_sections():
     assert dataset["FichasTecnicas_Peso"] == pytest.approx(1.25)
     assert dataset["PrecosTaxas_Preco1"] == pytest.approx(10.0)
     assert dataset["PrecosTaxas_Preco2"] == pytest.approx(15.5)
-    assert dataset["PrecosTaxas_Preco1_display"] == "10,00 €"
-    assert dataset["PrecosTaxas_Preco2_display"] == "15,50 €"
+    assert dataset["currency_symbol"] == "€"
+    assert dataset["currency_code"] == "EUR"
+    assert dataset["locale_code"] == "pt_PT"
+    assert dataset["currency"]["currency_code"] == "EUR"
+    assert dataset["PrecosTaxas_Preco1_display"] == "10,00\u00a0€"
+    assert dataset["PrecosTaxas_Preco2_display"] == "15,50\u00a0€"
     assert dataset["TiposArtigos_Cod"] == 2
     assert dataset["TiposArtigos_Descricao"] == "Produto acabado"
     assert dataset["product_tipo_artigo_cod"] == "Produto acabado"
@@ -216,8 +220,8 @@ def test_build_reportbro_context_formats_sections():
     assert dataset[STATIC_SECTION_PARAMETER] == [{}]
 
     pricing_rows = dataset["pricing_rows"]
-    assert pricing_rows[0]["pvp"] == "10,00 €"
-    assert pricing_rows[1]["pvp"] == "15,50 €"
+    assert pricing_rows[0]["pvp"] == "10,00\u00a0€"
+    assert pricing_rows[1]["pvp"] == "15,50\u00a0€"
 
     ingredientes = dataset["ingredientes"]
     assert isinstance(ingredientes, list)
@@ -794,3 +798,24 @@ def test_resolve_reportbro_template_missing_raises_friendly(tmp_path, monkeypatc
     message = str(exc.value)
     assert "Não foi possível localizar o template ReportBro" in message
     assert printing._DEFAULT_REPORTBRO_TEMPLATE_NAME in message
+
+
+def test_build_reportbro_context_respects_pt_br_locale():
+    product = Product(
+        code="BR-01",
+        name="Produto Brasil",
+        pvps=[1234.5],
+        iva=0,
+        ingredients=[],
+    )
+    locale_info = {"currency_symbol": "R$", "currency_code": "BRL", "locale_code": "pt_BR"}
+
+    payload = _prepare_management_payload(product, locale=locale_info)
+    dataset = build_reportbro_context(payload)
+
+    assert dataset["currency_symbol"] == "R$"
+    assert dataset["currency_code"] == "BRL"
+    assert dataset["locale_code"] == "pt_BR"
+    assert dataset["PrecosTaxas_Preco1_display"] == "R$\u00a01.234,50"
+    pricing_rows = dataset["pricing_rows"]
+    assert pricing_rows[0]["pvp"] == "R$\u00a01.234,50"

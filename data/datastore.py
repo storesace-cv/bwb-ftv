@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 from utils import get_project_root
+from utils.formatting import normalise_currency_context
 from .migration import (
     MIGRATIONS_DIR,
     get_pending_migrations as _get_pending_migrations,
@@ -982,6 +983,42 @@ class DataStore:
         except sqlite3.Error as exc:
             logger.error("[DataStore] list_temperaturas falhou: %s", exc, exc_info=True)
             return [(None, "—")]
+
+    def get_localizacao_ativa(self):
+        if not self.aux:
+            return None
+        try:
+            entry = self.aux.get_localizacao_ativa()
+        except sqlite3.Error as exc:
+            logger.error(
+                "[DataStore] get_localizacao_ativa falhou: %s", exc, exc_info=True
+            )
+            return None
+        if not entry:
+            return None
+
+        (
+            entry_id,
+            country,
+            country_code,
+            currency,
+            symbol,
+            fmt,
+            active,
+        ) = entry
+        return normalise_currency_context(
+            {
+                "id": entry_id,
+                "country": country,
+                "country_code": country_code,
+                "currency": currency,
+                "currency_code": currency,
+                "currency_symbol": symbol,
+                "locale_code": fmt,
+                "format": fmt,
+                "active": active,
+            }
+        )
 
     def set_tipo_artigo(self, codigo: str, tipo_cod) -> bool:
         """Atualiza o ``TipoArtigo`` de um produto."""
