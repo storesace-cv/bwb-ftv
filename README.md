@@ -82,6 +82,19 @@ Para promover novas versões do template de Gestão:
 > caminho `/databases/images/{Produtos_Codigo}.png`; mantenha este fluxo em
 > futuras alterações.
 
+> 🍽️ **Tabela de ingredientes** — O mesmo template passou a incluir uma tabela
+> alimentada pelo dataset `${ingredientes}`, com uma linha por componente e os
+> campos `FichasTecnicas_ComponenteNome`, `FichasTecnicas_Qtd`,
+> `FichasTecnicas_Unidade`, `FichasTecnicas_Ppu`, `FichasTecnicas_Preco` e
+> `FichasTecnicas_Peso`. Estes valores são convertidos para `float` em
+> `reporting/ft_gestao.build_reportbro_context`, pelo que devem ser enviados sem
+> símbolos adicionais (por exemplo `kg`, `€` ou vírgulas decimais) para evitar
+> exceções como as detetadas nos testes de exportação de ReportBro. Garanta
+> também que todos os ingredientes previstos são fornecidos, caso contrário a
+> tabela gera linhas vazias. A geração do relatório com a nova tabela foi
+> validada contra a versão atual da aplicação através de
+> `tests/test_reportbro_export.py`.
+
 **Windows**
 
 ```powershell

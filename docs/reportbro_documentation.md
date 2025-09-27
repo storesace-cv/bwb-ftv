@@ -72,6 +72,7 @@ O **ReportBro Edit** (ou Designer) é uma ferramenta visual para criar/editar te
 
 - `image`
 - `text`
+- `table`
 
 
 ## `docElements` — chaves e valores (global)
@@ -80,7 +81,7 @@ O **ReportBro Edit** (ou Designer) é uma ferramenta visual para criar/editar te
 |---|---|---:|---|
 | `backgroundColor` | str | 100.0% | .. |
 | `containerId` | str | 100.0% | 0_content |
-| `elementType` | str | 100.0% | image, text |
+| `elementType` | str | 100.0% | image, table, text |
 | `height` | int | 100.0% | 140, 18 |
 | `horizontalAlignment` | str | 100.0% | left |
 | `id` | int | 100.0% | 1, 10, 2, 3, 4, 5, 6, 7, 8, 9 |
@@ -166,4 +167,29 @@ O **ReportBro Edit** (ou Designer) é uma ferramenta visual para criar/editar te
 
 - **product_image_filename** (string) — caminho absoluto da imagem do produto, construído como `/databases/images/{Produtos_Codigo}.png`.
 - Não usar `source` para este caso. O binding deve ser sempre `imageFilename`.
+
+## `table` — tabela de ingredientes
+
+- O template `reporting/templates/ft_gestao_02.json` define uma tabela com seis
+  colunas: `FichasTecnicas_ComponenteNome`, `FichasTecnicas_Qtd`,
+  `FichasTecnicas_Unidade`, `FichasTecnicas_Ppu`, `FichasTecnicas_Preco` e
+  `FichasTecnicas_Peso`.
+- Cada linha é preenchida a partir do dataset `${ingredientes}` construído em
+  `reporting/ft_gestao.build_reportbro_context`, que converte os valores
+  localizados em `float` antes de enviar para o template.
+- Os testes de `tests/test_reportbro_export.py` cobrem a montagem deste dataset
+  e evitam regressões na renderização da tabela.
+
+## Dataset `${ingredientes}`
+
+- Tipo: array de mapas com as chaves `FichasTecnicas_ComponenteNome`,
+  `FichasTecnicas_Qtd`, `FichasTecnicas_Unidade`, `FichasTecnicas_Ppu`,
+  `FichasTecnicas_Preco`, `FichasTecnicas_Peso` e `FichasTecnicas_Ordem`.
+- Origem: `build_reportbro_context` copia `block_b2["ingredientes"]`, aplica
+  `replace_localized_decimal` e `decimal_to_float` aos campos numéricos e ordena
+  pelo índice `FichasTecnicas_Ordem`.
+- Erros conhecidos: enviar strings com unidades ou símbolos monetários impede a
+  conversão para `float`; conjuntos incompletos de ingredientes originam linhas
+  vazias. Siga os testes de `tests/test_reportbro_export.py` como referência ao
+  preparar novos dados.
 

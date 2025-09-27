@@ -1,5 +1,13 @@
 # Changelog
 
+## [2025-09-27]
+
+### Added
+- Documented that ReportBro template `ft_gestao_02.json` agora inclui uma tabela
+  de ingredientes alimentada pelo dataset `${ingredientes}`, com conversão
+  numérica garantida por `reporting/ft_gestao.build_reportbro_context` e
+  coberta pelos testes de exportação em `tests/test_reportbro_export.py`.
+
 ## [2025-09-26]
 
 ### Added
