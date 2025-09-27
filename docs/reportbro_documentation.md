@@ -20,6 +20,7 @@ O **ReportBro** possui um **modo de debug** que ativa verificações extras dura
   logging.basicConfig(level=logging.DEBUG)
   # Exceções do ReportBro serão logadas com detalhes
   ```
+- **Integração na aplicação**: defina a variável de ambiente `FTV_REPORTBRO_DEBUG=1` (ou qualquer valor não vazio) para forçar o modo debug no pipeline de geração de PDFs. Em alternativa, ativar `logging` em nível `DEBUG` também ativa automaticamente esta flag.
 
 ### Mais informações:
 - Consulte o guia oficial: [Debug Mode no Framework ReportBro](https://www.reportbro.com/framework/guide/6/debug-mode).

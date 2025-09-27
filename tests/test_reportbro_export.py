@@ -316,6 +316,40 @@ def test_reportbro_pdf_generation(tmp_path):
             image_path.unlink()
 
 
+def test_generate_ft_gestao_reportbro_pdf_enables_debug(monkeypatch, tmp_path):
+    from reporting import reportbro_export
+
+    monkeypatch.setenv("FTV_REPORTBRO_DEBUG", "1")
+
+    captured: dict[str, Any] = {}
+
+    class DebugAwareReport:
+        def __init__(self, template: Any, data: Mapping[str, Any], **kwargs: Any):
+            self.template = template
+            self.data = dict(data)
+            self.errors: list[Any] = []
+            captured["debug"] = kwargs.get("debug")
+
+        def generate_pdf(self) -> bytes:
+            return b"%PDF-1.4\n%debug\n"
+
+    monkeypatch.setattr(reportbro_export, "Report", DebugAwareReport)
+
+    product = _sample_product()
+    destination = tmp_path / "gestao_reportbro_debug.pdf"
+    template_path = Path("app/templates_store/templates/ft_gestao_02.json")
+
+    result = generate_ft_gestao_reportbro_pdf(
+        product,
+        template_path=template_path,
+        destination=destination,
+    )
+
+    assert destination.exists()
+    assert result == destination
+    assert captured.get("debug") is True
+
+
 def test_reportbro_template_without_image_element(tmp_path, caplog):
     product = _sample_product()
     product.code = "RB-TEMPLATE"

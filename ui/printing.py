@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 from collections.abc import Iterable as IterableABC, MutableMapping as MutableMappingABC
 from datetime import date, datetime
@@ -188,7 +189,11 @@ def generate_ft_gestao_reportbro_pdf(
         destination = _prompt_pdf_destination(product_obj, parent=parent)
 
     destination = Path(destination)
-    render_pdf_to_path(template, dataset, destination)
+    debug_enabled = _should_enable_reportbro_debug()
+    if debug_enabled:
+        logger.debug("[ReportBro] Modo debug ativo para geração de PDF")
+
+    render_pdf_to_path(template, dataset, destination, debug=debug_enabled)
     logger.info(
         "[ReportBro] FT Gestão criada com sucesso em %s usando template %s",
         destination,
@@ -1707,3 +1712,13 @@ def _build_pdf_lines(payload: dict[str, Any]) -> Iterable[str]:
 
 def _escape_pdf_text(text: str) -> str:
     return str(text).replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+
+def _should_enable_reportbro_debug() -> bool:
+    env_value = os.getenv("FTV_REPORTBRO_DEBUG")
+    if env_value is not None:
+        normalised = env_value.strip().lower()
+        if normalised in {"", "0", "false", "no", "off"}:
+            return False
+        return True
+    return logger.isEnabledFor(logging.DEBUG)
+

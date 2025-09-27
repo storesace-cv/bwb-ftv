@@ -131,6 +131,7 @@ class Report:
 
     template: Mapping[str, Any]
     data: Mapping[str, Any]
+    debug: bool = False
     errors: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
