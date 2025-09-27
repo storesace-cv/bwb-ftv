@@ -23,6 +23,7 @@ Este documento consolida os termos mais recorrentes encontrados no código-fonte
 | **TiposArtigos** | Lista de categorias de artigo que alimenta o campo `TipoArtigo` em `Produtos`. | Tabela auxiliar `TiposArtigos`. | Schema Maintenance Agent ao sincronizar cabeçalhos.
 | **Validade** | Referencial de durações padrão (ex.: “24h”, “48h”) associado a `Produtos`. | Tabela `Validade`. | Schema Maintenance Agent.
 | **Temperaturas** | Tabela com faixas de temperatura (ex.: “Quente”, “Frio”) para requisitos de conservação. | Tabela `Temperaturas`. | Schema Maintenance Agent.
+| **Localização** *("Parâmetros de Moeda")* | Catálogo com país, código ISO, moeda, símbolo e locale; exatamente um registo pode estar ativo para formatar valores monetários. | Tabela `Localizacao` documentada em `SCHEMA.md`. | Schema Maintenance Agent e equipa de Produto/Financeira. |
 | **ProdutoPreparacao** | Armazena instruções HTML de preparação ligadas a um produto. | Tabela `ProdutoPreparacao` e migrações correspondentes. | Migration Agent garante existência da tabela; UI atualiza conteúdo.
 | **Uploads** | Registo histórico dos ficheiros importados, incluindo nome e data. | Tabela `Uploads` alimentada após importações. | Data Import Agent.
 

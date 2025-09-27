@@ -118,6 +118,22 @@
 | Descricao | Ex.: "Quente", "Frio" |
 | Ativo | Indicador de ativo |
 
+### `Localizacao`
+| Campo | Descrição |
+|---|---|
+| **Id** | Identificador sequencial |
+| Country | Nome do país associado ao formato |
+| Code | Código ISO (ex.: `PT`, `BR`) |
+| Currency | Nome da moeda |
+| Symbol | Símbolo usado na UI |
+| Format | Locale/base de formatação (`pt_PT`, `en_US`, ...) |
+| Active | Indicador da configuração atualmente ativa |
+
+> A restrição `idx_localizacao_active` garante que apenas um registo pode
+> estar ativo (`Active = 1`) de cada vez. A tabela é a base para futuras
+> parametrizações de moeda e formatos regionais; é automaticamente semeada
+> com as localizações padrão na criação de uma nova base de dados.
+
 ### `ProdutoPreparacao`
 | Campo | Descrição |
 |---|---|
@@ -133,7 +149,25 @@ erDiagram
     TiposArtigos ||--o{ Produtos : "TipoArtigo"
     Validade ||--o{ Produtos : "Validade"
     Temperaturas ||--o{ Produtos : "Temperatura"
+    Localizacao {
+        string Country
+        string Code
+        string Currency
+        string Symbol
+        string Format
+        bool Active
+    }
 ```
+
+## Seeds e pré-carregamento
+
+- `Alergenios`: controlado por `FTV_SEED_ALERGENIOS`; apenas é preenchido com o
+  catálogo padrão quando a variável é definida.
+- `Localizacao`: semeado automaticamente na criação da base de dados com os
+  formatos definidos em `DEFAULT_LOCALIZACOES`, garantindo que existe pelo menos
+  um registo ativo.
+- `Validade` e `Temperaturas`: recebem valores padrão quando estão vazios para
+  suportar listas auxiliares na UI.
 
 ---
 
