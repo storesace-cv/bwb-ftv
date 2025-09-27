@@ -1,3 +1,59 @@
+# Debug e Logging no ReportBro e ReportBro Edit
+
+## Debug no ReportBro (Biblioteca Python)
+
+O **ReportBro** possui um **modo de debug** que ativa verificações extras durante a geração de relatórios, ajudando a identificar erros lógicos, problemas em expressões (como cálculos ou condições) e falhas na renderização. Ele exibe warnings ou erros detalhados no console.
+
+### Como ativar:
+- Na inicialização da classe `Report`, passe o parâmetro `debug=True`:
+  ```python
+  from reportbro import Report
+
+  report = Report(template_source, debug=True)  # Ativa o modo debug
+  report.generate()  # Gera o relatório com logs de debug
+  ```
+- Isso imprime mensagens no console (stdout/stderr), como erros em parâmetros, expressões inválidas ou problemas de layout.
+- **Benefícios**: Facilita o troubleshooting em desenvolvimento, mostrando, por exemplo, o traceback de falhas em cálculos.
+- **Limitações**: Logs vão para o console, não são persistentes. Para logging robusto, use o módulo `logging` do Python:
+  ```python
+  import logging
+  logging.basicConfig(level=logging.DEBUG)
+  # Exceções do ReportBro serão logadas com detalhes
+  ```
+
+### Mais informações:
+- Consulte o guia oficial: [Debug Mode no Framework ReportBro](https://www.reportbro.com/framework/guide/6/debug-mode).
+
+## Debug no ReportBro Edit/Designer (Editor JavaScript)
+
+O **ReportBro Edit** (ou Designer) é uma ferramenta visual para criar/editar templates no browser. O debug é feito principalmente via **ferramentas de desenvolvedor do navegador** (ex.: Chrome DevTools).
+
+### Como debugar:
+- Abra o console (F12 > Console) e execute o Designer. Erros em templates, previews ou integrações aparecem no console.
+  - Exemplo de erro comum: `TypeError: $(...).reportBro is not a function` – indica falha na inclusão do script `reportbro.js`. Verifique se os arquivos JS/CSS estão carregados.
+- **Modo Preview**: Teste templates com dados de amostra no Designer. Erros (ex.: expressões inválidas) são exibidos na interface ou console.
+- **Modo de Desenvolvimento**: Para debug avançado, use `npm run dev` no build do Designer para gerar logs detalhados no console.
+- **Logging**: Não há logging built-in, mas adicione `console.log()` em callbacks personalizados (ex.: ao carregar templates). Para produção, evite logs; use ferramentas como Sentry para logging remoto.
+
+## Tratamento Geral de Erros e Logging
+
+- **Captura de Exceções**: No ReportBro Lib, erros são lançados como `ReportBroError`. Capture e logue:
+  ```python
+  try:
+      report.generate()
+  except Exception as e:
+      print(f"Erro no ReportBro: {e}")  # Ou use logging.error(e)
+  ```
+- **Sem Logging Nativo Avançado**: Não há configurações para levels de log (debug/info/warn). No Python, use o módulo `logging`. No Designer JS, use `console.debug()` em scripts customizados.
+- **Problemas Comuns**:
+  - Erros em templates: Verifique expressões no preview do Designer.
+  - Falhas na geração: Ative debug e inspecione o dict de dados de entrada.
+  - Consulte o [Google Group do ReportBro](https://groups.google.com/g/reportbro) para dicas comunitárias.
+
+## Recursos Adicionais
+- [Documentação oficial do ReportBro](https://www.reportbro.com/docs/)
+- [GitHub do reportbro-lib](https://github.com/jobsta/reportbro-lib)
+
 # ReportBro — schema inferido do template
 
 ## Chaves de topo do documento
