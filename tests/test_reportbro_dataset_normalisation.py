@@ -151,10 +151,13 @@ def test_reportbro_dataset_with_complete_data():
     assert dataset["PrecosTaxas_Loja"] == "Loja X"
     assert dataset["TiposArtigos_Cod"] == 2
     assert dataset["TiposArtigos_Descricao"] == "Tipo padrão"
+    assert dataset["product_tipo_artigo_cod"] == "Tipo padrão"
     assert dataset["Validade_Cod"] == 5
     assert dataset["Validade_Descricao"] == "Validade padrão"
+    assert dataset["product_validade_cod"] == "Validade padrão"
     assert dataset["Temperaturas_Cod"] == 3
     assert dataset["Temperaturas_Descricao"] == "Frio"
+    assert dataset["product_temperatura_cod"] == "Frio"
     assert dataset["ProdutoPreparacao_ProdutoCodigo"] == "TEST-01"
     assert dataset["ProdutoPreparacao_Html"] == "<p>Preparação padrão.</p>"
     assert not warnings

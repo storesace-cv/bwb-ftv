@@ -64,6 +64,13 @@ def _format_optional(value: Any) -> str:
     return text or EMPTY_FIELD
 
 
+def _format_description_with_fallback(description: Any, code: Any) -> str:
+    formatted_description = _format_optional(description)
+    if formatted_description != EMPTY_FIELD:
+        return formatted_description
+    return _format_optional(code)
+
+
 def _format_currency(value: Any) -> str:
     formatted = _format_number(value)
     return formatted if formatted == EMPTY_FIELD else f"{formatted} €"
@@ -106,27 +113,32 @@ def _join_lines(lines: Iterable[str]) -> str:
     return "\n".join(filtered) if filtered else EMPTY_FIELD
 
 
-def _build_product_section(block: Mapping[str, Any]) -> str:
+def _build_product_section(
+    block: Mapping[str, Any], *, formatted: Mapping[str, str] | None = None
+) -> str:
+    def _get_formatted(key: str) -> str:
+        if formatted and key in formatted:
+            return formatted[key]
+        return _format_optional(block.get(key))
+
     lines = [
         "Produto",
-        f"Código: {_format_optional(block.get('codigo'))}",
+        f"Código: {_get_formatted('codigo')}",
     ]
 
     name = block.get("nome")
-    formatted_name = _format_optional(name)
+    formatted_name = _get_formatted("nome")
     if formatted_name != EMPTY_FIELD:
         lines.append(f"Nome: {formatted_name}")
 
-    lines.append(f"Família: {_format_optional(block.get('familia'))}")
-    lines.append(f"Subfamília: {_format_optional(block.get('subfamilia'))}")
+    lines.append(f"Família: {_get_formatted('familia')}")
+    lines.append(f"Subfamília: {_get_formatted('subfamilia')}")
     lines.append(
-        f"Tipo de artigo (código): {_format_optional(block.get('tipo_artigo_cod'))}"
+        f"Tipo de artigo (código): {_get_formatted('tipo_artigo_cod')}"
     )
+    lines.append(f"Validade (código): {_get_formatted('validade_cod')}")
     lines.append(
-        f"Validade (código): {_format_optional(block.get('validade_cod'))}"
-    )
-    lines.append(
-        f"Temperatura (código): {_format_optional(block.get('temperatura_cod'))}"
+        f"Temperatura (código): {_get_formatted('temperatura_cod')}"
     )
     extra = block.get("informacao_adicional")
     if extra:
@@ -136,7 +148,13 @@ def _build_product_section(block: Mapping[str, Any]) -> str:
     return _join_lines(lines)
 
 
-def _build_product_data(block: Mapping[str, Any]) -> dict[str, str]:
+def _build_product_data(
+    block: Mapping[str, Any],
+    *,
+    tipo_artigo_description: Any = None,
+    validade_description: Any = None,
+    temperatura_description: Any = None,
+) -> dict[str, str]:
     return {
         "codigo": _format_optional(block.get("codigo")),
         "nome": _format_optional(block.get("nome")),
@@ -145,9 +163,15 @@ def _build_product_data(block: Mapping[str, Any]) -> dict[str, str]:
         "informacao_adicional": _format_optional(
             block.get("informacao_adicional")
         ),
-        "tipo_artigo_cod": _format_optional(block.get("tipo_artigo_cod")),
-        "validade_cod": _format_optional(block.get("validade_cod")),
-        "temperatura_cod": _format_optional(block.get("temperatura_cod")),
+        "tipo_artigo_cod": _format_description_with_fallback(
+            tipo_artigo_description, block.get("tipo_artigo_cod")
+        ),
+        "validade_cod": _format_description_with_fallback(
+            validade_description, block.get("validade_cod")
+        ),
+        "temperatura_cod": _format_description_with_fallback(
+            temperatura_description, block.get("temperatura_cod")
+        ),
         "image_path": _format_optional(block.get("image_path")),
     }
 
@@ -380,7 +404,13 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
     ]
     subtitle = " — ".join(part for part in subtitle_parts if part != EMPTY_FIELD)
 
-    product_data = _build_product_data(block_b1)
+    product_data = _build_product_data(
+        block_b1,
+        tipo_artigo_description=parameters.get("TiposArtigos_Descricao"),
+        validade_description=parameters.get("Validade_Descricao"),
+        temperatura_description=parameters.get("Temperaturas_Descricao"),
+    )
+    product_details = _build_product_section(block_b1, formatted=product_data)
     pricing_rows = _build_pricing_rows(block_b3)
     pricing_lines = _build_pricing_lines(pricing_rows)
     ingredients_rows = _build_ingredients_rows(block_b2)
@@ -474,7 +504,7 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
             "title": page_title,
             "subtitle": subtitle or _format_optional(payload.get("identifier")),
             "metadata": metadata,
-            "product_details": _build_product_section(block_b1),
+            "product_details": product_details,
             "pricing_details": _build_pricing_section(block_b3),
             "ingredients": _build_ingredients_section(block_b2),
             "ingredientes": ingredientes_table,

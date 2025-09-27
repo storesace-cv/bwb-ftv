@@ -496,6 +496,24 @@ def _build_reportbro_parameters(
         preparacao["produtocodigo"] = product.code
     preparacao.update(_normalise_mapping(raw_preparacao))
 
+    dataset_section = {
+        "product_tipo_artigo_cod": (
+            tipos_artigos.get("descricao")
+            or tipos_artigos.get("cod")
+            or getattr(product, "tipo_artigo_cod", None)
+        ),
+        "product_validade_cod": (
+            validade.get("descricao")
+            or validade.get("cod")
+            or getattr(product, "validade_cod", None)
+        ),
+        "product_temperatura_cod": (
+            temperaturas.get("descricao")
+            or temperaturas.get("cod")
+            or getattr(product, "temperatura_cod", None)
+        ),
+    }
+
     parameters: dict[str, Any] = {}
     warnings: list[dict[str, Any]] = []
 
@@ -507,6 +525,7 @@ def _build_reportbro_parameters(
         "validade": validade,
         "temperaturas": temperaturas,
         "produto_preparacao": preparacao,
+        "dataset": dataset_section,
     }
 
     for name, meta in FT_GESTAO_PARAMETER_DEFINITIONS.items():
