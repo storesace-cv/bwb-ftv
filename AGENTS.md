@@ -62,3 +62,8 @@
 - **Inputs**: Templates in `app/templates_store/templates/ft_gestao_02.json`.
 - **Outputs**: Verified compliance in code and warnings if misconfigured.
 - **Interactions**: Works alongside the ReportBro Context Agent to enforce schema conformity.
+
+## ReportBro information update
+The ReportBro documentation can be found in `reportbro_documentation.md`.
+This file replaces the previous `reportbro_schema_from_template.md` and
+includes additional information about debugging.
