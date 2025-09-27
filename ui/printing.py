@@ -286,6 +286,20 @@ def _build_produtos_fallback(product: Product) -> dict[str, Any]:
     return fallback
 
 
+def _is_missing_price(value: Any) -> bool:
+    if value in (None, ""):
+        return True
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return True
+        value = parse_decimal(stripped)
+    try:
+        return float(value) == 0.0
+    except (TypeError, ValueError):
+        return False
+
+
 def _build_precos_fallback(product: Product) -> dict[str, Any]:
     fallback: dict[str, Any] = {}
     if product.code:
@@ -303,7 +317,7 @@ def _build_precos_fallback(product: Product) -> dict[str, Any]:
             price = pvps[idx - 1]
         except IndexError:
             price = None
-        if price in (None, ""):
+        if _is_missing_price(price):
             continue
         fallback[f"preco{idx}"] = price
 

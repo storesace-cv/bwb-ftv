@@ -478,6 +478,17 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
             "totals_num_ingredientes": totals_data["num_ingredientes"],
         }
 
+    precos_taxas_values = list(block_b3.get("pvps") or [])
+    for index in range(1, 6):
+        key = f"PrecosTaxas_Preco{index}"
+        if index - 1 < len(precos_taxas_values):
+            price_value = precos_taxas_values[index - 1]
+        else:
+            price_value = None
+        if price_value in (None, ""):
+            price_value = parameters.get(key)
+        dataset_update[key] = _format_currency(price_value)
+
     if product_image_filename:
         dataset_update["product_image_filename"] = product_image_filename
         if product_image_uri:
