@@ -314,6 +314,31 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
     pricing_lines = _build_pricing_lines(pricing_rows)
     ingredients_rows = _build_ingredients_rows(block_b2)
     ingredients_lines = _build_ingredients_lines(ingredients_rows)
+
+    ingredientes_table: list[dict[str, Any]] = []
+    ingredientes_source = list(block_b2.get("ingredientes") or [])
+
+    def _safe_numeric(value: Any) -> float:
+        if value is None:
+            return 0.0
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return 0.0
+
+    for entry in ingredientes_source:
+        ingrediente_nome = entry.get("nome") or entry.get("codigo") or ""
+        ingredientes_table.append(
+            {
+                "ingrediente": ingrediente_nome,
+                "quantidade": _safe_numeric(entry.get("quantidade")),
+                "um": entry.get("unidade") or "",
+                "custo_unit": _safe_numeric(entry.get("ppu")),
+                "custo_total": _safe_numeric(entry.get("total")),
+                "observacoes": entry.get("observacoes") or "",
+            }
+        )
+
     totals_data = _build_totals_data(block_b2.get("totais") or {})
     totals_lines = _build_totals_lines(totals_data)
     def _normalise_image_value(value: Any) -> str | None:
@@ -363,6 +388,7 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
             "product_details": _build_product_section(block_b1),
             "pricing_details": _build_pricing_section(block_b3),
             "ingredients": _build_ingredients_section(block_b2),
+            "ingredientes": ingredientes_table,
             "totals": _build_totals_section(block_b2),
             "product_data": product_data,
             "pricing_data": {

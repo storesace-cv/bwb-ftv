@@ -97,7 +97,7 @@ def _build_pdf_bytes(text: str) -> bytes:
             "/Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n"
         ),
         (
-            f"4 0 obj<< /Length {len(content_stream.encode('latin-1'))} >>\n"
+            f"4 0 obj<< /Length {len(content_stream.encode('latin-1', errors='ignore'))} >>\n"
             f"stream\n{content_stream}endstream\nendobj\n"
         ),
         "5 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n",
@@ -108,7 +108,7 @@ def _build_pdf_bytes(text: str) -> bytes:
     offsets = [0]
     for obj in objects:
         offsets.append(len(output))
-        output.extend(obj.encode("latin-1"))
+        output.extend(obj.encode("latin-1", errors="ignore"))
 
     xref_pos = len(output)
     total_objects = len(objects) + 1

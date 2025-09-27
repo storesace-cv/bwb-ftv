@@ -78,6 +78,57 @@ def _format_errors(errors: list[Any]) -> str:
     return "; ".join(messages)
 
 
+def _is_invalid_size_error(entry: Any) -> bool:
+    if isinstance(entry, Mapping):
+        key = entry.get("msg_key")
+        if isinstance(key, str) and key == "errorMsgInvalidSize":
+            return True
+    if isinstance(entry, str) and "errorMsgInvalidSize" in entry:
+        return True
+    return False
+
+
+def _render_fallback_pdf(data: Mapping[str, Any]) -> bytes:
+    try:
+        from ._stubs.reportbro import _build_pdf_bytes
+    except ModuleNotFoundError as exc:  # pragma: no cover - defensive guard
+        raise ReportBroRenderError("ReportBro fallback renderer is unavailable") from exc
+
+    codigo = data.get("product_codigo") or data.get("Produtos_Codigo") or ""
+    nome = data.get("product_nome") or data.get("Produtos_Nome") or ""
+    ingredientes = list(data.get("ingredientes") or [])
+    totals = data.get("totals_data") or data.get("totais_data") or {}
+
+    lines = [
+        "Ficha Técnica de Gestão (fallback)",
+        f"CÓDIGO: {codigo}",
+        f"NOME: {nome}",
+        "Ingredientes:",
+    ]
+
+    if ingredientes:
+        for entry in ingredientes:
+            nome_ingrediente = entry.get("ingrediente") or entry.get("nome") or "—"
+            quantidade = entry.get("quantidade")
+            unidade = entry.get("um") or entry.get("unidade") or ""
+            if isinstance(quantidade, (int, float)):
+                quantidade_text = f"{quantidade}"
+            else:
+                quantidade_text = str(quantidade) if quantidade not in (None, "") else "—"
+            parts = [nome_ingrediente, quantidade_text]
+            if unidade:
+                parts.append(unidade)
+            lines.append(" - " + " ".join(parts).strip())
+    else:
+        lines.append(" - —")
+
+    custo_total = totals.get("custo_total")
+    lines.append(f"Custo total: {custo_total if custo_total is not None else '—'}")
+
+    text = "\n".join(str(line) for line in lines)
+    return _build_pdf_bytes(text)
+
+
 def _normalise_document_properties(template: dict[str, Any]) -> None:
     if "documentProperties" not in template:
         raise ReportBroTemplateError(
@@ -99,30 +150,158 @@ def _normalise_document_properties(template: dict[str, Any]) -> None:
     else:
         properties["pageFormat"] = "A4"
 
+    def _looks_like_point_dimension(value: Any) -> bool:
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return False
+        return number > 400
+
+    doc_elements = template.get("docElements")
+    suspect_point_units = False
+    if isinstance(doc_elements, Iterable):
+        for element in doc_elements:
+            if not isinstance(element, Mapping):
+                continue
+            if _looks_like_point_dimension(element.get("height")):
+                suspect_point_units = True
+                break
+            content = element.get("contentData")
+            if isinstance(content, Mapping) and _looks_like_point_dimension(
+                content.get("height")
+            ):
+                suspect_point_units = True
+                break
+
+    unit = properties.get("unit")
+    if isinstance(unit, str):
+        cleaned_unit = unit.strip().lower()
+    else:
+        cleaned_unit = ""
+
+    if cleaned_unit == "mm" and suspect_point_units:
+        point_to_mm = 25.4 / 72.0
+        dimension_keys = {
+            "x",
+            "y",
+            "width",
+            "height",
+            "paddingLeft",
+            "paddingRight",
+            "paddingTop",
+            "paddingBottom",
+            "marginLeft",
+            "marginRight",
+            "marginTop",
+            "marginBottom",
+            "pageWidth",
+            "pageHeight",
+            "headerSize",
+            "footerSize",
+        }
+
+        def _convert_entry(mapping: Mapping[str, Any]) -> dict[str, Any]:
+            converted: dict[str, Any] = dict(mapping)
+            for key in dimension_keys:
+                if key in converted:
+                    value = converted.get(key)
+                    try:
+                        number = float(value)
+                    except (TypeError, ValueError):
+                        continue
+                    if key == "height" and number <= 0:
+                        converted[key] = 120.0
+                        continue
+                    if number <= 50:
+                        continue
+                    converted[key] = round(number * point_to_mm, 3)
+            return converted
+
+        if isinstance(properties, Mapping):
+            updated_properties = _convert_entry(properties)
+            template["documentProperties"] = updated_properties
+            properties = updated_properties
+
+        def _convert_node(node: Any) -> Any:
+            if isinstance(node, Mapping):
+                converted = _convert_entry(node)
+                for key, value in list(converted.items()):
+                    converted[key] = _convert_node(value)
+                return converted
+            if isinstance(node, Iterable) and not isinstance(node, (str, bytes, bytearray)):
+                return [_convert_node(item) for item in node]
+            return node
+
+        template["docElements"] = _convert_node(doc_elements)
+
 
 def _normalise_parameter_ids(template: dict[str, Any]) -> None:
     parameters = template.get("parameters")
     if not isinstance(parameters, Iterable):
         return
 
+    def _assign_child_ids(children: Iterable[Any]) -> list[dict[str, Any]]:
+        normalised_children: list[dict[str, Any]] = []
+        for index, child in enumerate(children, start=1):
+            if not isinstance(child, Mapping):
+                continue
+
+            mutable_child = dict(child)
+            raw_child_id = mutable_child.get("id")
+            child_id: int | None = None
+            if isinstance(raw_child_id, int):
+                child_id = raw_child_id
+            elif isinstance(raw_child_id, str):
+                digits = "".join(ch for ch in raw_child_id if ch.isdigit())
+                if digits:
+                    try:
+                        child_id = int(digits)
+                    except ValueError:
+                        child_id = None
+
+            if child_id is None:
+                child_id = index
+
+            mutable_child["id"] = child_id
+
+            grand_children = mutable_child.get("children")
+            if isinstance(grand_children, Iterable) and not isinstance(
+                grand_children, (str, bytes, bytearray)
+            ):
+                mutable_child["children"] = _assign_child_ids(grand_children)
+
+            normalised_children.append(mutable_child)
+
+        return normalised_children
+
     normalised: list[dict[str, Any]] = []
     for index, parameter in enumerate(parameters, start=1):
         if not isinstance(parameter, Mapping):
             continue
+
         mutable = dict(parameter)
 
         raw_id = mutable.get("id")
+        assigned: int | None = None
         if isinstance(raw_id, int):
-            normalised.append(mutable)
-            continue
-
-        candidate = None
-        if isinstance(raw_id, str):
+            assigned = raw_id
+        elif isinstance(raw_id, str):
             digits = "".join(ch for ch in raw_id if ch.isdigit())
             if digits:
-                candidate = int(digits)
+                try:
+                    assigned = int(digits)
+                except ValueError:
+                    assigned = None
 
-        mutable["id"] = candidate if candidate is not None else index
+        if assigned is None:
+            assigned = index
+
+        mutable["id"] = assigned
+
+        children = mutable.get("children")
+        if isinstance(children, Iterable) and not isinstance(children, (str, bytes, bytearray)):
+            mutable["children"] = _assign_child_ids(children)
+
         normalised.append(mutable)
 
     template["parameters"] = normalised
@@ -263,6 +442,11 @@ def render_pdf_bytes(
 
     if report.errors:
         message = _format_errors(report.errors)
+        if any(_is_invalid_size_error(error) for error in report.errors):
+            logger.warning(
+                "[ReportBro] Detetado erro de dimensão inválida; a usar renderer de fallback"
+            )
+            return _render_fallback_pdf(payload)
         raise ReportBroTemplateError(
             f"Template validation failed with errors: {message or '<sem detalhes>'}"
         )
@@ -270,6 +454,12 @@ def render_pdf_bytes(
     try:
         return report.generate_pdf()
     except ReportBroError as exc:
+        message = str(exc)
+        if "errorMsgInvalidSize" in message:
+            logger.warning(
+                "[ReportBro] Erro de dimensão inválida durante renderização; fallback ativado"
+            )
+            return _render_fallback_pdf(payload)
         raise ReportBroRenderError(f"Failed to generate ReportBro PDF: {exc}") from exc
 
 

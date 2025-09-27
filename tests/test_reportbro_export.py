@@ -169,6 +169,25 @@ def test_build_reportbro_context_formats_sections():
     assert dataset["ProdutoPreparacao_Html"] == "<p>Preparar e servir.</p>"
     assert dataset[STATIC_SECTION_PARAMETER] == [{}]
 
+    ingredientes = dataset["ingredientes"]
+    assert isinstance(ingredientes, list)
+    assert len(ingredientes) == 2
+
+    first, second = ingredientes
+    assert first["ingrediente"] == "Ingrediente A"
+    assert first["quantidade"] == pytest.approx(1.25)
+    assert first["um"] == "kg"
+    assert first["custo_unit"] == pytest.approx(2.5)
+    assert first["custo_total"] == pytest.approx(3.125)
+    assert first["observacoes"] == ""
+
+    assert second["ingrediente"] == "Ingrediente B"
+    assert second["quantidade"] == pytest.approx(0.5)
+    assert second["um"] == "L"
+    assert second["custo_unit"] == pytest.approx(1.2)
+    assert second["custo_total"] == pytest.approx(0.6)
+    assert second["observacoes"] == ""
+
 
 def test_build_reportbro_context_includes_product_image_filename(tmp_path):
     product = _sample_product()
