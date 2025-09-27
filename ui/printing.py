@@ -562,8 +562,8 @@ def resolve_product_image(
     """Populate ``product_image_filename`` in ``payload`` based on ``Produtos_Codigo``.
 
     When the product code is missing or the image file is unavailable the
-    function clears ``product_image_filename``/``product_image_uri`` so downstream
-    consumers can detect the absence of an image.
+    function points ``product_image_filename``/``product_image_uri`` to the
+    shared ``ui/no-image-thumb.png`` placeholder while keeping the warning log.
     """
 
     params: Mapping[str, Any] | None = parameters
@@ -579,21 +579,32 @@ def resolve_product_image(
         code_value = params.get("Produtos_Codigo")
 
     code = str(code_value).strip() if code_value is not None else ""
+    root = get_project_root()
+    fallback_path = root / "ui" / "no-image-thumb.png"
+
+    def _path_to_uri(path: Path) -> str:
+        try:
+            return path.as_uri()
+        except ValueError:
+            return path.resolve(strict=False).as_uri()
+
     filename: str | None = None
     uri: str | None = None
+    fallback_filename = str(fallback_path)
+    fallback_uri = _path_to_uri(fallback_path)
     if not code:
         logger.warning(_MISSING_CODE_WARNING)
+        filename = fallback_filename
+        uri = fallback_uri
     else:
-        root = get_project_root()
         candidate = root / "databases" / "images" / f"{code}.png"
         if check_exists and not candidate.exists():
             logger.warning(_MISSING_FILE_WARNING, code, candidate)
+            filename = fallback_filename
+            uri = fallback_uri
         else:
             filename = str(candidate)
-            try:
-                uri = candidate.as_uri()
-            except ValueError:
-                uri = candidate.resolve(strict=False).as_uri()
+            uri = _path_to_uri(candidate)
 
     targets: list[str] = []
     has_image = filename is not None
