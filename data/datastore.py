@@ -500,6 +500,15 @@ class DataStore:
             "TiposArtigos": {"Cod", "Descricao", "Ativo"},
             "Validade": {"Cod", "Descricao", "Ativo"},
             "Temperaturas": {"Cod", "Descricao", "Ativo"},
+            "Localizacao": {
+                "Id",
+                "Country",
+                "Code",
+                "Currency",
+                "Symbol",
+                "Format",
+                "Active",
+            },
             "FcostValues": {
                 "Nivel",
                 "Nome",

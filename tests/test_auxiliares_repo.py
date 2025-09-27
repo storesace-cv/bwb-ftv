@@ -56,6 +56,26 @@ def _make_repo():
         )
         """
     )
+    cur.execute(
+        """
+        CREATE TABLE Localizacao (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            Country TEXT NOT NULL,
+            Code TEXT NOT NULL,
+            Currency TEXT NOT NULL,
+            Symbol TEXT NOT NULL,
+            Format TEXT NOT NULL,
+            Active INTEGER NOT NULL DEFAULT 0 CHECK (Active IN (0,1))
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE UNIQUE INDEX idx_localizacao_active
+            ON Localizacao(Active)
+            WHERE Active = 1
+        """
+    )
     conn.commit()
     return conn, AuxiliaresRepo(conn)
 
@@ -204,6 +224,67 @@ def test_delete_temperatura():
     conn.commit()
     assert repo.delete_temperatura(tid2) is False
     assert repo.list_temperaturas_admin() == [(tid2, "Frio", 1)]
+    conn.close()
+
+
+def test_localizacao_crud_and_activation():
+    conn, repo = _make_repo()
+    lid1 = repo.add_localizacao("Portugal", "PT", "Euro", "€", "€ {:.2f}")
+    assert lid1 == 1
+    lid2 = repo.add_localizacao("Espanha", "ES", "Euro", "€", "€ {:.2f}")
+    rows = repo.list_localizacao_admin()
+    assert rows == [
+        (1, "Portugal", "PT", "Euro", "€", "€ {:.2f}", 0),
+        (2, "Espanha", "ES", "Euro", "€", "€ {:.2f}", 0),
+    ]
+
+    assert repo.update_localizacao(lid1, currency="EUR", fmt="{:.2f} €") is True
+    updated = repo.list_localizacao_admin()[0]
+    assert updated[3:6] == ("EUR", "€", "{:.2f} €")
+
+    assert repo.set_localizacao_ativo(lid2) is True
+    assert repo.get_localizacao_ativa() == (
+        2,
+        "Espanha",
+        "ES",
+        "Euro",
+        "€",
+        "€ {:.2f}",
+        1,
+    )
+
+    all_rows = repo.list_localizacao_admin()
+    assert [row[-1] for row in all_rows] == [0, 1]
+
+    conn.close()
+
+
+def test_localizacao_activation_handles_missing_and_invalid():
+    conn, repo = _make_repo()
+    lid = repo.add_localizacao(
+        "Brasil",
+        "BR",
+        "Real",
+        "R$",
+        "R$ {:.2f}",
+        active=1,
+    )
+    assert lid == 1
+    lid2 = repo.add_localizacao("Chile", "CL", "Peso", "$", "$ {:.2f}")
+    assert repo.set_localizacao_ativo(lid2) is True
+    rows = repo.list_localizacao_admin()
+    assert [row[-1] for row in rows] == [0, 1]
+    assert repo.set_localizacao_ativo(999) is False
+    conn.close()
+
+
+def test_localizacao_methods_missing_table():
+    conn, repo = _make_repo_no_tables()
+    assert repo.list_localizacao_admin() == []
+    assert repo.add_localizacao("X", "X", "X", "X", "X") is None
+    assert repo.update_localizacao(1, country="Y") is False
+    assert repo.set_localizacao_ativo(1) is False
+    assert repo.get_localizacao_ativa() is None
     conn.close()
 
 
