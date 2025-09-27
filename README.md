@@ -217,6 +217,16 @@ To populate the `Alergenios` table with the default values, set the
 the seeding step remains disabled so that an allergens JSON file can be
 imported first.
 
+A tabela `Localizacao` é criada com registos padrão (país, código ISO, moeda,
+símbolo e locale) logo na inicialização de uma nova base de dados. O índice
+`idx_localizacao_active` garante que exatamente um registo permanece ativo
+(`Active = 1`), sendo esse o formato utilizado pela UI ao apresentar valores
+monetários.
+The `Localizacao` table is populated with default records (country, ISO code,
+currency, symbol, and locale) when a fresh database is created. The
+`idx_localizacao_active` index enforces that exactly one record stays active
+(`Active = 1`); that locale drives the currency formatting across the UI.
+
 Os ficheiros de importação de alergénios devem conter uma matriz (array) JSON
 de objetos. Cada objeto representa um alergénio com as seguintes chaves:
 
