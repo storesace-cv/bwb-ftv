@@ -590,3 +590,330 @@ def manage_aux_table(
 
     refresh()
     exec_modal(dlg)
+
+
+def manage_localizacao_table(parent, repo, on_change: Callable | None = None) -> None:
+    """Display and edit localisation/currency entries."""
+
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtGui import QBrush
+    from PyQt5.QtWidgets import (
+        QAbstractItemView,
+        QDialog,
+        QFormLayout,
+        QHBoxLayout,
+        QLineEdit,
+        QPushButton,
+        QStyle,
+        QVBoxLayout,
+    )
+
+    dlg = QDialog(parent)
+    dlg.setWindowTitle("Localização e Moeda")
+    layout = QVBoxLayout(dlg)
+
+    table = QTableWidget(0, 6, dlg)
+    table.setFrameShape(QFrame.NoFrame)
+    table.setShowGrid(False)
+    table.setHorizontalHeaderLabels(
+        ["País", "Código", "Moeda", "Símbolo", "Formato", "Ativo"]
+    )
+    table.verticalHeader().setVisible(False)
+    table.setSelectionBehavior(QAbstractItemView.SelectRows)
+    table.setSelectionMode(QAbstractItemView.SingleSelection)
+    table.setStyleSheet(
+        """
+        QTableWidget { border: none; }
+        QTableWidget::item { margin: 0; padding: 0; border: none; }
+        QTableWidget::item:hover { background: #00008b; color: #fff; }
+        QHeaderView::section { border: none; }
+        """
+    )
+    header = table.horizontalHeader()
+    header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+    header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+    header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+    header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+    header.setSectionResizeMode(4, QHeaderView.Stretch)
+    header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
+    layout.addWidget(table)
+
+    button_row = QHBoxLayout()
+    layout.addLayout(button_row)
+
+    add_btn = QPushButton("Adicionar", dlg)
+    edit_btn = QPushButton("Editar", dlg)
+    active_btn = QPushButton("Definir como ativo", dlg)
+    active_btn.setIcon(dlg.style().standardIcon(QStyle.SP_DialogApplyButton))
+    close_btn = QPushButton("Fechar", dlg)
+
+    button_row.addWidget(add_btn)
+    button_row.addWidget(edit_btn)
+    button_row.addWidget(active_btn)
+    button_row.addStretch(1)
+    button_row.addWidget(close_btn)
+
+    entries: list[tuple[int, str, str, str, str, str, int]] = []
+
+    default_background = QBrush(dlg.palette().base())
+    default_foreground = QBrush(dlg.palette().text())
+    active_background = QBrush(dlg.palette().highlight())
+    active_foreground = QBrush(dlg.palette().highlightedText())
+
+    def code_exists(code: str, ignore_id: int | None = None) -> bool:
+        code_upper = code.strip().upper()
+        for entry in entries:
+            if entry[2].strip().upper() == code_upper and entry[0] != ignore_id:
+                return True
+        return False
+
+    def get_selected_id() -> int | None:
+        row = table.currentRow()
+        if row < 0:
+            return None
+        item = table.item(row, 0)
+        if item is None:
+            return None
+        value = item.data(Qt.UserRole)
+        return int(value) if value is not None else None
+
+    def is_active_id(localizacao_id: int | None) -> bool:
+        if localizacao_id is None:
+            return False
+        for entry in entries:
+            if entry[0] == localizacao_id:
+                return bool(entry[6])
+        return False
+
+    def update_buttons() -> None:
+        selected_id = get_selected_id()
+        has_selection = selected_id is not None
+        edit_btn.setEnabled(has_selection)
+        active_btn.setEnabled(has_selection and not is_active_id(selected_id))
+
+    def refresh(select_id: int | None = None) -> None:
+        nonlocal entries
+
+        current_id = select_id if select_id is not None else get_selected_id()
+        table.blockSignals(True)
+        table.setRowCount(0)
+        entries = repo.list_localizacao_admin() or []
+
+        for entry in entries:
+            (
+                entry_id,
+                country,
+                code,
+                currency,
+                symbol,
+                fmt,
+                active,
+            ) = entry
+            row = table.rowCount()
+            table.insertRow(row)
+            values = [
+                country or "",
+                code or "",
+                currency or "",
+                symbol or "",
+                fmt or "",
+                "Sim" if active else "Não",
+            ]
+            for column, value in enumerate(values):
+                item = QTableWidgetItem(value)
+                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                item.setData(Qt.UserRole, entry_id)
+                if active:
+                    item.setBackground(active_background)
+                    item.setForeground(active_foreground)
+                else:
+                    item.setBackground(default_background)
+                    item.setForeground(default_foreground)
+                table.setItem(row, column, item)
+
+        table.blockSignals(False)
+
+        target_id = current_id
+        if target_id is None:
+            for entry in entries:
+                if entry[6]:
+                    target_id = entry[0]
+                    break
+
+        if target_id is not None:
+            for row in range(table.rowCount()):
+                item = table.item(row, 0)
+                if item and item.data(Qt.UserRole) == target_id:
+                    table.selectRow(row)
+                    break
+        else:
+            table.clearSelection()
+
+        update_buttons()
+        table.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        table.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        dlg.adjustSize()
+
+    def show_form(entry: tuple[int, str, str, str, str, str, int] | None = None) -> int | None:
+        editing = entry is not None
+        form = QDialog(dlg)
+        form.setWindowTitle("Editar registo" if editing else "Adicionar registo")
+        form_layout = QVBoxLayout(form)
+        fields_layout = QFormLayout()
+        form_layout.addLayout(fields_layout)
+
+        country_edit = QLineEdit(form)
+        code_edit = QLineEdit(form)
+        currency_edit = QLineEdit(form)
+        symbol_edit = QLineEdit(form)
+        format_edit = QLineEdit(form)
+
+        fields_layout.addRow("País:", country_edit)
+        fields_layout.addRow("Código:", code_edit)
+        fields_layout.addRow("Moeda:", currency_edit)
+        fields_layout.addRow("Símbolo:", symbol_edit)
+        fields_layout.addRow("Formato:", format_edit)
+
+        if editing:
+            (
+                entry_id,
+                country,
+                code,
+                currency,
+                symbol,
+                fmt,
+                _active,
+            ) = entry
+            country_edit.setText(country or "")
+            code_edit.setText(code or "")
+            currency_edit.setText(currency or "")
+            symbol_edit.setText(symbol or "")
+            format_edit.setText(fmt or "")
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel, form)
+        form_layout.addWidget(buttons)
+
+        result_holder: dict[str, int | None] = {"id": None}
+
+        def accept_form() -> None:
+            if editing:
+                target_id = entry_id
+            else:
+                target_id = None
+
+            values = {
+                "country": country_edit.text().strip(),
+                "code": code_edit.text().strip(),
+                "currency": currency_edit.text().strip(),
+                "symbol": symbol_edit.text().strip(),
+                "fmt": format_edit.text().strip(),
+            }
+
+            if not all(values.values()):
+                QMessageBox.warning(
+                    form,
+                    "Localização e Moeda",
+                    "Todos os campos são obrigatórios.",
+                )
+                return
+
+            if code_exists(values["code"], ignore_id=target_id):
+                QMessageBox.warning(
+                    form,
+                    "Localização e Moeda",
+                    "Já existe um registo com o mesmo código.",
+                )
+                return
+
+            if editing:
+                success = repo.update_localizacao(
+                    entry_id,
+                    country=values["country"],
+                    code=values["code"],
+                    currency=values["currency"],
+                    symbol=values["symbol"],
+                    fmt=values["fmt"],
+                )
+                if not success:
+                    QMessageBox.warning(
+                        form,
+                        "Localização e Moeda",
+                        "Não foi possível atualizar o registo.",
+                    )
+                    return
+                result_holder["id"] = entry_id
+            else:
+                new_id = repo.add_localizacao(
+                    values["country"],
+                    values["code"],
+                    values["currency"],
+                    values["symbol"],
+                    values["fmt"],
+                )
+                if not new_id:
+                    QMessageBox.warning(
+                        form,
+                        "Localização e Moeda",
+                        "Não foi possível adicionar o registo.",
+                    )
+                    return
+                result_holder["id"] = int(new_id)
+
+            form.accept()
+
+        buttons.accepted.connect(accept_form)
+        buttons.rejected.connect(form.reject)
+
+        result = exec_modal(form)
+        if result == QDialog.Accepted:
+            return result_holder["id"]
+        return None
+
+    def add_entry() -> None:
+        new_id = show_form()
+        if new_id is None:
+            return
+        refresh(select_id=new_id)
+        if callable(on_change):
+            on_change()
+
+    def edit_selected() -> None:
+        selected_id = get_selected_id()
+        if selected_id is None:
+            return
+        for entry in entries:
+            if entry[0] == selected_id:
+                updated_id = show_form(entry)
+                break
+        else:
+            return
+        if updated_id is None:
+            return
+        refresh(select_id=updated_id)
+        if callable(on_change):
+            on_change()
+
+    def set_active() -> None:
+        selected_id = get_selected_id()
+        if selected_id is None:
+            return
+        if repo.set_localizacao_ativo(selected_id):
+            refresh(select_id=selected_id)
+            if callable(on_change):
+                on_change()
+        else:
+            QMessageBox.warning(
+                dlg,
+                "Localização e Moeda",
+                "Não foi possível definir o registo como ativo.",
+            )
+
+    add_btn.clicked.connect(add_entry)
+    edit_btn.clicked.connect(edit_selected)
+    active_btn.clicked.connect(set_active)
+    close_btn.clicked.connect(dlg.accept)
+    table.itemDoubleClicked.connect(lambda _item: edit_selected())
+    table.itemSelectionChanged.connect(update_buttons)
+
+    refresh()
+    exec_modal(dlg)
