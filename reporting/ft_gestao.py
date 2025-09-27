@@ -19,36 +19,64 @@ from utils.formatting import parse_decimal
 logger = logging.getLogger(__name__)
 
 
-def _format_number(value: Any, *, decimals: int = 2) -> str:
+EMPTY_FIELD = "--/--"
+
+
+def _should_use_empty_field(value: Any) -> bool:
+    if value is None:
+        return True
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return True
+        value = parse_decimal(stripped)
     try:
         number = float(value)
     except (TypeError, ValueError):
-        return "—"
+        return False
+    return number == 0.0
+
+
+def _format_number(value: Any, *, decimals: int = 2) -> str:
+    if _should_use_empty_field(value):
+        return EMPTY_FIELD
+
+    candidate = parse_decimal(value)
+    try:
+        number = float(candidate)
+    except (TypeError, ValueError):
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return EMPTY_FIELD
+
+    if number == 0.0:
+        return EMPTY_FIELD
 
     text = f"{number:,.{decimals}f}"
     return text.replace(",", " ").replace(".", ",")
 
 
 def _format_optional(value: Any) -> str:
-    if value is None:
-        return "—"
+    if _should_use_empty_field(value):
+        return EMPTY_FIELD
     text = str(value).strip()
-    return text or "—"
+    return text or EMPTY_FIELD
 
 
 def _format_currency(value: Any) -> str:
     formatted = _format_number(value)
-    return formatted if formatted == "—" else f"{formatted} €"
+    return formatted if formatted == EMPTY_FIELD else f"{formatted} €"
 
 
 def _format_percentage(value: Any) -> str:
     formatted = _format_number(value)
-    return formatted if formatted == "—" else f"{formatted} %"
+    return formatted if formatted == EMPTY_FIELD else f"{formatted} %"
 
 
 def _join_lines(lines: Iterable[str]) -> str:
     filtered = [line.rstrip() for line in lines if line and line.strip()]
-    return "\n".join(filtered) if filtered else "—"
+    return "\n".join(filtered) if filtered else EMPTY_FIELD
 
 
 def _build_product_section(block: Mapping[str, Any]) -> str:
@@ -58,8 +86,9 @@ def _build_product_section(block: Mapping[str, Any]) -> str:
     ]
 
     name = block.get("nome")
-    if name:
-        lines.append(f"Nome: {name}")
+    formatted_name = _format_optional(name)
+    if formatted_name != EMPTY_FIELD:
+        lines.append(f"Nome: {formatted_name}")
 
     lines.append(f"Família: {_format_optional(block.get('familia'))}")
     lines.append(f"Subfamília: {_format_optional(block.get('subfamilia'))}")
@@ -111,7 +140,7 @@ def _build_pricing_section(block: Mapping[str, Any]) -> str:
         except IndexError:
             fc_value = None
         fc_text = _format_percentage(fc_value)
-        if fc_text != "—":
+        if fc_text != EMPTY_FIELD:
             entry += f" (Food cost: {fc_text})"
         lines.append(entry)
 
@@ -142,10 +171,10 @@ def _build_pricing_lines(rows: Iterable[Mapping[str, str]]) -> str:
     for row in rows:
         entry = f"{row.get('label')}: {row.get('pvp')}"
         food_cost = row.get("food_cost")
-        if food_cost and food_cost != "—":
+        if food_cost and food_cost != EMPTY_FIELD:
             entry += f" | Food cost: {food_cost}"
         lines.append(entry)
-    return "\n".join(lines) if lines else "—"
+    return "\n".join(lines) if lines else EMPTY_FIELD
 
 
 def _build_ingredients_section(block: Mapping[str, Any]) -> str:
@@ -153,58 +182,68 @@ def _build_ingredients_section(block: Mapping[str, Any]) -> str:
     ingredients = list(block.get("ingredientes") or [])
     for entry in ingredients:
         order = entry.get("ordem")
-        name = entry.get("nome") or entry.get("codigo") or "—"
+        name_value = entry.get("nome")
+        name = _format_optional(name_value)
+        if name == EMPTY_FIELD:
+            name = _format_optional(entry.get("codigo"))
         prefix = f"{int(order):02d}. " if isinstance(order, (int, float)) else ""
         label = f"{prefix}{name}"
         details: list[str] = []
         code = entry.get("codigo")
-        if code and code != name:
-            details.append(f"Código: {code}")
+        code_text = _format_optional(code)
+        if code_text != EMPTY_FIELD and code_text != name:
+            details.append(f"Código: {code_text}")
         quantity = entry.get("quantidade")
         unit = entry.get("unidade")
-        if quantity is not None:
-            qty_text = _format_number(quantity, decimals=3 if (quantity and quantity < 1) else 2)
-            if unit:
-                details.append(f"Qtd: {qty_text} {unit}")
-            else:
-                details.append(f"Qtd: {qty_text}")
+        quantity_text = _format_ingredient_quantity(quantity, unit)
+        details.append(f"Qtd: {quantity_text}")
         ppu = entry.get("ppu")
         if ppu is not None:
-            unit_label = f"/{unit}" if unit else ""
-            details.append(f"PPU: {_format_currency(ppu)}{unit_label}")
+            ppu_text = _format_currency(ppu)
+            unit_text = _format_optional(unit)
+            unit_label = f"/{unit_text}" if unit_text != EMPTY_FIELD else ""
+            details.append(f"PPU: {ppu_text}{unit_label}")
         total = entry.get("total")
         if total is not None:
-            details.append(f"Custo: {_format_currency(total)}")
+            total_text = _format_currency(total)
+            details.append(f"Custo: {total_text}")
         weight = entry.get("peso")
         if weight is not None:
-            details.append(f"Peso: {_format_number(weight)}")
+            weight_text = _format_number(weight)
+            details.append(f"Peso: {weight_text}")
 
         if details:
             label += " — " + " | ".join(details)
         lines.append(label)
 
     if len(lines) == 1:
-        lines.append("—")
+        lines.append(EMPTY_FIELD)
     return "\n".join(lines)
 
 
 def _format_ingredient_quantity(quantity: Any, unit: Any) -> str:
-    if quantity is None and not unit:
-        return "—"
+    candidate = parse_decimal(quantity)
     decimals = 2
+    number: float | None
     try:
-        number = float(quantity)
+        number = float(candidate)
     except (TypeError, ValueError):
-        number = None
-    else:
-        if abs(number) < 1:
+        try:
+            number = float(quantity)
+        except (TypeError, ValueError):
+            number = None
+    if isinstance(number, float):
+        if number != 0.0 and abs(number) < 1:
             decimals = 3
-    formatted = _format_number(number, decimals=decimals) if number is not None else "—"
-    if formatted == "—":
-        return _format_optional(unit)
-    if unit:
-        return f"{formatted} {unit}".strip()
-    return formatted
+        formatted = _format_number(number, decimals=decimals)
+    else:
+        formatted = _format_number(quantity, decimals=decimals)
+    if formatted == EMPTY_FIELD:
+        return EMPTY_FIELD
+    unit_text = _format_optional(unit)
+    if unit_text == EMPTY_FIELD:
+        return formatted
+    return f"{formatted} {unit_text}".strip()
 
 
 def _build_ingredients_rows(block: Mapping[str, Any]) -> list[dict[str, str]]:
@@ -213,15 +252,18 @@ def _build_ingredients_rows(block: Mapping[str, Any]) -> list[dict[str, str]]:
     for entry in ingredients:
         order = entry.get("ordem")
         order_text = _format_optional(order)
-        if order_text != "—":
+        if order_text != EMPTY_FIELD:
             try:
                 order_text = f"{int(float(order))}"
             except (TypeError, ValueError):
                 pass
+        nome_text = _format_optional(entry.get("nome"))
+        if nome_text == EMPTY_FIELD:
+            nome_text = _format_optional(entry.get("codigo"))
         rows.append(
             {
                 "ordem": order_text,
-                "nome": _format_optional(entry.get("nome") or entry.get("codigo")),
+                "nome": nome_text,
                 "codigo": _format_optional(entry.get("codigo")),
                 "quantidade": _format_ingredient_quantity(
                     entry.get("quantidade"), entry.get("unidade")
@@ -250,7 +292,7 @@ def _build_ingredients_lines(rows: Iterable[Mapping[str, str]]) -> str:
                 ]
             )
         )
-    return "\n".join(lines) if lines else "—"
+    return "\n".join(lines) if lines else EMPTY_FIELD
 
 
 def _build_totals_section(block: Mapping[str, Any]) -> str:
@@ -309,7 +351,7 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
         _format_optional(block_b1.get("codigo")),
         _format_optional(block_b1.get("nome")),
     ]
-    subtitle = " — ".join(part for part in subtitle_parts if part != "—")
+    subtitle = " — ".join(part for part in subtitle_parts if part != EMPTY_FIELD)
 
     product_data = _build_product_data(block_b1)
     pricing_rows = _build_pricing_rows(block_b3)
@@ -383,7 +425,7 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
     generated_at = _format_optional(payload.get("generated_at"))
     metadata = (
         f"{page_title} — Gerado em {generated_at}"
-        if generated_at != "—"
+        if generated_at != EMPTY_FIELD
         else page_title
     )
 

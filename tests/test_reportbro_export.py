@@ -10,12 +10,16 @@ from typing import Any, Mapping
 
 import pytest
 from app.server.routes_reportbro import _normalise_template_payload
+from app.server.services.report_service import (
+    _render_fallback_pdf as service_render_fallback_pdf,
+)
 from domain.models import Ingredient, Product
-from reporting.ft_gestao import build_reportbro_context
+from reporting.ft_gestao import EMPTY_FIELD, build_reportbro_context
 from reporting.reportbro_export import (
     load_template_definition,
     render_pdf_bytes,
     render_pdf_to_path,
+    _render_fallback_pdf as export_render_fallback_pdf,
 )
 from reporting.reportbro_normalizer import STATIC_SECTION_PARAMETER
 from ui.printing import _prepare_management_payload, generate_ft_gestao_reportbro_pdf
@@ -223,6 +227,56 @@ def test_build_reportbro_context_formats_sections():
     assert third["FichasTecnicas_Ppu"] == pytest.approx(1.5)
     assert third["FichasTecnicas_Preco"] == pytest.approx(1.5)
     assert third["FichasTecnicas_Peso"] == pytest.approx(0.25)
+
+
+def test_build_reportbro_context_uses_empty_field_for_missing_values():
+    payload = _prepare_management_payload(_sample_product())
+
+    block_b1 = payload["blocks"]["B1"]
+    block_b1["codigo"] = ""
+    block_b1["nome"] = None
+
+    block_b3 = payload["blocks"]["B3"]
+    block_b3["iva"] = 0
+    block_b3["pvps"] = [0]
+    block_b3["food_cost"] = [0]
+
+    block_b2 = payload["blocks"]["B2"]
+    block_b2["ingredientes"] = [
+        {
+            "nome": "",
+            "codigo": "",
+            "quantidade": 0,
+            "unidade": "",
+            "ppu": 0,
+            "total": 0,
+            "peso": 0,
+            "ordem": 0,
+        }
+    ]
+    block_b2["totais"] = {
+        "custo_total": 0,
+        "peso_total": 0,
+        "num_ingredientes": 0,
+    }
+
+    payload["generated_at"] = ""
+
+    dataset = build_reportbro_context(payload)
+
+    assert dataset["pricing_rows"][0]["pvp"] == EMPTY_FIELD
+    assert dataset["pricing_rows"][0]["food_cost"] == EMPTY_FIELD
+    assert dataset["pricing_iva"] == EMPTY_FIELD
+    assert EMPTY_FIELD in dataset["pricing_lines"]
+    assert dataset["ingredients_data"][0]["quantidade"] == EMPTY_FIELD
+    assert dataset["ingredients_data"][0]["ppu"] == EMPTY_FIELD
+    assert dataset["ingredients_data"][0]["total"] == EMPTY_FIELD
+    assert dataset["ingredients_data"][0]["peso"] == EMPTY_FIELD
+    assert EMPTY_FIELD in dataset["ingredients_lines"]
+    assert dataset["totals_custo_total"] == EMPTY_FIELD
+    assert dataset["totals_peso_total"] == EMPTY_FIELD
+    assert dataset["totals_num_ingredientes"] == EMPTY_FIELD
+    assert EMPTY_FIELD in dataset["totals_lines"]
 
 
 def test_build_reportbro_context_includes_product_image_filename(tmp_path):
@@ -485,6 +539,35 @@ def test_generate_ft_gestao_reportbro_pdf_enables_debug(monkeypatch, tmp_path):
     assert destination.exists()
     assert result == destination
     assert captured.get("debug") is True
+
+
+def test_fallback_renderers_use_empty_field(tmp_path):
+    data = {
+        "product_codigo": "",
+        "product_nome": None,
+        "ingredientes": [
+            {
+                "FichasTecnicas_ComponenteNome": "",
+                "FichasTecnicas_Qtd": 0,
+                "FichasTecnicas_Unidade": "",
+            }
+        ],
+        "totals_data": {"custo_total": 0},
+    }
+
+    export_bytes = export_render_fallback_pdf(data)
+    export_path = tmp_path / "export_fallback.pdf"
+    export_path.write_bytes(export_bytes)
+    export_text = "\n".join(_extract_pdf_streams(export_path))
+    assert EMPTY_FIELD in export_text
+    assert "—" not in export_text
+
+    service_bytes = service_render_fallback_pdf(data)
+    service_path = tmp_path / "service_fallback.pdf"
+    service_path.write_bytes(service_bytes)
+    service_text = "\n".join(_extract_pdf_streams(service_path))
+    assert EMPTY_FIELD in service_text
+    assert "—" not in service_text
 
 
 def test_reportbro_template_without_image_element(tmp_path, caplog):
