@@ -287,12 +287,12 @@ def test_build_reportbro_context_uses_empty_field_for_missing_values():
 
     dataset = build_reportbro_context(payload)
 
-    assert dataset["TiposArtigos_Cod"] == EMPTY_FIELD
-    assert dataset["TiposArtigos_Descricao"] == EMPTY_FIELD
-    assert dataset["Validade_Cod"] == EMPTY_FIELD
-    assert dataset["Validade_Descricao"] == EMPTY_FIELD
-    assert dataset["Temperaturas_Cod"] == EMPTY_FIELD
-    assert dataset["Temperaturas_Descricao"] == EMPTY_FIELD
+    assert dataset["TiposArtigos_Cod"] == 0
+    assert dataset["Validade_Cod"] == 0
+    assert dataset["Temperaturas_Cod"] == 0
+    assert dataset["product_tipo_artigo_cod"] == EMPTY_FIELD
+    assert dataset["product_validade_cod"] == EMPTY_FIELD
+    assert dataset["product_temperatura_cod"] == EMPTY_FIELD
     assert dataset["pricing_rows"][0]["pvp"] == EMPTY_FIELD
     assert dataset["pricing_rows"][0]["food_cost"] == EMPTY_FIELD
     assert dataset["PrecosTaxas_Preco1"] == EMPTY_FIELD

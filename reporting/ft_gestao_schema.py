@@ -18,6 +18,21 @@ FT_GESTAO_PARAMETER_DEFINITIONS: dict[str, ParameterDefinition] = {
         "field": "subfamilia",
         "type": "text",
     },
+    "product_tipo_artigo_cod": {
+        "section": "dataset",
+        "field": "product_tipo_artigo_cod",
+        "type": "text",
+    },
+    "product_validade_cod": {
+        "section": "dataset",
+        "field": "product_validade_cod",
+        "type": "text",
+    },
+    "product_temperatura_cod": {
+        "section": "dataset",
+        "field": "product_temperatura_cod",
+        "type": "text",
+    },
     "Produtos_AfetaStk": {"section": "produtos", "field": "afetastk", "type": "text"},
     "Produtos_Menu": {"section": "produtos", "field": "menu", "type": "text"},
     "Produtos_CodBarras": {"section": "produtos", "field": "codbarras", "type": "text"},

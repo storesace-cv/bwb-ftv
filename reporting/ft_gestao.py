@@ -494,11 +494,20 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
         if product_image_uri:
             dataset_update["product_image_uri"] = product_image_uri
     dataset.update(dataset_update)
-    optional_prefixes = ("TiposArtigos_", "Validade_", "Temperaturas_")
-    for name, value in list(dataset.items()):
-        if any(name.startswith(prefix) for prefix in optional_prefixes):
-            formatted = _format_optional(value)
-            if formatted == EMPTY_FIELD:
-                dataset[name] = EMPTY_FIELD
+    for numeric_name in ("TiposArtigos_Cod", "Validade_Cod", "Temperaturas_Cod"):
+        value = dataset.get(numeric_name)
+        if value in (None, "", EMPTY_FIELD):
+            dataset[numeric_name] = 0
+            continue
+        candidate = parse_decimal(value)
+        try:
+            dataset[numeric_name] = int(float(candidate))
+        except (TypeError, ValueError):
+            try:
+                dataset[numeric_name] = int(value)
+            except (TypeError, ValueError):
+                logger.debug(
+                    "[ReportBro] unable to normalise %s=%r to int", numeric_name, value
+                )
     dataset[STATIC_SECTION_PARAMETER] = [{}]
     return dataset
