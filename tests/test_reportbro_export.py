@@ -451,14 +451,18 @@ def test_render_pdf_bytes_converts_small_point_margins(monkeypatch):
     assert result.startswith(b"%PDF-1.4")
     assert fallback_called is False
     properties = captured["template"]["documentProperties"]
-    assert properties["marginLeft"] == pytest.approx(7.056, rel=1e-3)
-    assert properties["marginRight"] == pytest.approx(7.056, rel=1e-3)
-    assert properties["marginTop"] == pytest.approx(7.056, rel=1e-3)
-    assert properties["marginBottom"] == pytest.approx(7.056, rel=1e-3)
-    assert properties["headerSize"] == pytest.approx(7.056, rel=1e-3)
-    assert properties["footerSize"] == pytest.approx(7.056, rel=1e-3)
-    assert properties["pageWidth"] == pytest.approx(209.903, rel=1e-3)
-    assert properties["pageHeight"] == pytest.approx(296.926, rel=1e-3)
+    assert properties["marginLeft"] == 20
+    assert properties["marginRight"] == 20
+    assert properties["marginTop"] == 20
+    assert properties["marginBottom"] == 20
+    assert properties["headerSize"] == 20
+    assert properties["footerSize"] == 20
+    assert properties["pageWidth"] == 595
+    assert properties["pageHeight"] == 842
+
+    elements = captured["template"]["docElements"]
+    assert elements[0]["height"] == 600
+    assert elements[1]["height"] == 620
 
 
 def test_render_pdf_bytes_handles_many_ingredients_without_fallback(monkeypatch):
