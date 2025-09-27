@@ -25,6 +25,18 @@ from .ft_gestao import (
 logger = logging.getLogger(__name__)
 
 
+def _is_feature_enabled(env_var: str) -> bool:
+    value = os.getenv(env_var)
+    if value is None:
+        return False
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+_ENABLE_DOCUMENT_DIMENSION_NORMALISATION = _is_feature_enabled(
+    "REPORTBRO_ENABLE_DOCUMENT_DIMENSION_NORMALISATION"
+)
+
+
 class ReportBroIntegrationError(RuntimeError):
     """Base exception for ReportBro integration issues."""
 
@@ -186,6 +198,9 @@ def _normalise_document_properties(template: dict[str, Any]) -> None:
         properties["pageFormat"] = page_size.strip()
     else:
         properties["pageFormat"] = "A4"
+
+    if not _ENABLE_DOCUMENT_DIMENSION_NORMALISATION:
+        return
 
     def _looks_like_point_dimension(value: Any) -> bool:
         try:
