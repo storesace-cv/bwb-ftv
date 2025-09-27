@@ -641,3 +641,17 @@ def test_get_pvps_parses_decimal_formats(raw, expected):
     pvps = ds.get_pvps("P1")
     assert pvps["pvps"] == [expected] * 5
     assert pvps["iva"] == expected
+
+
+def test_get_localizacao_ativa_returns_normalised_context():
+    ds = DataStore(db_path=":memory:")
+    context = ds.get_localizacao_ativa()
+    assert context["currency_code"] == "EUR"
+    assert context["locale_code"] == "pt_PT"
+    repo = ds.aux
+    new_id = repo.add_localizacao("Estados Unidos", "US", "USD", "$", "en_US")
+    assert repo.set_localizacao_ativo(new_id) is True
+    updated = ds.get_localizacao_ativa()
+    assert updated["currency_code"] == "USD"
+    assert updated["currency_symbol"] == "$"
+    assert updated["locale_code"] == "en_US"

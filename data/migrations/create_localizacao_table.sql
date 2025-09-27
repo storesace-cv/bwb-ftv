@@ -13,12 +13,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_localizacao_active
     WHERE Active = 1;
 
 INSERT OR IGNORE INTO Localizacao (Country, Code, Currency, Symbol, Format, Active) VALUES
-    ('Portugal', 'PT', 'Euro', '€', 'pt_PT', 1);
+    ('Portugal', 'PT', 'EUR', '€', 'pt_PT', 1);
 INSERT OR IGNORE INTO Localizacao (Country, Code, Currency, Symbol, Format, Active) VALUES
-    ('Brasil', 'BR', 'Real brasileiro', 'R$', 'pt_BR', 0);
+    ('Brasil', 'BR', 'BRL', 'R$', 'pt_BR', 0);
 INSERT OR IGNORE INTO Localizacao (Country, Code, Currency, Symbol, Format, Active) VALUES
-    ('Estados Unidos', 'US', 'Dólar americano', '$', 'en_US', 0);
+    ('Estados Unidos', 'US', 'USD', '$', 'en_US', 0);
 INSERT OR IGNORE INTO Localizacao (Country, Code, Currency, Symbol, Format, Active) VALUES
-    ('Reino Unido', 'GB', 'Libra esterlina', '£', 'en_GB', 0);
+    ('Reino Unido', 'GB', 'GBP', '£', 'en_GB', 0);
 INSERT OR IGNORE INTO Localizacao (Country, Code, Currency, Symbol, Format, Active) VALUES
-    ('Espanha', 'ES', 'Euro', '€', 'es_ES', 0);
+    ('Espanha', 'ES', 'EUR', '€', 'es_ES', 0);

@@ -34,11 +34,11 @@ DEFAULT_ALERGENIOS = [
     (14, "Moluscos", "Molluscs", None, None, None),
 ]
 DEFAULT_LOCALIZACOES = [
-    ("Portugal", "PT", "Euro", "€", "pt_PT", 1),
-    ("Brasil", "BR", "Real brasileiro", "R$", "pt_BR", 0),
-    ("Estados Unidos", "US", "Dólar americano", "$", "en_US", 0),
-    ("Reino Unido", "GB", "Libra esterlina", "£", "en_GB", 0),
-    ("Espanha", "ES", "Euro", "€", "es_ES", 0),
+    ("Portugal", "PT", "EUR", "€", "pt_PT", 1),
+    ("Brasil", "BR", "BRL", "R$", "pt_BR", 0),
+    ("Estados Unidos", "US", "USD", "$", "en_US", 0),
+    ("Reino Unido", "GB", "GBP", "£", "en_GB", 0),
+    ("Espanha", "ES", "EUR", "€", "es_ES", 0),
 ]
 
 ALERGENIOS_SEED_FLAG = "FTV_SEED_ALERGENIOS"

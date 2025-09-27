@@ -23,8 +23,6 @@ except ImportError:  # pragma: no cover - executed when stubs are active
 else:  # pragma: no cover - exercised in integration tests
     _QT_AVAILABLE = True
 
-_USE_BASIC_PDF = False
-
 from domain.models import Product
 from reporting import (
     build_reportbro_context,
@@ -37,7 +35,30 @@ from reporting.ft_gestao_schema import (
 )
 from services.products import calculate_food_cost
 from utils.paths import get_project_root
-from utils.formatting import parse_decimal
+from utils.formatting import (
+    format_currency_locale,
+    normalise_currency_context,
+    parse_decimal,
+)
+
+_USE_BASIC_PDF = False
+
+_DEFAULT_CURRENCY_CONTEXT = {
+    "currency": "EUR",
+    "currency_code": "EUR",
+    "currency_symbol": "€",
+    "locale_code": "pt_PT",
+}
+
+_CURRENCY_CONTEXT = normalise_currency_context({}, defaults=_DEFAULT_CURRENCY_CONTEXT)
+
+
+def _set_currency_context(context: Any | None) -> dict[str, Any]:
+    global _CURRENCY_CONTEXT
+    _CURRENCY_CONTEXT = normalise_currency_context(
+        context, defaults=_DEFAULT_CURRENCY_CONTEXT
+    )
+    return _CURRENCY_CONTEXT
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +91,7 @@ def generate_ft_gestao_pdf(
     *,
     page_size: str = "A4",
     parent: QWidget | None = None,
+    locale: Any | None = None,
 ) -> Path | None:
     """Generate the Gestão PDF for the given product on the specified page size.
 
@@ -89,7 +111,7 @@ def generate_ft_gestao_pdf(
     """
 
     product_obj = _validate_product(product)
-    payload = _prepare_management_payload(product_obj)
+    payload = _prepare_management_payload(product_obj, locale=locale)
     try:
         destination = _prompt_pdf_destination(product_obj, parent=parent)
     except ExportCancelled:
@@ -167,11 +189,12 @@ def generate_ft_gestao_reportbro_pdf(
     template_path: str | Path | None = None,
     destination: Path | None = None,
     parent: QWidget | None = None,
+    locale: Any | None = None,
 ) -> Path | None:
     """Generate the Gestão PDF using the ReportBro template pipeline."""
 
     product_obj = _validate_product(product)
-    payload = _prepare_management_payload(product_obj)
+    payload = _prepare_management_payload(product_obj, locale=locale)
     dataset = build_reportbro_context(payload)
 
     template_location = _resolve_reportbro_template_location(template_path)
@@ -677,7 +700,9 @@ def resolve_product_image(
     return filename
 
 
-def _prepare_management_payload(product: Product) -> dict[str, Any]:
+def _prepare_management_payload(
+    product: Product, *, locale: Any | None = None
+) -> dict[str, Any]:
     code = getattr(product, "code", None)
     name = getattr(product, "name", None)
     identifier = code or name or "<desconhecido>"
@@ -728,6 +753,8 @@ def _prepare_management_payload(product: Product) -> dict[str, Any]:
         raw_temperaturas=getattr(product, "temperaturas_row", None),
         raw_preparacao=getattr(product, "produto_preparacao_row", None),
     )
+    currency_context = _set_currency_context(locale)
+
     payload = {
         "identifier": identifier,
         "generated_at": generated_at,
@@ -737,6 +764,10 @@ def _prepare_management_payload(product: Product) -> dict[str, Any]:
             "parameters": reportbro_params,
             "warnings": reportbro_warnings,
         },
+        "currency": dict(currency_context),
+        "currency_symbol": currency_context.get("currency_symbol"),
+        "currency_code": currency_context.get("currency_code"),
+        "locale_code": currency_context.get("locale_code"),
     }
 
     image_filename = resolve_product_image(payload, parameters=reportbro_params)
@@ -838,6 +869,8 @@ def _prompt_pdf_destination(product: Product, parent: QWidget | None = None) -> 
 
 def _render_pdf(payload: dict[str, Any], destination: Path, page_metrics: tuple[float, float]) -> None:
     """Render *payload* into a PDF written to *destination* using the configured backend."""
+
+    _set_currency_context(payload.get("currency"))
 
     if _QT_AVAILABLE and not _USE_BASIC_PDF:
         _render_pdf_qt(payload, destination, page_metrics)
@@ -1629,13 +1662,19 @@ def _format_measure(value: Any) -> str:
     return f"{numeric:,.2f}"
 
 
-def _format_currency(value: Any) -> str:
+def _format_currency(value: Any, currency: Mapping[str, Any] | None = None) -> str:
     if value in (None, ""):
         return "—"
     numeric = _safe_float(value)
     if numeric is None:
         return str(value)
-    return f"€ {numeric:,.2f}"
+    context = currency or _CURRENCY_CONTEXT
+    return format_currency_locale(
+        numeric,
+        locale_code=context.get("locale_code"),
+        currency_symbol=context.get("currency_symbol"),
+        currency_code=context.get("currency_code"),
+    )
 
 
 def _format_percentage(value: Any) -> str:

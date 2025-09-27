@@ -811,12 +811,23 @@ class FTApp(QWidget):
             logger.info(
                 "[Print] FT Gestão (Actual) solicitado para produto %s", identifier
             )
+            locale_info = None
+            get_locale = getattr(self.ds, "get_localizacao_ativa", None)
+            if callable(get_locale):
+                try:
+                    locale_info = get_locale()
+                except Exception:
+                    logger.debug(
+                        "[Print] Falha ao obter localização ativa; a usar omissões",
+                        exc_info=True,
+                    )
             if use_reportbro:
                 try:
                     output_path = generate_ft_gestao_reportbro_pdf(
                         product,
                         template_path=template_override,
                         parent=self,
+                        locale=locale_info,
                     )
                 except ReportBroIntegrationError as exc:
                     logger.warning(
@@ -830,9 +841,13 @@ class FTApp(QWidget):
                         "Não foi possível gerar a ficha com o ReportBro."
                         " Será utilizada a versão anterior.",
                     )
-                    output_path = generate_ft_gestao_pdf(product, parent=self)
+                    output_path = generate_ft_gestao_pdf(
+                        product, parent=self, locale=locale_info
+                    )
             else:
-                output_path = generate_ft_gestao_pdf(product, parent=self)
+                output_path = generate_ft_gestao_pdf(
+                    product, parent=self, locale=locale_info
+                )
         except ExportCancelled:
             logger.info(
                 "[Print] Exportação FT Gestão cancelada pelo utilizador (%s)",
