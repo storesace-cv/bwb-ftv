@@ -314,6 +314,39 @@
       function setStatus(message) { statusBar.textContent = message || ""; }
       function cloneTemplate(tpl) { return JSON.parse(JSON.stringify(tpl)); }
 
+      function buildPreviewPayload(rawReport, rawData) {
+        let templatePayload = rawReport;
+        let candidateData = rawData;
+
+        if (typeof templatePayload === "string") {
+          try {
+            templatePayload = JSON.parse(templatePayload);
+          } catch (parseError) {
+            console.warn("Preview: JSON inválido no template fornecido pelo ReportBro.", parseError);
+            templatePayload = null;
+          }
+        }
+
+        if (templatePayload && typeof templatePayload === "object" && "template" in templatePayload) {
+          if (candidateData === undefined) candidateData = templatePayload.data;
+          templatePayload = templatePayload.template;
+        }
+
+        if (!templatePayload || typeof templatePayload !== "object") {
+          if (designerInstance && typeof designerInstance.getReport === "function") {
+            templatePayload = designerInstance.getReport();
+          } else {
+            templatePayload = EMPTY_TEMPLATE;
+          }
+        }
+
+        const template = cloneTemplate(templatePayload);
+        normaliseTemplateSchema(template);
+
+        const data = candidateData === undefined ? null : candidateData;
+        return { report: { template, data }, data };
+      }
+
       function resetDesigner(message = "") {
         if (!designerInstance) return;
         designerInstance.load(cloneTemplate(EMPTY_TEMPLATE));
@@ -592,11 +625,11 @@
 
       async function previewTemplate() {
         try {
-          const report = designerInstance.getReport();
+          const payload = buildPreviewPayload(designerInstance.getReport(), null);
           const response = await fetch("/rb/preview", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ templateJson: report }),
+            body: JSON.stringify(payload),
           });
           if (!response.ok) {
             const payload = await response.json().catch(() => ({}));
@@ -646,8 +679,15 @@
               reportServerUrl: "/rb/preview",
               saveCallback: () => persistTemplate(false),
               requestCallback: (params) => {
+                const prepared = buildPreviewPayload(params?.report, params?.data);
+                const body = JSON.stringify(prepared);
+                params.report = prepared.report;
+                params.data = prepared.data;
+                params.reportServerMethod = "POST";
                 params.reportServerHeaders = { "Content-Type": "application/json" };
                 params.reportServerUrl = "/rb/preview";
+                params.reportServerData = body;
+                params.reportServerBody = body;
               },
             });
           } else {
