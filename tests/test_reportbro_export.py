@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Mapping
@@ -10,7 +11,11 @@ import pytest
 from app.server.routes_reportbro import _normalise_template_payload
 from domain.models import Ingredient, Product
 from reporting.ft_gestao import build_reportbro_context
-from reporting.reportbro_export import load_template_definition, render_pdf_to_path
+from reporting.reportbro_export import (
+    load_template_definition,
+    render_pdf_bytes,
+    render_pdf_to_path,
+)
 from reporting.reportbro_normalizer import STATIC_SECTION_PARAMETER
 from ui.printing import _prepare_management_payload, generate_ft_gestao_reportbro_pdf
 from utils.paths import get_project_root
@@ -315,6 +320,80 @@ def test_reportbro_pdf_generation(tmp_path):
     finally:
         if image_path.exists():
             image_path.unlink()
+
+
+def test_render_pdf_bytes_converts_small_point_margins(monkeypatch):
+    from reporting import reportbro_export
+
+    captured: dict[str, Any] = {}
+
+    class RecordingReport:
+        def __init__(self, template: Mapping[str, Any], data: Mapping[str, Any], **kwargs: Any):
+            captured["template"] = deepcopy(template)
+            captured["data"] = dict(data)
+            captured["debug"] = kwargs.get("debug")
+            self.template = template
+            self.data = data
+            self.errors: list[Any] = []
+
+        def generate_pdf(self) -> bytes:
+            return b"%PDF-1.4\n%recording\n"
+
+    fallback_called = False
+
+    def _fake_fallback(data: Mapping[str, Any]) -> bytes:
+        nonlocal fallback_called
+        fallback_called = True
+        return b"%PDF-1.4\n%fallback\n"
+
+    monkeypatch.setattr(reportbro_export, "Report", RecordingReport)
+    monkeypatch.setattr(reportbro_export, "_render_fallback_pdf", _fake_fallback)
+
+    template = {
+        "documentProperties": {
+            "unit": "mm",
+            "marginLeft": 20,
+            "marginRight": 20,
+            "marginTop": 20,
+            "marginBottom": 20,
+            "headerSize": 20,
+            "footerSize": 20,
+            "pageWidth": 595,
+            "pageHeight": 842,
+        },
+        "docElements": [
+            {
+                "elementType": "frame",
+                "id": "Content",
+                "width": 400,
+                "height": 600,
+            },
+            {
+                "elementType": "text",
+                "styleId": "Body",
+                "contentData": {
+                    "height": 620,
+                },
+                "height": 620,
+            },
+        ],
+        "parameters": [],
+        "styles": [],
+    }
+
+    result = render_pdf_bytes(template, {"title": "Ficha"})
+
+    assert result.startswith(b"%PDF-1.4")
+    assert fallback_called is False
+    properties = captured["template"]["documentProperties"]
+    assert properties["marginLeft"] == pytest.approx(7.056, rel=1e-3)
+    assert properties["marginRight"] == pytest.approx(7.056, rel=1e-3)
+    assert properties["marginTop"] == pytest.approx(7.056, rel=1e-3)
+    assert properties["marginBottom"] == pytest.approx(7.056, rel=1e-3)
+    assert properties["headerSize"] == pytest.approx(7.056, rel=1e-3)
+    assert properties["footerSize"] == pytest.approx(7.056, rel=1e-3)
+    assert properties["pageWidth"] == pytest.approx(209.903, rel=1e-3)
+    assert properties["pageHeight"] == pytest.approx(296.926, rel=1e-3)
 
 
 def test_generate_ft_gestao_reportbro_pdf_enables_debug(monkeypatch, tmp_path):
