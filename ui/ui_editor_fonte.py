@@ -177,6 +177,7 @@ from .utilities import (
 from .dialogs import (
     import_data,
     manage_aux_table,
+    manage_localizacao_table,
     update_data,
     backup_database,
     restore_database,
@@ -1022,7 +1023,11 @@ class FTApp(QWidget):
         mParams = QMenu("Parametrizações", mConf)
         apply_menu_font(mParams)
         actFoodCost = QAction("Food Cost", self)
+        apply_menu_font(actFoodCost)
+        actCurrency = QAction("Moeda", self)
+        apply_menu_font(actCurrency)
         mParams.addAction(actFoodCost)
+        mParams.addAction(actCurrency)
         mConf.addMenu(mParams)
         self.mnuRoot.addMenu(mConf)
         self.btMenu.setMenu(self.mnuRoot)
@@ -1095,6 +1100,13 @@ class FTApp(QWidget):
         )
         actFoodCost.triggered.connect(
             lambda: edit_fcost_values(self, self.ds.fcost)
+        )
+        actCurrency.triggered.connect(
+            lambda: manage_localizacao_table(
+                self,
+                self.ds.aux,
+                on_change=self._aux_refresh_lists,
+            )
         )
         self.btSearchToggle = QToolButton()
         self.btSearchToggle.setCheckable(True)
