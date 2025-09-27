@@ -22,7 +22,19 @@ def _optional_tag(key: str) -> str | None:
 
 class DummyService:
     def __init__(self):
-        self.ds = object()
+        self.ds = _DummyDataStore()
+
+
+class _DummyDataStore:
+    def __init__(self):
+        self._locale = {
+            "currency_code": "EUR",
+            "currency_symbol": "€",
+            "locale_code": "pt_PT",
+        }
+
+    def get_localizacao_ativa(self):
+        return self._locale
 
 
 def _find_zone(root: QObject, tag_key: str) -> QObject | None:
@@ -68,6 +80,10 @@ def test_qquick_engine_loads_and_binds_metadata(qapp):
         assert isinstance(zones_metadata, dict)
         assert context.contextProperty("zoneOverlayLightenStep") == layout.OVERLAY_LIGHTEN_STEP
         assert context.contextProperty("zoneOverlayLightenMax") == layout.OVERLAY_LIGHTEN_MAX
+        currency_info = context.contextProperty("ftvCurrency")
+        assert isinstance(currency_info, dict)
+        assert currency_info.get("currency_code") == "EUR"
+        assert currency_info.get("currency_symbol") == "€"
 
         general_root_tag = zone_tag("general_root")
         general_root_meta = zones_metadata.get(general_root_tag)

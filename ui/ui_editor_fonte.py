@@ -92,7 +92,7 @@ import os
 import html as html_module
 import html.parser as html_parser
 import itertools
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 import re
 from pathlib import Path
 
@@ -106,9 +106,10 @@ try:  # PyQt 5.15.10 wheels omit QWIDGETSIZE_MAX on some platforms
         QSize,
         pyqtSignal,
         QUrl,
+        QLocale,
     )
 except ImportError:  # pragma: no cover - fallback for stripped builds
-    from PyQt5.QtCore import Qt, QTimer, QPoint, QSize, pyqtSignal, QUrl
+    from PyQt5.QtCore import Qt, QTimer, QPoint, QSize, pyqtSignal, QUrl, QLocale
 
     QWIDGETSIZE_MAX = 16777215
 from PyQt5.QtGui import (
@@ -150,7 +151,12 @@ from PyQt5.QtWidgets import (
 from data.datastore import DataStore
 from services.products import ProductService, calculate_food_cost
 from domain import FichaTecnica
-from utils.formatting import format_pt_number, parse_decimal
+from utils.formatting import (
+    format_currency_locale,
+    format_pt_number,
+    normalise_currency_context,
+    parse_decimal,
+)
 
 from . import layout
 from .layout import Zone
@@ -636,6 +642,8 @@ class FTApp(QWidget):
         super().__init__()
         self.service = service
         self.ds = service.ds
+        self.locale_info = normalise_currency_context({})
+        self._refresh_locale_info()
         self.cur_index = 0
         self.current_product = None
         self._prep_dirty = False
@@ -657,6 +665,83 @@ class FTApp(QWidget):
         """Synchronize the UI datastore reference with the service."""
 
         self.ds = self.service.ds
+        self._refresh_locale_info()
+
+    def _resolve_locale_info(self) -> dict[str, str | None]:
+        """Return the active locale context from the datastore."""
+
+        fallback = normalise_currency_context({})
+        datastore = getattr(self, "ds", None)
+        get_locale = getattr(datastore, "get_localizacao_ativa", None)
+        if callable(get_locale):
+            try:
+                info = get_locale()
+            except Exception:
+                logger.debug(
+                    "[FTApp] Falha ao obter localização ativa; a usar omissões.",
+                    exc_info=True,
+                )
+            else:
+                if info in (None, ""):
+                    return fallback
+                try:
+                    return normalise_currency_context(info, defaults=fallback)
+                except Exception:
+                    logger.debug(
+                        "[FTApp] Localização inválida recebida; a usar omissões.",
+                        exc_info=True,
+                    )
+        return fallback
+
+    def _apply_locale_defaults(self) -> None:
+        """Align Qt's default locale with the active currency context."""
+
+        locale_info = self.locale_info if isinstance(self.locale_info, Mapping) else {}
+        locale_code = locale_info.get("locale_code") if isinstance(locale_info, Mapping) else None
+        if not locale_code:
+            return
+        try:
+            qt_locale = QLocale(str(locale_code))
+            QLocale.setDefault(qt_locale)
+        except Exception:
+            logger.debug(
+                "[FTApp] Falha ao aplicar QLocale padrão '%s'", locale_code,
+                exc_info=True,
+            )
+
+    def _refresh_locale_info(self) -> None:
+        """Reload cached locale metadata from the datastore."""
+
+        self.locale_info = self._resolve_locale_info()
+        self._apply_locale_defaults()
+
+    def _format_currency_value(self, value, *, missing: str = "—") -> str:
+        """Return ``value`` formatted according to the active locale."""
+
+        if value is None or value == "":
+            return missing
+        context = self.locale_info if isinstance(self.locale_info, Mapping) else {}
+        return format_currency_locale(
+            value,
+            locale_code=context.get("locale_code"),
+            currency_symbol=context.get("currency_symbol"),
+            currency_code=context.get("currency_code"),
+        )
+
+    def _on_localizacao_changed(self) -> None:
+        """Refresh locale-sensitive UI elements after currency changes."""
+
+        self._refresh_locale_info()
+        try:
+            self._aux_refresh_lists()
+        except Exception:
+            logger.exception("[AuxUI] Falha ao recarregar listas auxiliares")
+        try:
+            self._load_record(getattr(self, "cur_index", 0))
+        except Exception:
+            logger.exception(
+                "[FTApp] Falha ao recarregar o registo atual após alterar localização"
+            )
 
     def _on_import_data(self) -> None:
         """Run the import workflow and refresh datastore bindings."""
@@ -1120,7 +1205,7 @@ class FTApp(QWidget):
             lambda: manage_localizacao_table(
                 self,
                 self.ds.aux,
-                on_change=self._aux_refresh_lists,
+                on_change=self._on_localizacao_changed,
             )
         )
         self.btSearchToggle = QToolButton()
@@ -2939,9 +3024,10 @@ class FTApp(QWidget):
             pvps = list(product.pvps or [])
             pvps.extend([None] * (5 - len(pvps)))
             for lbl, price in zip(self.lbPVPs, pvps):
-                lbl.setText(
-                    "--N/A--" if price in (None, 0) else format_pt_number(price)
-                )
+                if price in (None, 0):
+                    lbl.setText("--N/A--")
+                else:
+                    lbl.setText(self._format_currency_value(price))
 
             def _select_by_code(combo, code_value):
                 if code_value is None:
@@ -2973,7 +3059,7 @@ class FTApp(QWidget):
             self._apply_ing_autofit_or_scroll()
 
             self.edCustoTotal.setText(
-                format_pt_number(self.service.calculate_cost(product))
+                self._format_currency_value(self.service.calculate_cost(product))
             )
             self._update_food_costs()
             self.lbPos.setText(f"{self.cur_index+1} / {max(1,self.service.total())}")
@@ -3125,7 +3211,7 @@ class FTApp(QWidget):
         """Recalculate total cost using the service layer."""
         try:
             total = self.service.calculate_cost(self.current_product)
-            self.edCustoTotal.setText(format_pt_number(total))
+            self.edCustoTotal.setText(self._format_currency_value(total))
             self._update_food_costs()
         except Exception:
             pass

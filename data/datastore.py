@@ -985,17 +985,18 @@ class DataStore:
             return [(None, "—")]
 
     def get_localizacao_ativa(self):
+        fallback = normalise_currency_context({})
         if not self.aux:
-            return None
+            return fallback
         try:
             entry = self.aux.get_localizacao_ativa()
         except sqlite3.Error as exc:
             logger.error(
                 "[DataStore] get_localizacao_ativa falhou: %s", exc, exc_info=True
             )
-            return None
+            return fallback
         if not entry:
-            return None
+            return fallback
 
         (
             entry_id,
@@ -1017,7 +1018,8 @@ class DataStore:
                 "locale_code": fmt,
                 "format": fmt,
                 "active": active,
-            }
+            },
+            defaults=fallback,
         )
 
     def set_tipo_artigo(self, codigo: str, tipo_cod) -> bool:
