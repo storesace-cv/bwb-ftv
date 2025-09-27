@@ -2,13 +2,20 @@
 
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Mapping
+from typing import Iterable, Any
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
 
 from domain import FichaTecnica
-from utils.formatting import format_pt_number, parse_decimal
+from utils.formatting import (
+    NBSP,
+    format_currency_locale,
+    format_pt_number,
+    normalise_currency_context,
+    parse_decimal,
+)
 
 _FT_HEADERS = ["INGREDIENTES", "QTD", "U.M.", "PPU", "TOTAL", "PESO (%)"]
 _FT_DEV_HEADERS = [
@@ -24,10 +31,61 @@ _HEADER_ALIGNMENT = Qt.AlignHCenter | Qt.AlignVCenter
 _CELL_ALIGNMENT = Qt.AlignLeft | Qt.AlignVCenter
 
 
+def _coerce_currency_context(
+    context: Mapping[str, Any] | None,
+) -> Mapping[str, Any]:
+    """Return a normalised currency context for formatting ingredients."""
+
+    defaults = normalise_currency_context({})
+    if context is None:
+        return defaults
+    if isinstance(context, Mapping):
+        return normalise_currency_context(context, defaults=defaults)
+    return defaults
+
+
+def _format_ft_currency(
+    value: Any,
+    context: Mapping[str, Any] | None,
+    *,
+    missing: str = "—",
+) -> str:
+    """Format ingredient currency values ensuring trailing symbols."""
+
+    if value is None or value == "":
+        return missing
+
+    currency_context = context or {}
+    locale_code = currency_context.get("locale_code") if isinstance(currency_context, Mapping) else None
+    currency_symbol = (
+        currency_context.get("currency_symbol")
+        if isinstance(currency_context, Mapping)
+        else None
+    )
+    currency_code = (
+        currency_context.get("currency_code")
+        if isinstance(currency_context, Mapping)
+        else None
+    )
+    formatted = format_currency_locale(
+        value,
+        locale_code=locale_code,
+        currency_symbol=currency_symbol,
+        currency_code=currency_code,
+    )
+    symbol = currency_symbol or currency_code
+    if symbol and formatted.startswith(symbol):
+        numeric_text = formatted[len(symbol) :].lstrip().lstrip(NBSP)
+        if numeric_text:
+            return f"{numeric_text}{NBSP}{symbol}".strip()
+    return formatted
+
+
 def build_fichas_tecnicas_model(
     rows: Iterable[FichaTecnica] | None,
     *,
     overlays: bool,
+    currency_context: Mapping[str, Any] | None = None,
 ) -> QStandardItemModel:
     """Return a ``QStandardItemModel`` configured for ingredient rows."""
 
@@ -36,7 +94,10 @@ def build_fichas_tecnicas_model(
     model._ft_refreshing = False  # type: ignore[attr-defined]
     model._ft_item_handler = lambda item: _sync_item_to_ficha(model, item)  # type: ignore[attr-defined]
     model.itemChanged.connect(model._ft_item_handler)  # type: ignore[arg-type]
-    update_fichas_tecnicas_model(model, rows, overlays=overlays)
+    model._ft_currency_context = _coerce_currency_context(currency_context)  # type: ignore[attr-defined]
+    update_fichas_tecnicas_model(
+        model, rows, overlays=overlays, currency_context=currency_context
+    )
     return model
 
 
@@ -45,6 +106,7 @@ def update_fichas_tecnicas_model(
     rows: Iterable[FichaTecnica] | None,
     *,
     overlays: bool,
+    currency_context: Mapping[str, Any] | None = None,
 ) -> None:
     """Replace ``model`` contents with ``rows`` respecting overlays."""
 
@@ -53,9 +115,16 @@ def update_fichas_tecnicas_model(
     model.beginResetModel()
     try:
         model.clear()
+        if currency_context is not None:
+            model._ft_currency_context = _coerce_currency_context(currency_context)  # type: ignore[attr-defined]
+        context = getattr(
+            model,
+            "_ft_currency_context",
+            _coerce_currency_context(None),
+        )
         _apply_fichas_tecnicas_headers(model, overlays)
         for ficha in ficha_rows:
-            model.appendRow(_build_ft_row_items(ficha))
+            model.appendRow(_build_ft_row_items(ficha, context))
         model._ft_rows = ficha_rows  # type: ignore[attr-defined]
         model._ft_overlays = overlays  # type: ignore[attr-defined]
     finally:
@@ -82,15 +151,18 @@ def _apply_fichas_tecnicas_headers(model: QStandardItemModel, overlays: bool) ->
         model.setHeaderData(idx, Qt.Horizontal, _HEADER_ALIGNMENT, Qt.TextAlignmentRole)
 
 
-def _build_ft_row_items(ficha: FichaTecnica) -> list[QStandardItem]:
+def _build_ft_row_items(
+    ficha: FichaTecnica,
+    context: Mapping[str, Any] | None,
+) -> list[QStandardItem]:
     ingredient = ficha.ingredient or ""
     has_ingredient = bool(ingredient.strip())
     display_values = (
         ingredient if has_ingredient else "—",
         format_pt_number(ficha.quantity),
         ficha.unit or "",
-        format_pt_number(ficha.ppu),
-        format_pt_number(ficha.total),
+        _format_ft_currency(ficha.ppu, context),
+        _format_ft_currency(ficha.total, context),
         format_pt_number(ficha.weight),
     )
     if not has_ingredient:
@@ -139,7 +211,15 @@ def _sync_item_to_ficha(model: QStandardItemModel, item: QStandardItem) -> None:
         return
 
     setattr(ficha, column_attr, numeric)
-    formatted = format_pt_number(numeric)
+    if column_attr == "quantity":
+        formatted = format_pt_number(numeric)
+    else:
+        context = getattr(
+            model,
+            "_ft_currency_context",
+            _coerce_currency_context(None),
+        )
+        formatted = _format_ft_currency(numeric, context)
     if item.text() != formatted:
         model.blockSignals(True)
         item.setText(formatted)
