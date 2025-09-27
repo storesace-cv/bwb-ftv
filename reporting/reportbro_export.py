@@ -370,7 +370,7 @@ def _normalise_parameter_ids(template: dict[str, Any]) -> None:
 
 
 def _ensure_price_parameters_are_strings(template: dict[str, Any]) -> None:
-    target_names = {f"PrecosTaxas_Preco{index}" for index in range(1, 6)}
+    target_names = {f"PrecosTaxas_Preco{index}_display" for index in range(1, 6)}
 
     def _convert_parameter(entry: Mapping[str, Any]) -> dict[str, Any]:
         mutable = dict(entry)

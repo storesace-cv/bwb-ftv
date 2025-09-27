@@ -198,8 +198,10 @@ def test_build_reportbro_context_formats_sections():
     assert dataset["Produtos_Descontinuado"] == "2024-05-01"
     assert dataset["FichasTecnicas_ComponenteNome"] == "Ingrediente A"
     assert dataset["FichasTecnicas_Peso"] == pytest.approx(1.25)
-    assert dataset["PrecosTaxas_Preco1"] == "10,00 €"
-    assert dataset["PrecosTaxas_Preco2"] == "15,50 €"
+    assert dataset["PrecosTaxas_Preco1"] == pytest.approx(10.0)
+    assert dataset["PrecosTaxas_Preco2"] == pytest.approx(15.5)
+    assert dataset["PrecosTaxas_Preco1_display"] == "10,00 €"
+    assert dataset["PrecosTaxas_Preco2_display"] == "15,50 €"
     assert dataset["TiposArtigos_Cod"] == 2
     assert dataset["TiposArtigos_Descricao"] == "Produto acabado"
     assert dataset["Validade_Cod"] == 5
@@ -295,7 +297,8 @@ def test_build_reportbro_context_uses_empty_field_for_missing_values():
     assert dataset["product_temperatura_cod"] == EMPTY_FIELD
     assert dataset["pricing_rows"][0]["pvp"] == EMPTY_FIELD
     assert dataset["pricing_rows"][0]["food_cost"] == EMPTY_FIELD
-    assert dataset["PrecosTaxas_Preco1"] == EMPTY_FIELD
+    assert dataset["PrecosTaxas_Preco1"] == pytest.approx(0.0)
+    assert dataset["PrecosTaxas_Preco1_display"] == EMPTY_FIELD
     assert dataset["pricing_iva"] == EMPTY_FIELD
     assert EMPTY_FIELD in dataset["pricing_lines"]
     assert dataset["ingredients_data"][0]["quantidade"] == EMPTY_FIELD
