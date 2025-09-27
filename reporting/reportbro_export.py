@@ -369,6 +369,36 @@ def _normalise_parameter_ids(template: dict[str, Any]) -> None:
     template["parameters"] = normalised
 
 
+def _ensure_price_parameters_are_strings(template: dict[str, Any]) -> None:
+    target_names = {f"PrecosTaxas_Preco{index}" for index in range(1, 6)}
+
+    def _convert_parameter(entry: Mapping[str, Any]) -> dict[str, Any]:
+        mutable = dict(entry)
+        name = mutable.get("name")
+        if isinstance(name, str) and name in target_names:
+            mutable["type"] = "string"
+            if not isinstance(mutable.get("testData"), str):
+                mutable["testData"] = ""
+        children = mutable.get("children")
+        if isinstance(children, Iterable) and not isinstance(children, (str, bytes, bytearray)):
+            mutable["children"] = [
+                _convert_parameter(child)
+                for child in children
+                if isinstance(child, Mapping)
+            ]
+        return mutable
+
+    parameters = template.get("parameters")
+    if not isinstance(parameters, Iterable):
+        return
+
+    template["parameters"] = [
+        _convert_parameter(param)
+        for param in parameters
+        if isinstance(param, Mapping)
+    ]
+
+
 def _normalise_image_sources(template: dict[str, Any]) -> None:
     parameters = {
         param.get("name"): param
@@ -510,6 +540,7 @@ def render_pdf_bytes(
     template = deepcopy(dict(template_definition))
     _normalise_document_properties(template)
     _normalise_parameter_ids(template)
+    _ensure_price_parameters_are_strings(template)
     _normalise_image_sources(template)
     _ensure_title_binding(template)
     _clamp_image_heights(template)
