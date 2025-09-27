@@ -1,3 +1,5 @@
+from collections.abc import Mapping
+
 import pytest
 from tests._qt import require_real_qt_modules
 
@@ -21,7 +23,7 @@ from ui.tagging import zone_tag
 from ui.models import build_fichas_tecnicas_model
 from ui.ui_editor_fonte import FTApp, ImagePreview
 from domain import FichaTecnica
-from utils.formatting import format_pt_number
+from utils.formatting import format_currency_locale, format_pt_number
 
 
 class StubDataStore:
@@ -95,13 +97,29 @@ def test_load_record_populates_ingredients(qapp):
     assert zone.findChild(QTableView) is ft.tbIng
     assert ft.lbInformacaoAdicional.text() == "Sem glúten"
     assert model.rowCount() == 2
+    locale = ft.locale_info if isinstance(ft.locale_info, Mapping) else {}
+
+    def fmt_currency(value):
+        return format_currency_locale(
+            value,
+            locale_code=locale.get("locale_code"),
+            currency_symbol=locale.get("currency_symbol"),
+            currency_code=locale.get("currency_code"),
+        )
+
     expected = ds.get_ingredientes("P1")
     for row, data in enumerate(expected):
         assert model.data(model.index(row, 0)) == data["ComponenteNome"]
         assert model.data(model.index(row, 1)) == format_pt_number(data["Qtd"])
         assert model.data(model.index(row, 2)) == data["Unidade"]
-        assert model.data(model.index(row, 3)) == format_pt_number(data["Ppu"])
-        assert model.data(model.index(row, 4)) == format_pt_number(data["Preco"])
+        ppu_text = model.data(model.index(row, 3))
+        total_text = model.data(model.index(row, 4))
+        assert ppu_text == fmt_currency(data["Ppu"])
+        assert total_text == fmt_currency(data["Preco"])
+        symbol = locale.get("currency_symbol") or locale.get("currency_code")
+        if symbol:
+            assert ppu_text.endswith(symbol)
+            assert total_text.endswith(symbol)
         assert model.data(model.index(row, 5)) == format_pt_number(data["Peso"])
         assert model.item(row, 0).textAlignment() == Qt.AlignLeft | Qt.AlignVCenter
         assert model.item(row, 1).textAlignment() == Qt.AlignHCenter | Qt.AlignVCenter

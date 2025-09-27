@@ -2135,7 +2135,9 @@ class FTApp(QWidget):
         )
 
         self.ingModel = build_fichas_tecnicas_model(
-            [], overlays=layout.DEV_OVERLAYS
+            [],
+            overlays=layout.DEV_OVERLAYS,
+            currency_context=self.locale_info,
         )
 
         self.tbIng = QTableView(self)
@@ -3204,7 +3206,10 @@ class FTApp(QWidget):
                     for ing in product.ingredients
                 ]
             update_fichas_tecnicas_model(
-                self.ingModel, fichas, overlays=layout.DEV_OVERLAYS
+                self.ingModel,
+                fichas,
+                overlays=layout.DEV_OVERLAYS,
+                currency_context=self.locale_info,
             )
             self._apply_ingredient_widths()
             self._apply_ing_autofit_or_scroll()

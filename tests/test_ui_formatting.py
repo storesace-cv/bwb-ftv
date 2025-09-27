@@ -4,7 +4,7 @@ require_real_qt_modules("PyQt5.QtWidgets")
 
 import logging
 
-from domain import Product
+from domain import Ingredient, Product
 from services.products import calculate_food_cost
 from ui.ui_editor_fonte import FTApp
 from utils.formatting import (
@@ -131,6 +131,48 @@ def test_ftapp_formats_numbers(qapp):
     ]
     assert [lb.text() for lb in ft.lbFoodCosts] == expected_fc_texts
     ft.close()
+
+
+def test_ftapp_formats_ingredient_currency(qapp):
+    class IngredientService(DummyService):
+        def get_product_info(self, codigo):
+            product = super().get_product_info(codigo)
+            product.ingredients = [
+                Ingredient(
+                    name="Sugar",
+                    quantity=1.5,
+                    unit="kg",
+                    ppu=2.0,
+                    total=3.0,
+                    weight=1.2,
+                )
+            ]
+            return product
+
+    service = IngredientService()
+    ft = FTApp(service)
+    try:
+        context = service.ds.get_localizacao_ativa()
+
+        def fmt(value):
+            return format_currency_locale(
+                value,
+                locale_code=context.get("locale_code"),
+                currency_symbol=context.get("currency_symbol"),
+                currency_code=context.get("currency_code"),
+            )
+
+        model = ft.tbIng.model()
+        ppu_text = model.data(model.index(0, 3))
+        total_text = model.data(model.index(0, 4))
+        assert ppu_text == fmt(2.0)
+        assert total_text == fmt(3.0)
+        symbol = context.get("currency_symbol") or context.get("currency_code")
+        if symbol:
+            assert ppu_text.endswith(symbol)
+            assert total_text.endswith(symbol)
+    finally:
+        ft.close()
 
 
 def test_ftapp_reloads_locale_info_on_change(qapp):
