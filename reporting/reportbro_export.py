@@ -109,13 +109,32 @@ def _render_fallback_pdf(data: Mapping[str, Any]) -> bytes:
 
     if ingredientes:
         for entry in ingredientes:
-            nome_ingrediente = entry.get("ingrediente") or entry.get("nome") or "—"
-            quantidade = entry.get("quantidade")
-            unidade = entry.get("um") or entry.get("unidade") or ""
+            def _entry_value(*keys: str) -> Any:
+                for key in keys:
+                    if key in entry:
+                        value = entry.get(key)
+                        if value not in (None, ""):
+                            return value
+                return None
+
+            nome_ingrediente = _entry_value(
+                "FichasTecnicas_ComponenteNome",
+                "ingrediente",
+                "nome",
+                "codigo",
+            ) or "—"
+            quantidade = _entry_value("FichasTecnicas_Qtd", "quantidade")
+            unidade = _entry_value(
+                "FichasTecnicas_Unidade",
+                "um",
+                "unidade",
+            ) or ""
             if isinstance(quantidade, (int, float)):
                 quantidade_text = f"{quantidade}"
             else:
-                quantidade_text = str(quantidade) if quantidade not in (None, "") else "—"
+                quantidade_text = (
+                    str(quantidade) if quantidade not in (None, "") else "—"
+                )
             parts = [nome_ingrediente, quantidade_text]
             if unidade:
                 parts.append(unidade)
