@@ -398,11 +398,20 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
             return stripped or None
         return str(value)
 
+    parameter_image_filename = _normalise_image_value(
+        parameters.get("product_image_filename")
+    )
+    parameter_image_uri = _normalise_image_value(parameters.get("product_image_uri"))
+
     raw_image_filename = payload.get("product_image_filename")
     product_image_filename = _normalise_image_value(raw_image_filename)
+    if not product_image_filename:
+        product_image_filename = parameter_image_filename
 
     raw_image_uri = payload.get("product_image_uri")
     product_image_uri = _normalise_image_value(raw_image_uri)
+    if not product_image_uri and product_image_filename:
+        product_image_uri = parameter_image_uri
 
     if product_image_filename:
         parameters["product_image_filename"] = product_image_filename
@@ -413,6 +422,10 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
     else:
         parameters.pop("product_image_filename", None)
         parameters.pop("product_image_uri", None)
+
+    current_image_path = product_data.get("image_path")
+    if product_image_filename and (not current_image_path or current_image_path == EMPTY_FIELD):
+        product_data["image_path"] = product_image_filename
 
     logger.info(
         "[ReportBro] product_image_filename dataset: entrada=%r -> product_image_filename=%r, product_image_path=%r, product_image_uri=%r",

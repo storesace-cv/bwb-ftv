@@ -14,6 +14,10 @@ from ui.printing import _prepare_management_payload, _validate_reportbro_inputs
 from utils.paths import get_project_root
 
 
+def _placeholder_image_path() -> Path:
+    return get_project_root() / "ui" / "no-image-thumb.png"
+
+
 def _make_product(**overrides) -> Product:
     product = Product(
         code=overrides.get("code", "TEST-01"),
@@ -155,8 +159,10 @@ def test_reportbro_dataset_with_complete_data():
     assert dataset["ProdutoPreparacao_Html"] == "<p>Preparação padrão.</p>"
     assert not warnings
     assert dataset[STATIC_SECTION_PARAMETER] == [{}]
-    assert "product_image_uri" not in dataset
-    assert "product_image_filename" not in dataset
+    placeholder = _placeholder_image_path()
+    assert dataset["product_image_filename"] == str(placeholder)
+    assert dataset["product_image_uri"] == placeholder.as_uri()
+    assert dataset["product_image_path"] == str(placeholder)
 
 
 def test_missing_text_normalises_to_empty(caplog):
@@ -308,10 +314,15 @@ def test_product_image_filename_missing_code_logs_warning(caplog):
     payload = _prepare_management_payload(product)
     dataset = build_reportbro_context(payload)
 
-    assert "product_image_filename" not in payload
-    assert "product_image_uri" not in payload
-    assert "product_image_filename" not in dataset
-    assert "product_image_uri" not in dataset
+    placeholder = _placeholder_image_path()
+    expected_path = str(placeholder)
+    expected_uri = placeholder.as_uri()
+
+    assert payload["product_image_filename"] == expected_path
+    assert payload["product_image_uri"] == expected_uri
+    assert dataset["product_image_filename"] == expected_path
+    assert dataset["product_image_uri"] == expected_uri
+    assert dataset["product_image_path"] == expected_path
     warning_messages = [
         record.getMessage() for record in caplog.records if record.levelno == logging.WARNING
     ]
@@ -323,7 +334,9 @@ def test_product_image_filename_missing_code_logs_warning(caplog):
         if record.name == "ui.printing" and record.levelno == logging.INFO
     ]
     assert any(
-        "normalizado=''" in message and "uri=None" in message
+        "normalizado=''" in message
+        and f"caminho='{expected_path}'" in message
+        and expected_uri in message
         for message in printing_info
     )
     assert any("destino=" in message for message in printing_info)
@@ -334,11 +347,11 @@ def test_product_image_filename_missing_code_logs_warning(caplog):
         if record.name == "reporting.ft_gestao" and record.levelno == logging.INFO
     ]
     assert any(
-        "product_image_filename" in message and "None" in message
+        "product_image_filename" in message and expected_path in message
         for message in gestao_info
     )
     assert any(
-        "product_image_uri" in message and "None" in message
+        "product_image_uri" in message and expected_uri in message
         for message in gestao_info
     )
 
@@ -356,10 +369,15 @@ def test_product_image_filename_missing_file_logs_warning(caplog):
     payload = _prepare_management_payload(product)
     dataset = build_reportbro_context(payload)
 
-    assert "product_image_filename" not in payload
-    assert "product_image_uri" not in payload
-    assert "product_image_filename" not in dataset
-    assert "product_image_uri" not in dataset
+    placeholder = _placeholder_image_path()
+    expected_path = str(placeholder)
+    expected_uri = placeholder.as_uri()
+
+    assert payload["product_image_filename"] == expected_path
+    assert payload["product_image_uri"] == expected_uri
+    assert dataset["product_image_filename"] == expected_path
+    assert dataset["product_image_uri"] == expected_uri
+    assert dataset["product_image_path"] == expected_path
     warning_messages = [
         record.getMessage() for record in caplog.records if record.levelno == logging.WARNING
     ]
@@ -371,7 +389,9 @@ def test_product_image_filename_missing_file_logs_warning(caplog):
         if record.name == "ui.printing" and record.levelno == logging.INFO
     ]
     assert any(
-        product.code in message and "caminho=None" in message and "uri=None" in message
+        product.code in message
+        and f"caminho='{expected_path}'" in message
+        and expected_uri in message
         for message in printing_info
     )
 
@@ -381,11 +401,11 @@ def test_product_image_filename_missing_file_logs_warning(caplog):
         if record.name == "reporting.ft_gestao" and record.levelno == logging.INFO
     ]
     assert any(
-        "product_image_filename" in message and "None" in message
+        "product_image_filename" in message and expected_path in message
         for message in gestao_info
     )
     assert any(
-        "product_image_uri" in message and "None" in message
+        "product_image_uri" in message and expected_uri in message
         for message in gestao_info
     )
 

@@ -26,6 +26,10 @@ from ui.printing import _prepare_management_payload, generate_ft_gestao_reportbr
 from utils.paths import get_project_root
 
 
+def _placeholder_image_path() -> Path:
+    return get_project_root() / "ui" / "no-image-thumb.png"
+
+
 def _extract_pdf_streams(path: Path) -> list[str]:
     data = path.read_bytes()
     streams: list[str] = []
@@ -179,13 +183,16 @@ def test_build_reportbro_context_formats_sections():
     )
     dataset = build_reportbro_context(payload)
 
+    placeholder = _placeholder_image_path()
+
     assert dataset["title"] == "Ficha Técnica de Gestão"
     assert "Produto" in dataset["product_details"]
     assert "Preços e IVA" in dataset["pricing_details"]
     assert "Ingredientes" in dataset["ingredients"]
     assert "Totais" in dataset["totals"]
-    assert "product_image_filename" not in dataset
-    assert "product_image_uri" not in dataset
+    assert dataset["product_image_filename"] == str(placeholder)
+    assert dataset["product_image_path"] == str(placeholder)
+    assert dataset["product_image_uri"] == placeholder.as_uri()
     assert dataset["Produtos_Codigo"] == "RB-01"
     assert dataset["Produtos_PCU"] == pytest.approx(12.5)
     assert dataset["Produtos_Descontinuado"] == "2024-05-01"
@@ -343,10 +350,12 @@ def test_reportbro_pdf_generation_ignores_missing_image(monkeypatch, tmp_path):
     assert destination.exists()
     assert result == destination
     assert "dataset" in captured
-    assert captured["dataset"].get("product_image_filename") is None
-    assert captured["dataset"].get("product_image_uri") is None
-    assert "product_image_filename" not in captured["dataset"]
-    assert "product_image_uri" not in captured["dataset"]
+    placeholder = _placeholder_image_path()
+    expected_uri = placeholder.as_uri()
+    assert "product_image_filename" in captured["dataset"]
+    assert "product_image_uri" in captured["dataset"]
+    assert captured["dataset"].get("product_image_filename") == str(placeholder)
+    assert captured["dataset"].get("product_image_uri") == expected_uri
 
 
 def test_reportbro_pdf_generation(tmp_path):
