@@ -98,6 +98,7 @@ import shutil
 from pathlib import Path
 
 from reporting import ReportBroIntegrationError
+from reporting.template_updater import apply_template_updaters
 try:  # PyQt 5.15.10 wheels omit QWIDGETSIZE_MAX on some platforms
     from PyQt5.QtCore import (
         Qt,
@@ -926,7 +927,9 @@ class FTApp(QWidget):
                     destination,
                 )
 
-        if not copied:
+        summary = apply_template_updaters(target_dir)
+
+        if not copied and not summary.any_updates():
             QMessageBox.warning(
                 self,
                 "Actualizar Documentos",
@@ -940,6 +943,27 @@ class FTApp(QWidget):
             lines.append("")
             lines.append("Os seguintes modelos não puderam ser actualizados:")
             lines.extend(f"• {name}" for name in failed)
+
+        if summary.updated:
+            lines.append("")
+            lines.append(
+                "Modelos base actualizados a partir dos respectivos ficheiros updater:"
+            )
+            lines.extend(f"• {path.name}" for path in summary.updated)
+
+        if summary.missing_updater:
+            lines.append("")
+            lines.append(
+                "Os seguintes modelos base não possuem ficheiro updater correspondente (ver registos):"
+            )
+            lines.extend(f"• {path.name}" for path in summary.missing_updater)
+
+        if summary.errors:
+            lines.append("")
+            lines.append(
+                "Ocorreram erros ao aplicar alguns ficheiros updater (consulte os registos):"
+            )
+            lines.extend(f"• {path.name}" for path, _ in summary.errors)
 
         QMessageBox.information(self, "Actualizar Documentos", "\n".join(lines))
 
