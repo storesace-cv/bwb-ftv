@@ -1891,7 +1891,7 @@
           {
             "elementType": "text",
             "id": 410,
-            "content": "Ingrediente",
+            "content": "INGREDIENTES",
             "richText": false,
             "richTextContent": "",
             "richTextHtml": "",
@@ -1963,7 +1963,7 @@
           {
             "elementType": "text",
             "id": 411,
-            "content": "Qtd.",
+            "content": "QTD",
             "richText": false,
             "richTextContent": "",
             "richTextHtml": "",
@@ -2035,7 +2035,7 @@
           {
             "elementType": "text",
             "id": 412,
-            "content": "UM",
+            "content": "U.M.",
             "richText": false,
             "richTextContent": "",
             "richTextHtml": "",
@@ -2107,7 +2107,7 @@
           {
             "elementType": "text",
             "id": 413,
-            "content": "Custo unit.",
+            "content": "PPU",
             "richText": false,
             "richTextContent": "",
             "richTextHtml": "",
@@ -2179,7 +2179,7 @@
           {
             "elementType": "text",
             "id": 414,
-            "content": "Custo total",
+            "content": "TOTAL",
             "richText": false,
             "richTextContent": "",
             "richTextHtml": "",
@@ -2251,7 +2251,7 @@
           {
             "elementType": "text",
             "id": 415,
-            "content": "Observações",
+            "content": "PESO",
             "richText": false,
             "richTextContent": "",
             "richTextHtml": "",
@@ -2339,7 +2339,7 @@
             {
               "elementType": "text",
               "id": 416,
-              "content": "${ingrediente}",
+              "content": "${FichasTecnicas_ComponenteNome}",
               "richText": false,
               "richTextContent": "",
               "richTextHtml": "",
@@ -2411,7 +2411,7 @@
             {
               "elementType": "text",
               "id": 417,
-              "content": "${quantidade}",
+              "content": "${FichasTecnicas_Qtd}",
               "richText": false,
               "richTextContent": "",
               "richTextHtml": "",
@@ -2483,7 +2483,7 @@
             {
               "elementType": "text",
               "id": 418,
-              "content": "${um}",
+              "content": "${FichasTecnicas_Unidade}",
               "richText": false,
               "richTextContent": "",
               "richTextHtml": "",
@@ -2555,7 +2555,7 @@
             {
               "elementType": "text",
               "id": 419,
-              "content": "${custo_unit}",
+              "content": "${FichasTecnicas_Ppu}",
               "richText": false,
               "richTextContent": "",
               "richTextHtml": "",
@@ -2627,7 +2627,7 @@
             {
               "elementType": "text",
               "id": 420,
-              "content": "${custo_total}",
+              "content": "${FichasTecnicas_Preco}",
               "richText": false,
               "richTextContent": "",
               "richTextHtml": "",
@@ -2699,7 +2699,7 @@
             {
               "elementType": "text",
               "id": 421,
-              "content": "${observacoes}",
+              "content": "${FichasTecnicas_Peso}",
               "richText": false,
               "richTextContent": "",
               "richTextHtml": "",
@@ -3713,7 +3713,7 @@
       "showOnlyNameType": false,
       "children": [
         {
-          "name": "ingrediente",
+          "name": "FichasTecnicas_ComponenteNome",
           "type": "string",
           "arrayItemType": "string",
           "eval": false,
@@ -3728,7 +3728,7 @@
           "testDataRichText": false
         },
         {
-          "name": "quantidade",
+          "name": "FichasTecnicas_Qtd",
           "type": "number",
           "arrayItemType": "string",
           "eval": false,
@@ -3743,7 +3743,7 @@
           "testDataRichText": false
         },
         {
-          "name": "um",
+          "name": "FichasTecnicas_Unidade",
           "type": "string",
           "arrayItemType": "string",
           "eval": false,
@@ -3758,7 +3758,7 @@
           "testDataRichText": false
         },
         {
-          "name": "custo_unit",
+          "name": "FichasTecnicas_Ppu",
           "type": "number",
           "arrayItemType": "string",
           "eval": false,
@@ -3773,7 +3773,7 @@
           "testDataRichText": false
         },
         {
-          "name": "custo_total",
+          "name": "FichasTecnicas_Preco",
           "type": "number",
           "arrayItemType": "string",
           "eval": false,
@@ -3788,8 +3788,8 @@
           "testDataRichText": false
         },
         {
-          "name": "observacoes",
-          "type": "string",
+          "name": "FichasTecnicas_Peso",
+          "type": "number",
           "arrayItemType": "string",
           "eval": false,
           "nullable": false,
@@ -3803,7 +3803,7 @@
           "testDataRichText": false
         }
       ],
-      "testData": "[{\"ingrediente\": \"Farinha de trigo\", \"quantidade\": 2.5, \"um\": \"kg\", \"custo_unit\": 1.8, \"custo_total\": 4.5, \"observacoes\": \"Base da massa\"}, {\"ingrediente\": \"Fermento\", \"quantidade\": 0.05, \"um\": \"kg\", \"custo_unit\": 12.0, \"custo_total\": 0.6, \"observacoes\": \"\"}]",
+      "testData": "[{\"FichasTecnicas_ComponenteNome\": \"Farinha de trigo\", \"FichasTecnicas_Qtd\": 2.5, \"FichasTecnicas_Unidade\": \"kg\", \"FichasTecnicas_Ppu\": 1.8, \"FichasTecnicas_Preco\": 4.5, \"FichasTecnicas_Peso\": 2.5}, {\"FichasTecnicas_ComponenteNome\": \"Fermento\", \"FichasTecnicas_Qtd\": 0.05, \"FichasTecnicas_Unidade\": \"kg\", \"FichasTecnicas_Ppu\": 12.0, \"FichasTecnicas_Preco\": 0.6, \"FichasTecnicas_Peso\": 0.05}]",
       "testDataBoolean": false,
       "testDataImage": "",
       "testDataImageFilename": "",

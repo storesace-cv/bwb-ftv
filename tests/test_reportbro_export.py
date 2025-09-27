@@ -163,7 +163,7 @@ def test_build_reportbro_context_formats_sections():
             "unidade": "kg",
             "ppu": LocalisedStr("1,50"),
             "total": LocalisedStr("1,50"),
-            "observacoes": "",
+            "peso": LocalisedStr("0,25"),
             "ordem": 3,
         }
     )
@@ -180,6 +180,7 @@ def test_build_reportbro_context_formats_sections():
     assert dataset["Produtos_PCU"] == pytest.approx(12.5)
     assert dataset["Produtos_Descontinuado"] == "2024-05-01"
     assert dataset["FichasTecnicas_ComponenteNome"] == "Ingrediente A"
+    assert dataset["FichasTecnicas_Peso"] == pytest.approx(1.25)
     assert dataset["PrecosTaxas_Preco1"] == pytest.approx(10.0)
     assert dataset["TiposArtigos_Cod"] == 2
     assert dataset["TiposArtigos_Descricao"] == "Produto acabado"
@@ -196,26 +197,26 @@ def test_build_reportbro_context_formats_sections():
     assert len(ingredientes) == 3
 
     first, second, third = ingredientes
-    assert first["ingrediente"] == "Ingrediente A"
-    assert first["quantidade"] == pytest.approx(1.25)
-    assert first["um"] == "kg"
-    assert first["custo_unit"] == pytest.approx(2.5)
-    assert first["custo_total"] == pytest.approx(3.125)
-    assert first["observacoes"] == ""
+    assert first["FichasTecnicas_ComponenteNome"] == "Ingrediente A"
+    assert first["FichasTecnicas_Qtd"] == pytest.approx(1.25)
+    assert first["FichasTecnicas_Unidade"] == "kg"
+    assert first["FichasTecnicas_Ppu"] == pytest.approx(2.5)
+    assert first["FichasTecnicas_Preco"] == pytest.approx(3.125)
+    assert first["FichasTecnicas_Peso"] == pytest.approx(1.25)
 
-    assert second["ingrediente"] == "Ingrediente B"
-    assert second["quantidade"] == pytest.approx(0.5)
-    assert second["um"] == "L"
-    assert second["custo_unit"] == pytest.approx(1.2)
-    assert second["custo_total"] == pytest.approx(0.6)
-    assert second["observacoes"] == ""
+    assert second["FichasTecnicas_ComponenteNome"] == "Ingrediente B"
+    assert second["FichasTecnicas_Qtd"] == pytest.approx(0.5)
+    assert second["FichasTecnicas_Unidade"] == "L"
+    assert second["FichasTecnicas_Ppu"] == pytest.approx(1.2)
+    assert second["FichasTecnicas_Preco"] == pytest.approx(0.6)
+    assert second["FichasTecnicas_Peso"] == pytest.approx(0.5)
 
-    assert third["ingrediente"] == "Ingrediente Localizado"
-    assert third["quantidade"] == pytest.approx(0.25)
-    assert third["um"] == "kg"
-    assert third["custo_unit"] == pytest.approx(1.5)
-    assert third["custo_total"] == pytest.approx(1.5)
-    assert third["observacoes"] == ""
+    assert third["FichasTecnicas_ComponenteNome"] == "Ingrediente Localizado"
+    assert third["FichasTecnicas_Qtd"] == pytest.approx(0.25)
+    assert third["FichasTecnicas_Unidade"] == "kg"
+    assert third["FichasTecnicas_Ppu"] == pytest.approx(1.5)
+    assert third["FichasTecnicas_Preco"] == pytest.approx(1.5)
+    assert third["FichasTecnicas_Peso"] == pytest.approx(0.25)
 
 
 def test_build_reportbro_context_includes_product_image_filename(tmp_path):
