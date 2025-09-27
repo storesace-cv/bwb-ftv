@@ -55,11 +55,11 @@
 ## ReportBro Image Verification Agent
 - **Role**: Verify that the application integrates product images correctly in ReportBro templates.
 - **Responsibilities**:
-  - Ensure that when using template `reporting/templates/ft_gestao_02.json`, the application sets the parameter `product_image_filename` correctly.
+  - Ensure that when using template `reporting/templates/ft_gestao_00_base.json`, the application sets the parameter `product_image_filename` correctly.
   - Validate that the path is always `/databases/images/{Produtos_Codigo}.png` (fixed directory, `.png` extension, filename = product code).
   - Confirm that the code fills this parameter before calling ReportBro, with a safe fallback (`""`) if missing, and logs warnings instead of crashing.
   - Ensure that `source` is not used for this case and that missing files do not cause crashes.
-- **Inputs**: Template file in `reporting/templates/ft_gestao_02.json`.
+- **Inputs**: Template file in `reporting/templates/ft_gestao_00_base.json`.
 - **Outputs**: Verified compliance in code and warnings if misconfigured.
 - **Interactions**: Works alongside the ReportBro Context Agent to enforce schema conformity.
 
