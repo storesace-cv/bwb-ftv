@@ -219,6 +219,16 @@ def _normalise_document_properties(template: dict[str, Any]) -> None:
             "headerSize",
             "footerSize",
         }
+        always_convert_keys = {
+            "marginLeft",
+            "marginRight",
+            "marginTop",
+            "marginBottom",
+            "pageWidth",
+            "pageHeight",
+            "headerSize",
+            "footerSize",
+        }
 
         def _convert_entry(mapping: Mapping[str, Any]) -> dict[str, Any]:
             converted: dict[str, Any] = dict(mapping)
@@ -232,7 +242,7 @@ def _normalise_document_properties(template: dict[str, Any]) -> None:
                     if key == "height" and number <= 0:
                         converted[key] = 120.0
                         continue
-                    if number <= 50:
+                    if number <= 50 and key not in always_convert_keys:
                         continue
                     converted[key] = round(number * point_to_mm, 3)
             return converted
