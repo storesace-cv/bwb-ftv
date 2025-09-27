@@ -9,6 +9,12 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 from reporting.reportbro_normalizer import STATIC_SECTION_PARAMETER, normalise_template
+from reporting.ft_gestao import (
+    EMPTY_FIELD,
+    _format_currency,
+    _format_ingredient_quantity,
+    _format_optional,
+)
 
 try:
     from reportbro import Report, ReportBroError
@@ -308,8 +314,18 @@ def _render_fallback_pdf(data: Mapping[str, Any]) -> bytes:
     except ModuleNotFoundError as exc:  # pragma: no cover - defensive guard
         raise RenderError("Fallback renderer indisponível") from exc
 
-    codigo = data.get("product_codigo") or data.get("Produtos_Codigo") or ""
-    nome = data.get("product_nome") or data.get("Produtos_Nome") or ""
+    def _coalesce_value(source: Mapping[str, Any], keys: Iterable[str], *, allow_empty: bool = False) -> Any:
+        for key in keys:
+            if key in source:
+                value = source.get(key)
+                if allow_empty or _format_optional(value) != EMPTY_FIELD:
+                    return value
+        return None
+
+    codigo_value = _coalesce_value(data, ("product_codigo", "Produtos_Codigo"))
+    nome_value = _coalesce_value(data, ("product_nome", "Produtos_Nome"))
+    codigo = _format_optional(codigo_value)
+    nome = _format_optional(nome_value)
     ingredientes = list(data.get("ingredientes") or [])
     totals = data.get("totals_data") or data.get("totais_data") or {}
 
@@ -322,41 +338,42 @@ def _render_fallback_pdf(data: Mapping[str, Any]) -> bytes:
 
     if ingredientes:
         for entry in ingredientes:
-            def _entry_value(*keys: str) -> Any:
-                for key in keys:
-                    if key in entry:
-                        value = entry.get(key)
-                        if value not in (None, ""):
-                            return value
-                return None
-
-            nome_ingrediente = _entry_value(
-                "FichasTecnicas_ComponenteNome",
-                "ingrediente",
-                "nome",
-                "codigo",
-            ) or "—"
-            quantidade = _entry_value("FichasTecnicas_Qtd", "quantidade")
-            unidade = _entry_value(
-                "FichasTecnicas_Unidade",
-                "um",
-                "unidade",
-            ) or ""
-            if isinstance(quantidade, (int, float)):
-                quantidade_text = f"{quantidade}"
-            else:
-                quantidade_text = (
-                    str(quantidade) if quantidade not in (None, "") else "—"
+            nome_ingrediente = _format_optional(
+                _coalesce_value(
+                    entry,
+                    (
+                        "FichasTecnicas_ComponenteNome",
+                        "ingrediente",
+                        "nome",
+                        "codigo",
+                    ),
                 )
-            parts = [nome_ingrediente, quantidade_text]
-            if unidade:
-                parts.append(unidade)
-            lines.append(" - " + " ".join(parts).strip())
+            )
+            quantidade = _coalesce_value(
+                entry,
+                ("FichasTecnicas_Qtd", "quantidade"),
+                allow_empty=True,
+            )
+            unidade = _coalesce_value(
+                entry,
+                ("FichasTecnicas_Unidade", "um", "unidade"),
+                allow_empty=True,
+            )
+            quantidade_text = _format_ingredient_quantity(quantidade, unidade)
+            parts = [nome_ingrediente]
+            if quantidade_text != EMPTY_FIELD:
+                parts.append(quantidade_text)
+            else:
+                unit_text = _format_optional(unidade)
+                if unit_text != EMPTY_FIELD:
+                    parts.append(unit_text)
+            line_text = " ".join(str(part).strip() for part in parts if str(part).strip())
+            lines.append(f" - {line_text if line_text else EMPTY_FIELD}")
     else:
-        lines.append(" - —")
+        lines.append(f" - {EMPTY_FIELD}")
 
-    custo_total = totals.get("custo_total")
-    lines.append(f"Custo total: {custo_total if custo_total is not None else '—'}")
+    custo_total = _format_currency(totals.get("custo_total"))
+    lines.append(f"Custo total: {custo_total}")
 
     text = "\n".join(str(line) for line in lines)
     return _build_pdf_bytes(text)
