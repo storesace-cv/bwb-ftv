@@ -145,6 +145,28 @@ def _sample_product() -> Product:
 
 def test_build_reportbro_context_formats_sections():
     payload = _prepare_management_payload(_sample_product())
+
+    class LocalisedStr(str):
+        def __float__(self):
+            return float(self.replace(",", "."))
+
+        def __lt__(self, other):
+            try:
+                return float(self) < other
+            except TypeError:
+                return super().__lt__(other)
+
+    payload["blocks"]["B2"]["ingredientes"].append(
+        {
+            "nome": "Ingrediente Localizado",
+            "quantidade": LocalisedStr("0,25"),
+            "unidade": "kg",
+            "ppu": LocalisedStr("1,50"),
+            "total": LocalisedStr("1,50"),
+            "observacoes": "",
+            "ordem": 3,
+        }
+    )
     dataset = build_reportbro_context(payload)
 
     assert dataset["title"] == "Ficha Técnica de Gestão"
@@ -171,9 +193,9 @@ def test_build_reportbro_context_formats_sections():
 
     ingredientes = dataset["ingredientes"]
     assert isinstance(ingredientes, list)
-    assert len(ingredientes) == 2
+    assert len(ingredientes) == 3
 
-    first, second = ingredientes
+    first, second, third = ingredientes
     assert first["ingrediente"] == "Ingrediente A"
     assert first["quantidade"] == pytest.approx(1.25)
     assert first["um"] == "kg"
@@ -187,6 +209,13 @@ def test_build_reportbro_context_formats_sections():
     assert second["custo_unit"] == pytest.approx(1.2)
     assert second["custo_total"] == pytest.approx(0.6)
     assert second["observacoes"] == ""
+
+    assert third["ingrediente"] == "Ingrediente Localizado"
+    assert third["quantidade"] == pytest.approx(0.25)
+    assert third["um"] == "kg"
+    assert third["custo_unit"] == pytest.approx(1.5)
+    assert third["custo_total"] == pytest.approx(1.5)
+    assert third["observacoes"] == ""
 
 
 def test_build_reportbro_context_includes_product_image_filename(tmp_path):

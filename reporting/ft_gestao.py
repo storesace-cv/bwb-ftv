@@ -13,6 +13,8 @@ from .ft_gestao_schema import (
     default_for_parameter,
 )
 
+from utils.formatting import parse_decimal
+
 
 logger = logging.getLogger(__name__)
 
@@ -321,6 +323,11 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
     def _safe_numeric(value: Any) -> float:
         if value is None:
             return 0.0
+        parsed = parse_decimal(value)
+        try:
+            return float(parsed)
+        except (TypeError, ValueError):
+            pass
         try:
             return float(value)
         except (TypeError, ValueError):
