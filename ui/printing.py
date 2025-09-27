@@ -241,12 +241,6 @@ def _validate_product(product: Product) -> Product:
     if not isinstance(product, Product):
         raise TypeError("product must be an instance of domain.models.Product")
 
-    identifier = getattr(product, "code", None) or getattr(product, "name", None)
-    if not identifier:
-        raise ValueError(
-            "product must define at least a code or a name for export purposes"
-        )
-
     ingredients = getattr(product, "ingredients", None)
     if ingredients is None:
         product.ingredients = []
@@ -637,7 +631,9 @@ def resolve_product_image(
 
 
 def _prepare_management_payload(product: Product) -> dict[str, Any]:
-    identifier = product.code or product.name or "<desconhecido>"
+    code = getattr(product, "code", None)
+    name = getattr(product, "name", None)
+    identifier = code or name or "<desconhecido>"
     generated_at = datetime.now().isoformat(timespec="seconds")
 
     ingredients = list(getattr(product, "ingredients", []) or [])
