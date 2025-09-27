@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
@@ -315,8 +316,9 @@ def test_reportbro_pdf_generation(tmp_path):
         assert dataset["product_image_uri"] == image_path.as_uri()
         streams = _extract_pdf_streams(destination)
         combined = "\n".join(streams)
-        assert "CÓDIGO" in combined
-        assert "NOME:" in combined
+        text_content = "".join(re.findall(r"\(([^)]*)\)", combined))
+        assert "CÓDIGO" in text_content
+        assert "NOME:" in text_content
     finally:
         if image_path.exists():
             image_path.unlink()
@@ -394,6 +396,61 @@ def test_render_pdf_bytes_converts_small_point_margins(monkeypatch):
     assert properties["footerSize"] == pytest.approx(7.056, rel=1e-3)
     assert properties["pageWidth"] == pytest.approx(209.903, rel=1e-3)
     assert properties["pageHeight"] == pytest.approx(296.926, rel=1e-3)
+
+
+def test_render_pdf_bytes_handles_many_ingredients_without_fallback(monkeypatch):
+    from reporting import reportbro_export
+
+    fallback_called = False
+
+    def _fake_fallback(data: Mapping[str, Any]) -> bytes:
+        nonlocal fallback_called
+        fallback_called = True
+        return b"%PDF-1.4\n%fallback\n"
+
+    monkeypatch.setattr(reportbro_export, "_render_fallback_pdf", _fake_fallback)
+
+    product = _sample_product()
+
+    base_order = len(product.fichas_tecnicas_rows)
+    for index in range(24):
+        ingredient = Ingredient(
+            name=f"Ingrediente Extra {index:02d}",
+            quantity=1.0 + index / 10.0,
+            unit="kg",
+            ppu=2.0 + index / 2.0,
+            total=2.5 + index / 2.0,
+            code=f"IE-{index:02d}",
+            weight=0.5 + index / 10.0,
+        )
+        product.ingredients.append(ingredient)
+        product.fichas_tecnicas_rows.append(
+            {
+                "familiasubfamilia": "Família>Sub",
+                "produtocodigo": product.code,
+                "produtonome": product.name,
+                "componentecodigo": ingredient.code,
+                "componentenome": ingredient.name,
+                "qtd": ingredient.quantity,
+                "unidade": ingredient.unit,
+                "ppu": ingredient.ppu,
+                "preco": ingredient.total,
+                "peso": ingredient.weight,
+                "ordem": base_order + index + 1,
+            }
+        )
+
+    payload = _prepare_management_payload(product)
+    dataset = build_reportbro_context(payload)
+
+    assert len(dataset["ingredientes"]) == len(product.ingredients)
+
+    template = load_template_definition(Path("reporting/templates/ft_gestao_02.json"))
+
+    pdf_bytes = render_pdf_bytes(template, dataset)
+
+    assert pdf_bytes.startswith(b"%PDF-")
+    assert fallback_called is False
 
 
 def test_generate_ft_gestao_reportbro_pdf_enables_debug(monkeypatch, tmp_path):
