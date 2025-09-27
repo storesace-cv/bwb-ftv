@@ -1878,7 +1878,7 @@
       "borderWidth": "1",
       "printIf": "",
       "removeEmptyElement": false,
-      "shrinkToContentHeight": true,
+      "shrinkToContentHeight": false,
       "alignToPageBottom": false,
       "spreadsheet_hide": false,
       "spreadsheet_column": "",
