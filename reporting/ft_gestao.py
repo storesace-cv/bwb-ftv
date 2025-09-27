@@ -483,5 +483,11 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
         if product_image_uri:
             dataset_update["product_image_uri"] = product_image_uri
     dataset.update(dataset_update)
+    optional_prefixes = ("TiposArtigos_", "Validade_", "Temperaturas_")
+    for name, value in list(dataset.items()):
+        if any(name.startswith(prefix) for prefix in optional_prefixes):
+            formatted = _format_optional(value)
+            if formatted == EMPTY_FIELD:
+                dataset[name] = EMPTY_FIELD
     dataset[STATIC_SECTION_PARAMETER] = [{}]
     return dataset

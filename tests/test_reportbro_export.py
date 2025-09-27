@@ -237,7 +237,18 @@ def test_build_reportbro_context_formats_sections():
 
 
 def test_build_reportbro_context_uses_empty_field_for_missing_values():
-    payload = _prepare_management_payload(_sample_product())
+    product = _sample_product()
+    product.tipo_artigo_cod = None
+    product.validade_cod = None
+    product.temperatura_cod = None
+    product.tipos_artigos_row = {}
+    product.validade_row = {}
+    product.temperaturas_row = {}
+    product.produtos_row["tipoartigo"] = None
+    product.produtos_row["validade"] = None
+    product.produtos_row["temperatura"] = None
+
+    payload = _prepare_management_payload(product)
 
     block_b1 = payload["blocks"]["B1"]
     block_b1["codigo"] = ""
@@ -271,6 +282,12 @@ def test_build_reportbro_context_uses_empty_field_for_missing_values():
 
     dataset = build_reportbro_context(payload)
 
+    assert dataset["TiposArtigos_Cod"] == EMPTY_FIELD
+    assert dataset["TiposArtigos_Descricao"] == EMPTY_FIELD
+    assert dataset["Validade_Cod"] == EMPTY_FIELD
+    assert dataset["Validade_Descricao"] == EMPTY_FIELD
+    assert dataset["Temperaturas_Cod"] == EMPTY_FIELD
+    assert dataset["Temperaturas_Descricao"] == EMPTY_FIELD
     assert dataset["pricing_rows"][0]["pvp"] == EMPTY_FIELD
     assert dataset["pricing_rows"][0]["food_cost"] == EMPTY_FIELD
     assert dataset["pricing_iva"] == EMPTY_FIELD

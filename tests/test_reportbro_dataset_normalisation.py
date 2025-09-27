@@ -165,12 +165,12 @@ def test_reportbro_dataset_with_complete_data():
     assert dataset["product_image_path"] == str(placeholder)
 
 
-def test_missing_text_normalises_to_empty(caplog):
+def test_missing_text_normalises_to_none(caplog):
     product = _make_product(produtos_row={"menu": "   "})
     payload = _prepare_management_payload(product)
     dataset = build_reportbro_context(payload)
 
-    assert dataset["Produtos_Menu"] == ""
+    assert dataset["Produtos_Menu"] is None
 
     template = load_template_definition(
         Path("app/templates_store/templates/ft_gestao_00_base.json")
@@ -181,12 +181,12 @@ def test_missing_text_normalises_to_empty(caplog):
     assert any("Produtos_Menu" in record.message for record in caplog.records)
 
 
-def test_invalid_number_coerces_to_zero():
+def test_invalid_number_coerces_to_none():
     product = _make_product(produtos_row={"pcu": "abc"})
     payload = _prepare_management_payload(product)
     dataset = build_reportbro_context(payload)
 
-    assert dataset["Produtos_PCU"] == 0
+    assert dataset["Produtos_PCU"] is None
     reasons = {entry["reason"] for entry in payload["reportbro"]["warnings"]}
     assert "invalid-number" in reasons
 

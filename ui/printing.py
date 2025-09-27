@@ -353,14 +353,14 @@ def _build_ficha_fallback(
     return fallback
 
 
-def _coerce_text_value(value: Any) -> tuple[str, str | None]:
+def _coerce_text_value(value: Any) -> tuple[str | None, str | None]:
     if value is None:
-        return "", "missing-text"
+        return None, "missing-text"
     if isinstance(value, (date, datetime)):
         return value.strftime("%Y-%m-%d"), None
     text = str(value).strip()
     if not text:
-        return "", "missing-text"
+        return None, "missing-text"
     return text, None
 
 
@@ -409,10 +409,9 @@ def _normalise_date_value(value: Any) -> tuple[str, str | None]:
 
 def _coerce_number_value(
     value: Any, numeric_type: str | None
-) -> tuple[int | float, str | None]:
+) -> tuple[int | float | None, str | None]:
     if value in (None, ""):
-        default = 0 if numeric_type != "int" else 0
-        return default, "missing-number"
+        return None, "missing-number"
 
     if isinstance(value, bool):
         value = int(value)
@@ -429,14 +428,13 @@ def _coerce_number_value(
             number = None
 
     if number is None:
-        default = 0 if numeric_type != "int" else 0
-        return default, "invalid-number"
+        return None, "invalid-number"
 
     if numeric_type == "int":
         try:
             return int(round(number)), None
         except (TypeError, ValueError):
-            return 0, "invalid-number"
+            return None, "invalid-number"
 
     return float(number), None
 
