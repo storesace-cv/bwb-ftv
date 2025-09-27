@@ -13,7 +13,11 @@ from services.products import ProductService
 from ui.layout import Zone
 from ui.tagging import zone_tag
 from ui.ui_editor_fonte import FTApp
-from utils.formatting import format_pt_number
+from utils.formatting import (
+    format_currency_locale,
+    format_pt_number,
+    normalise_currency_context,
+)
 
 
 class TagAwareDataStore:
@@ -23,6 +27,7 @@ class TagAwareDataStore:
         self._saved_allergens: list[tuple[str, list[int]]] = []
         self.aux = types.SimpleNamespace()
         self.fcost = None
+        self._locale_context = normalise_currency_context({})
 
     # -- navigation -----------------------------------------------------
     def total(self) -> int:
@@ -106,6 +111,12 @@ class TagAwareDataStore:
     def set_fcost_level(self, _level):
         return None
 
+    def get_localizacao_ativa(self):
+        return self._locale_context
+
+    def set_locale(self, data):
+        self._locale_context = normalise_currency_context(data or {})
+
 
 @pytest.fixture
 def tag_service():
@@ -143,13 +154,23 @@ def test_iter_layout_children_covers_block_roots(qapp, tag_service):
 def test_load_record_populates_new_tag_widgets(qapp, tag_service):
     ft = FTApp(tag_service)
     try:
+        locale = tag_service.ds.get_localizacao_ativa()
+
+        def fmt(value):
+            return format_currency_locale(
+                value,
+                locale_code=locale.get("locale_code"),
+                currency_symbol=locale.get("currency_symbol"),
+                currency_code=locale.get("currency_code"),
+            )
+
         assert ft.lbFamiliaVal.text() == "Pastelaria"
         assert ft.lbSubFamiliaVal.text() == "Doces"
         assert ft.cbTipos.currentText() == "Premium"
         assert ft.cbValidade.currentText() == "7 dias"
         assert ft.cbTemp.currentText() == "Frio"
-        assert ft.lbPVPs[0].text() == format_pt_number(12.5)
-        assert ft.lbPVPs[1].text() == format_pt_number(9.75)
+        assert ft.lbPVPs[0].text() == fmt(12.5)
+        assert ft.lbPVPs[1].text() == fmt(9.75)
         assert ft.lbInformacaoAdicional.text() == "Consumir fresco"
         additional_field_zone = ft.findChild(
             Zone, zone_tag("general_aux_additional_info_field")
@@ -161,5 +182,36 @@ def test_load_record_populates_new_tag_widgets(qapp, tag_service):
         assert 10 in checkboxes and 11 in checkboxes
         assert checkboxes[10].isChecked()
         assert isinstance(ft.B5_C1.findChild(QCheckBox), QCheckBox)
+    finally:
+        ft.close()
+
+
+def test_localizacao_change_updates_currency_display(qapp, tag_service):
+    ft = FTApp(tag_service)
+    try:
+        default_locale = tag_service.ds.get_localizacao_ativa()
+        assert ft.lbPVPs[0].text() == format_currency_locale(
+            12.5,
+            locale_code=default_locale.get("locale_code"),
+            currency_symbol=default_locale.get("currency_symbol"),
+            currency_code=default_locale.get("currency_code"),
+        )
+
+        tag_service.ds.set_locale(
+            {
+                "currency_code": "GBP",
+                "currency_symbol": "£",
+                "locale_code": "en_GB",
+            }
+        )
+        ft._on_localizacao_changed()
+        updated_locale = tag_service.ds.get_localizacao_ativa()
+        assert ft.lbPVPs[0].text() == format_currency_locale(
+            12.5,
+            locale_code=updated_locale.get("locale_code"),
+            currency_symbol=updated_locale.get("currency_symbol"),
+            currency_code=updated_locale.get("currency_code"),
+        )
+        assert ft.edCustoTotal.text().startswith("£")
     finally:
         ft.close()

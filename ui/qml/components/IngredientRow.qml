@@ -179,6 +179,15 @@ Item {
         if (isNaN(number)) {
             return value;
         }
-        return Qt.locale().toCurrencyString(number, "EUR");
+        var currency = ftvCurrency || {};
+        var symbol = currency.currency_symbol || currency.currencySymbol || "";
+        var code = currency.currency_code || currency.currencyCode || "";
+        if (symbol) {
+            return Qt.locale().toCurrencyString(number, symbol);
+        }
+        if (code) {
+            return Qt.locale().toCurrencyString(number, code);
+        }
+        return Qt.locale().toCurrencyString(number);
     }
 }

@@ -8,11 +8,13 @@ from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
-from PyQt5.QtCore import QObject, QUrl, pyqtProperty, pyqtSignal
+from PyQt5.QtCore import QLocale, QObject, QUrl, pyqtProperty, pyqtSignal
 from PyQt5.QtQml import QQmlApplicationEngine
 from PyQt5.QtWidgets import QApplication
 
 from domain import Product
+
+from utils.formatting import normalise_currency_context
 
 from . import layout
 from .tagging import zone_tag_map
@@ -238,11 +240,35 @@ def create_engine(
     engine = QQmlApplicationEngine()
     context = engine.rootContext()
 
+    currency_context = normalise_currency_context({})
+
     if service is not None:
         context.setContextProperty("productService", service)
         datastore = getattr(service, "ds", None)
         if datastore is not None:
             context.setContextProperty("dataStore", datastore)
+            get_locale = getattr(datastore, "get_localizacao_ativa", None)
+            if callable(get_locale):
+                try:
+                    currency_context = normalise_currency_context(
+                        get_locale(), defaults=currency_context
+                    )
+                except Exception:
+                    logger.debug(
+                        "[QQuick] Falha ao obter localização ativa; a usar omissões.",
+                        exc_info=True,
+                    )
+
+    context.setContextProperty("ftvCurrency", currency_context)
+    locale_code = currency_context.get("locale_code")
+    if locale_code:
+        try:
+            QLocale.setDefault(QLocale(str(locale_code)))
+        except Exception:
+            logger.debug(
+                "[QQuick] Falha ao aplicar QLocale padrão '%s'", locale_code,
+                exc_info=True,
+            )
 
     if show_overlays is None:
         show_overlays = _default_show_overlays()
