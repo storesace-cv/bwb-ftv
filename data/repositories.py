@@ -450,6 +450,172 @@ class AuxiliaresRepo:
             )
         return []
 
+    def list_localizacao_admin(self):
+        cur = self.conn.cursor()
+        try:
+            cur.execute(
+                """
+                SELECT Id, Country, Code, Currency, Symbol, Format, Active
+                FROM Localizacao
+                ORDER BY Id
+                """
+            )
+            return [
+                (
+                    row[0],
+                    row[1],
+                    row[2],
+                    row[3],
+                    row[4],
+                    row[5],
+                    row[6],
+                )
+                for row in cur.fetchall()
+            ]
+        except sqlite3.Error as exc:
+            logger.error(
+                "[AuxiliaresRepo] list_localizacao_admin falhou: %s",
+                exc,
+                exc_info=True,
+            )
+            return []
+
+    def add_localizacao(
+        self,
+        country: str,
+        code: str,
+        currency: str,
+        symbol: str,
+        fmt: str,
+        *,
+        active: int = 0,
+    ):
+        cur = self.conn.cursor()
+        try:
+            cur.execute(
+                """
+                INSERT INTO Localizacao (
+                    Country, Code, Currency, Symbol, Format, Active
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (country, code, currency, symbol, fmt, int(active)),
+            )
+            self.conn.commit()
+            return cur.lastrowid
+        except sqlite3.Error as exc:
+            logger.error(
+                "[AuxiliaresRepo] add_localizacao falhou: %s", exc, exc_info=True
+            )
+            return None
+
+    def update_localizacao(
+        self,
+        localizacao_id: int,
+        *,
+        country: str | None = None,
+        code: str | None = None,
+        currency: str | None = None,
+        symbol: str | None = None,
+        fmt: str | None = None,
+        active: int | None = None,
+    ) -> bool:
+        fields: list[str] = []
+        values: list[object] = []
+
+        mapping = {
+            "Country": country,
+            "Code": code,
+            "Currency": currency,
+            "Symbol": symbol,
+            "Format": fmt,
+            "Active": int(active) if active is not None else None,
+        }
+
+        for column, value in mapping.items():
+            if value is not None:
+                fields.append(f"{column} = ?")
+                values.append(value)
+
+        if not fields:
+            return False
+
+        values.append(localizacao_id)
+        cur = self.conn.cursor()
+        try:
+            cur.execute(
+                f"UPDATE Localizacao SET {', '.join(fields)} WHERE Id = ?",
+                values,
+            )
+            self.conn.commit()
+            return cur.rowcount > 0
+        except sqlite3.Error as exc:
+            logger.error(
+                "[AuxiliaresRepo] update_localizacao(%s) falhou: %s",
+                localizacao_id,
+                exc,
+                exc_info=True,
+            )
+            return False
+
+    def set_localizacao_ativo(self, localizacao_id: int) -> bool:
+        cur = self.conn.cursor()
+        try:
+            cur.execute("BEGIN")
+            cur.execute("UPDATE Localizacao SET Active = 0 WHERE Active = 1")
+            cur.execute(
+                "UPDATE Localizacao SET Active = 1 WHERE Id = ?",
+                (localizacao_id,),
+            )
+            if cur.rowcount == 0:
+                self.conn.rollback()
+                return False
+            self.conn.commit()
+            return True
+        except sqlite3.Error as exc:
+            try:
+                self.conn.rollback()
+            except sqlite3.Error:
+                pass
+            logger.error(
+                "[AuxiliaresRepo] set_localizacao_ativo(%s) falhou: %s",
+                localizacao_id,
+                exc,
+                exc_info=True,
+            )
+            return False
+
+    def get_localizacao_ativa(self):
+        cur = self.conn.cursor()
+        try:
+            cur.execute(
+                """
+                SELECT Id, Country, Code, Currency, Symbol, Format, Active
+                FROM Localizacao
+                WHERE Active = 1
+                LIMIT 1
+                """
+            )
+            row = cur.fetchone()
+            if not row:
+                return None
+            return (
+                row[0],
+                row[1],
+                row[2],
+                row[3],
+                row[4],
+                row[5],
+                row[6],
+            )
+        except sqlite3.Error as exc:
+            logger.error(
+                "[AuxiliaresRepo] get_localizacao_ativa falhou: %s",
+                exc,
+                exc_info=True,
+            )
+            return None
+
     # --- Métodos administrativos adicionados (CRUD) ---
     def list_tipos_artigos_admin(self):
         return self._admin_list("TiposArtigos", "list_tipos_artigos_admin")

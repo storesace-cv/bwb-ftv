@@ -575,6 +575,7 @@ def test_datastore_missing_tables(tmp_path):
         "TiposArtigos",
         "Validade",
         "Temperaturas",
+        "Localizacao",
     }
     assert required <= names
 
@@ -593,6 +594,7 @@ def test_datastore_missing_columns(tmp_path, caplog):
     conn.execute("CREATE TABLE Validade (Cod INTEGER)")
     conn.execute("CREATE TABLE Temperaturas (Cod INTEGER)")
     conn.execute("CREATE TABLE Alergenios (Id INTEGER, Nome TEXT)")
+    conn.execute("CREATE TABLE Localizacao (Id INTEGER)")
     conn.commit()
     conn.close()
     with caplog.at_level(logging.ERROR), pytest.raises(RuntimeError):
