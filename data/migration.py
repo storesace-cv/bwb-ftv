@@ -33,6 +33,13 @@ DEFAULT_ALERGENIOS = [
     (13, "Tremoço", "Lupin", None, None, None),
     (14, "Moluscos", "Molluscs", None, None, None),
 ]
+DEFAULT_LOCALIZACOES = [
+    ("Portugal", "PT", "Euro", "€", "pt_PT", 1),
+    ("Brasil", "BR", "Real brasileiro", "R$", "pt_BR", 0),
+    ("Estados Unidos", "US", "Dólar americano", "$", "en_US", 0),
+    ("Reino Unido", "GB", "Libra esterlina", "£", "en_GB", 0),
+    ("Espanha", "ES", "Euro", "€", "es_ES", 0),
+]
 
 ALERGENIOS_SEED_FLAG = "FTV_SEED_ALERGENIOS"
 _TRUTHY_VALUES = {"1", "true", "yes", "on"}
@@ -100,6 +107,24 @@ CREATE TABLE IF NOT EXISTS PrecosTaxas (
     SubFamilia TEXT,
     PRIMARY KEY (Codigo, Loja)
 )
+"""
+
+LOCALIZACAO_SCHEMA = """
+CREATE TABLE IF NOT EXISTS Localizacao (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    Country TEXT NOT NULL,
+    Code TEXT NOT NULL,
+    Currency TEXT NOT NULL,
+    Symbol TEXT NOT NULL,
+    Format TEXT NOT NULL,
+    Active INTEGER NOT NULL DEFAULT 0 CHECK (Active IN (0,1))
+)
+"""
+
+LOCALIZACAO_INDEX = """
+CREATE UNIQUE INDEX IF NOT EXISTS idx_localizacao_active
+    ON Localizacao(Active)
+    WHERE Active = 1
 """
 
 
@@ -361,6 +386,8 @@ def ensure_core_tables(conn: sqlite3.Connection) -> None:
         (PRODUTOS_SCHEMA),
         (FICHAS_TECNICAS_SCHEMA),
         (PRECOS_TAXAS_SCHEMA),
+        (LOCALIZACAO_SCHEMA),
+        (LOCALIZACAO_INDEX),
         (
             """
             CREATE TABLE IF NOT EXISTS Alergenios (
@@ -452,6 +479,7 @@ def ensure_core_tables(conn: sqlite3.Connection) -> None:
         conn.execute(stmt)
     conn.commit()
     _seed_alergenios(conn)
+    _seed_localizacao(conn)
     _seed_validade(conn)
     _seed_temperaturas(conn)
 
@@ -500,6 +528,27 @@ def _seed_validade(conn: sqlite3.Connection) -> None:
             conn.commit()
     except sqlite3.Error:
         logger.exception("Falha a inserir registos predefinidos na tabela Validade.")
+        raise
+
+
+def _seed_localizacao(conn: sqlite3.Connection) -> None:
+    """Populate ``Localizacao`` with default records if empty."""
+
+    try:
+        cur = conn.execute("SELECT COUNT(*) FROM Localizacao")
+        if cur.fetchone()[0] == 0:
+            conn.executemany(
+                """
+                INSERT INTO Localizacao (Country, Code, Currency, Symbol, Format, Active)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                DEFAULT_LOCALIZACOES,
+            )
+            conn.commit()
+    except sqlite3.Error:
+        logger.exception(
+            "Falha a inserir registos predefinidos na tabela Localizacao."
+        )
         raise
 
 

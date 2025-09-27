@@ -69,6 +69,20 @@ CREATE TABLE IF NOT EXISTS Config (
     Value TEXT
 );
 
+CREATE TABLE IF NOT EXISTS Localizacao (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    Country TEXT NOT NULL,
+    Code TEXT NOT NULL,
+    Currency TEXT NOT NULL,
+    Symbol TEXT NOT NULL,
+    Format TEXT NOT NULL,
+    Active INTEGER NOT NULL DEFAULT 0 CHECK (Active IN (0,1))
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_localizacao_active
+    ON Localizacao(Active)
+    WHERE Active = 1;
+
 CREATE TABLE IF NOT EXISTS Alergenios (
     Id         INTEGER PRIMARY KEY,
     Nome       TEXT NOT NULL,
