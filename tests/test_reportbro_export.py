@@ -370,7 +370,7 @@ def test_reportbro_pdf_generation(tmp_path):
         payload = _prepare_management_payload(product)
         dataset = build_reportbro_context(payload)
 
-        template = load_template_definition(Path("reporting/templates/ft_gestao_02.json"))
+        template = load_template_definition(Path("reporting/templates/ft_gestao_00_base.json"))
         destination = tmp_path / "gestao_reportbro.pdf"
 
         render_pdf_to_path(template, dataset, destination)
@@ -508,7 +508,7 @@ def test_render_pdf_bytes_handles_many_ingredients_without_fallback(monkeypatch)
 
     assert len(dataset["ingredientes"]) == len(product.ingredients)
 
-    template = load_template_definition(Path("reporting/templates/ft_gestao_02.json"))
+    template = load_template_definition(Path("reporting/templates/ft_gestao_00_base.json"))
 
     pdf_bytes = render_pdf_bytes(template, dataset)
 
@@ -537,7 +537,7 @@ def test_generate_ft_gestao_reportbro_pdf_enables_debug(monkeypatch, tmp_path):
 
     product = _sample_product()
     destination = tmp_path / "gestao_reportbro_debug.pdf"
-    template_path = Path("app/templates_store/templates/ft_gestao_02.json")
+    template_path = Path("app/templates_store/templates/ft_gestao_00_base.json")
 
     result = generate_ft_gestao_reportbro_pdf(
         product,
@@ -593,7 +593,7 @@ def test_reportbro_template_without_image_element(tmp_path, caplog):
     fallback_image = root / "ui" / "no-image-thumb.png"
     image_path.write_bytes(fallback_image.read_bytes())
 
-    template_path = Path("app/templates_store/templates/ft_gestao_02.json")
+    template_path = Path("app/templates_store/templates/ft_gestao_00_base.json")
     template = json.loads(template_path.read_text())
     template["docElements"] = [
         element
@@ -642,7 +642,7 @@ def test_reportbro_pdf_generation_with_extra_template_parameter(tmp_path, caplog
     fallback_image = root / "ui" / "no-image-thumb.png"
     image_path.write_bytes(fallback_image.read_bytes())
 
-    template_path = Path("app/templates_store/templates/ft_gestao_02.json")
+    template_path = Path("app/templates_store/templates/ft_gestao_00_base.json")
     template = json.loads(template_path.read_text())
     extra_parameter = dict(template["parameters"][0])
     extra_parameter["name"] = "Extra_Parameter"
@@ -669,7 +669,7 @@ def test_reportbro_pdf_generation_with_extra_template_parameter(tmp_path, caplog
 
 
 def test_load_template_definition_normalises_ft_gestao_template():
-    template_path = Path("app/templates_store/templates/ft_gestao_02.json")
+    template_path = Path("app/templates_store/templates/ft_gestao_00_base.json")
     template = load_template_definition(template_path)
 
     assert all(isinstance(style.get("id"), str) for style in template.get("styles", []))
@@ -698,7 +698,7 @@ def test_load_template_definition_normalises_ft_gestao_template():
 
 
 def test_template_payload_normalisation_discards_extra_metadata():
-    raw_template = json.loads(Path("app/templates_store/templates/ft_gestao_02.json").read_text())
+    raw_template = json.loads(Path("app/templates_store/templates/ft_gestao_00_base.json").read_text())
     raw_template["designerState"] = {"zoom": 125}
 
     payload = {"template": raw_template, "other": "ignored"}

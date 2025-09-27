@@ -170,7 +170,7 @@ O **ReportBro Edit** (ou Designer) é uma ferramenta visual para criar/editar te
 
 ## `table` — tabela de ingredientes
 
-- O template `reporting/templates/ft_gestao_02.json` define uma tabela com seis
+- O template `reporting/templates/ft_gestao_00_base.json` define uma tabela com seis
   colunas: `FichasTecnicas_ComponenteNome`, `FichasTecnicas_Qtd`,
   `FichasTecnicas_Unidade`, `FichasTecnicas_Ppu`, `FichasTecnicas_Preco` e
   `FichasTecnicas_Peso`.

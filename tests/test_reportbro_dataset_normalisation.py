@@ -132,7 +132,7 @@ def _make_product(**overrides) -> Product:
 def _build_dataset(product: Product):
     payload = _prepare_management_payload(product)
     dataset = build_reportbro_context(payload)
-    template_path = Path("app/templates_store/templates/ft_gestao_02.json")
+    template_path = Path("app/templates_store/templates/ft_gestao_00_base.json")
     template = load_template_definition(template_path)
     warnings = payload["reportbro"]["warnings"]
     _validate_reportbro_inputs(template, dataset, warnings)
@@ -173,7 +173,7 @@ def test_missing_text_normalises_to_empty(caplog):
     assert dataset["Produtos_Menu"] == ""
 
     template = load_template_definition(
-        Path("app/templates_store/templates/ft_gestao_02.json")
+        Path("app/templates_store/templates/ft_gestao_00_base.json")
     )
     caplog.set_level(logging.WARNING, logger="ui.printing")
     _validate_reportbro_inputs(template, dataset, payload["reportbro"]["warnings"])
@@ -416,7 +416,7 @@ def test_validation_accepts_string_style_id():
     dataset = build_reportbro_context(payload)
 
     template = load_template_definition(
-        Path("app/templates_store/templates/ft_gestao_02.json")
+        Path("app/templates_store/templates/ft_gestao_00_base.json")
     )
     # Should not raise despite template mixing string style identifiers
     _validate_reportbro_inputs(template, dataset, payload["reportbro"]["warnings"])

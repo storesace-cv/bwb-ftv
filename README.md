@@ -55,13 +55,13 @@ instalação, arranque a interface desktop:
 O servidor Flask expõe os endpoints `/designer`, `/templates/*` e `/rb/*` para
 gestão de templates e geração de PDF/XLSX. Os templates são armazenados em
 `reporting/templates` e os dados de exemplo em `reporting/samples`.
-Por omissão é carregado o template `ft_gestao_02.json`, alimentado por
+Por omissão é carregado o template `ft_gestao_00_base.json`, alimentado por
 `sample_data.json` com um exemplo realista de ficha técnica.
 
 Para promover novas versões do template de Gestão:
 
 1. Exporte o JSON a partir do ReportBro Designer sobrescrevendo diretamente
-   `reporting/templates/ft_gestao_02.json` (faça um backup local se precisar de
+   `reporting/templates/ft_gestao_00_base.json` (faça um backup local se precisar de
    comparar versões antigas).
 2. Caso altere o nome do ficheiro, atualize a constante
    `_DEFAULT_REPORTBRO_TEMPLATE_NAME` em `ui/printing.py` para refletir o novo
@@ -74,7 +74,7 @@ Para promover novas versões do template de Gestão:
 > modificações efetuadas.
 
 > ℹ️ **Resumo rápido** — (1) exporte o template aprovado sobre
-> `reporting/templates/ft_gestao_02.json`; (2) confirme que
+> `reporting/templates/ft_gestao_00_base.json`; (2) confirme que
 > `_DEFAULT_REPORTBRO_TEMPLATE_NAME` aponta para o nome correto; (3) sincronize
 > os testes. O
 > template FT Gestão obtém a imagem do produto através de
@@ -124,7 +124,7 @@ Main features:
 
 ## Imagem do Produto / Product Image
 
-O template padrão `ft_gestao_02.json` inclui um elemento de imagem para o produto.
+O template padrão `ft_gestao_00_base.json` inclui um elemento de imagem para o produto.
 Este elemento está ligado ao parâmetro `product_image_filename`.
 
 Regras para preencher este parâmetro:

@@ -30,8 +30,8 @@ EDITOR_MENU_TITLE = "Editor de Documentos"
 EDITOR_OFFLINE_TITLE = f"{EDITOR_MENU_TITLE} (modo offline)"
 
 TEMPLATE_ACTION_MAP = {
-    "FT's Gestão (filtro)": Path("ft_gestao_02.json"),
-    "FT's Gestão (Actual)": Path("ft_gestao_02.json"),
+    "FT's Gestão (filtro)": Path("ft_gestao_00_base.json"),
+    "FT's Gestão (Actual)": Path("ft_gestao_00_base.json"),
     "FT's Operacionais (filtro)": Path("ft_operacional_reportbro.json"),
     "FT's Operacionais (Actual)": Path("ft_operacional_reportbro.json"),
 }

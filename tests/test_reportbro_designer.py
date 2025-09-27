@@ -21,7 +21,7 @@ def _load_template(name: str) -> dict:
 
 
 def test_preview_endpoint_returns_pdf(flask_client):
-    template = _load_template("ft_gestao_02")
+    template = _load_template("ft_gestao_00_base")
     response = flask_client.post("/rb/preview", json={"templateJson": template})
     assert response.status_code == 200
     assert response.headers["Content-Type"].startswith("application/pdf")
@@ -29,7 +29,7 @@ def test_preview_endpoint_returns_pdf(flask_client):
 
 
 def test_preview_put_accepts_empty_string_data(flask_client):
-    template = _load_template("ft_gestao_02")
+    template = _load_template("ft_gestao_00_base")
     response = flask_client.put(
         "/rb/preview",
         json={"report": {"template": template}, "data": ""},
