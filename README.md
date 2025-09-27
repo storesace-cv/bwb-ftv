@@ -60,21 +60,23 @@ Por omissão é carregado o template `ft_gestao_02.json`, alimentado por
 
 Para promover novas versões do template de Gestão:
 
-1. Exporte o JSON a partir do ReportBro Designer para
-   `app/templates_store/templates/` com um novo sufixo incremental (por
-   exemplo, `ft_gestao_03.json`).
-2. Copie o ficheiro aprovado para `reporting/templates/` e atualize a constante
-   `_DEFAULT_REPORTBRO_TEMPLATE_NAME` em `ui/printing.py`.
+1. Exporte o JSON a partir do ReportBro Designer sobrescrevendo diretamente
+   `reporting/templates/ft_gestao_02.json` (faça um backup local se precisar de
+   comparar versões antigas).
+2. Caso altere o nome do ficheiro, atualize a constante
+   `_DEFAULT_REPORTBRO_TEMPLATE_NAME` em `ui/printing.py` para refletir o novo
+   valor.
 3. Ajuste os testes em `tests/test_reportbro_export.py` e no stub do editor
-   para referenciar o novo nome e valide a geração de PDF com `pytest`.
+   para referenciar o nome final e valide a geração de PDF com `pytest`.
 
 > ⚠️ O ReportBro Designer está licenciado sob AGPL-3.0. Ao distribuir a
 > aplicação, garanta o cumprimento da licença e disponibilize o código-fonte das
 > modificações efetuadas.
 
-> ℹ️ **Resumo rápido** — (1) exporte o template aprovado para
-> `app/templates_store/templates/`; (2) promova-o para `reporting/templates/` e
-> atualize `_DEFAULT_REPORTBRO_TEMPLATE_NAME`; (3) sincronize os testes. O
+> ℹ️ **Resumo rápido** — (1) exporte o template aprovado sobre
+> `reporting/templates/ft_gestao_02.json`; (2) confirme que
+> `_DEFAULT_REPORTBRO_TEMPLATE_NAME` aponta para o nome correto; (3) sincronize
+> os testes. O
 > template FT Gestão obtém a imagem do produto através de
 > `ui.printing.resolve_product_image`, que preenche `imageFilename` com o
 > caminho `/databases/images/{Produtos_Codigo}.png`; mantenha este fluxo em
