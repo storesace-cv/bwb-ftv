@@ -271,6 +271,13 @@
 
       let currentLocationDescriptor = "";
 
+      const HANDLE_DB_NAME = "bwb-designer-fs";
+      const HANDLE_STORE_NAME = "fs-handles";
+      const TEMPLATES_DIRECTORY_KEY = "reporting-templates";
+      let handlesDbPromise = null;
+      let templatesDirectoryHandle = null;
+      let templatesDirectoryHandleLoaded = false;
+
       function buildServerLocation(name) {
         if (!name) return "";
         const encoded = encodeURIComponent(name);
@@ -304,6 +311,116 @@
           };
         }
       };
+
+      function isFileSystemAccessSupported() {
+        return (
+          typeof window.showOpenFilePicker === "function" &&
+          typeof window.showDirectoryPicker === "function"
+        );
+      }
+
+      function getHandlesDb() {
+        if (!("indexedDB" in window)) return Promise.reject(new Error("IndexedDB indisponível"));
+        if (!handlesDbPromise) {
+          handlesDbPromise = new Promise((resolve, reject) => {
+            const request = window.indexedDB.open(HANDLE_DB_NAME, 1);
+            request.onupgradeneeded = () => {
+              const db = request.result;
+              if (!db.objectStoreNames.contains(HANDLE_STORE_NAME)) {
+                db.createObjectStore(HANDLE_STORE_NAME);
+              }
+            };
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+          }).catch((error) => {
+            console.warn("IndexedDB indisponível para guardar handles.", error);
+            handlesDbPromise = null;
+            throw error;
+          });
+        }
+        return handlesDbPromise;
+      }
+
+      async function readPersistedDirectoryHandle() {
+        try {
+          const db = await getHandlesDb();
+          if (!db) return null;
+          return await new Promise((resolve, reject) => {
+            const tx = db.transaction(HANDLE_STORE_NAME, "readonly");
+            const store = tx.objectStore(HANDLE_STORE_NAME);
+            const request = store.get(TEMPLATES_DIRECTORY_KEY);
+            request.onsuccess = () => resolve(request.result || null);
+            request.onerror = () => reject(request.error);
+          });
+        } catch (error) {
+          console.warn("Não foi possível recuperar a pasta 'reporting/templates'.", error);
+          return null;
+        }
+      }
+
+      async function persistDirectoryHandle(handle) {
+        templatesDirectoryHandle = handle || null;
+        templatesDirectoryHandleLoaded = true;
+        if (!handle) return;
+        try {
+          const db = await getHandlesDb();
+          if (!db) return;
+          await new Promise((resolve, reject) => {
+            const tx = db.transaction(HANDLE_STORE_NAME, "readwrite");
+            const store = tx.objectStore(HANDLE_STORE_NAME);
+            const request = store.put(handle, TEMPLATES_DIRECTORY_KEY);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+          });
+        } catch (error) {
+          console.warn("Não foi possível guardar a pasta 'reporting/templates'.", error);
+        }
+      }
+
+      async function clearPersistedDirectoryHandle() {
+        templatesDirectoryHandle = null;
+        templatesDirectoryHandleLoaded = true;
+        try {
+          const db = await getHandlesDb();
+          if (!db) return;
+          await new Promise((resolve, reject) => {
+            const tx = db.transaction(HANDLE_STORE_NAME, "readwrite");
+            const store = tx.objectStore(HANDLE_STORE_NAME);
+            const request = store.delete(TEMPLATES_DIRECTORY_KEY);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+          });
+        } catch (error) {
+          console.warn("Não foi possível limpar a pasta 'reporting/templates' armazenada.", error);
+        }
+      }
+
+      async function getTemplatesDirectoryHandle() {
+        if (!templatesDirectoryHandleLoaded) {
+          templatesDirectoryHandle = await readPersistedDirectoryHandle();
+          templatesDirectoryHandleLoaded = true;
+        }
+        return templatesDirectoryHandle;
+      }
+
+      async function ensureDirectoryPermission(handle) {
+        if (!handle) return false;
+        try {
+          const opts = { mode: "read" };
+          if (typeof handle.queryPermission === "function") {
+            const status = await handle.queryPermission(opts);
+            if (status === "granted") return true;
+            if (status === "denied") return false;
+          }
+          if (typeof handle.requestPermission === "function") {
+            const status = await handle.requestPermission(opts);
+            return status === "granted";
+          }
+        } catch (error) {
+          console.warn("Falha ao verificar permissões da pasta.", error);
+        }
+        return false;
+      }
 
       function showToast(message, variant = "info") {
         toastElement.textContent = message;
@@ -461,9 +578,103 @@
       }
 
       // ---------------- Abrir do DISCO ----------------
-      function triggerOpenFromDisk() {
-        openFileInput.value = ""; // permite reabrir o mesmo ficheiro
-        openFileInput.click();
+      async function triggerOpenFromDisk() {
+        const hasFileSystemAccess = isFileSystemAccessSupported();
+        if (!hasFileSystemAccess) {
+          setStatus("API avançada indisponível; a usar o seletor compatível de ficheiros.");
+          showToast("A utilizar o seletor compatível por falta de suporte do navegador.");
+          openFileInput.value = "";
+          openFileInput.click();
+          return;
+        }
+
+        let directoryHandle = await getTemplatesDirectoryHandle();
+        if (directoryHandle) {
+          const hasPermission = await ensureDirectoryPermission(directoryHandle);
+          if (!hasPermission) {
+            await clearPersistedDirectoryHandle();
+            directoryHandle = null;
+          }
+        }
+
+        if (!directoryHandle) {
+          try {
+            setStatus("Selecione a pasta 'reporting/templates' para abrir templates locais.");
+            const pickedDirectory = await window.showDirectoryPicker();
+            const hasPermission = await ensureDirectoryPermission(pickedDirectory);
+            if (hasPermission) {
+              directoryHandle = pickedDirectory;
+              await persistDirectoryHandle(directoryHandle);
+            } else {
+              directoryHandle = null;
+            }
+          } catch (error) {
+            if (error?.name === "AbortError") {
+              setStatus("Seleção da pasta cancelada; a usar o seletor compatível de ficheiros.");
+              showToast("A pasta não foi selecionada; a usar o seletor compatível.");
+            } else {
+              console.warn("Falha ao selecionar a pasta 'reporting/templates'.", error);
+              setStatus("Falha ao preparar a pasta pedida; a usar o seletor compatível de ficheiros.");
+              showToast("Não foi possível aceder à pasta pedida; a usar o seletor compatível.", "error");
+            }
+            openFileInput.value = "";
+            openFileInput.click();
+            return;
+          }
+        }
+
+        const pickerOptions = {
+          multiple: false,
+          types: [
+            {
+              description: "Ficheiros JSON",
+              accept: {
+                "application/json": [".json"],
+              },
+            },
+          ],
+        };
+
+        if (directoryHandle) {
+          pickerOptions.startIn = directoryHandle;
+        }
+
+        let fileHandle;
+        try {
+          const handles = await window.showOpenFilePicker(pickerOptions);
+          fileHandle = Array.isArray(handles) ? handles[0] : handles;
+          if (!fileHandle) {
+            setStatus("Nenhum ficheiro foi selecionado.");
+            return;
+          }
+        } catch (error) {
+          if (error?.name === "AbortError") {
+            setStatus("Seleção de ficheiro cancelada.");
+            showToast("Abertura cancelada.");
+            return;
+          }
+          console.warn("Falha ao usar showOpenFilePicker; a recuar para o seletor compatível.", error);
+          setStatus("Falha ao abrir o seletor avançado; a usar o seletor compatível.");
+          showToast("Não foi possível abrir o seletor avançado; a usar o seletor compatível.");
+          openFileInput.value = "";
+          openFileInput.click();
+          return;
+        }
+
+        try {
+          const file = await fileHandle.getFile();
+          const fileName = file?.name || fileHandle?.name || "ficheiro selecionado";
+          const statusMessage = directoryHandle
+            ? `Template aberto com acesso directo a 'reporting/templates': ${fileName}`
+            : `Template aberto via seletor do sistema (sem pasta preferida): ${fileName}`;
+          const toastMessage = directoryHandle
+            ? `Aberto a partir de 'reporting/templates': ${fileName}`
+            : `Aberto com o seletor do sistema sem pasta predefinida: ${fileName}`;
+          await loadTemplateFile(file, { statusMessage, toastMessage });
+        } catch (error) {
+          console.error("Falha ao ler o ficheiro selecionado.", error);
+          showToast("Não foi possível ler o ficheiro selecionado.", "error");
+        }
       }
 
       function buildDownloadName(baseName = "") {
@@ -542,8 +753,7 @@
         }
       }
 
-      async function handleOpenFromDisk(ev) {
-        const file = ev.target.files?.[0];
+      async function loadTemplateFile(file, { statusMessage, toastMessage } = {}) {
         if (!file) return;
         try {
           const text = await file.text();
@@ -553,13 +763,22 @@
           designerInstance.setModified(false);
           currentTemplateName = file.name.replace(/\.json$/i, "");
           selectElement.value = ""; // limpa seleção do servidor
-          setStatus(`Template aberto do disco: ${file.name}`);
-          showToast(`Aberto: ${file.name}`);
+          setStatus(statusMessage || `Template aberto do disco: ${file.name}`);
+          showToast(toastMessage || `Aberto: ${file.name}`);
           setLocationDescriptor(file.name);
-        } catch (err) {
-          console.error(err);
+        } catch (error) {
+          console.error(error);
           showToast("Ficheiro inválido ou JSON malformado.", "error");
         }
+      }
+
+      async function handleOpenFromDisk(ev) {
+        const file = ev.target.files?.[0];
+        if (!file) return;
+        await loadTemplateFile(file, {
+          statusMessage: `Template aberto através do seletor compatível: ${file.name}`,
+          toastMessage: `Aberto com o seletor compatível: ${file.name}`,
+        });
       }
 
       async function handleReopenServerDialog() {
