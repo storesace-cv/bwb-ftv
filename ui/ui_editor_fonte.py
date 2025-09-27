@@ -94,6 +94,7 @@ import html.parser as html_parser
 import itertools
 from collections.abc import Iterable, Mapping
 import re
+import shutil
 from pathlib import Path
 
 from reporting import ReportBroIntegrationError
@@ -755,6 +756,51 @@ class FTApp(QWidget):
         update_data(self, self.service, self._load_record, self.cur_index)
         self._refresh_datastore()
 
+    def _on_update_templates(self) -> None:
+        """Confirm before synchronising ReportBro document templates."""
+
+        message_box = QMessageBox(self)
+        message_box.setWindowTitle("Actualizar Documentos")
+        message_box.setIcon(QMessageBox.Question)
+        message_box.setText("Pretende actualizar os modelos de documentos?")
+
+        confirm_button = QPushButton("Actualizar", message_box)
+        confirm_button.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #c62828;
+                color: white;
+                padding: 6px 16px;
+                font-weight: bold;
+            }
+            QPushButton:pressed {
+                background-color: #b71c1c;
+            }
+            """
+        )
+        cancel_button = QPushButton("Cancelar", message_box)
+        cancel_button.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #2e7d32;
+                color: white;
+                padding: 6px 16px;
+                font-weight: bold;
+            }
+            QPushButton:pressed {
+                background-color: #1b5e20;
+            }
+            """
+        )
+
+        message_box.addButton(confirm_button, QMessageBox.AcceptRole)
+        message_box.addButton(cancel_button, QMessageBox.RejectRole)
+        message_box.setDefaultButton(cancel_button)
+        message_box.exec_()
+
+        if message_box.clickedButton() is confirm_button:
+            self._update_reportbro_templates()
+
     def _open_reportbro_editor(self) -> None:
         """Open the ReportBro editor or fall back to the bundled stub."""
 
@@ -819,6 +865,83 @@ class FTApp(QWidget):
                 "Não foi possível abrir o editor ReportBro. Verifique a ligação.",
             )
             logger.warning("[ReportBro] Falha ao abrir editor em %s", url.toString())
+
+    def _update_reportbro_templates(self) -> None:
+        """Copy ReportBro templates from the templates store into runtime."""
+
+        project_root = Path(__file__).resolve().parent.parent
+        source_dir = project_root / "app" / "templates_store" / "templates"
+        target_dir = project_root / "reporting" / "templates"
+
+        try:
+            templates = sorted(
+                path for path in source_dir.glob("*.json") if path.is_file()
+            )
+        except Exception:
+            logger.exception("[ReportBro] Falha ao listar templates em %s", source_dir)
+            QMessageBox.critical(
+                self,
+                "Actualizar Documentos",
+                "Não foi possível listar os modelos disponíveis para actualização.",
+            )
+            return
+
+        if not templates:
+            QMessageBox.information(
+                self,
+                "Actualizar Documentos",
+                "Não foram encontrados modelos para actualizar.",
+            )
+            return
+
+        try:
+            target_dir.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            logger.exception(
+                "[ReportBro] Falha ao preparar diretório de destino em %s", target_dir
+            )
+            QMessageBox.critical(
+                self,
+                "Actualizar Documentos",
+                "Não foi possível preparar a pasta de destino para os modelos.",
+            )
+            return
+
+        copied: list[str] = []
+        failed: list[str] = []
+        for template in templates:
+            destination = target_dir / template.name
+            try:
+                shutil.copy2(template, destination)
+            except Exception:
+                failed.append(template.name)
+                logger.exception(
+                    "[ReportBro] Falha ao actualizar template %s", template.name
+                )
+            else:
+                copied.append(template.name)
+                logger.info(
+                    "[ReportBro] Template %s actualizado em %s",
+                    template.name,
+                    destination,
+                )
+
+        if not copied:
+            QMessageBox.warning(
+                self,
+                "Actualizar Documentos",
+                "Não foi possível actualizar nenhum modelo.",
+            )
+            return
+
+        lines = ["Modelos actualizados com sucesso."]
+        lines.extend(f"• {name}" for name in copied)
+        if failed:
+            lines.append("")
+            lines.append("Os seguintes modelos não puderam ser actualizados:")
+            lines.extend(f"• {name}" for name in failed)
+
+        QMessageBox.information(self, "Actualizar Documentos", "\n".join(lines))
 
     def _open_reportbro_template(self, template_label: str) -> None:
         """Open the ReportBro template associated with ``template_label``."""
@@ -1112,6 +1235,9 @@ class FTApp(QWidget):
         actActiveModels = QAction("Modelos Activos", self)
         apply_menu_font(actActiveModels)
         gestao_docs_menu.addAction(actActiveModels)
+        actUpdateTemplates = QAction("Actualizar Documentos", self)
+        apply_menu_font(actUpdateTemplates)
+        gestao_docs_menu.addAction(actUpdateTemplates)
         mUtil.addMenu(gestao_docs_menu)
         mUtil.addSeparator()
         actTheme = QAction("Tema", self)
@@ -1137,6 +1263,7 @@ class FTApp(QWidget):
         actUpdate.triggered.connect(self._on_update_data)
         actDocEditor.triggered.connect(self._open_reportbro_editor)
         actActiveModels.triggered.connect(self._open_active_models_dialog)
+        actUpdateTemplates.triggered.connect(self._on_update_templates)
         actBackup.triggered.connect(lambda: backup_database(self, self.ds))
         actRestore.triggered.connect(
             lambda: restore_database(self, self.ds, self._after_restore)
