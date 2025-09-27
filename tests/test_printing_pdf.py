@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import zlib
 import re
+import logging
 from pathlib import Path
 
 import pytest
@@ -17,6 +18,7 @@ from ui.printing import (
     _render_pdf,
     _scaled_font,
     generate_ft_gestao_pdf,
+    generate_ft_gestao_reportbro_pdf,
 )
 
 
@@ -74,6 +76,70 @@ def _rect_widths(stream: str) -> list[float]:
     for match in pattern.finditer(stream):
         widths.append(float(match.group(1)))
     return widths
+
+
+def test_generate_ft_gestao_pdf_accepts_missing_identifier(
+    tmp_path, monkeypatch, caplog
+):
+    caplog.set_level(logging.DEBUG, logger="ui.printing")
+
+    destination = tmp_path / "ft_gestao_sem_identificador.pdf"
+    monkeypatch.setattr(
+        "ui.printing._prompt_pdf_destination",
+        lambda _product, parent=None: destination,
+    )
+
+    original_prepare = ui.printing._prepare_management_payload
+
+    def capture_prepare(product):
+        payload = original_prepare(product)
+        assert payload["identifier"] == "<desconhecido>"
+        return payload
+
+    monkeypatch.setattr("ui.printing._prepare_management_payload", capture_prepare)
+
+    def fake_render(payload, output_path, page_metrics):
+        output_path.write_text("%PDF-1.4\n%mock\n")
+
+    monkeypatch.setattr("ui.printing._render_pdf", fake_render)
+
+    product = Product(code="", name="")
+
+    result = generate_ft_gestao_pdf(product)
+
+    assert result == destination
+    assert destination.exists()
+    assert "dados incompletos" not in caplog.text.lower()
+
+
+def test_generate_ft_gestao_reportbro_pdf_accepts_missing_identifier(
+    tmp_path, monkeypatch, caplog
+):
+    caplog.set_level(logging.DEBUG, logger="ui.printing")
+
+    destination = tmp_path / "ft_gestao_reportbro_sem_identificador.pdf"
+
+    original_prepare = ui.printing._prepare_management_payload
+
+    def capture_prepare(product):
+        payload = original_prepare(product)
+        assert payload["identifier"] == "<desconhecido>"
+        return payload
+
+    monkeypatch.setattr("ui.printing._prepare_management_payload", capture_prepare)
+
+    def fake_render(template, dataset, output_path):
+        output_path.write_text("%PDF-1.4\n%mock\n")
+
+    monkeypatch.setattr("ui.printing.render_pdf_to_path", fake_render)
+
+    product = Product(code="", name="")
+
+    result = generate_ft_gestao_reportbro_pdf(product, destination=destination)
+
+    assert result == destination
+    assert destination.exists()
+    assert "dados incompletos" not in caplog.text.lower()
 
 
 def test_management_pdf_contains_brand_elements(qapp, tmp_path):

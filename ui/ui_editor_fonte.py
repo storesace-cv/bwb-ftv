@@ -779,8 +779,10 @@ class FTApp(QWidget):
             )
             return
 
-        identifier = getattr(product, "code", None) or getattr(
-            product, "name", "<desconhecido>"
+        identifier = (
+            getattr(product, "code", None)
+            or getattr(product, "name", None)
+            or "<desconhecido>"
         )
         use_reportbro_flag = os.getenv("FTV_USE_REPORTBRO", "").strip().lower()
         template_override_env = os.getenv("FTV_REPORTBRO_TEMPLATE", "").strip()
@@ -2996,7 +2998,8 @@ class FTApp(QWidget):
             return
         identifier = (
             getattr(product, "code", None)
-            or getattr(product, "name", "<unknown>")
+            or getattr(product, "name", None)
+            or "<desconhecido>"
         )
         try:
             total = parse_decimal(self.edCustoTotal.text())
