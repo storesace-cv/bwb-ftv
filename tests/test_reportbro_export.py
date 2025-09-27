@@ -204,10 +204,13 @@ def test_build_reportbro_context_formats_sections():
     assert dataset["PrecosTaxas_Preco2_display"] == "15,50 €"
     assert dataset["TiposArtigos_Cod"] == 2
     assert dataset["TiposArtigos_Descricao"] == "Produto acabado"
+    assert dataset["product_tipo_artigo_cod"] == "Produto acabado"
     assert dataset["Validade_Cod"] == 5
     assert dataset["Validade_Descricao"] == "72 horas"
+    assert dataset["product_validade_cod"] == "72 horas"
     assert dataset["Temperaturas_Cod"] == 3
     assert dataset["Temperaturas_Descricao"] == "Frio"
+    assert dataset["product_temperatura_cod"] == "Frio"
     assert dataset["ProdutoPreparacao_ProdutoCodigo"] == "RB-01"
     assert dataset["ProdutoPreparacao_Html"] == "<p>Preparar e servir.</p>"
     assert dataset[STATIC_SECTION_PARAMETER] == [{}]
