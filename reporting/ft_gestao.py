@@ -74,6 +74,33 @@ def _format_percentage(value: Any) -> str:
     return formatted if formatted == EMPTY_FIELD else f"{formatted} %"
 
 
+def _normalise_numeric_value(value: Any) -> float | None:
+    if value is None:
+        return None
+
+    if isinstance(value, (int, float)):
+        return float(value)
+
+    cleaned: Any = value
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped or stripped == EMPTY_FIELD:
+            return None
+        cleaned = stripped.replace("€", "").replace("%", "").strip()
+
+    candidate = parse_decimal(cleaned)
+
+    for possible in (candidate, cleaned, value):
+        if isinstance(possible, (int, float)):
+            return float(possible)
+        try:
+            return float(possible)  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            continue
+
+    return None
+
+
 def _join_lines(lines: Iterable[str]) -> str:
     filtered = [line.rstrip() for line in lines if line and line.strip()]
     return "\n".join(filtered) if filtered else EMPTY_FIELD
@@ -481,13 +508,16 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
     precos_taxas_values = list(block_b3.get("pvps") or [])
     for index in range(1, 6):
         key = f"PrecosTaxas_Preco{index}"
+        display_key = f"{key}_display"
         if index - 1 < len(precos_taxas_values):
             price_value = precos_taxas_values[index - 1]
         else:
             price_value = None
         if price_value in (None, ""):
             price_value = parameters.get(key)
-        dataset_update[key] = _format_currency(price_value)
+
+        dataset_update[key] = _normalise_numeric_value(price_value)
+        dataset_update[display_key] = _format_currency(price_value)
 
     if product_image_filename:
         dataset_update["product_image_filename"] = product_image_filename
