@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, Iterable, Mapping
@@ -421,9 +422,27 @@ def _clamp_image_heights(template: dict[str, Any]) -> None:
             entry["height"] = max_height
 
 
+def _resolve_debug_flag(debug: bool) -> bool:
+    """Return whether ReportBro debug mode should be enabled."""
+
+    if debug:
+        return True
+
+    env_value = os.getenv("FTV_REPORTBRO_DEBUG")
+    if env_value is not None:
+        normalised = env_value.strip().lower()
+        if normalised in {"", "0", "false", "no", "off"}:
+            return False
+        return True
+
+    return logger.isEnabledFor(logging.DEBUG)
+
+
 def render_pdf_bytes(
     template_definition: Mapping[str, Any],
     data: Mapping[str, Any],
+    *,
+    debug: bool = False,
 ) -> bytes:
     """Return the PDF bytes rendered from *template_definition* using *data*."""
 
@@ -435,10 +454,17 @@ def render_pdf_bytes(
     _clamp_image_heights(template)
 
     payload = dict(data)
+    resolved_debug = _resolve_debug_flag(debug)
+
     try:
-        report = Report(template, payload)
+        report = Report(template, payload, debug=resolved_debug)
     except AssertionError as exc:  # pragma: no cover - defensive guard
         raise ReportBroTemplateError(f"Invalid template definition: {exc}") from exc
+    except TypeError as exc:
+        message = str(exc)
+        if "debug" not in message and "keyword" not in message:
+            raise
+        report = Report(template, payload)
 
     if report.errors:
         message = _format_errors(report.errors)
@@ -467,11 +493,13 @@ def render_pdf_to_path(
     template_definition: Mapping[str, Any],
     data: Mapping[str, Any],
     destination: Path,
+    *,
+    debug: bool = False,
 ) -> Path:
     """Render *template_definition* and write the resulting PDF into *destination*."""
 
     destination = Path(destination)
-    pdf_bytes = render_pdf_bytes(template_definition, data)
+    pdf_bytes = render_pdf_bytes(template_definition, data, debug=debug)
     destination.write_bytes(pdf_bytes)
     logger.info("[ReportBro] PDF export completed at %s", destination)
     return destination
