@@ -833,9 +833,18 @@ def test_load_template_definition_normalises_ft_gestao_template():
         if isinstance(element, dict) and element.get("elementType") == "image"
     ]
     assert image_elements, "expected at least one image element"
-    for element in image_elements:
-        assert element.get("source") == "${product_image_uri}"
-        assert element.get("imageFilename", "").strip() == "${product_image_filename}"
+
+    images_by_filename = {
+        element.get("imageFilename", "").strip(): element for element in image_elements
+    }
+
+    product_image = images_by_filename.get("${product_image_filename}")
+    assert product_image is not None
+    assert product_image.get("source") == "${product_image_uri}"
+
+    grafico_image = images_by_filename.get("${GraficoFoodCost_Filename}")
+    assert grafico_image is not None
+    assert grafico_image.get("source") == "${GraficoFoodCost_Filename}"
 
 
 def test_template_payload_normalisation_discards_extra_metadata():

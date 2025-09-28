@@ -432,7 +432,7 @@ def test_foodcost_graph_integration(monkeypatch):
     assert params["GraficoFoodCost_Filename"] == "/tmp/chart.png"
 
     dataset = build_reportbro_context(payload)
-    assert dataset["GraficoFoodCost_Filename"] == "/tmp/chart.png"
+    assert dataset["GraficoFoodCost_Filename"] == Path("/tmp/chart.png").resolve().as_uri()
 
     assert "ingredients" in captured
     ingredient_weights = [entry.get("peso") for entry in captured["ingredients"]]

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 
+from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 from .reportbro_normalizer import STATIC_SECTION_PARAMETER
@@ -541,11 +542,24 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
             return stripped or None
         return str(value)
 
-    grafico_foodcost_filename = _normalise_image_value(
+    def _normalise_file_uri(value: Any) -> str | None:
+        normalised = _normalise_image_value(value)
+        if not normalised:
+            return None
+        if isinstance(normalised, str) and normalised.startswith(
+            ("http://", "https://", "file:", "data:")
+        ):
+            return normalised
+        try:
+            return Path(str(normalised)).resolve().as_uri()
+        except (TypeError, ValueError, OSError):
+            return str(normalised)
+
+    grafico_foodcost_filename = _normalise_file_uri(
         payload.get("GraficoFoodCost_Filename")
     )
     if not grafico_foodcost_filename:
-        grafico_foodcost_filename = _normalise_image_value(
+        grafico_foodcost_filename = _normalise_file_uri(
             parameters.get("GraficoFoodCost_Filename")
         )
     if grafico_foodcost_filename:

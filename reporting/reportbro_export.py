@@ -620,21 +620,34 @@ def _normalise_image_sources(template: dict[str, Any]) -> None:
         if mutable.get("elementType") == "image":
             source = mutable.get("source")
             if isinstance(source, str):
-                stripped = source.strip()
-                if stripped.startswith("${") and stripped.endswith("}"):
+                stripped_source = source.strip()
+                if stripped_source.startswith("${") and stripped_source.endswith("}"):
                     pass
                 else:
-                    if stripped.startswith("@"):
-                        stripped = stripped.lstrip("@")
-                    if stripped in parameters and stripped:
-                        mutable["source"] = f"${{{stripped}}}"
-                if (
-                    not stripped
-                    and "product_image_uri" in parameters
-                    and isinstance(mutable.get("imageFilename"), str)
-                    and mutable["imageFilename"].strip() == "${product_image_filename}"
-                ):
-                    mutable["source"] = "${product_image_uri}"
+                    lookup_key = stripped_source
+                    if lookup_key.startswith("@"):
+                        lookup_key = lookup_key.lstrip("@")
+                    if lookup_key in parameters and lookup_key:
+                        mutable["source"] = f"${{{lookup_key}}}"
+                if not stripped_source:
+                    image_filename = mutable.get("imageFilename")
+                    image_filename_str = (
+                        image_filename.strip()
+                        if isinstance(image_filename, str)
+                        else ""
+                    )
+                    if (
+                        "product_image_uri" in parameters
+                        and image_filename_str == "${product_image_filename}"
+                    ):
+                        mutable["source"] = "${product_image_uri}"
+                    elif (
+                        image_filename_str.startswith("${")
+                        and image_filename_str.endswith("}")
+                    ):
+                        param_name = image_filename_str[2:-1]
+                        if param_name and param_name in parameters:
+                            mutable["source"] = image_filename_str
         normalised_elements.append(mutable)
 
     template["docElements"] = normalised_elements
