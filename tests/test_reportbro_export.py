@@ -256,6 +256,26 @@ def test_build_reportbro_context_formats_sections():
     assert third["FichasTecnicas_Peso"] == pytest.approx(0.25)
 
 
+def test_build_reportbro_context_uses_flat_currency_fields():
+    payload = _prepare_management_payload(_sample_product())
+    payload.pop("currency", None)
+    payload["currency_symbol"] = "$"
+    payload["currency_code"] = "USD"
+    payload["locale_code"] = "en_US"
+
+    dataset = build_reportbro_context(payload)
+
+    assert dataset["currency_symbol"] == "$"
+    assert dataset["currency_code"] == "USD"
+    assert dataset["locale_code"] == "en_US"
+    assert dataset["currency"]["currency_symbol"] == "$"
+    assert "$" in dataset["PrecosTaxas_Preco1_display"]
+
+    first_ingredient = dataset["ingredientes"][0]
+    assert "$" in first_ingredient["FichasTecnicas_Ppu_display"]
+    assert "$" in first_ingredient["FichasTecnicas_Preco_display"]
+
+
 def test_build_reportbro_context_uses_empty_field_for_missing_values():
     product = _sample_product()
     product.tipo_artigo_cod = None
