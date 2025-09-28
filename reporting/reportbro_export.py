@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import json
 import logging
+import numbers
 import os
 from copy import deepcopy
+from decimal import Decimal
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
@@ -22,8 +24,60 @@ from .ft_gestao import (
     _format_optional,
     set_currency_context,
 )
+from utils.formatting import parse_decimal
 
 logger = logging.getLogger(__name__)
+
+
+def _coerce_numeric(value: Any) -> float | None:
+    """Convert *value* to a numeric ``float`` when possible."""
+
+    if value is None:
+        return None
+
+    if isinstance(value, Decimal):
+        return float(value)
+
+    if isinstance(value, numbers.Number):
+        return float(value)
+
+    candidate = parse_decimal(value)
+    if isinstance(candidate, numbers.Number):
+        return float(candidate)
+
+    try:
+        return float(candidate)
+    except (TypeError, ValueError):
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
+
+def _reportbro_sum(values: Any) -> float:
+    """Return the sum of numeric *values* ignoring ``None`` or invalid entries."""
+
+    numeric = _coerce_numeric(values)
+    if numeric is not None:
+        return numeric
+
+    if isinstance(values, Mapping):
+        iterable = values.values()
+    else:
+        iterable = values
+
+    total = 0.0
+    if isinstance(iterable, Iterable) and not isinstance(iterable, (str, bytes, bytearray)):
+        for entry in iterable:
+            coerced = _coerce_numeric(entry)
+            if coerced is not None:
+                total += coerced
+        return total
+
+    return 0.0
+
+
+_REPORTBRO_CUSTOM_FUNCTIONS = {"sum": _reportbro_sum}
 
 
 def _is_feature_enabled(env_var: str) -> bool:
@@ -169,6 +223,88 @@ def _is_invalid_size_error(entry: Any) -> bool:
     if isinstance(entry, str) and "errorMsgInvalidSize" in entry:
         return True
     return False
+
+
+def _initialise_report(
+    template: Mapping[str, Any],
+    payload: Mapping[str, Any],
+    *,
+    debug: bool | None,
+):
+    attempts: list[dict[str, Any]] = []
+    if debug is not None:
+        attempts.append(
+            {
+                "debug": debug,
+                "custom_functions": dict(_REPORTBRO_CUSTOM_FUNCTIONS),
+            }
+        )
+        attempts.append({"debug": debug})
+    attempts.append({"custom_functions": dict(_REPORTBRO_CUSTOM_FUNCTIONS)})
+    attempts.append({})
+
+    last_error: TypeError | None = None
+    for kwargs in attempts:
+        try:
+            return Report(template, payload, **kwargs)
+        except TypeError as exc:
+            message = str(exc)
+            if "keyword" not in message:
+                raise
+            last_error = exc
+            continue
+
+    if last_error is not None:
+        raise last_error
+
+    return Report(template, payload)
+
+
+def _ensure_sum_parameter(template: dict[str, Any]) -> None:
+    parameters = template.get("parameters")
+    if not isinstance(parameters, list):
+        return
+
+    for entry in parameters:
+        if isinstance(entry, Mapping) and entry.get("name") == "ingredientes_sum_FichasTecnicas_Preco":
+            return
+
+    parameters.append(
+        {
+            "name": "ingredientes_sum_FichasTecnicas_Preco",
+            "type": "number",
+            "arrayItemType": "string",
+            "eval": False,
+            "nullable": False,
+            "pattern": "",
+            "expression": "",
+            "showOnlyNameType": False,
+            "testData": "",
+            "testDataBoolean": False,
+            "testDataImage": "",
+            "testDataImageFilename": "",
+            "testDataRichText": "",
+        }
+    )
+
+
+def _replace_sum_expression_targets(template: dict[str, Any]) -> None:
+    target = "${sum(ingredientes.FichasTecnicas_Preco)}"
+    replacement = "${ingredientes_sum_FichasTecnicas_Preco}"
+
+    def _walk(node: Any) -> None:
+        if isinstance(node, dict):
+            content = node.get("content")
+            if isinstance(content, str) and content.strip() == target:
+                node["content"] = replacement
+                node["eval"] = True
+            for value in node.values():
+                _walk(value)
+        elif isinstance(node, list):
+            for item in node:
+                _walk(item)
+
+    _walk(template.get("docElements"))
 
 
 def _render_fallback_pdf(data: Mapping[str, Any]) -> bytes:
@@ -605,25 +741,22 @@ def render_pdf_bytes(
 
     template = deepcopy(dict(template_definition))
     _normalise_document_properties(template)
+    _ensure_sum_parameter(template)
     _normalise_parameter_ids(template)
     _ensure_price_parameters_are_strings(template)
     _normalise_image_sources(template)
     _ensure_title_binding(template)
     _clamp_image_heights(template)
+    _replace_sum_expression_targets(template)
 
     payload = dict(data)
     _apply_currency_overrides(template, payload)
     resolved_debug = _resolve_debug_flag(debug)
 
     try:
-        report = Report(template, payload, debug=resolved_debug)
+        report = _initialise_report(template, payload, debug=resolved_debug)
     except AssertionError as exc:  # pragma: no cover - defensive guard
         raise ReportBroTemplateError(f"Invalid template definition: {exc}") from exc
-    except TypeError as exc:
-        message = str(exc)
-        if "debug" not in message and "keyword" not in message:
-            raise
-        report = Report(template, payload)
 
     if report.errors:
         message = _format_errors(report.errors)

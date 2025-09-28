@@ -509,10 +509,14 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
         except (TypeError, ValueError):
             return 0.0
 
+    ingredientes_totais_preco: list[float] = []
+
     for entry in ingredientes_source:
         ingrediente_nome = entry.get("nome") or entry.get("codigo") or ""
         ppu_value = entry.get("ppu")
         total_value = entry.get("total")
+        total_numeric = _safe_numeric(total_value)
+        ingredientes_totais_preco.append(total_numeric)
         ingredientes_table.append(
             {
                 "FichasTecnicas_ComponenteNome": ingrediente_nome,
@@ -520,7 +524,7 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
                 "FichasTecnicas_Unidade": entry.get("unidade") or "",
                 "FichasTecnicas_Ppu": _safe_numeric(ppu_value),
                 "FichasTecnicas_Ppu_display": _format_currency(ppu_value),
-                "FichasTecnicas_Preco": _safe_numeric(total_value),
+                "FichasTecnicas_Preco": total_numeric,
                 "FichasTecnicas_Preco_display": _format_currency(total_value),
                 "FichasTecnicas_Peso": _safe_numeric(entry.get("peso")),
             }
@@ -593,6 +597,10 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
             "pricing_details": _build_pricing_section(block_b3),
             "ingredients": _build_ingredients_section(block_b2),
             "ingredientes": ingredientes_table,
+            "ingredientes_FichasTecnicas_Preco": [
+                entry.get("FichasTecnicas_Preco", 0.0) for entry in ingredientes_table
+            ],
+            "ingredientes_sum_FichasTecnicas_Preco": sum(ingredientes_totais_preco),
             "totals": _build_totals_section(block_b2),
             "product_data": product_data,
             "pricing_data": {
