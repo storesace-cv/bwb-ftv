@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt">
+  <head>
+    <meta charset="utf-8" />
+    <title>ReportBro Designer Offline</title>
+    <link rel="stylesheet" href="/static/reportbro-designer/reportbro.css" />
+    <style>
+      body {
+        margin: 0;
+        font-family: "Open Sans", Arial, sans-serif;
+        background: #f5f5f5;
+      }
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        background: #1f2933;
+        color: #f7fafc;
+      }
+      .toolbar button,
+      .toolbar select {
+        border: none;
+        border-radius: 4px;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.95rem;
+      }
+      .toolbar button {
+        background: #2563eb;
+        color: #fff;
+        cursor: pointer;
+      }
+      .toolbar button.secondary {
+        background: #475569;
+      }
+      .toolbar button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .toolbar select {
+        min-width: 12rem;
+      }
+      #status-bar {
+        margin-left: auto;
+        font-size: 0.85rem;
+      }
+      #designer {
+        height: calc(100vh - 64px);
+      }
+      .toast {
+        position: fixed;
+        right: 1.5rem;
+        bottom: 1.5rem;
+        min-width: 240px;
+        max-width: 360px;
+        background: #1f2933;
+        color: #fff;
+        padding: 1rem;
+        border-radius: 6px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.4);
+        display: none;
+        z-index: 9999;
+      }
+      .toast.show {
+        display: block;
+      }
+      .toast.error {
+        background: #b91c1c;
+      }
+    </style>
+    <script src="/static/reportbro-designer/reportbro.js"></script>
+  </head>
+  <body>
+    <div class="toolbar">
+      <button id="btn-new" class="secondary">Novo</button>
+      <select id="template-select"></select>
+      <button id="btn-open" class="secondary">Abrir</button>
+      <button id="btn-save">Guardar</button>
+      <button id="btn-preview" class="secondary">Preview PDF</button>
+      <div id="status-bar"></div>
+    </div>
+    <div id="designer"></div>
+    <div id="toast" class="toast"></div>
+    <script>
+      const EMPTY_TEMPLATE = {
+        version: 7,
+        docElements: [],
+        parameters: [],
+        styles: [],
+        watermarks: [],
+        documentProperties: {
+          pageFormat: "A4",
+          orientation: "portrait",
+          marginLeft: 15,
+          marginRight: 15,
+          marginTop: 15,
+          marginBottom: 15,
+          contentHeight: 0,
+          header: false,
+          footer: false,
+          patternLocale: "pt_PT",
+          patternCurrencySymbol: "€",
+          patternNumberGroupSymbol: " ",
+        },
+      };
+
+      let designerInstance = null;
+      let currentTemplateName = null;
+      let templatesCache = [];
+
+      const toastElement = document.getElementById("toast");
+      const statusBar = document.getElementById("status-bar");
+      const selectElement = document.getElementById("template-select");
+
+      function showToast(message, variant = "info") {
+        toastElement.textContent = message;
+        toastElement.className = `toast ${variant === "error" ? "error" : ""} show`;
+        setTimeout(() => {
+          toastElement.className = "toast";
+        }, 3500);
+      }
+
+      function setStatus(message) {
+        statusBar.textContent = message || "";
+      }
+
+      function cloneTemplate(template) {
+        return JSON.parse(JSON.stringify(template));
+      }
+
+      async function refreshTemplates() {
+        const response = await fetch("/templates/list");
+        if (!response.ok) {
+          throw new Error("Não foi possível carregar a lista de templates.");
+        }
+        templatesCache = await response.json();
+        populateTemplateSelect();
+      }
+
+      function populateTemplateSelect() {
+        selectElement.innerHTML = "";
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "-- escolher template --";
+        selectElement.appendChild(placeholder);
+        for (const template of templatesCache) {
+          const option = document.createElement("option");
+          option.value = template.name;
+          option.textContent = `${template.name} (${new Date(template.updated_at).toLocaleString()})`;
+          if (template.name === currentTemplateName) {
+            option.selected = true;
+          }
+          selectElement.appendChild(option);
+        }
+      }
+
+      async function loadTemplate(name) {
+        const response = await fetch(`/templates/${encodeURIComponent(name)}`);
+        if (!response.ok) {
+          throw new Error(`Não foi possível carregar o template '${name}'.`);
+        }
+        const report = await response.json();
+        designerInstance.load(report);
+        designerInstance.setModified(false);
+        currentTemplateName = name;
+        setStatus(`Template activo: ${name}`);
+        showToast(`Template '${name}' carregado.`);
+      }
+
+      async function handleOpen() {
+        const name = selectElement.value;
+        if (!name) {
+          showToast("Seleccione um template na lista.", "error");
+          return;
+        }
+        try {
+          await loadTemplate(name);
+        } catch (error) {
+          console.error(error);
+          showToast(error.message, "error");
+        }
+      }
+
+      async function saveTemplate(name, report, overwrite = false) {
+        const url = new URL(`/templates/${encodeURIComponent(name)}`, window.location.origin);
+        if (overwrite) {
+          url.searchParams.set("overwrite", "1");
+        }
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(report),
+        });
+        if (response.status === 409) {
+          return { conflict: true };
+        }
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.error || "Falha ao guardar o template.");
+        }
+        const payload = await response.json();
+        return { conflict: false, payload };
+      }
+
+      async function persistTemplate(overwrite = false) {
+        const report = designerInstance.getReport();
+        let targetName = currentTemplateName;
+        if (!targetName) {
+          const input = window.prompt("Nome do template (slug em minúsculas):");
+          if (!input) {
+            showToast("Operação cancelada.", "error");
+            return;
+          }
+          targetName = input.trim();
+        }
+        try {
+          const result = await saveTemplate(targetName, report, overwrite);
+          if (result.conflict && !overwrite) {
+            const confirmed = window.confirm(
+              "O template já existe. Pretende substituir o ficheiro?"
+            );
+            if (confirmed) {
+              await persistTemplate(true);
+            }
+            return;
+          }
+          currentTemplateName = targetName;
+          designerInstance.setModified(false);
+          await refreshTemplates();
+          setStatus(`Template activo: ${targetName}`);
+          showToast("Template guardado com sucesso.");
+        } catch (error) {
+          console.error(error);
+          showToast(error.message, "error");
+        }
+      }
+
+      async function previewTemplate() {
+        try {
+          const report = designerInstance.getReport();
+          const response = await fetch("/rb/preview", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ templateJson: report }),
+          });
+          if (!response.ok) {
+            const payload = await response.json().catch(() => ({}));
+            throw new Error(payload.error || "Falha ao gerar o PDF.");
+          }
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          window.open(url, "_blank");
+          showToast("Pré-visualização gerada.");
+        } catch (error) {
+          console.error(error);
+          showToast(error.message, "error");
+        }
+      }
+
+      function handleNew() {
+        designerInstance.load(cloneTemplate(EMPTY_TEMPLATE));
+        designerInstance.setModified(false);
+        currentTemplateName = null;
+        selectElement.value = "";
+        setStatus("Template novo (por guardar)");
+        showToast("Template em branco criado.");
+      }
+
+      async function bootstrap() {
+        designerInstance = new ReportBro(document.getElementById("designer"), {
+          reportServerUrl: "/rb/preview",
+          saveCallback: () => persistTemplate(false),
+          requestCallback: (params) => {
+            params.reportServerHeaders = { "Content-Type": "application/json" };
+            params.reportServerUrl = "/rb/preview";
+          },
+        });
+
+        document.getElementById("btn-new").addEventListener("click", handleNew);
+        document.getElementById("btn-open").addEventListener("click", () => {
+          handleOpen();
+        });
+        document.getElementById("btn-save").addEventListener("click", () => {
+          persistTemplate(false);
+        });
+        document.getElementById("btn-preview").addEventListener("click", () => {
+          previewTemplate();
+        });
+
+        try {
+          await refreshTemplates();
+          const defaultTemplate = templatesCache.find((item) => item.name === "exemplo_fatura");
+          if (defaultTemplate) {
+            await loadTemplate(defaultTemplate.name);
+            selectElement.value = defaultTemplate.name;
+          } else {
+            handleNew();
+          }
+        } catch (error) {
+          console.error(error);
+          showToast(error.message, "error");
+          handleNew();
+        }
+      }
+
+      window.addEventListener("DOMContentLoaded", bootstrap);
+    </script>
+  </body>
+</html>
