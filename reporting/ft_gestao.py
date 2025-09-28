@@ -657,6 +657,7 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
     }
 
     precos_taxas_values = list(block_b3.get("pvps") or [])
+    food_cost_values = list(block_b3.get("food_cost") or [])
     for index in range(1, 6):
         key = f"PrecosTaxas_Preco{index}"
         display_key = f"{key}_display"
@@ -669,6 +670,15 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
 
         dataset_update[key] = _normalise_numeric_value(price_value)
         dataset_update[display_key] = _format_currency(price_value)
+
+        food_cost_key = f"FoodCost_Nivel{index}"
+        if index - 1 < len(food_cost_values):
+            food_cost_value = food_cost_values[index - 1]
+        else:
+            food_cost_value = None
+        formatted_food_cost = _format_percentage(food_cost_value)
+        parameters[food_cost_key] = formatted_food_cost
+        dataset_update[food_cost_key] = formatted_food_cost
 
     if product_image_filename:
         dataset_update["product_image_filename"] = product_image_filename
