@@ -11,3 +11,4 @@ black==24.8.0
 openpyxl==3.1.5
 Pillow>=10.4.0,<12
 reportbro-lib==3.11.3
+matplotlib>=3.7.0,<4

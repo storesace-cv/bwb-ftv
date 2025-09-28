@@ -1,12 +1,15 @@
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from data.datastore import DataStore
 from domain.models import Ingredient, Product
+from matplotlib.axes import Axes
 from reporting.ft_gestao import build_reportbro_context
+from reporting.graphics import gerar_grafico_foodcost_pie
 from reporting.reportbro_export import load_template_definition
 from reporting.reportbro_normalizer import STATIC_SECTION_PARAMETER
 from services.products import get_product_info
@@ -411,6 +414,55 @@ def test_product_image_filename_missing_file_logs_warning(caplog):
         "product_image_uri" in message and expected_uri in message
         for message in gestao_info
     )
+
+
+def test_foodcost_graph_integration(monkeypatch):
+    product = _make_product()
+    captured: dict[str, Any] = {}
+
+    def fake_graph(ingredients):
+        captured["ingredients"] = ingredients
+        return "/tmp/chart.png"
+
+    monkeypatch.setattr("ui.printing.gerar_grafico_foodcost_pie", fake_graph)
+
+    payload = _prepare_management_payload(product)
+    assert payload["GraficoFoodCost_Filename"] == "/tmp/chart.png"
+    params = payload["reportbro"]["parameters"]
+    assert params["GraficoFoodCost_Filename"] == "/tmp/chart.png"
+
+    dataset = build_reportbro_context(payload)
+    assert dataset["GraficoFoodCost_Filename"] == "/tmp/chart.png"
+
+    assert "ingredients" in captured
+    ingredient_weights = [entry.get("peso") for entry in captured["ingredients"]]
+    assert ingredient_weights == [pytest.approx(1.0)]
+
+
+def test_foodcost_graph_sem_dados_fallback(monkeypatch):
+    recorded: dict[str, Any] = {}
+
+    original_pie = Axes.pie
+
+    def spy_pie(self, x, *args, **kwargs):
+        recorded["sizes"] = list(x)
+        recorded["labels"] = list(kwargs.get("labels", []))
+        return original_pie(self, x, *args, **kwargs)
+
+    monkeypatch.setattr(Axes, "pie", spy_pie)
+
+    path = gerar_grafico_foodcost_pie(
+        [
+            {"FichasTecnicas_ComponenteNome": "Sem peso", "FichasTecnicas_Peso": 0},
+            {"nome": "Negativo", "peso": -2},
+        ]
+    )
+
+    assert Path(path).name == "foodcost_pie.png"
+    assert recorded["labels"] == ["Sem dados"]
+    assert recorded["sizes"] == [1.0]
+
+    Path(path).unlink(missing_ok=True)
 
 
 def test_validation_accepts_string_style_id():
