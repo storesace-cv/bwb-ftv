@@ -42,6 +42,16 @@ from utils.formatting import (
     parse_decimal,
 )
 
+try:  # PyQt5 may be unavailable during headless unit tests
+    from .utilities import FOOD_COST_LEVEL_RGB_MAP
+except ModuleNotFoundError:  # pragma: no cover - exercised when Qt bindings missing
+    FOOD_COST_LEVEL_RGB_MAP = {
+        "Bom": (198, 216, 112),
+        "Aceitável": (248, 222, 126),
+        "Mau": (255, 158, 145),
+        "Todos": (200, 200, 200),
+    }
+
 _USE_BASIC_PDF = False
 
 _DEFAULT_CURRENCY_CONTEXT = {
@@ -93,6 +103,7 @@ def generate_ft_gestao_pdf(
     page_size: str = "A4",
     parent: QWidget | None = None,
     locale: Any | None = None,
+    food_cost_levels: Iterable[Any] | None = None,
 ) -> Path | None:
     """Generate the Gestão PDF for the given product on the specified page size.
 
@@ -104,6 +115,9 @@ def generate_ft_gestao_pdf(
         Nome do tamanho da página (``"A4"`` por omissão) usado na renderização.
     parent:
         Widget pai utilizado para apresentar diálogos modais.
+    food_cost_levels:
+        Lista opcional com intervalos de Food Cost já normalizados para
+        transportar para o payload e realçar a grelha impressa.
 
     Returns
     -------
@@ -112,7 +126,9 @@ def generate_ft_gestao_pdf(
     """
 
     product_obj = _validate_product(product)
-    payload = _prepare_management_payload(product_obj, locale=locale)
+    payload = _prepare_management_payload(
+        product_obj, locale=locale, food_cost_levels=food_cost_levels
+    )
     try:
         destination = _prompt_pdf_destination(product_obj, parent=parent)
     except ExportCancelled:
@@ -191,11 +207,14 @@ def generate_ft_gestao_reportbro_pdf(
     destination: Path | None = None,
     parent: QWidget | None = None,
     locale: Any | None = None,
+    food_cost_levels: Iterable[Any] | None = None,
 ) -> Path | None:
     """Generate the Gestão PDF using the ReportBro template pipeline."""
 
     product_obj = _validate_product(product)
-    payload = _prepare_management_payload(product_obj, locale=locale)
+    payload = _prepare_management_payload(
+        product_obj, locale=locale, food_cost_levels=food_cost_levels
+    )
     dataset = build_reportbro_context(payload)
 
     template_location = _resolve_reportbro_template_location(template_path)
@@ -706,7 +725,10 @@ def resolve_product_image(
 
 
 def _prepare_management_payload(
-    product: Product, *, locale: Any | None = None
+    product: Product,
+    *,
+    locale: Any | None = None,
+    food_cost_levels: Iterable[Any] | None = None,
 ) -> dict[str, Any]:
     code = getattr(product, "code", None)
     name = getattr(product, "name", None)
@@ -723,6 +745,8 @@ def _prepare_management_payload(
     food_cost = _compute_food_costs(
         totals.get("custo_total"), pvps_numeric, _safe_float(iva_raw), identifier
     )
+
+    serialised_levels = _serialise_food_cost_levels(food_cost_levels)
 
     blocks = {
         "B1": {
@@ -744,6 +768,7 @@ def _prepare_management_payload(
             "pvps": pvps_serialised,
             "iva": iva_serialised,
             "food_cost": food_cost,
+            "food_cost_levels": serialised_levels,
         },
     }
 
@@ -835,6 +860,64 @@ def _normalise_ingredients(ingredients: Iterable[Any]) -> tuple[list[dict[str, A
         "num_ingredientes": len(entries),
     }
     return entries, totals
+
+
+def _serialise_food_cost_levels(
+    levels: Iterable[Any] | None,
+) -> list[dict[str, float]]:
+    serialised: list[dict[str, float]] = []
+
+    def _extract_mapping(entry: Mapping[str, Any]) -> tuple[Any, Any, Any]:
+        name = (
+            entry.get("name")
+            or entry.get("Nome")
+            or entry.get("nome")
+            or entry.get("level")
+        )
+        minimum = (
+            entry.get("min")
+            if entry.get("min") is not None
+            else entry.get("valor_min")
+        )
+        if minimum is None:
+            minimum = entry.get("ValorMin")
+        maximum = (
+            entry.get("max")
+            if entry.get("max") is not None
+            else entry.get("valor_max")
+        )
+        if maximum is None:
+            maximum = entry.get("ValorMax")
+        return name, minimum, maximum
+
+    for entry in levels or []:
+        raw_name: Any
+        raw_min: Any
+        raw_max: Any
+        if isinstance(entry, Mapping):
+            raw_name, raw_min, raw_max = _extract_mapping(entry)
+        else:
+            try:
+                raw_name = entry[1]
+                raw_min = entry[2]
+                raw_max = entry[3]
+            except (TypeError, IndexError):
+                continue
+
+        min_value = _safe_float(raw_min)
+        max_value = _safe_float(raw_max)
+        if not raw_name or min_value is None or max_value is None:
+            continue
+
+        serialised.append(
+            {
+                "name": str(raw_name),
+                "min": float(min_value),
+                "max": float(max_value),
+            }
+        )
+
+    return serialised
 
 
 def _compute_food_costs(
@@ -1396,6 +1479,7 @@ def _draw_block_b3(
         table_rect,
         pvp_row,
         food_row,
+        food_cost_levels=data.get("food_cost_levels"),
         scale_y=scale_y,
     )
 
@@ -1506,6 +1590,7 @@ def _draw_food_cost_grid(
     pvp_columns: list[tuple[str, Any]],
     food_columns: list[tuple[str, Any]],
     *,
+    food_cost_levels: Iterable[Any] | None = None,
     scale_y: float = 1.0,
 ) -> None:
     painter.save()
@@ -1521,6 +1606,33 @@ def _draw_food_cost_grid(
 
     total_columns = max(len(pvp_columns), len(food_columns), 1)
     column_width = rect.width() / float(total_columns)
+
+    palette: dict[str, QColor] = {}
+    for name, rgb in FOOD_COST_LEVEL_RGB_MAP.items():
+        if not isinstance(rgb, IterableABC):
+            continue
+        components = tuple(rgb)
+        if len(components) != 3:
+            continue
+        palette[name] = QColor(*components)
+    neutral_color = palette.get("Todos", value_color)
+    normalised_levels = _serialise_food_cost_levels(food_cost_levels)
+
+    def _resolve_food_cost_colour(raw_value: Any) -> QColor:
+        numeric = _safe_float(raw_value)
+        if numeric is None:
+            return neutral_color
+        for entry in normalised_levels:
+            lower = entry.get("min")
+            upper = entry.get("max")
+            if lower is None or upper is None:
+                continue
+            if lower <= float(numeric) <= upper:
+                colour = palette.get(entry.get("name"))
+                if colour is not None:
+                    return colour
+                break
+        return neutral_color
 
     def _draw_row(entries: list[tuple[str, Any]], top: float, *, percentage: bool = False) -> None:
         for column, (label, raw_value) in enumerate(entries):
@@ -1542,7 +1654,9 @@ def _draw_food_cost_grid(
             painter.drawText(label_rect, Qt.AlignLeft | Qt.AlignVCenter, label)
 
             painter.setFont(value_font)
-            painter.setPen(value_color)
+            painter.setPen(
+                _resolve_food_cost_colour(raw_value) if percentage else value_color
+            )
             formatted = (
                 _format_percentage(raw_value)
                 if percentage
