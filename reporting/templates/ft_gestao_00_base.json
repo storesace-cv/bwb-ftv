@@ -3005,6 +3005,28 @@
       "spreadsheet_type": "",
       "spreadsheet_pattern": "",
       "spreadsheet_textWrap": false
+    },
+    {
+      "elementType": "image",
+      "id": 9201,
+      "containerId": "0_content",
+      "x": 100,
+      "y": 324,
+      "width": 300,
+      "height": 200,
+      "source": "",
+      "image": "",
+      "imageFilename": "${GraficoFoodCost_Filename}",
+      "styleId": "",
+      "horizontalAlignment": "left",
+      "verticalAlignment": "top",
+      "backgroundColor": "",
+      "printIf": "",
+      "removeEmptyElement": false,
+      "link": "",
+      "spreadsheet_hide": false,
+      "spreadsheet_column": "",
+      "spreadsheet_addEmptyRow": false
     }
   ],
   "parameters": [
@@ -4219,6 +4241,21 @@
           "testDataRichText": ""
         }
       ]
+    },
+    {
+      "name": "GraficoFoodCost_Filename",
+      "type": "string",
+      "arrayItemType": "string",
+      "eval": false,
+      "nullable": true,
+      "pattern": "",
+      "expression": "",
+      "showOnlyNameType": false,
+      "testData": "/databases/images/foodcost_pie.png",
+      "testDataBoolean": false,
+      "testDataImage": "",
+      "testDataImageFilename": "",
+      "testDataRichText": false
     }
   ],
   "styles": [
