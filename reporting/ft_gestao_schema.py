@@ -259,6 +259,31 @@ FT_GESTAO_PARAMETER_DEFINITIONS: dict[str, ParameterDefinition] = {
         "type": "number",
         "numeric_type": "float",
     },
+    "FoodCost_Nivel1": {
+        "section": "precos_taxas",
+        "field": "food_cost_nivel1",
+        "type": "text",
+    },
+    "FoodCost_Nivel2": {
+        "section": "precos_taxas",
+        "field": "food_cost_nivel2",
+        "type": "text",
+    },
+    "FoodCost_Nivel3": {
+        "section": "precos_taxas",
+        "field": "food_cost_nivel3",
+        "type": "text",
+    },
+    "FoodCost_Nivel4": {
+        "section": "precos_taxas",
+        "field": "food_cost_nivel4",
+        "type": "text",
+    },
+    "FoodCost_Nivel5": {
+        "section": "precos_taxas",
+        "field": "food_cost_nivel5",
+        "type": "text",
+    },
     "PrecosTaxas_Iva1": {
         "section": "precos_taxas",
         "field": "iva1",

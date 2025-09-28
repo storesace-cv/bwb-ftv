@@ -8,7 +8,7 @@ import pytest
 from data.datastore import DataStore
 from domain.models import Ingredient, Product
 from matplotlib.axes import Axes
-from reporting.ft_gestao import build_reportbro_context
+from reporting.ft_gestao import _format_percentage, build_reportbro_context
 from reporting.graphics import gerar_grafico_foodcost_pie
 from reporting.reportbro_export import load_template_definition
 from reporting.reportbro_normalizer import STATIC_SECTION_PARAMETER
@@ -437,6 +437,11 @@ def test_foodcost_graph_integration(monkeypatch):
     assert "ingredients" in captured
     ingredient_weights = [entry.get("peso") for entry in captured["ingredients"]]
     assert ingredient_weights == [pytest.approx(1.0)]
+
+    food_cost_values = list(payload["blocks"]["B3"].get("food_cost") or [])
+    for index in range(1, 6):
+        fc_value = food_cost_values[index - 1] if index - 1 < len(food_cost_values) else None
+        assert dataset[f"FoodCost_Nivel{index}"] == _format_percentage(fc_value)
 
 
 def test_foodcost_graph_sem_dados_fallback(monkeypatch):

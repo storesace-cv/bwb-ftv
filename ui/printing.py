@@ -565,6 +565,10 @@ def _build_reportbro_parameters(
         else:
             coerced, reason = _coerce_text_value(raw_value)
 
+        if name.startswith("FoodCost_Nivel") and reason == "missing-text":
+            coerced = default_for_parameter(name)
+            reason = None
+
         parameters[name] = coerced
         if reason:
             warnings.append(
