@@ -1039,6 +1039,8 @@ class FTApp(QWidget):
         else:
             use_reportbro = True
 
+        food_cost_levels = self._get_food_cost_levels()
+
         try:
             logger.info(
                 "[Print] FT Gestão (Actual) solicitado para produto %s", identifier
@@ -1060,6 +1062,7 @@ class FTApp(QWidget):
                         template_path=template_override,
                         parent=self,
                         locale=locale_info,
+                        food_cost_levels=food_cost_levels,
                     )
                 except ReportBroIntegrationError as exc:
                     logger.warning(
@@ -1074,11 +1077,17 @@ class FTApp(QWidget):
                         " Será utilizada a versão anterior.",
                     )
                     output_path = generate_ft_gestao_pdf(
-                        product, parent=self, locale=locale_info
+                        product,
+                        parent=self,
+                        locale=locale_info,
+                        food_cost_levels=food_cost_levels,
                     )
             else:
                 output_path = generate_ft_gestao_pdf(
-                    product, parent=self, locale=locale_info
+                    product,
+                    parent=self,
+                    locale=locale_info,
+                    food_cost_levels=food_cost_levels,
                 )
         except ExportCancelled:
             logger.info(
@@ -3260,6 +3269,48 @@ class FTApp(QWidget):
             self._loading = False
 
     # ---------- Cálculos ----------
+    def _get_food_cost_levels(self) -> list[dict[str, float]]:
+        """Fetch and normalise Food Cost levels from the datastore."""
+        repo = getattr(getattr(self.service, "ds", None), "fcost", None)
+        levels: list[dict[str, float]] = []
+
+        def _level_value(entry, key: str, index: int):
+            if isinstance(entry, dict):
+                return entry.get(key)
+            try:
+                return entry[index]
+            except (TypeError, IndexError):
+                return None
+
+        if repo is not None:
+            try:
+                for entry in repo.list_levels():
+                    nome = _level_value(entry, "Nome", 1)
+                    vmin = parse_decimal(_level_value(entry, "ValorMin", 2))
+                    vmax = parse_decimal(_level_value(entry, "ValorMax", 3))
+                    if not nome:
+                        continue
+                    try:
+                        vmin_f = float(vmin) if vmin is not None else None
+                        vmax_f = float(vmax) if vmax is not None else None
+                    except (TypeError, ValueError):
+                        continue
+                    if vmin_f is None or vmax_f is None:
+                        continue
+                    levels.append(
+                        {
+                            "name": str(nome),
+                            "min": vmin_f,
+                            "max": vmax_f,
+                        }
+                    )
+            except Exception:
+                logger.exception(
+                    "[FoodCost] failed to retrieve cost levels for styling."
+                )
+
+        return levels
+
     def _update_food_costs(self):
         """Update food cost percentage labels based on current product."""
         product = getattr(self, "current_product", None)
@@ -3288,35 +3339,13 @@ class FTApp(QWidget):
             (200, 200, 200)
         )
 
-        level_ranges: list[tuple[str, float, float]] = []
-        repo = getattr(getattr(self.service, "ds", None), "fcost", None)
-
-        def _level_value(entry, key: str, index: int):
-            if isinstance(entry, dict):
-                return entry.get(key)
-            try:
-                return entry[index]
-            except (TypeError, IndexError):
-                return None
-
-        if repo is not None:
-            try:
-                for entry in repo.list_levels():
-                    nome = _level_value(entry, "Nome", 1)
-                    vmin = parse_decimal(_level_value(entry, "ValorMin", 2))
-                    vmax = parse_decimal(_level_value(entry, "ValorMax", 3))
-                    if not nome:
-                        continue
-                    try:
-                        vmin_f = float(vmin) if vmin is not None else None
-                        vmax_f = float(vmax) if vmax is not None else None
-                    except (TypeError, ValueError):
-                        continue
-                    if vmin_f is None or vmax_f is None:
-                        continue
-                    level_ranges.append((str(nome), vmin_f, vmax_f))
-            except Exception:
-                logger.exception("[FoodCost] failed to retrieve cost levels for styling.")
+        level_ranges: list[tuple[str, float, float]] = [
+            (entry["name"], entry["min"], entry["max"])
+            for entry in self._get_food_cost_levels()
+            if entry.get("name") is not None
+            and entry.get("min") is not None
+            and entry.get("max") is not None
+        ]
 
         for idx, (lbl, pvp) in enumerate(zip(self.lbFoodCosts, pvps)):
             lbl.setStyleSheet(default_style)

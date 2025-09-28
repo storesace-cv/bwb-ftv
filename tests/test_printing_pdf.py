@@ -20,6 +20,10 @@ from ui.printing import (
     generate_ft_gestao_pdf,
     generate_ft_gestao_reportbro_pdf,
 )
+try:  # PyQt5 stubs may be unavailable in headless test environments
+    from ui.utilities import FOOD_COST_LEVEL_RGB_MAP
+except ModuleNotFoundError:  # pragma: no cover - exercised when Qt bindings missing
+    FOOD_COST_LEVEL_RGB_MAP = None  # type: ignore[assignment]
 
 
 def _extract_pdf_streams(path: Path) -> list[str]:
@@ -193,6 +197,73 @@ def test_management_pdf_contains_brand_elements(qapp, tmp_path):
     assert "0.290196078 0.435294117 0.647058823 scn" in combined
     assert combined.count(" re") >= 6
     assert "IVA: 23.00%" in combined
+
+
+def test_food_cost_grid_uses_level_palette(qapp, monkeypatch):
+    modules = require_real_qt_modules(
+        "PyQt5.QtWidgets", "PyQt5.QtGui", "PyQt5.QtPrintSupport"
+    )
+    if not modules:
+        pytest.skip("Real Qt modules are required")
+    if FOOD_COST_LEVEL_RGB_MAP is None:
+        pytest.skip("Food Cost palette unavailable without Qt utilities")
+
+    from PyQt5.QtGui import QImage
+
+    block_b3 = {
+        "pvps": [10.0, 12.5, 15.0, 18.0],
+        "iva": 23,
+        "food_cost": [25.0, 45.0, 75.0, 120.0],
+        "food_cost_levels": [
+            {"name": "Bom", "min": 0.0, "max": 30.0},
+            {"name": "Aceitável", "min": 30.01, "max": 60.0},
+            {"name": "Mau", "min": 60.01, "max": 100.0},
+        ],
+    }
+
+    image = QImage(480, 240, QImage.Format_ARGB32)
+    image.fill(0xFFFFFFFF)
+    painter = ui.printing.QPainter(image)
+
+    recorded_colours: list[tuple[str, tuple[int, int, int]]] = []
+    original_draw_text = ui.printing.QPainter.drawText
+
+    def capture_draw_text(self, *args, **kwargs):
+        text = args[-1] if args else kwargs.get("text")
+        if isinstance(text, str) and text.endswith("%"):
+            pen = self.pen()
+            colour = pen.color() if pen is not None else None
+            if colour is not None:
+                recorded_colours.append(
+                    (
+                        text,
+                        (colour.red(), colour.green(), colour.blue()),
+                    )
+                )
+        return original_draw_text(self, *args, **kwargs)
+
+    monkeypatch.setattr(ui.printing.QPainter, "drawText", capture_draw_text)
+
+    try:
+        ui.printing._draw_block_b3(
+            painter,
+            ui.printing.QRectF(0, 0, 360, 180),
+            block_b3,
+            scale_y=1.0,
+        )
+    finally:
+        painter.end()
+
+    assert recorded_colours, "expected to capture Food Cost text colours"
+    # Order follows the values defined in block_b3
+    expected_palette = [
+        FOOD_COST_LEVEL_RGB_MAP["Bom"],
+        FOOD_COST_LEVEL_RGB_MAP["Aceitável"],
+        FOOD_COST_LEVEL_RGB_MAP["Mau"],
+        FOOD_COST_LEVEL_RGB_MAP["Todos"],
+    ]
+    extracted = [rgb for _text, rgb in recorded_colours]
+    assert extracted == expected_palette
 
 
 def test_management_pdf_renders_pvps_on_single_row(qapp, tmp_path):
