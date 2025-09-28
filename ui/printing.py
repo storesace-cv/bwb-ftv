@@ -198,7 +198,7 @@ def generate_ft_gestao_reportbro_pdf(
     dataset = build_reportbro_context(payload)
 
     template_location = _resolve_reportbro_template_location(template_path)
-    template = load_template_definition(template_location)
+    template = load_template_definition(template_location, dataset=dataset)
 
     reportbro_metadata = payload.get("reportbro", {}) if isinstance(payload, Mapping) else {}
     warnings = (

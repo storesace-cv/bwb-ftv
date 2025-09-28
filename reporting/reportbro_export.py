@@ -50,7 +50,68 @@ class ReportBroRenderError(ReportBroIntegrationError):
     """Raised when ReportBro fails to render the requested output."""
 
 
-def load_template_definition(source: str | Path | Mapping[str, Any]) -> dict[str, Any]:
+def _extract_currency_metadata(data: Mapping[str, Any]) -> tuple[str | None, str | None, str | None]:
+    symbol: str | None = None
+    code: str | None = None
+    locale: str | None = None
+
+    def _collect_from(source: Mapping[str, Any]) -> None:
+        nonlocal symbol, code, locale
+        candidate_symbol = source.get("currency_symbol") or source.get("symbol")
+        if isinstance(candidate_symbol, str) and not symbol:
+            stripped = candidate_symbol.strip()
+            if stripped:
+                symbol = stripped
+
+        candidate_code = source.get("currency_code") or source.get("currency")
+        if isinstance(candidate_code, str) and not code:
+            stripped = candidate_code.strip()
+            if stripped:
+                code = stripped
+
+        candidate_locale = (
+            source.get("locale_code")
+            or source.get("format")
+            or source.get("fmt")
+        )
+        if isinstance(candidate_locale, str) and not locale:
+            stripped = candidate_locale.strip()
+            if stripped:
+                locale = stripped
+
+    if isinstance(data, Mapping):
+        _collect_from(data)
+        nested_currency = data.get("currency")
+        if isinstance(nested_currency, Mapping):
+            _collect_from(nested_currency)
+
+    return symbol, code, locale
+
+
+def _apply_currency_overrides(
+    template: Mapping[str, Any],
+    dataset: Mapping[str, Any] | None,
+) -> None:
+    if not isinstance(template, Mapping) or not isinstance(dataset, Mapping):
+        return
+
+    document_properties = template.get("documentProperties")
+    if not isinstance(document_properties, dict):
+        return
+
+    symbol, code, locale = _extract_currency_metadata(dataset)
+    replacement = symbol or code
+    if replacement:
+        document_properties["patternCurrencySymbol"] = replacement
+    if locale:
+        document_properties["patternLocale"] = locale
+
+
+def load_template_definition(
+    source: str | Path | Mapping[str, Any],
+    *,
+    dataset: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     """Return the ReportBro template definition stored in *source*.
 
     Parameters
@@ -63,6 +124,7 @@ def load_template_definition(source: str | Path | Mapping[str, Any]) -> dict[str
     if isinstance(source, Mapping):
         normalised, _ = normalise_template(source)
         _normalise_image_sources(normalised)
+        _apply_currency_overrides(normalised, dataset)
         return normalised
 
     path = Path(source)
@@ -85,6 +147,7 @@ def load_template_definition(source: str | Path | Mapping[str, Any]) -> dict[str
 
     normalised, _ = normalise_template(template)
     _normalise_image_sources(normalised)
+    _apply_currency_overrides(normalised, dataset)
     return normalised
 
 
@@ -549,6 +612,7 @@ def render_pdf_bytes(
     _clamp_image_heights(template)
 
     payload = dict(data)
+    _apply_currency_overrides(template, payload)
     resolved_debug = _resolve_debug_flag(debug)
 
     try:

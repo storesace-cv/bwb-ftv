@@ -561,6 +561,52 @@ def test_render_pdf_bytes_handles_many_ingredients_without_fallback(monkeypatch)
     assert fallback_called is False
 
 
+def test_load_template_definition_applies_currency_overrides():
+    template_path = Path("reporting/templates/ft_gestao_00_base.json")
+    dataset = {"currency_symbol": "R$", "locale_code": "pt_BR"}
+
+    template = load_template_definition(template_path, dataset=dataset)
+
+    properties = template.get("documentProperties")
+    assert isinstance(properties, dict)
+    assert properties["patternCurrencySymbol"] == "R$"
+    assert properties["patternLocale"] == "pt_BR"
+
+
+def test_render_pdf_bytes_applies_currency_overrides(monkeypatch):
+    from reporting import reportbro_export
+
+    captured: dict[str, Any] = {}
+
+    class RecordingReport:
+        def __init__(self, template: Mapping[str, Any], data: Mapping[str, Any], **_: Any):
+            captured["template"] = deepcopy(template)
+            self.errors: list[Any] = []
+
+        def generate_pdf(self) -> bytes:
+            return b"%PDF-1.4\n%currency\n"
+
+    monkeypatch.setattr(reportbro_export, "Report", RecordingReport)
+
+    template = load_template_definition(Path("reporting/templates/ft_gestao_00_base.json"))
+    dataset = {
+        "title": "Ficha",
+        "currency_symbol": "$",
+        "currency_code": "USD",
+        "locale_code": "en_US",
+    }
+
+    pdf_bytes = render_pdf_bytes(template, dataset)
+
+    assert pdf_bytes.startswith(b"%PDF-1.4")
+    template_used = captured.get("template")
+    assert isinstance(template_used, Mapping)
+    properties = template_used.get("documentProperties")
+    assert isinstance(properties, Mapping)
+    assert properties["patternCurrencySymbol"] == "$"
+    assert properties["patternLocale"] == "en_US"
+
+
 def test_generate_ft_gestao_reportbro_pdf_enables_debug(monkeypatch, tmp_path):
     from reporting import reportbro_export
 
