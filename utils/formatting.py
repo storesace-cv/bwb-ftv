@@ -192,5 +192,5 @@ def format_currency_locale(
 
     symbol = currency_symbol or currency_code or ""
     if symbol:
-        return f"{symbol}{NBSP}{formatted}".strip()
+        return f"{formatted}{NBSP}{symbol}"
     return formatted

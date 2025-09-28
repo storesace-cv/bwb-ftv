@@ -33,3 +33,17 @@ def test_format_currency_locale_pt_br():
         currency_code=context["currency_code"],
     )
     assert result == "R$\u00a09.876,54"
+
+
+def test_format_currency_locale_fallback_places_symbol_to_the_right(monkeypatch):
+    monkeypatch.setattr("utils.formatting.babel_format_currency", None)
+    monkeypatch.setattr("utils.formatting.babel_format_decimal", None)
+
+    result = format_currency_locale(
+        1234.56,
+        locale_code=None,
+        currency_symbol="€",
+        currency_code=None,
+    )
+
+    assert result == "1\u00a0234,56\u00a0€"
