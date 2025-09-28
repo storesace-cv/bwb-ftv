@@ -1654,9 +1654,11 @@ def _draw_food_cost_grid(
             painter.drawText(label_rect, Qt.AlignLeft | Qt.AlignVCenter, label)
 
             painter.setFont(value_font)
-            painter.setPen(
-                _resolve_food_cost_colour(raw_value) if percentage else value_color
-            )
+            highlight_color = None
+            if percentage:
+                highlight_color = _resolve_food_cost_colour(raw_value)
+                painter.fillRect(value_rect, highlight_color)
+            painter.setPen(value_color)
             formatted = (
                 _format_percentage(raw_value)
                 if percentage
