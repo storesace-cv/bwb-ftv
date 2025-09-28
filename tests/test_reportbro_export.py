@@ -232,21 +232,27 @@ def test_build_reportbro_context_formats_sections():
     assert first["FichasTecnicas_Qtd"] == pytest.approx(1.25)
     assert first["FichasTecnicas_Unidade"] == "kg"
     assert first["FichasTecnicas_Ppu"] == pytest.approx(2.5)
+    assert first["FichasTecnicas_Ppu_display"] == "2,50\u00a0€"
     assert first["FichasTecnicas_Preco"] == pytest.approx(3.125)
+    assert first["FichasTecnicas_Preco_display"] == "3,12\u00a0€"
     assert first["FichasTecnicas_Peso"] == pytest.approx(1.25)
 
     assert second["FichasTecnicas_ComponenteNome"] == "Ingrediente B"
     assert second["FichasTecnicas_Qtd"] == pytest.approx(0.5)
     assert second["FichasTecnicas_Unidade"] == "L"
     assert second["FichasTecnicas_Ppu"] == pytest.approx(1.2)
+    assert second["FichasTecnicas_Ppu_display"] == "1,20\u00a0€"
     assert second["FichasTecnicas_Preco"] == pytest.approx(0.6)
+    assert second["FichasTecnicas_Preco_display"] == "0,60\u00a0€"
     assert second["FichasTecnicas_Peso"] == pytest.approx(0.5)
 
     assert third["FichasTecnicas_ComponenteNome"] == "Ingrediente Localizado"
     assert third["FichasTecnicas_Qtd"] == pytest.approx(0.25)
     assert third["FichasTecnicas_Unidade"] == "kg"
     assert third["FichasTecnicas_Ppu"] == pytest.approx(1.5)
+    assert third["FichasTecnicas_Ppu_display"] == "1,50\u00a0€"
     assert third["FichasTecnicas_Preco"] == pytest.approx(1.5)
+    assert third["FichasTecnicas_Preco_display"] == "1,50\u00a0€"
     assert third["FichasTecnicas_Peso"] == pytest.approx(0.25)
 
 
@@ -312,6 +318,8 @@ def test_build_reportbro_context_uses_empty_field_for_missing_values():
     assert dataset["ingredients_data"][0]["ppu"] == EMPTY_FIELD
     assert dataset["ingredients_data"][0]["total"] == EMPTY_FIELD
     assert dataset["ingredients_data"][0]["peso"] == EMPTY_FIELD
+    assert dataset["ingredientes"][0]["FichasTecnicas_Ppu_display"] == EMPTY_FIELD
+    assert dataset["ingredientes"][0]["FichasTecnicas_Preco_display"] == EMPTY_FIELD
     assert EMPTY_FIELD in dataset["ingredients_lines"]
     assert dataset["totals_custo_total"] == EMPTY_FIELD
     assert dataset["totals_peso_total"] == EMPTY_FIELD

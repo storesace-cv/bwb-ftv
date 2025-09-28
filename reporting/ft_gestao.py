@@ -472,13 +472,17 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
 
     for entry in ingredientes_source:
         ingrediente_nome = entry.get("nome") or entry.get("codigo") or ""
+        ppu_value = entry.get("ppu")
+        total_value = entry.get("total")
         ingredientes_table.append(
             {
                 "FichasTecnicas_ComponenteNome": ingrediente_nome,
                 "FichasTecnicas_Qtd": _safe_numeric(entry.get("quantidade")),
                 "FichasTecnicas_Unidade": entry.get("unidade") or "",
-                "FichasTecnicas_Ppu": _safe_numeric(entry.get("ppu")),
-                "FichasTecnicas_Preco": _safe_numeric(entry.get("total")),
+                "FichasTecnicas_Ppu": _safe_numeric(ppu_value),
+                "FichasTecnicas_Ppu_display": _format_currency(ppu_value),
+                "FichasTecnicas_Preco": _safe_numeric(total_value),
+                "FichasTecnicas_Preco_display": _format_currency(total_value),
                 "FichasTecnicas_Peso": _safe_numeric(entry.get("peso")),
             }
         )
