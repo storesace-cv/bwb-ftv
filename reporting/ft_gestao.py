@@ -456,8 +456,7 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
         if isinstance(payload_currency, Mapping):
             merged: dict[str, Any] = dict(payload_currency)
             for key, value in flattened_currency.items():
-                if _is_missing(merged.get(key)):
-                    merged[key] = value
+                merged[key] = value
             currency_source = merged
         elif _is_missing(payload_currency):
             currency_source = flattened_currency

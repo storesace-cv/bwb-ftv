@@ -276,6 +276,36 @@ def test_build_reportbro_context_uses_flat_currency_fields():
     assert "$" in first_ingredient["FichasTecnicas_Preco_display"]
 
 
+def test_build_reportbro_context_prefers_flat_currency_fields():
+    payload = _prepare_management_payload(_sample_product())
+
+    nested_currency = dict(payload.get("currency") or {})
+    nested_currency["currency_symbol"] = "€"
+    nested_currency["currency_code"] = "EUR"
+    payload["currency"] = nested_currency
+
+    payload["currency_symbol"] = "£"
+    payload["currency_code"] = "GBP"
+    payload["locale_code"] = "en_GB"
+
+    dataset = build_reportbro_context(payload)
+
+    assert dataset["currency_symbol"] == "£"
+    assert dataset["currency_code"] == "GBP"
+    assert dataset["locale_code"] == "en_GB"
+    assert dataset["currency"]["currency_symbol"] == "£"
+    assert dataset["currency"]["currency_code"] == "GBP"
+
+    preco_display = dataset["PrecosTaxas_Preco1_display"]
+    assert "£" in preco_display
+    assert "€" not in preco_display
+
+    first_ingredient = dataset["ingredientes"][0]
+    assert "£" in first_ingredient["FichasTecnicas_Ppu_display"]
+    assert "£" in first_ingredient["FichasTecnicas_Preco_display"]
+    assert "€" not in first_ingredient["FichasTecnicas_Ppu_display"]
+
+
 def test_build_reportbro_context_uses_empty_field_for_missing_values():
     product = _sample_product()
     product.tipo_artigo_cod = None
