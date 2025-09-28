@@ -532,6 +532,7 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
 
     totals_data = _build_totals_data(block_b2.get("totais") or {})
     totals_lines = _build_totals_lines(totals_data)
+
     def _normalise_image_value(value: Any) -> str | None:
         if value is None:
             return None
@@ -539,6 +540,18 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
             stripped = value.strip()
             return stripped or None
         return str(value)
+
+    grafico_foodcost_filename = _normalise_image_value(
+        payload.get("GraficoFoodCost_Filename")
+    )
+    if not grafico_foodcost_filename:
+        grafico_foodcost_filename = _normalise_image_value(
+            parameters.get("GraficoFoodCost_Filename")
+        )
+    if grafico_foodcost_filename:
+        parameters["GraficoFoodCost_Filename"] = grafico_foodcost_filename
+    elif "GraficoFoodCost_Filename" in parameters:
+        parameters["GraficoFoodCost_Filename"] = ""
 
     parameter_image_filename = _normalise_image_value(
         parameters.get("product_image_filename")
@@ -594,39 +607,40 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
         "subtitle": subtitle or _format_optional(payload.get("identifier")),
         "metadata": metadata,
         "product_details": product_details,
-            "pricing_details": _build_pricing_section(block_b3),
-            "ingredients": _build_ingredients_section(block_b2),
-            "ingredientes": ingredientes_table,
-            "ingredientes_FichasTecnicas_Preco": [
-                entry.get("FichasTecnicas_Preco", 0.0) for entry in ingredientes_table
-            ],
-            "ingredientes_sum_FichasTecnicas_Preco": sum(ingredientes_totais_preco),
-            "totals": _build_totals_section(block_b2),
-            "product_data": product_data,
-            "pricing_data": {
-                "iva": _format_percentage(block_b3.get("iva")),
-                "rows": pricing_rows,
-            },
-            "product_codigo": product_data["codigo"],
-            "product_nome": product_data["nome"],
-            "product_familia": product_data["familia"],
-            "product_subfamilia": product_data["subfamilia"],
-            "product_tipo_artigo_cod": product_data["tipo_artigo_cod"],
-            "product_validade_cod": product_data["validade_cod"],
-            "product_temperatura_cod": product_data["temperatura_cod"],
-            "product_informacao_adicional": product_data["informacao_adicional"],
-            "product_image_path": product_data["image_path"],
-            "pricing_rows": pricing_rows,
-            "pricing_lines": pricing_lines,
-            "pricing_iva": _format_percentage(block_b3.get("iva")),
-            "ingredients_data": ingredients_rows,
-            "ingredients_lines": ingredients_lines,
-            "totals_data": totals_data,
-            "totals_lines": totals_lines,
-            "totals_custo_total": totals_data["custo_total"],
-            "totals_peso_total": totals_data["peso_total"],
-            "totals_num_ingredientes": totals_data["num_ingredientes"],
-        }
+        "pricing_details": _build_pricing_section(block_b3),
+        "ingredients": _build_ingredients_section(block_b2),
+        "ingredientes": ingredientes_table,
+        "ingredientes_FichasTecnicas_Preco": [
+            entry.get("FichasTecnicas_Preco", 0.0) for entry in ingredientes_table
+        ],
+        "ingredientes_sum_FichasTecnicas_Preco": sum(ingredientes_totais_preco),
+        "totals": _build_totals_section(block_b2),
+        "product_data": product_data,
+        "pricing_data": {
+            "iva": _format_percentage(block_b3.get("iva")),
+            "rows": pricing_rows,
+        },
+        "product_codigo": product_data["codigo"],
+        "product_nome": product_data["nome"],
+        "product_familia": product_data["familia"],
+        "product_subfamilia": product_data["subfamilia"],
+        "product_tipo_artigo_cod": product_data["tipo_artigo_cod"],
+        "product_validade_cod": product_data["validade_cod"],
+        "product_temperatura_cod": product_data["temperatura_cod"],
+        "product_informacao_adicional": product_data["informacao_adicional"],
+        "product_image_path": product_data["image_path"],
+        "pricing_rows": pricing_rows,
+        "pricing_lines": pricing_lines,
+        "pricing_iva": _format_percentage(block_b3.get("iva")),
+        "ingredients_data": ingredients_rows,
+        "ingredients_lines": ingredients_lines,
+        "totals_data": totals_data,
+        "totals_lines": totals_lines,
+        "totals_custo_total": totals_data["custo_total"],
+        "totals_peso_total": totals_data["peso_total"],
+        "totals_num_ingredientes": totals_data["num_ingredientes"],
+        "GraficoFoodCost_Filename": grafico_foodcost_filename or "",
+    }
 
     precos_taxas_values = list(block_b3.get("pvps") or [])
     for index in range(1, 6):

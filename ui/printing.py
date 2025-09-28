@@ -29,6 +29,7 @@ from reporting import (
     load_template_definition,
     render_pdf_to_path,
 )
+from reporting.graphics import gerar_grafico_foodcost_pie
 from reporting.ft_gestao_schema import (
     FT_GESTAO_PARAMETER_DEFINITIONS,
     default_for_parameter,
@@ -755,6 +756,14 @@ def _prepare_management_payload(
     )
     currency_context = _set_currency_context(locale)
 
+    grafico_foodcost_filename = ""
+    try:
+        grafico_foodcost_filename = gerar_grafico_foodcost_pie(ing_data)
+    except Exception:  # pragma: no cover - defensive logging
+        logger.exception("[Print] Falha ao gerar gráfico de food cost")
+        grafico_foodcost_filename = ""
+    reportbro_params["GraficoFoodCost_Filename"] = grafico_foodcost_filename
+
     payload = {
         "identifier": identifier,
         "generated_at": generated_at,
@@ -768,6 +777,7 @@ def _prepare_management_payload(
         "currency_symbol": currency_context.get("currency_symbol"),
         "currency_code": currency_context.get("currency_code"),
         "locale_code": currency_context.get("locale_code"),
+        "GraficoFoodCost_Filename": grafico_foodcost_filename,
     }
 
     image_filename = resolve_product_image(payload, parameters=reportbro_params)
