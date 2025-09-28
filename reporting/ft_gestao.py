@@ -414,15 +414,55 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
 
     parameters: dict[str, Any] = {}
     payload_currency: Any | None = None
+    flattened_currency: dict[str, Any] = {}
+
+    def _is_missing(value: Any) -> bool:
+        if value is None:
+            return True
+        if isinstance(value, str) and not value.strip():
+            return True
+        return False
+
     if isinstance(payload, Mapping):
         payload_currency = payload.get("currency")
+
+        currency_keys = (
+            "id",
+            "country",
+            "country_code",
+            "code",
+            "currency",
+            "currency_name",
+            "currency_code",
+            "currency_symbol",
+            "symbol",
+            "locale_code",
+            "format",
+            "fmt",
+            "active",
+        )
+        for key in currency_keys:
+            if key in payload and not _is_missing(payload[key]):
+                flattened_currency[key] = payload[key]
+
         reportbro_section = payload.get("reportbro")
         if isinstance(reportbro_section, Mapping):
             provided = reportbro_section.get("parameters")
             if isinstance(provided, Mapping):
                 parameters.update(provided)
 
-    currency_context = set_currency_context(payload_currency)
+    currency_source: Any = payload_currency
+    if flattened_currency:
+        if isinstance(payload_currency, Mapping):
+            merged: dict[str, Any] = dict(payload_currency)
+            for key, value in flattened_currency.items():
+                if _is_missing(merged.get(key)):
+                    merged[key] = value
+            currency_source = merged
+        elif _is_missing(payload_currency):
+            currency_source = flattened_currency
+
+    currency_context = set_currency_context(currency_source)
 
     image_parameter_names = {"product_image_filename", "product_image_uri"}
     for name in FT_GESTAO_PARAMETER_DEFINITIONS:
