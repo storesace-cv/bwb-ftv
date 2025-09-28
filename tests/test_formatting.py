@@ -19,7 +19,7 @@ def test_parse_decimal_strips_percent_suffix():
 
 def test_format_currency_locale_en_us():
     context = normalise_currency_context(
-        {"currency_symbol": "$", "currency_code": "USD", "locale_code": "en_US"}
+        {"currency_symbol": "US$", "currency_code": "USD", "locale_code": "en_US"}
     )
     result = format_currency_locale(
         1234.5,
@@ -27,12 +27,12 @@ def test_format_currency_locale_en_us():
         currency_symbol=context["currency_symbol"],
         currency_code=context["currency_code"],
     )
-    assert result == "$1,234.50"
+    assert result == "US$1,234.50"
 
 
 def test_format_currency_locale_pt_br():
     context = normalise_currency_context(
-        {"currency_symbol": "R$", "currency_code": "BRL", "locale_code": "pt_BR"}
+        {"currency_symbol": "BRL$", "currency_code": "BRL", "locale_code": "pt_BR"}
     )
     result = format_currency_locale(
         9876.54,
@@ -40,11 +40,11 @@ def test_format_currency_locale_pt_br():
         currency_symbol=context["currency_symbol"],
         currency_code=context["currency_code"],
     )
-    assert result == "R$\u00a09.876,54"
+    assert result == "BRL$\u00a09.876,54"
 
 
 def test_format_currency_locale_fallback_places_symbol_to_the_right(monkeypatch):
-    monkeypatch.setattr("utils.formatting.babel_format_currency", None)
+    monkeypatch.setattr("utils.formatting.Locale", None)
     monkeypatch.setattr("utils.formatting.babel_format_decimal", None)
 
     result = format_currency_locale(

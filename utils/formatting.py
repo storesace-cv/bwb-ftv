@@ -7,12 +7,11 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 try:  # pragma: no cover - optional dependency, exercised when available
-    from babel.core import UnknownLocaleError
-    from babel.numbers import format_currency as babel_format_currency
+    from babel.core import Locale, UnknownLocaleError
     from babel.numbers import format_decimal as babel_format_decimal
 except ImportError:  # pragma: no cover - handled gracefully in helpers
     UnknownLocaleError = ValueError  # type: ignore[assignment]
-    babel_format_currency = None
+    Locale = None  # type: ignore[assignment]
     babel_format_decimal = None
 
 NBSP = "\u00A0"
@@ -176,12 +175,27 @@ def format_currency_locale(
         locales_to_try.append(str(locale_code))
     locales_to_try.append(_DEFAULT_CURRENCY_CONTEXT["locale_code"])
 
-    if babel_format_currency and currency_code:
+    symbol = currency_symbol or currency_code or ""
+
+    if Locale is not None and currency_code:
         for candidate in locales_to_try:
             try:
-                return babel_format_currency(numeric, currency_code, locale=candidate)
+                locale_obj = Locale.parse(candidate)
+                pattern = locale_obj.currency_formats.get("standard")
+                if pattern is None:
+                    continue
+                placeholder = pattern.apply(numeric, locale=locale_obj)
             except (UnknownLocaleError, ValueError):
                 continue
+            except (TypeError, AttributeError):
+                continue
+
+            if symbol:
+                return placeholder.replace("¤", symbol)
+
+            cleaned = placeholder.replace("¤", "").strip()
+            if cleaned:
+                return cleaned
 
     formatted = None
     if babel_format_decimal:
@@ -195,7 +209,6 @@ def format_currency_locale(
     if formatted is None:
         formatted = format_pt_number(numeric)
 
-    symbol = currency_symbol or currency_code or ""
     if symbol:
         return f"{formatted}{NBSP}{symbol}"
     return formatted
