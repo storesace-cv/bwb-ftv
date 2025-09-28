@@ -34,7 +34,12 @@ def parse_decimal(value):
     """
 
     if isinstance(value, str):
-        cleaned = value.replace(" ", "").replace(NBSP, "").replace(",", ".")
+        allowed_suffix_chars = set("0123456789-.,") | {NBSP}
+        trimmed = value.rstrip(" \t\r\n")
+        while trimmed and trimmed[-1] not in allowed_suffix_chars:
+            trimmed = trimmed[:-1].rstrip(" \t\r\n")
+
+        cleaned = trimmed.replace(" ", "").replace(NBSP, "").replace(",", ".")
         try:
             return float(Decimal(cleaned))
         except (InvalidOperation, ValueError):
