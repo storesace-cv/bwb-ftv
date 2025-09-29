@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 from reporting.reportbro_normalizer import STATIC_SECTION_PARAMETER, normalise_template
+from reporting.reportbro_export import _apply_color_parameter_overrides
 from reporting.ft_gestao import (
     EMPTY_FIELD,
     _format_currency,
@@ -463,6 +464,7 @@ def _build_context(template: dict[str, Any], data: dict[str, Any] | None) -> Ren
     if not isinstance(normalised_data, dict):
         raise DataError("Dados inválidos: deve ser um objeto JSON.")
     _apply_currency_overrides(template, normalised_data)
+    _apply_color_parameter_overrides(template, normalised_data)
     required_parameters = {
         param.get("name")
         for param in template.get("parameters", [])
