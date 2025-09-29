@@ -974,6 +974,7 @@ def _build_food_cost_badges(
     badges: list[dict[str, Any]] = []
     ranges: Sequence[Mapping[str, Any]] = level_ranges or ()
     default_rgb = FOOD_COST_LEVEL_RGB_MAP.get("Todos")
+    debug_enabled = logger.isEnabledFor(logging.DEBUG)
 
     parsed_ranges: list[tuple[str, float, float]] = []
     lowest_range: tuple[str, float, float] | None = None
@@ -994,24 +995,37 @@ def _build_food_cost_badges(
     for value in food_cost_values or []:
         level_name = ""
         cost_value = _safe_float(value)
+        level_origin = "no ranges configured"
         if cost_value is not None and parsed_ranges:
+            level_origin = "no matching range"
             for name, minimum, maximum in parsed_ranges:
                 if minimum <= cost_value <= maximum:
                     level_name = name
+                    level_origin = (
+                        f"range {name!r} [{minimum:.2f}, {maximum:.2f}]"
+                    )
                     break
             if not level_name:
                 if lowest_range is not None and cost_value < lowest_range[1]:
                     level_name = lowest_range[0]
+                    level_origin = (
+                        f"clamped low to {lowest_range[0]!r} (< {lowest_range[1]:.2f})"
+                    )
                 elif highest_range is not None and cost_value > highest_range[2]:
                     level_name = highest_range[0]
+                    level_origin = (
+                        f"clamped high to {highest_range[0]!r} (> {highest_range[2]:.2f})"
+                    )
+        elif cost_value is None:
+            level_origin = "non-numeric value"
 
         canonical_level = _canonicalise_food_cost_level_name(level_name)
         if canonical_level:
             level_name = canonical_level
 
-        rgb_colour = FOOD_COST_LEVEL_RGB_MAP.get(level_name)
-        if rgb_colour is None:
-            rgb_colour = default_rgb
+        palette_colour = FOOD_COST_LEVEL_RGB_MAP.get(level_name)
+        fallback_to_todos = palette_colour is None and default_rgb is not None
+        rgb_colour = palette_colour if palette_colour is not None else default_rgb
 
         if rgb_colour is not None and not isinstance(rgb_colour, (str, bytes)):
             rgb_list = [
@@ -1029,6 +1043,21 @@ def _build_food_cost_badges(
                 "hex": hex_colour,
             }
         )
+
+        if debug_enabled:
+            logger.debug(
+                "[Print] Food cost badge raw=%r -> level=%r via %s "
+                "(fallback_to_todos=%s, rgb=%s, hex=%r)",
+                value,
+                level_name,
+                level_origin,
+                fallback_to_todos,
+                tuple(rgb_list) if rgb_list is not None else rgb_colour,
+                hex_colour,
+            )
+
+    if debug_enabled:
+        logger.debug("[Print] Food cost badges built: %s", badges)
 
     return badges
 
