@@ -161,6 +161,39 @@ def _apply_currency_overrides(
         document_properties["patternLocale"] = locale
 
 
+_COLOR_KEYS = {"backgroundColor", "cs_backgroundColor"}
+
+
+def _apply_color_parameter_overrides(
+    template: Mapping[str, Any],
+    dataset: Mapping[str, Any] | None,
+) -> None:
+    """Replace color placeholders with concrete dataset values."""
+
+    if not isinstance(template, Mapping) or not isinstance(dataset, Mapping):
+        return
+
+    def _resolve(node: Any) -> None:
+        if isinstance(node, Mapping):
+            for key, value in node.items():
+                if isinstance(value, str) and key in _COLOR_KEYS:
+                    text = value.strip()
+                    if text.startswith("${") and text.endswith("}"):
+                        parameter = text[2:-1].strip()
+                        replacement = dataset.get(parameter, "")
+                        if isinstance(replacement, str):
+                            node[key] = replacement.strip()
+                        else:
+                            node[key] = ""
+                _resolve(value)
+        elif isinstance(node, Iterable) and not isinstance(node, (str, bytes, bytearray)):
+            for item in node:
+                _resolve(item)
+
+    _resolve(template.get("docElements"))
+    _resolve(template.get("styles"))
+
+
 def load_template_definition(
     source: str | Path | Mapping[str, Any],
     *,
@@ -179,6 +212,7 @@ def load_template_definition(
         normalised, _ = normalise_template(source)
         _normalise_image_sources(normalised)
         _apply_currency_overrides(normalised, dataset)
+        _apply_color_parameter_overrides(normalised, dataset)
         return normalised
 
     path = Path(source)
@@ -202,6 +236,7 @@ def load_template_definition(
     normalised, _ = normalise_template(template)
     _normalise_image_sources(normalised)
     _apply_currency_overrides(normalised, dataset)
+    _apply_color_parameter_overrides(normalised, dataset)
     return normalised
 
 
