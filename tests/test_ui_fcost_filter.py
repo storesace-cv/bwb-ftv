@@ -167,3 +167,25 @@ def test_fcost_field_style_missing_values(qapp):
 
     ft.close()
     ds.close()
+
+
+def test_food_cost_below_minimum_clamps_to_lowest_style(qapp):
+    ds = _setup_ds()
+    service = ProductService(ds)
+    ft = FTApp(service)
+
+    product = ft.current_product
+    ft.edCustoTotal.setText('10')
+    product.pvps = [1230 / 15.94] + [None] * 4
+    product.iva = 23
+
+    ft._update_food_costs()
+
+    expected_style = food_cost_lineedit_stylesheet(FOOD_COST_LEVEL_RGB_MAP['Bom'])
+    neutral_style = food_cost_lineedit_stylesheet(FOOD_COST_LEVEL_RGB_MAP['Todos'])
+
+    assert ft.lbFoodCosts[0].styleSheet() == expected_style
+    assert ft.lbFoodCosts[0].styleSheet() != neutral_style
+
+    ft.close()
+    ds.close()

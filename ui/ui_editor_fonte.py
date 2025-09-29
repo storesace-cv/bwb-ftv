@@ -194,6 +194,7 @@ from .dialogs import (
 )
 from .printing import (
     ExportCancelled,
+    _serialise_food_cost_levels,
     generate_ft_gestao_pdf,
     generate_ft_gestao_reportbro_pdf,
 )
@@ -3339,13 +3340,35 @@ class FTApp(QWidget):
             (200, 200, 200)
         )
 
-        level_ranges: list[tuple[str, float, float]] = [
-            (entry["name"], entry["min"], entry["max"])
-            for entry in self._get_food_cost_levels()
-            if entry.get("name") is not None
-            and entry.get("min") is not None
-            and entry.get("max") is not None
-        ]
+        serialised_levels = _serialise_food_cost_levels(
+            self._get_food_cost_levels()
+        )
+        level_ranges: list[tuple[str, float, float]] = []
+        lowest_range: tuple[str, float, float] | None = None
+        highest_range: tuple[str, float, float] | None = None
+        for entry in serialised_levels:
+            level_tuple = (
+                entry["name"],
+                float(entry["min"]),
+                float(entry["max"]),
+            )
+            level_ranges.append(level_tuple)
+            if lowest_range is None or level_tuple[1] < lowest_range[1]:
+                lowest_range = level_tuple
+            if highest_range is None or level_tuple[2] > highest_range[2]:
+                highest_range = level_tuple
+
+        def resolve_level(cost_value):
+            if cost_value is None or not level_ranges:
+                return None
+            for level_name, vmin, vmax in level_ranges:
+                if vmin <= cost_value <= vmax:
+                    return level_name
+            if lowest_range is not None and cost_value < lowest_range[1]:
+                return lowest_range[0]
+            if highest_range is not None and cost_value > highest_range[2]:
+                return highest_range[0]
+            return None
 
         for idx, (lbl, pvp) in enumerate(zip(self.lbFoodCosts, pvps)):
             lbl.setStyleSheet(default_style)
@@ -3385,11 +3408,10 @@ class FTApp(QWidget):
                 if pct_value is None:
                     lbl.setText("--N/A--")
                 else:
-                    for level_name, vmin, vmax in level_ranges:
-                        if vmin <= pct_value <= vmax:
-                            style = level_styles.get(level_name, default_style)
-                            lbl.setStyleSheet(style)
-                            break
+                    level_name = resolve_level(pct_value)
+                    if level_name:
+                        style = level_styles.get(level_name, default_style)
+                        lbl.setStyleSheet(style)
                     lbl.setText(format_pt_number(pct_value))
 
     def _update_costs_from_table(self):
