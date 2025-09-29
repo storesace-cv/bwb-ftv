@@ -46,6 +46,12 @@ def _make_product(**overrides) -> Product:
         ],
     )
 
+    if "pvps" in overrides:
+        product.pvps = list(overrides["pvps"])
+
+    if "ingredients" in overrides:
+        product.ingredients = list(overrides["ingredients"])
+
     produtos_row = {
         "codigo": product.code,
         "produto": product.name,
@@ -142,6 +148,56 @@ def _build_dataset(product: Product):
     return dataset, warnings
 
 
+def test_food_cost_badges_expose_level_and_colour():
+    product = _make_product(
+        pvps=[15.0, 10.0, 5.0],
+        precos_row={
+            "preco1": 15.0,
+            "preco2": 10.0,
+            "preco3": 5.0,
+            "preco4": 0.0,
+            "preco5": 0.0,
+        },
+        ingredients=[
+            Ingredient(
+                name="Ingrediente Percentual",
+                quantity=1.0,
+                unit="kg",
+                ppu=3.0,
+                total=3.0,
+                code="ING-PCT",
+                weight=1.0,
+            )
+        ],
+    )
+    levels = [
+        {"name": "Bom", "min": 0.0, "max": 35.0},
+        {"name": "Aceitável", "min": 35.01, "max": 55.0},
+        {"name": "Mau", "min": 55.01, "max": 100.0},
+    ]
+    payload = _prepare_management_payload(product, food_cost_levels=levels)
+    block_b3 = payload["blocks"]["B3"]
+    badges = block_b3.get("food_cost_badges", [])
+
+    assert len(badges) == len(block_b3.get("food_cost", []))
+    assert [badge.get("level") for badge in badges[:3]] == [
+        "Bom",
+        "Aceitável",
+        "Mau",
+    ]
+    assert badges[0].get("hex") == "#C6D870"
+    assert badges[1].get("hex") == "#F8DE7E"
+    assert badges[2].get("hex") == "#FF9E91"
+
+    dataset = build_reportbro_context(payload)
+    assert dataset["FoodCost_Nivel1_Nivel"] == "Bom"
+    assert dataset["FoodCost_Nivel1_Cor"] == "#C6D870"
+    assert dataset["FoodCost_Nivel2_Nivel"] == "Aceitável"
+    assert dataset["FoodCost_Nivel2_Cor"] == "#F8DE7E"
+    assert dataset["FoodCost_Nivel3_Nivel"] == "Mau"
+    assert dataset["FoodCost_Nivel3_Cor"] == "#FF9E91"
+    assert dataset["FoodCost_Nivel4_Nivel"] == ""
+    assert dataset["FoodCost_Nivel4_Cor"] == ""
 def test_reportbro_dataset_with_complete_data():
     product = _make_product()
     dataset, warnings = _build_dataset(product)
