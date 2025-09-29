@@ -17,6 +17,10 @@ def test_parse_decimal_strips_percent_suffix():
     assert parse_decimal("12,5%") == 12.5
 
 
+def test_parse_decimal_strips_currency_prefix():
+    assert parse_decimal("US$1,234.50") == 1234.5
+
+
 def test_format_currency_locale_en_us():
     context = normalise_currency_context(
         {"currency_symbol": "US$", "currency_code": "USD", "locale_code": "en_US"}
