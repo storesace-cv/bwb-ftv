@@ -200,6 +200,50 @@ def test_food_cost_badges_expose_level_and_colour():
     assert dataset["FoodCost_Nivel4_Cor"] == ""
 
 
+def test_food_cost_badge_debug_logging(caplog: pytest.LogCaptureFixture):
+    caplog.set_level(logging.DEBUG, logger="ui.printing")
+    caplog.set_level(logging.DEBUG, logger="reporting.ft_gestao")
+    caplog.clear()
+
+    product = _make_product()
+    levels = [
+        {"name": "Excelente", "min": 0.0, "max": 25.0},
+        {"name": "Bom", "min": 25.01, "max": 40.0},
+    ]
+
+    payload = _prepare_management_payload(product, food_cost_levels=levels)
+    build_reportbro_context(payload)
+
+    block_b3 = payload["blocks"]["B3"]
+    expected_badge_count = len(block_b3.get("food_cost", []))
+
+    printing_messages = [
+        record.getMessage()
+        for record in caplog.records
+        if record.name == "ui.printing" and "Food cost badge raw=" in record.getMessage()
+    ]
+    assert len(printing_messages) == expected_badge_count
+    assert any("fallback_to_todos=True" in message for message in printing_messages)
+    assert any("fallback_to_todos=False" in message for message in printing_messages)
+    assert any("range 'Excelente'" in message for message in printing_messages)
+
+    summary_messages = [
+        record.getMessage()
+        for record in caplog.records
+        if record.name == "ui.printing" and "Food cost badges built" in record.getMessage()
+    ]
+    assert summary_messages
+
+    ft_messages = [
+        record.getMessage()
+        for record in caplog.records
+        if record.name == "reporting.ft_gestao" and "FoodCost_Nivel" in record.getMessage()
+    ]
+    assert len(ft_messages) == 5
+    assert any("FoodCost_Nivel1_Nivel" in message for message in ft_messages)
+    assert any("hex=''" in message for message in ft_messages)
+
+
 def test_food_cost_badges_normalise_level_names():
     product = _make_product(
         pvps=[15.0, 10.0],

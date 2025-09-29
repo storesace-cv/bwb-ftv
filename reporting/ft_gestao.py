@@ -706,6 +706,7 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
     precos_taxas_values = list(block_b3.get("pvps") or [])
     food_cost_values = list(block_b3.get("food_cost") or [])
     food_cost_badges = list(block_b3.get("food_cost_badges") or [])
+    badge_logging_enabled = logger.isEnabledFor(logging.DEBUG)
     for index in range(1, 6):
         key = f"PrecosTaxas_Preco{index}"
         display_key = f"{key}_display"
@@ -746,6 +747,14 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
                 )
             else:
                 badge_colour = _normalise_hex_colour(badge_entry)
+        if badge_logging_enabled:
+            logger.debug(
+                "[ReportBro] %s level=%r, %s hex=%r",
+                badge_level_key,
+                badge_level,
+                badge_colour_key,
+                badge_colour,
+            )
         parameters[badge_level_key] = badge_level
         dataset_update[badge_level_key] = badge_level
         parameters[badge_colour_key] = badge_colour
