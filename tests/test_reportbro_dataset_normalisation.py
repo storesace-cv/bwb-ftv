@@ -198,6 +198,44 @@ def test_food_cost_badges_expose_level_and_colour():
     assert dataset["FoodCost_Nivel3_Cor"] == "#FF9E91"
     assert dataset["FoodCost_Nivel4_Nivel"] == ""
     assert dataset["FoodCost_Nivel4_Cor"] == ""
+
+
+def test_food_cost_badges_use_nearest_level_for_outliers():
+    product = _make_product(
+        pvps=[100.0],
+        precos_row={
+            "preco1": 100.0,
+            "preco2": 0.0,
+            "preco3": 0.0,
+            "preco4": 0.0,
+            "preco5": 0.0,
+        },
+        ingredients=[
+            Ingredient(
+                name="Ingrediente Percentual",
+                quantity=1.0,
+                unit="kg",
+                ppu=12.9593495935,
+                total=12.9593495935,
+                code="ING-BAIXO",
+                weight=1.0,
+            )
+        ],
+    )
+    seeded_levels = [
+        {"name": "Bom", "min": 25.0, "max": 30.0},
+        {"name": "Aceitável", "min": 30.0, "max": 35.0},
+        {"name": "Mau", "min": 35.0, "max": 100.0},
+    ]
+
+    payload = _prepare_management_payload(product, food_cost_levels=seeded_levels)
+    badges = payload["blocks"]["B3"].get("food_cost_badges", [])
+
+    assert len(badges) == 1
+    assert badges[0]["level"] == "Bom"
+    assert badges[0]["hex"] == "#C6D870"
+
+
 def test_reportbro_dataset_with_complete_data():
     product = _make_product()
     dataset, warnings = _build_dataset(product)
