@@ -954,22 +954,35 @@ def _build_food_cost_badges(
     ranges: Sequence[Mapping[str, Any]] = level_ranges or ()
     default_rgb = FOOD_COST_LEVEL_RGB_MAP.get("Todos")
 
+    parsed_ranges: list[tuple[str, float, float]] = []
+    lowest_range: tuple[str, float, float] | None = None
+    highest_range: tuple[str, float, float] | None = None
+    for entry in ranges:
+        name = entry.get("name")
+        minimum = _safe_float(entry.get("min"))
+        maximum = _safe_float(entry.get("max"))
+        if name is None or minimum is None or maximum is None:
+            continue
+        parsed = (str(name), float(minimum), float(maximum))
+        parsed_ranges.append(parsed)
+        if lowest_range is None or parsed[1] < lowest_range[1]:
+            lowest_range = parsed
+        if highest_range is None or parsed[2] > highest_range[2]:
+            highest_range = parsed
+
     for value in food_cost_values or []:
         level_name = ""
         cost_value = _safe_float(value)
-        if cost_value is not None:
-            for entry in ranges:
-                name = entry.get("name")
-                minimum = _safe_float(entry.get("min"))
-                maximum = _safe_float(entry.get("max"))
-                if (
-                    name is not None
-                    and minimum is not None
-                    and maximum is not None
-                    and minimum <= cost_value <= maximum
-                ):
-                    level_name = str(name)
+        if cost_value is not None and parsed_ranges:
+            for name, minimum, maximum in parsed_ranges:
+                if minimum <= cost_value <= maximum:
+                    level_name = name
                     break
+            if not level_name:
+                if lowest_range is not None and cost_value < lowest_range[1]:
+                    level_name = lowest_range[0]
+                elif highest_range is not None and cost_value > highest_range[2]:
+                    level_name = highest_range[0]
 
         colour_key = level_name or "Todos"
         rgb_colour = FOOD_COST_LEVEL_RGB_MAP.get(colour_key)
