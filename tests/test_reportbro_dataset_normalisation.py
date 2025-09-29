@@ -200,6 +200,40 @@ def test_food_cost_badges_expose_level_and_colour():
     assert dataset["FoodCost_Nivel4_Cor"] == ""
 
 
+def test_food_cost_badges_normalise_level_names():
+    product = _make_product(
+        pvps=[15.0, 10.0],
+        precos_row={
+            "preco1": 15.0,
+            "preco2": 10.0,
+            "preco3": 0.0,
+            "preco4": 0.0,
+            "preco5": 0.0,
+        },
+    )
+    levels = [
+        {"name": "Bom ", "min": 0.0, "max": 35.0},
+        {"name": "aceitável", "min": 35.01, "max": 55.0},
+    ]
+
+    payload = _prepare_management_payload(product, food_cost_levels=levels)
+    block_b3 = payload["blocks"]["B3"]
+
+    serialised_levels = block_b3.get("food_cost_levels", [])
+    assert [level.get("name") for level in serialised_levels] == [
+        "Bom",
+        "Aceitável",
+    ]
+
+    badges = block_b3.get("food_cost_badges", [])
+    assert badges, "Expected at least one food cost badge"
+    assert badges[0].get("level") == "Bom"
+    assert badges[0].get("hex") == "#C6D870"
+
+    dataset = build_reportbro_context(payload)
+    assert dataset["FoodCost_Nivel1_Nivel"] == "Bom"
+    assert dataset["FoodCost_Nivel1_Cor"] == "#C6D870"
+
 def test_food_cost_badges_use_nearest_level_for_outliers():
     product = _make_product(
         pvps=[100.0],

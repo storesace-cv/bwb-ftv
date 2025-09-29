@@ -864,6 +864,23 @@ def _normalise_ingredients(ingredients: Iterable[Any]) -> tuple[list[dict[str, A
     return entries, totals
 
 
+def _canonicalise_food_cost_level_name(name: Any) -> str:
+    """Return the canonical palette key for ``name`` when available."""
+
+    if name is None:
+        return ""
+    if not isinstance(name, str):
+        name = str(name)
+    trimmed = name.strip()
+    if not trimmed:
+        return ""
+    lowered = trimmed.casefold()
+    for palette_name in FOOD_COST_LEVEL_RGB_MAP:
+        if palette_name.casefold() == lowered:
+            return palette_name
+    return trimmed
+
+
 def _serialise_food_cost_levels(
     levels: Iterable[Any] | None,
 ) -> list[dict[str, float]]:
@@ -908,12 +925,16 @@ def _serialise_food_cost_levels(
 
         min_value = _safe_float(raw_min)
         max_value = _safe_float(raw_max)
-        if not raw_name or min_value is None or max_value is None:
+        if min_value is None or max_value is None:
+            continue
+
+        canonical_name = _canonicalise_food_cost_level_name(raw_name)
+        if not canonical_name:
             continue
 
         serialised.append(
             {
-                "name": str(raw_name),
+                "name": canonical_name,
                 "min": float(min_value),
                 "max": float(max_value),
             }
@@ -958,12 +979,12 @@ def _build_food_cost_badges(
     lowest_range: tuple[str, float, float] | None = None
     highest_range: tuple[str, float, float] | None = None
     for entry in ranges:
-        name = entry.get("name")
+        name = _canonicalise_food_cost_level_name(entry.get("name"))
         minimum = _safe_float(entry.get("min"))
         maximum = _safe_float(entry.get("max"))
-        if name is None or minimum is None or maximum is None:
+        if not name or minimum is None or maximum is None:
             continue
-        parsed = (str(name), float(minimum), float(maximum))
+        parsed = (name, float(minimum), float(maximum))
         parsed_ranges.append(parsed)
         if lowest_range is None or parsed[1] < lowest_range[1]:
             lowest_range = parsed
@@ -984,8 +1005,11 @@ def _build_food_cost_badges(
                 elif highest_range is not None and cost_value > highest_range[2]:
                     level_name = highest_range[0]
 
-        colour_key = level_name or "Todos"
-        rgb_colour = FOOD_COST_LEVEL_RGB_MAP.get(colour_key)
+        canonical_level = _canonicalise_food_cost_level_name(level_name)
+        if canonical_level:
+            level_name = canonical_level
+
+        rgb_colour = FOOD_COST_LEVEL_RGB_MAP.get(level_name)
         if rgb_colour is None:
             rgb_colour = default_rgb
 
