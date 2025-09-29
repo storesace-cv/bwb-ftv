@@ -657,6 +657,88 @@ def test_render_pdf_bytes_applies_currency_overrides(monkeypatch):
     assert properties["patternLocale"] == "en_US"
 
 
+def test_render_pdf_bytes_applies_color_parameter_overrides(monkeypatch):
+    from reporting import reportbro_export
+
+    captured: dict[str, Any] = {}
+
+    class RecordingReport:
+        def __init__(self, template: Mapping[str, Any], data: Mapping[str, Any], **_: Any):
+            captured["template"] = deepcopy(template)
+            captured["data"] = dict(data)
+            self.errors: list[Any] = []
+
+        def generate_pdf(self) -> bytes:
+            return b"%PDF-1.4\n%colors\n"
+
+    monkeypatch.setattr(reportbro_export, "Report", RecordingReport)
+
+    template = {
+        "documentProperties": {
+            "unit": "mm",
+            "marginLeft": 10,
+            "marginRight": 10,
+            "marginTop": 10,
+            "marginBottom": 10,
+            "headerSize": 10,
+            "footerSize": 10,
+            "pageWidth": 210,
+            "pageHeight": 297,
+        },
+        "docElements": [
+            {
+                "elementType": "text",
+                "backgroundColor": "${ primary_color }",
+                "height": 20,
+            },
+            {
+                "elementType": "frame",
+                "cs_backgroundColor": "${secondary_color}",
+                "height": 30,
+            },
+        ],
+        "styles": [
+            {
+                "id": "Body",
+                "backgroundColor": "${primary_color}",
+            },
+            {
+                "id": "Footer",
+                "cs_backgroundColor": "${ missing_color }",
+            },
+        ],
+        "parameters": [],
+    }
+
+    dataset = {
+        "title": "Ficha",
+        "primary_color": "  #ABCDEF  ",
+        "secondary_color": "#123456",
+    }
+
+    pdf_bytes = render_pdf_bytes(template, dataset)
+
+    assert pdf_bytes.startswith(b"%PDF-1.4")
+    template_used = captured.get("template")
+    assert isinstance(template_used, Mapping)
+
+    elements = template_used.get("docElements")
+    assert isinstance(elements, list)
+    assert elements[0]["backgroundColor"] == "#ABCDEF"
+    assert elements[1]["cs_backgroundColor"] == "#123456"
+
+    styles = template_used.get("styles")
+    assert isinstance(styles, list)
+    assert styles[0]["backgroundColor"] == "#ABCDEF"
+    assert styles[1]["cs_backgroundColor"] == ""
+
+    # Ensure that the dataset passed to Report keeps the original values
+    dataset_used = captured.get("data")
+    assert isinstance(dataset_used, Mapping)
+    assert dataset_used["primary_color"].strip() == "#ABCDEF"
+    assert dataset_used["secondary_color"] == "#123456"
+
+
 def test_generate_ft_gestao_reportbro_pdf_enables_debug(monkeypatch, tmp_path):
     from reporting import reportbro_export
 
