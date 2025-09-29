@@ -799,6 +799,7 @@ def render_pdf_bytes(
 
     payload = dict(data)
     _apply_currency_overrides(template, payload)
+    _apply_color_parameter_overrides(template, payload)
     resolved_debug = _resolve_debug_flag(debug)
 
     try:
