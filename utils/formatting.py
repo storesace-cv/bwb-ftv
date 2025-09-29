@@ -38,7 +38,35 @@ def parse_decimal(value):
         while trimmed and trimmed[-1] not in allowed_suffix_chars:
             trimmed = trimmed[:-1].rstrip(" \t\r\n")
 
-        cleaned = trimmed.replace(" ", "").replace(NBSP, "").replace(",", ".")
+        start = 0
+        while start < len(trimmed):
+            char = trimmed[start]
+            if char.isdigit() or char in "+-":
+                break
+            if char in ",.":
+                break
+            start += 1
+
+        trimmed = trimmed[start:]
+        if not trimmed:
+            return value
+
+        cleaned = trimmed.replace(" ", "").replace(NBSP, "")
+
+        decimal_sep = None
+        comma_index = cleaned.rfind(",")
+        dot_index = cleaned.rfind(".")
+        if comma_index != -1 and dot_index != -1:
+            decimal_sep = "," if comma_index > dot_index else "."
+        elif comma_index != -1:
+            decimal_sep = ","
+        elif dot_index != -1:
+            decimal_sep = "."
+
+        if decimal_sep == ",":
+            cleaned = cleaned.replace(".", "").replace(",", ".")
+        elif decimal_sep == ".":
+            cleaned = cleaned.replace(",", "")
         try:
             return float(Decimal(cleaned))
         except (InvalidOperation, ValueError):
