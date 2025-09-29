@@ -116,6 +116,53 @@ def _format_percentage(value: Any) -> str:
     return formatted if formatted == EMPTY_FIELD else f"{formatted} %"
 
 
+def _normalise_hex_colour(colour: Any) -> str:
+    if colour is None:
+        return ""
+    if isinstance(colour, Mapping):
+        for key in ("hex", "colour", "color"):
+            candidate = colour.get(key)
+            if candidate:
+                return _normalise_hex_colour(candidate)
+        rgb_value = colour.get("rgb")
+        if rgb_value is not None:
+            return _normalise_hex_colour(rgb_value)
+        return ""
+    if isinstance(colour, (list, tuple)):
+        if len(colour) != 3:
+            return ""
+        components: list[int] = []
+        for component in colour:
+            try:
+                numeric = int(round(float(component)))
+            except (TypeError, ValueError):
+                return ""
+            components.append(max(0, min(255, numeric)))
+        return "#{:02X}{:02X}{:02X}".format(*components)
+    if isinstance(colour, str):
+        text = colour.strip()
+        if not text:
+            return ""
+        if text.startswith("#"):
+            text = text[1:]
+        text = text.strip()
+        if len(text) == 3:
+            text = "".join(ch * 2 for ch in text)
+        if len(text) != 6:
+            return ""
+        try:
+            int(text, 16)
+        except ValueError:
+            return ""
+        return f"#{text.upper()}"
+    try:
+        numeric_colour = int(colour)
+    except (TypeError, ValueError):
+        return ""
+    numeric_colour = max(0, min(0xFFFFFF, numeric_colour))
+    return f"#{numeric_colour:06X}"
+
+
 def _normalise_numeric_value(value: Any) -> float | None:
     if value is None:
         return None
@@ -658,6 +705,7 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
 
     precos_taxas_values = list(block_b3.get("pvps") or [])
     food_cost_values = list(block_b3.get("food_cost") or [])
+    food_cost_badges = list(block_b3.get("food_cost_badges") or [])
     for index in range(1, 6):
         key = f"PrecosTaxas_Preco{index}"
         display_key = f"{key}_display"
@@ -679,6 +727,29 @@ def build_reportbro_context(payload: Mapping[str, Any]) -> dict[str, Any]:
         formatted_food_cost = _format_percentage(food_cost_value)
         parameters[food_cost_key] = formatted_food_cost
         dataset_update[food_cost_key] = formatted_food_cost
+
+        badge_level_key = f"FoodCost_Nivel{index}_Nivel"
+        badge_colour_key = f"FoodCost_Nivel{index}_Cor"
+        badge_level = ""
+        badge_colour = ""
+        if index - 1 < len(food_cost_badges):
+            badge_entry = food_cost_badges[index - 1]
+            if isinstance(badge_entry, Mapping):
+                raw_level = badge_entry.get("level") or badge_entry.get("name")
+                if raw_level is not None:
+                    badge_level = str(raw_level)
+                badge_colour = _normalise_hex_colour(
+                    badge_entry.get("hex")
+                    or badge_entry.get("colour")
+                    or badge_entry.get("color")
+                    or badge_entry.get("rgb")
+                )
+            else:
+                badge_colour = _normalise_hex_colour(badge_entry)
+        parameters[badge_level_key] = badge_level
+        dataset_update[badge_level_key] = badge_level
+        parameters[badge_colour_key] = badge_colour
+        dataset_update[badge_colour_key] = badge_colour
 
     if product_image_filename:
         dataset_update["product_image_filename"] = product_image_filename

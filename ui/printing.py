@@ -9,7 +9,7 @@ import re
 from collections.abc import Iterable as IterableABC, MutableMapping as MutableMappingABC
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any, Iterable, Mapping, Sequence
 
 try:  # pragma: no cover - import guard depends on environment
     from PyQt5.QtCore import QRectF, QSizeF, Qt
@@ -747,6 +747,7 @@ def _prepare_management_payload(
     )
 
     serialised_levels = _serialise_food_cost_levels(food_cost_levels)
+    food_cost_badges = _build_food_cost_badges(food_cost, serialised_levels)
 
     blocks = {
         "B1": {
@@ -769,6 +770,7 @@ def _prepare_management_payload(
             "iva": iva_serialised,
             "food_cost": food_cost,
             "food_cost_levels": serialised_levels,
+            "food_cost_badges": food_cost_badges,
         },
     }
 
@@ -918,6 +920,80 @@ def _serialise_food_cost_levels(
         )
 
     return serialised
+
+
+def _rgb_to_hex(rgb: Iterable[Any] | None) -> str:
+    if rgb is None:
+        return ""
+    if isinstance(rgb, Mapping):
+        rgb = rgb.get("rgb")  # type: ignore[assignment]
+    if isinstance(rgb, (str, bytes)):
+        return ""
+    try:
+        components = list(rgb)  # type: ignore[arg-type]
+    except TypeError:
+        return ""
+    if len(components) != 3:
+        return ""
+    hex_parts: list[str] = []
+    for component in components:
+        try:
+            numeric = int(round(float(component)))
+        except (TypeError, ValueError):
+            return ""
+        numeric = max(0, min(255, numeric))
+        hex_parts.append(f"{numeric:02X}")
+    return f"#{''.join(hex_parts)}"
+
+
+def _build_food_cost_badges(
+    food_cost_values: Iterable[Any] | None,
+    level_ranges: Sequence[Mapping[str, Any]] | None,
+) -> list[dict[str, Any]]:
+    badges: list[dict[str, Any]] = []
+    ranges: Sequence[Mapping[str, Any]] = level_ranges or ()
+    default_rgb = FOOD_COST_LEVEL_RGB_MAP.get("Todos")
+
+    for value in food_cost_values or []:
+        level_name = ""
+        cost_value = _safe_float(value)
+        if cost_value is not None:
+            for entry in ranges:
+                name = entry.get("name")
+                minimum = _safe_float(entry.get("min"))
+                maximum = _safe_float(entry.get("max"))
+                if (
+                    name is not None
+                    and minimum is not None
+                    and maximum is not None
+                    and minimum <= cost_value <= maximum
+                ):
+                    level_name = str(name)
+                    break
+
+        colour_key = level_name or "Todos"
+        rgb_colour = FOOD_COST_LEVEL_RGB_MAP.get(colour_key)
+        if rgb_colour is None:
+            rgb_colour = default_rgb
+
+        if rgb_colour is not None and not isinstance(rgb_colour, (str, bytes)):
+            rgb_list = [
+                max(0, min(255, int(round(float(component)))))
+                for component in rgb_colour
+            ]
+        else:
+            rgb_list = None
+        hex_colour = _rgb_to_hex(rgb_colour)
+
+        badges.append(
+            {
+                "level": level_name,
+                "rgb": rgb_list,
+                "hex": hex_colour,
+            }
+        )
+
+    return badges
 
 
 def _compute_food_costs(
