@@ -6,11 +6,9 @@ import logging
 import os
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any, Mapping
 
 from PyQt5.QtCore import QLocale, QObject, QUrl, pyqtProperty, pyqtSignal
-from PyQt5.QtGui import QColor, QSurfaceFormat
-from PyQt5.QtQuick import QQuickWindow
 from PyQt5.QtQml import QQmlApplicationEngine
 from PyQt5.QtWidgets import QApplication
 
@@ -237,8 +235,6 @@ def create_engine(
     if app is None:
         app = QApplication([])
 
-    _ensure_translucent_quick_windows()
-
     zones_metadata = dict(_collect_zone_metadata_snapshot())
 
     engine = QQmlApplicationEngine()
@@ -290,11 +286,8 @@ def create_engine(
 
     qml_path = _resolve_qml_path(main_qml)
     engine.load(QUrl.fromLocalFile(str(qml_path)))
-    root_objects = engine.rootObjects()
-    if not root_objects:
+    if not engine.rootObjects():
         raise RuntimeError(f"Failed to load QML file: {qml_path}")
-
-    _apply_transparent_background(root_objects)
 
     return engine, overlay_controller
 
@@ -331,33 +324,3 @@ def load_qquick_app(
         main_qml=main_qml,
     )
     return app, engine, overlay_controller
-
-
-def _ensure_translucent_quick_windows() -> None:
-    """Guarantee Qt Quick surfaces reserve an alpha buffer."""
-
-    QQuickWindow.setDefaultAlphaBuffer(True)
-
-    current_format = QSurfaceFormat.defaultFormat()
-    if current_format.alphaBufferSize() >= 8:
-        return
-
-    current_format.setAlphaBufferSize(8)
-    QSurfaceFormat.setDefaultFormat(current_format)
-
-
-def _apply_transparent_background(root_objects: Iterable[QObject]) -> None:
-    """Ensure the root QML windows preserve a transparent background."""
-
-    for obj in root_objects:
-        set_color = getattr(obj, "setColor", None)
-        if not callable(set_color):
-            continue
-        try:
-            set_color(QColor("transparent"))
-        except Exception:  # pragma: no cover - defensive safety net
-            logger.debug(
-                "[QQuick] Falha ao aplicar fundo transparente a %r.",
-                obj,
-                exc_info=True,
-            )
