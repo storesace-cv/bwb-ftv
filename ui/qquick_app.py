@@ -9,7 +9,8 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 from PyQt5.QtCore import QLocale, QObject, QUrl, pyqtProperty, pyqtSignal
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QSurfaceFormat
+from PyQt5.QtQuick import QQuickWindow
 from PyQt5.QtQml import QQmlApplicationEngine
 from PyQt5.QtWidgets import QApplication
 
@@ -236,6 +237,8 @@ def create_engine(
     if app is None:
         app = QApplication([])
 
+    _ensure_translucent_quick_windows()
+
     zones_metadata = dict(_collect_zone_metadata_snapshot())
 
     engine = QQmlApplicationEngine()
@@ -328,6 +331,19 @@ def load_qquick_app(
         main_qml=main_qml,
     )
     return app, engine, overlay_controller
+
+
+def _ensure_translucent_quick_windows() -> None:
+    """Guarantee Qt Quick surfaces reserve an alpha buffer."""
+
+    QQuickWindow.setDefaultAlphaBuffer(True)
+
+    current_format = QSurfaceFormat.defaultFormat()
+    if current_format.alphaBufferSize() >= 8:
+        return
+
+    current_format.setAlphaBufferSize(8)
+    QSurfaceFormat.setDefaultFormat(current_format)
 
 
 def _apply_transparent_background(root_objects: Iterable[QObject]) -> None:
