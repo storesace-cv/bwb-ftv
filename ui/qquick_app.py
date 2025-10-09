@@ -6,9 +6,10 @@ import logging
 import os
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Iterable, Mapping
 
 from PyQt5.QtCore import QLocale, QObject, QUrl, pyqtProperty, pyqtSignal
+from PyQt5.QtGui import QColor
 from PyQt5.QtQml import QQmlApplicationEngine
 from PyQt5.QtWidgets import QApplication
 
@@ -286,8 +287,11 @@ def create_engine(
 
     qml_path = _resolve_qml_path(main_qml)
     engine.load(QUrl.fromLocalFile(str(qml_path)))
-    if not engine.rootObjects():
+    root_objects = engine.rootObjects()
+    if not root_objects:
         raise RuntimeError(f"Failed to load QML file: {qml_path}")
+
+    _apply_transparent_background(root_objects)
 
     return engine, overlay_controller
 
@@ -324,3 +328,20 @@ def load_qquick_app(
         main_qml=main_qml,
     )
     return app, engine, overlay_controller
+
+
+def _apply_transparent_background(root_objects: Iterable[QObject]) -> None:
+    """Ensure the root QML windows preserve a transparent background."""
+
+    for obj in root_objects:
+        set_color = getattr(obj, "setColor", None)
+        if not callable(set_color):
+            continue
+        try:
+            set_color(QColor("transparent"))
+        except Exception:  # pragma: no cover - defensive safety net
+            logger.debug(
+                "[QQuick] Falha ao aplicar fundo transparente a %r.",
+                obj,
+                exc_info=True,
+            )
