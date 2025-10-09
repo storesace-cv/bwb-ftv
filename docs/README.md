@@ -27,17 +27,60 @@ O segundo `Menu` chamado "Navegação" liga cada `MenuItem` às funções `root.
 ```
 MenuBar (ApplicationWindow.menuBar)
 │
-├── Menu "Ficheiro"
+├── Menu (title: "Ficheiro")
 │   │
-│   ├── MenuItem "Sobre…" (abre a janela modal "Sobre")
-│   ├── MenuItem "Fechar Sobre" (fecha a janela modal "Sobre")
+│   ├── MenuItem (text: "Sobre…") — abre a janela modal "Sobre"
+│   ├── MenuItem (text: "Fechar Sobre") — fecha a janela modal "Sobre"
 │   ├── MenuSeparator
-│   └── MenuItem "Sair" (termina a aplicação)
+│   └── MenuItem (text: "Sair") — termina a aplicação
 │
-└── Menu "Navegação"
+└── Menu (title: "Navegação")
     │
-    ├── MenuItem "Anterior" (chama `root.loadPrevious()`)
-    └── MenuItem "Seguinte" (chama `root.loadNext()`)
+    ├── MenuItem (text: "Anterior") — chama `root.loadPrevious()`
+    └── MenuItem (text: "Seguinte") — chama `root.loadNext()`
+```
+
+### Hierarquia do menu Qt Widgets (botão "Menu")
+
+O botão **Menu** no canto superior direito da interface Qt Widgets abre um `QMenu`
+em cascata com os rótulos exatamente como apresentados ao utilizador:
+
+```
+QToolButton (text: "Menu")
+│
+├── QMenu (title: "Base de Dados")
+│   │
+│   ├── QAction (text: "Atualizar Dados") — executa `_on_update_data()`
+│   ├── QAction (text: "Importar Dados") — chama `_on_import_data()`
+│   └── QMenu (title: "Segurança")
+│       │
+│       ├── QAction (text: "Segurança") — invoca `backup_database()`
+│       └── QAction (text: "Reposição") — invoca `restore_database()`
+│
+├── QMenu (title: "Tabelas")
+│   │
+│   ├── QAction (text: "Tipos Artigos") — abre o gestor de "Tipos de Artigos"
+│   ├── QAction (text: "Validade") — abre o gestor de "Validade"
+│   ├── QAction (text: "Temperaturas") — abre o gestor de "Temperaturas"
+│   └── QAction (text: "Alergénios") — abre o gestor de "Alergénios"
+│
+├── QMenu (title: "Utilitários")
+│   │
+│   ├── QMenu (title: "Gestão de Documentos")
+│   │   │
+│   │   ├── QAction (text: "Editor de Documentos") — abre o editor ReportBro
+│   │   ├── QAction (text: "Modelos Activos") — mostra os modelos activos
+│   │   └── QAction (text: "Actualizar Documentos") — sincroniza os modelos
+│   │
+│   ├── QMenuSeparator
+│   └── QAction (text: "Tema") — apresenta a mensagem sobre alternância de tema
+│
+└── QMenu (title: "Configurações")
+    │
+    └── QMenu (title: "Parametrizações")
+        │
+        ├── QAction (text: "Food Cost") — abre o editor de valores de food cost
+        └── QAction (text: "Moeda") — abre a gestão de localização/moeda
 ```
 
 A janela "Sobre" é um `Window` separado com `id: aboutWindow`, `modality: Qt.WindowModal` e `flags: Qt.Dialog`, tornando-se visível apenas quando chamado pelo menu e hospedando um `Rectangle` com cantos arredondados para estruturar o conteúdo.
