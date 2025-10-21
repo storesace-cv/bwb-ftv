@@ -87,7 +87,7 @@ rm "${TEAMCITY_DATA_PATH}/config/_metaRunners/MetaRunner.xml"
 
 | Symptom | Resolution |
 |---------|------------|
-| The runner does not appear after uploading. | Confirm the XML file is present inside `${TEAMCITY_DATA_PATH}/config/_metaRunners` and that the server was restarted if you installed it manually. |
+| The runner does not appear after uploading. | Confirm the XML file is present inside `${TEAMCITY_DATA_PATH}/config/_metaRunners` and that the server was restarted if you installed it manually. See also [Fixing Meta Runner installers](182_meta_runner_fix_installers.md) for deeper troubleshooting. |
 | Permission denied when copying files. | Ensure your macOS account owns `${TEAMCITY_DATA_PATH}`. If TeamCity runs under a dedicated user, switch to that account before copying. |
 | TeamCity fails to start after adding the XML. | Validate the XML file syntax (it must contain the `<meta-runner>` root element). Remove the file and restart to recover. |
 | Multiple runners have the same display name. | Rename the `<name>` element inside the XML or keep a single copy of the runner in the directory. |
