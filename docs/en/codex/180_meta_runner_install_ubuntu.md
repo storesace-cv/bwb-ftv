@@ -93,7 +93,7 @@ sudo systemctl restart teamcity
 
 | Symptom | Resolution |
 |---------|------------|
-| The runner does not appear after uploading. | Confirm the XML file exists in `${TEAMCITY_DATA_PATH}/config/_metaRunners` and restart TeamCity. The server only loads new files at startup. |
+| The runner does not appear after uploading. | Confirm the XML file exists in `${TEAMCITY_DATA_PATH}/config/_metaRunners` and restart TeamCity. The server only loads new files at startup. For advanced diagnosis follow [Fixing Meta Runner installers](182_meta_runner_fix_installers.md). |
 | Permission denied when copying files. | Switch to the account that owns the TeamCity data directory (often `teamcity`) or use `sudo` with `chown` to grant access. |
 | TeamCity fails to start after adding the XML. | Validate the XML syntax (must include the `<meta-runner>` root element). Remove the file and restart to recover. |
 | Multiple runners share the same name. | Edit the `<name>` element in the XML or keep only one copy in the directory. |
