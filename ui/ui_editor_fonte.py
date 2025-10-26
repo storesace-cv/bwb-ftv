@@ -159,6 +159,7 @@ from utils.formatting import (
     normalise_currency_context,
     parse_decimal,
 )
+from utils.git_sync import FastForwardError, GitRepository, GitSyncError
 
 from . import layout
 from .layout import Zone
@@ -868,12 +869,179 @@ class FTApp(QWidget):
             )
             logger.warning("[ReportBro] Falha ao abrir editor em %s", url.toString())
 
+    def _synchronize_template_store(self) -> bool:
+        """Ensure the template store repository is up-to-date before copying."""
+
+        project_root = Path(__file__).resolve().parent.parent
+        repo_dir = project_root / "app" / "templates_store"
+        repository = GitRepository(repo_dir)
+
+        if not repository.is_repository():
+            logger.info(
+                "[GitSync] Diretório %s não é um repositório Git; sincronização ignorada.",
+                repo_dir,
+            )
+            return True
+
+        try:
+            output = repository.pull_ff_only()
+        except FastForwardError:
+            logger.warning(
+                "[GitSync] Sincronização automática falhou (fast-forward indisponível) em %s",
+                repo_dir,
+            )
+            return self._handle_fast_forward_conflict(repository)
+        except GitSyncError as exc:
+            detail = (exc.stderr or exc.stdout).strip() or str(exc)
+            logger.error(
+                "[GitSync] Falha ao sincronizar repositório de templates %s: %s",
+                repo_dir,
+                detail,
+            )
+            QMessageBox.critical(
+                self,
+                "Actualizar Documentos",
+                "Não foi possível sincronizar o repositório de modelos."
+                " Consulte os registos para mais detalhes."
+                f"\n\nDetalhe: {detail}",
+            )
+            return False
+
+        output_text = (output or "").strip()
+        if output_text:
+            for line in output_text.splitlines():
+                logger.info("[GitSync] %s", line)
+        else:
+            logger.info("[GitSync] Repositório de templates actualizado (nenhuma alteração nova).")
+        return True
+
+    def _handle_fast_forward_conflict(self, repository: GitRepository) -> bool:
+        """Prompt the operator to resolve a non fast-forward pull."""
+
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle("Actualizar Documentos")
+        dialog.setIcon(QMessageBox.Warning)
+        dialog.setText(
+            "Não foi possível concluir a sincronização automática dos modelos (fast-forward)."
+        )
+        dialog.setInformativeText(
+            "Existem commits locais no repositório de modelos. Escolha como integrar as"
+            " alterações remotas:\n\n"
+            "• Merge (--no-ff): cria um commit de merge mantendo o histórico existente.\n"
+            "• Rebase: reaplica os commits locais sobre a versão remota.\n\n"
+            "Antes de executar a opção seleccionada a aplicação irá salvaguardar quaisquer"
+            " alterações locais não comprometidas numa cópia de segurança."
+        )
+        merge_button = dialog.addButton("Merge (--no-ff)", QMessageBox.AcceptRole)
+        rebase_button = dialog.addButton("Rebase", QMessageBox.ActionRole)
+        cancel_button = dialog.addButton("Cancelar", QMessageBox.RejectRole)
+        dialog.setDefaultButton(cancel_button)
+        exec_modal(dialog)
+        clicked = dialog.clickedButton()
+
+        if clicked is cancel_button or clicked is None:
+            logger.info("[GitSync] Resolução de sincronização cancelada pelo operador.")
+            QMessageBox.information(
+                self,
+                "Actualizar Documentos",
+                "Sincronização cancelada. Nenhuma alteração foi aplicada.",
+            )
+            return False
+
+        operation = "merge" if clicked is merge_button else "rebase"
+
+        try:
+            branch_name = repository.current_branch()
+        except GitSyncError as exc:
+            detail = (exc.stderr or exc.stdout).strip() or str(exc)
+            logger.error(
+                "[GitSync] Não foi possível determinar o branch actual antes de git %s: %s",
+                operation,
+                detail,
+            )
+            QMessageBox.critical(
+                self,
+                "Actualizar Documentos",
+                "Não foi possível identificar o branch activo do repositório."
+                " A sincronização foi interrompida."
+                f"\n\nDetalhe: {detail}",
+            )
+            return False
+
+        try:
+            backup_path = repository.create_backup_snapshot()
+        except GitSyncError as exc:
+            detail = (exc.stderr or exc.stdout).strip() or str(exc)
+            logger.error(
+                "[GitSync] Falha ao salvaguardar alterações locais antes de git %s: %s",
+                operation,
+                detail,
+            )
+            QMessageBox.critical(
+                self,
+                "Actualizar Documentos",
+                "Não foi possível criar a cópia de segurança das alterações locais."
+                " A sincronização foi interrompida."
+                f"\n\nDetalhe: {detail}",
+            )
+            return False
+
+        try:
+            if operation == "merge":
+                repository.merge_no_ff(branch=branch_name)
+            else:
+                repository.rebase(branch=branch_name)
+        except GitSyncError as exc:
+            detail = (exc.stderr or exc.stdout).strip() or str(exc)
+            logger.error(
+                "[GitSync] Falha ao executar git %s (--no-ff opcional) no repositório de modelos: %s",
+                operation,
+                detail,
+            )
+            QMessageBox.critical(
+                self,
+                "Actualizar Documentos",
+                "Falha ao aplicar a operação seleccionada. Consulte os registos para"
+                " mais detalhes."
+                f"\n\nDetalhe: {detail}",
+            )
+            return False
+
+        lines = ["Sincronização concluída com sucesso."]
+        if operation == "merge":
+            lines.append(f"Operação aplicada: git merge --no-ff origin/{branch_name}")
+        else:
+            lines.append(f"Operação aplicada: git rebase origin/{branch_name}")
+
+        if backup_path is None:
+            lines.append("Não foram detectadas alterações locais para salvaguardar.")
+            backup_display = "<não aplicável>"
+        else:
+            lines.append(f"Cópia de segurança das alterações locais: {backup_path}")
+            backup_display = str(backup_path)
+
+        QMessageBox.information(
+            self,
+            "Actualizar Documentos",
+            "\n".join(lines),
+        )
+        logger.info(
+            "[GitSync] git %s origin/%s concluído com sucesso. Backup: %s",
+            "merge --no-ff" if operation == "merge" else "rebase",
+            branch_name,
+            backup_display,
+        )
+        return True
+
     def _update_reportbro_templates(self) -> None:
         """Copy ReportBro templates from the templates store into runtime."""
 
         project_root = Path(__file__).resolve().parent.parent
         source_dir = project_root / "app" / "templates_store" / "templates"
         target_dir = project_root / "reporting" / "templates"
+
+        if not self._synchronize_template_store():
+            return
 
         try:
             templates = sorted(
