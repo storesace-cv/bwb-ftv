@@ -227,6 +227,20 @@ currency, symbol, and locale) when a fresh database is created. The
 `idx_localizacao_active` index enforces that exactly one record stays active
 (`Active = 1`); that locale drives the currency formatting across the UI.
 
+As fontes de ingestão online residem na tabela `IngestionSources`. Uma base
+recém-criada inclui registos para Continente (PT), Shoprite (AO) e NosSuper
+(CV), permitindo manter um espelho da configuração usada na app Barcode
+Datacenter. A aplicação cria também a chave de configuração
+`auto_online_sync`, ativa por defeito, que controla se a sincronização remota é
+executada automaticamente ao iniciar o pipeline.
+
+Online ingestion sources are stored in the `IngestionSources` table. A fresh
+database contains default rows for Continente (PT), Shoprite (AO), and NosSuper
+(CV), mirroring the configuration used in the Barcode Datacenter app. The
+application seeds the `auto_online_sync` configuration key (enabled by
+default), which governs whether remote synchronization is triggered
+automatically when the pipeline starts.
+
 Os ficheiros de importação de alergénios devem conter uma matriz (array) JSON
 de objetos. Cada objeto representa um alergénio com as seguintes chaves:
 
