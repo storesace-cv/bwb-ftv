@@ -1305,241 +1305,240 @@ def _apply_updates(
 
     def _upsert(file_path: Path, table: str) -> None:
         wb = load_workbook(file_path, read_only=True, data_only=True)
-        ws = wb.active
-        rows = ws.iter_rows(values_only=True)
         try:
-            headers = list(next(rows))
-        except StopIteration:
-            wb.close()
-            return
-        headers = sync_table_schema(conn, table, headers)
-        cols = [h for h in headers if h]
-        if not cols:
-            wb.close()
-            return
-        placeholders = ",".join(["?"] * len(cols))
-        if table == "FichasTecnicas":
-            cols_sql = ",".join(quote_ident(c) for c in cols)
-            insert_sql = (
-                f"INSERT INTO {quote_ident(table)} ({cols_sql}) VALUES ({placeholders})"
-            )
-            grouped: dict[str, list[tuple]] = {}
-            last_codigo: str | None = None
-            for row in rows:
-                row_map = {
-                    headers[i]: row[i]
-                    for i in range(min(len(headers), len(row)))
-                }
-                codigo = row_map.get("ProdutoCodigo")
-                if isinstance(codigo, str):
-                    codigo = codigo.strip()
-                    if not codigo:
-                        codigo = None
-                if _is_blank(codigo):
-                    codigo = last_codigo
-                if codigo is None:
-                    continue
-                row_map["ProdutoCodigo"] = codigo
-                last_codigo = codigo
-                componente = row_map.get("ComponenteCodigo")
-                if isinstance(componente, str):
-                    componente = componente.strip() or None
-                row_map["ComponenteCodigo"] = componente
-                row_data = {c: row_map.get(c) for c in cols}
-                key = _ingredient_key(row_data)
-                existing = fichas_state.get(key)
-                changes = _collect_changes(
-                    row_data,
-                    existing,
-                    key_fields={"ProdutoCodigo"},
-                    include_keys_when_new=True,
+            ws = wb.active
+            rows = ws.iter_rows(values_only=True)
+            try:
+                headers = list(next(rows))
+            except StopIteration:
+                return
+            headers = sync_table_schema(conn, table, headers)
+            cols = [h for h in headers if h]
+            if not cols:
+                return
+            placeholders = ",".join(["?"] * len(cols))
+            if table == "FichasTecnicas":
+                cols_sql = ",".join(quote_ident(c) for c in cols)
+                insert_sql = (
+                    f"INSERT INTO {quote_ident(table)} ({cols_sql}) VALUES ({placeholders})"
                 )
-                if existing is None:
-                    _record_change(
-                        "Novo Ingrediente",
-                        "FichasTecnicas",
-                        codigo,
-                        component_code=row_data.get("ComponenteCodigo"),
-                        component_name=row_data.get("ComponenteNome"),
-                        changes=changes,
-                    )
-                elif changes:
-                    _record_change(
-                        "Atualização de Ingrediente",
-                        "FichasTecnicas",
-                        codigo,
-                        component_code=row_data.get("ComponenteCodigo"),
-                        component_name=row_data.get("ComponenteNome"),
-                        changes=changes,
-                    )
-                updated = dict(existing or {})
-                updated.update(row_data)
-                fichas_state[key] = updated
-                grouped.setdefault(codigo, []).append(
-                    tuple(row_data.get(c) for c in cols)
-                )
-            for codigo, data in grouped.items():
-                conn.execute(
-                    f"DELETE FROM {quote_ident('FichasTecnicas')} "
-                    f"WHERE {quote_ident('ProdutoCodigo')}=?",
-                    (codigo,),
-                )
-                conn.executemany(insert_sql, data)
-        else:
-            cols_sql = ",".join(quote_ident(c) for c in cols)
-            sql = (
-                f"INSERT OR REPLACE INTO {quote_ident(table)} ({cols_sql}) "
-                f"VALUES ({placeholders})"
-            )
-            id_col = "Codigo" if table in {"Produtos", "PrecosTaxas"} else None
-            for row in rows:
-                row_map = {
-                    headers[i]: row[i]
-                    for i in range(min(len(headers), len(row)))
-                }
-                identifier = None
-                if id_col:
-                    identifier = row_map.get(id_col)
-                    if isinstance(identifier, str):
-                        identifier = identifier.strip()
-                        if not identifier:
-                            identifier = None
-                    if _is_blank(identifier):
-                        identifier = None
-                    if identifier is None:
+                grouped: dict[str, list[tuple]] = {}
+                last_codigo: str | None = None
+                for row in rows:
+                    row_map = {
+                        headers[i]: row[i]
+                        for i in range(min(len(headers), len(row)))
+                    }
+                    codigo = row_map.get("ProdutoCodigo")
+                    if isinstance(codigo, str):
+                        codigo = codigo.strip()
+                        if not codigo:
+                            codigo = None
+                    if _is_blank(codigo):
+                        codigo = last_codigo
+                    if codigo is None:
                         continue
-                    row_map[id_col] = identifier
-                row_data = {c: row_map.get(c) for c in cols}
-                if table == "Produtos":
-                    existing = produtos_state.get(identifier)
+                    row_map["ProdutoCodigo"] = codigo
+                    last_codigo = codigo
+                    componente = row_map.get("ComponenteCodigo")
+                    if isinstance(componente, str):
+                        componente = componente.strip() or None
+                    row_map["ComponenteCodigo"] = componente
+                    row_data = {c: row_map.get(c) for c in cols}
+                    key = _ingredient_key(row_data)
+                    existing = fichas_state.get(key)
                     changes = _collect_changes(
                         row_data,
                         existing,
-                        key_fields={"Codigo"},
+                        key_fields={"ProdutoCodigo"},
                         include_keys_when_new=True,
                     )
                     if existing is None:
                         _record_change(
-                            "Novo Registo",
-                            "Produtos",
-                            identifier,
+                            "Novo Ingrediente",
+                            "FichasTecnicas",
+                            codigo,
+                            component_code=row_data.get("ComponenteCodigo"),
+                            component_name=row_data.get("ComponenteNome"),
                             changes=changes,
                         )
                     elif changes:
                         _record_change(
-                            "Atualização de Registo",
-                            "Produtos",
-                            identifier,
+                            "Atualização de Ingrediente",
+                            "FichasTecnicas",
+                            codigo,
+                            component_code=row_data.get("ComponenteCodigo"),
+                            component_name=row_data.get("ComponenteNome"),
                             changes=changes,
                         )
                     updated = dict(existing or {})
                     updated.update(row_data)
-                    produtos_state[identifier] = updated
-                conn.execute(sql, tuple(row_data.get(c) for c in cols))
-        wb.close()
+                    fichas_state[key] = updated
+                    grouped.setdefault(codigo, []).append(
+                        tuple(row_data.get(c) for c in cols)
+                    )
+                for codigo, data in grouped.items():
+                    conn.execute(
+                        f"DELETE FROM {quote_ident('FichasTecnicas')} "
+                        f"WHERE {quote_ident('ProdutoCodigo')}=?",
+                        (codigo,),
+                    )
+                    conn.executemany(insert_sql, data)
+            else:
+                cols_sql = ",".join(quote_ident(c) for c in cols)
+                sql = (
+                    f"INSERT OR REPLACE INTO {quote_ident(table)} ({cols_sql}) "
+                    f"VALUES ({placeholders})"
+                )
+                id_col = "Codigo" if table in {"Produtos", "PrecosTaxas"} else None
+                for row in rows:
+                    row_map = {
+                        headers[i]: row[i]
+                        for i in range(min(len(headers), len(row)))
+                    }
+                    identifier = None
+                    if id_col:
+                        identifier = row_map.get(id_col)
+                        if isinstance(identifier, str):
+                            identifier = identifier.strip()
+                            if not identifier:
+                                identifier = None
+                        if _is_blank(identifier):
+                            identifier = None
+                        if identifier is None:
+                            continue
+                        row_map[id_col] = identifier
+                    row_data = {c: row_map.get(c) for c in cols}
+                    if table == "Produtos":
+                        existing = produtos_state.get(identifier)
+                        changes = _collect_changes(
+                            row_data,
+                            existing,
+                            key_fields={"Codigo"},
+                            include_keys_when_new=True,
+                        )
+                        if existing is None:
+                            _record_change(
+                                "Novo Registo",
+                                "Produtos",
+                                identifier,
+                                changes=changes,
+                            )
+                        elif changes:
+                            _record_change(
+                                "Atualização de Registo",
+                                "Produtos",
+                                identifier,
+                                changes=changes,
+                            )
+                        updated = dict(existing or {})
+                        updated.update(row_data)
+                        produtos_state[identifier] = updated
+                    conn.execute(sql, tuple(row_data.get(c) for c in cols))
+        finally:
+            wb.close()
 
     _upsert(files["Produtos"], "Produtos")
     _upsert(files["FichasTecnicas"], "FichasTecnicas")
 
     def _load_prices(file_path: Path) -> None:
         wb = load_workbook(file_path, read_only=True, data_only=True)
-        ws = wb.active
-        rows = ws.iter_rows(values_only=True)
         try:
-            raw_headers = list(next(rows))
-        except StopIteration:
-            wb.close()
-            return
-        rows = list(rows)
-        mapped = [
-            canonicalize_header(h, table="PrecosTaxas") for h in raw_headers
-        ]
-        if "Loja" not in mapped:
-            mapped.append("Loja")
-            rows = [tuple(list(r) + ["1"]) for r in rows]
-        has_codigo = "Codigo" in mapped
-        existing = [
-            r[1]
-            for r in conn.execute(
-                f"PRAGMA table_info({quote_ident('PrecosTaxas')})"
+            ws = wb.active
+            rows = ws.iter_rows(values_only=True)
+            try:
+                raw_headers = list(next(rows))
+            except StopIteration:
+                return
+            rows = list(rows)
+            mapped = [
+                canonicalize_header(h, table="PrecosTaxas") for h in raw_headers
+            ]
+            if "Loja" not in mapped:
+                mapped.append("Loja")
+                rows = [tuple(list(r) + ["1"]) for r in rows]
+            has_codigo = "Codigo" in mapped
+            existing = [
+                r[1]
+                for r in conn.execute(
+                    f"PRAGMA table_info({quote_ident('PrecosTaxas')})"
+                )
+            ]
+            headers = sync_table_schema(
+                conn, "PrecosTaxas", mapped + [c for c in existing if c not in mapped]
             )
-        ]
-        headers = sync_table_schema(
-            conn, "PrecosTaxas", mapped + [c for c in existing if c not in mapped]
-        )
-        if not has_codigo:
-            wb.close()
-            raise ValueError(
-                "PreçosTaxas_base.xlsx missing 'Codigo' column; found: "
-                + ", ".join(mapped)
+            if not has_codigo:
+                raise ValueError(
+                    "PreçosTaxas_base.xlsx missing 'Codigo' column; found: "
+                    + ", ".join(mapped)
+                )
+            cols = [h for h in headers if h]
+            if not cols:
+                return
+            numeric_cols = {
+                r[1]
+                for r in conn.execute(
+                    f"PRAGMA table_info({quote_ident('PrecosTaxas')})"
+                )
+                if r[2]
+                and any(
+                    t in r[2].upper()
+                    for t in ("REAL", "INT", "NUM", "DEC", "FLOAT")
+                )
+            }
+            conn.execute(f"DELETE FROM {quote_ident('PrecosTaxas')}")
+            placeholders = ",".join(["?"] * len(cols))
+            cols_sql = ",".join(quote_ident(c) for c in cols)
+            sql = (
+                f"INSERT INTO {quote_ident('PrecosTaxas')} ({cols_sql}) "
+                f"VALUES ({placeholders})"
             )
-        cols = [h for h in headers if h]
-        if not cols:
-            wb.close()
-            return
-        numeric_cols = {
-            r[1]
-            for r in conn.execute(
-                f"PRAGMA table_info({quote_ident('PrecosTaxas')})"
-            )
-            if r[2]
-            and any(
-                t in r[2].upper()
-                for t in ("REAL", "INT", "NUM", "DEC", "FLOAT")
-            )
-        }
-        conn.execute(f"DELETE FROM {quote_ident('PrecosTaxas')}")
-        placeholders = ",".join(["?"] * len(cols))
-        cols_sql = ",".join(quote_ident(c) for c in cols)
-        sql = (
-            f"INSERT INTO {quote_ident('PrecosTaxas')} ({cols_sql}) "
-            f"VALUES ({placeholders})"
-        )
-        for row in rows:
-            row_map = {}
-            for i in range(min(len(headers), len(row))):
-                col = headers[i]
-                val = row[i]
-                if col in numeric_cols:
-                    val = parse_decimal(val)
-                row_map[col] = val
-            codigo = row_map.get("Codigo")
-            if isinstance(codigo, str):
-                codigo = codigo.strip()
-                if not codigo:
+            for row in rows:
+                row_map = {}
+                for i in range(min(len(headers), len(row))):
+                    col = headers[i]
+                    val = row[i]
+                    if col in numeric_cols:
+                        val = parse_decimal(val)
+                    row_map[col] = val
+                codigo = row_map.get("Codigo")
+                if isinstance(codigo, str):
+                    codigo = codigo.strip()
+                    if not codigo:
+                        continue
+                    row_map["Codigo"] = codigo
+                elif _is_blank(codigo):
                     continue
-                row_map["Codigo"] = codigo
-            elif _is_blank(codigo):
-                continue
-            loja = row_map.get("Loja")
-            key = (codigo, loja)
-            row_data = {c: row_map.get(c) for c in cols}
-            existing = precos_state.get(key)
-            changes = _collect_changes(
-                row_data,
-                existing,
-                key_fields={"Codigo"},
-                include_keys_when_new=True,
-            )
-            if existing is None:
-                _record_change(
-                    "Novo Registo",
-                    "PrecosTaxas",
-                    codigo,
-                    changes=changes,
+                loja = row_map.get("Loja")
+                key = (codigo, loja)
+                row_data = {c: row_map.get(c) for c in cols}
+                existing = precos_state.get(key)
+                changes = _collect_changes(
+                    row_data,
+                    existing,
+                    key_fields={"Codigo"},
+                    include_keys_when_new=True,
                 )
-            elif changes:
-                _record_change(
-                    "Atualização de Registo",
-                    "PrecosTaxas",
-                    codigo,
-                    changes=changes,
-                )
-            updated = dict(existing or {})
-            updated.update(row_data)
-            precos_state[key] = updated
-            conn.execute(sql, tuple(row_data.get(c) for c in cols))
-        wb.close()
+                if existing is None:
+                    _record_change(
+                        "Novo Registo",
+                        "PrecosTaxas",
+                        codigo,
+                        changes=changes,
+                    )
+                elif changes:
+                    _record_change(
+                        "Atualização de Registo",
+                        "PrecosTaxas",
+                        codigo,
+                        changes=changes,
+                    )
+                updated = dict(existing or {})
+                updated.update(row_data)
+                precos_state[key] = updated
+                conn.execute(sql, tuple(row_data.get(c) for c in cols))
+        finally:
+            wb.close()
 
     _load_prices(files["PrecosTaxas"])
     conn.commit()
