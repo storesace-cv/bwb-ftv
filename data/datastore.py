@@ -14,6 +14,7 @@ from .migration import (
     get_pending_migrations as _get_pending_migrations,
     setup_database,
 )
+from .source_registry import IngestionSource, SourceRegistry
 
 base = get_project_root()
 
@@ -501,6 +502,15 @@ class DataStore:
             "TiposArtigos": {"Cod", "Descricao", "Ativo"},
             "Validade": {"Cod", "Descricao", "Ativo"},
             "Temperaturas": {"Cod", "Descricao", "Ativo"},
+            "Config": {"Key", "Value"},
+            "IngestionSources": {
+                "Id",
+                "Name",
+                "BaseUrl",
+                "CountryCode",
+                "Active",
+                "CreatedAt",
+            },
             "Localizacao": {
                 "Id",
                 "Country",
@@ -553,6 +563,122 @@ class DataStore:
             msg = "[DataStore] Tabelas essenciais em falta: " + ", ".join(parts)
             logger.error(msg)
             raise RuntimeError(msg)
+
+    # ----------------------------
+    # Configuração e ingestão online
+    # ----------------------------
+    def auto_sync_enabled(self) -> bool:
+        """Return ``True`` when automatic online sync is active."""
+
+        if not self.conn:
+            return False
+        try:
+            cur = self.conn.execute(
+                "SELECT Value FROM Config WHERE Key = ?",
+                ("auto_online_sync",),
+            )
+            row = cur.fetchone()
+        except sqlite3.Error as exc:
+            logger.error(
+                "[DataStore] Falha ao ler configuração 'auto_online_sync': %s",
+                exc,
+                exc_info=True,
+            )
+            return False
+        if not row or row[0] is None:
+            return True
+        value = str(row[0]).strip().lower()
+        return value in {"1", "true", "yes", "on"}
+
+    def set_auto_sync_enabled(self, enabled: bool) -> None:
+        """Persist the automatic sync flag."""
+
+        if not self.conn:
+            return
+        try:
+            with self.conn:
+                self.conn.execute(
+                    "INSERT INTO Config (Key, Value) VALUES (?, ?)"
+                    " ON CONFLICT(Key) DO UPDATE SET Value = excluded.Value",
+                    ("auto_online_sync", "1" if enabled else "0"),
+                )
+        except sqlite3.Error as exc:
+            logger.error(
+                "[DataStore] Falha ao atualizar configuração 'auto_online_sync': %s",
+                exc,
+                exc_info=True,
+            )
+            raise
+
+    def get_ingestion_sources(self, *, active_only: bool = False) -> list[IngestionSource]:
+        """Return registered ingestion sources."""
+
+        if not self.conn:
+            return []
+        registry = SourceRegistry(self.conn)
+        return (
+            registry.get_active_sources()
+            if active_only
+            else registry.list_sources()
+        )
+
+    def register_ingestion_source(
+        self,
+        name: str,
+        base_url: str,
+        *,
+        country_code: str | None = None,
+        active: bool = True,
+    ) -> IngestionSource:
+        """Create a new ingestion source entry."""
+
+        if not self.conn:
+            raise RuntimeError("DataStore sem ligação à base de dados.")
+        registry = SourceRegistry(self.conn)
+        return registry.add_source(
+            name,
+            base_url,
+            country_code=country_code,
+            active=active,
+        )
+
+    def update_ingestion_source(
+        self,
+        source_id: int,
+        *,
+        name: str | None = None,
+        base_url: str | None = None,
+        country_code: str | None = None,
+        active: bool | None = None,
+    ) -> IngestionSource:
+        """Update an existing ingestion source."""
+
+        if not self.conn:
+            raise RuntimeError("DataStore sem ligação à base de dados.")
+        registry = SourceRegistry(self.conn)
+        return registry.update_source(
+            source_id,
+            name=name,
+            base_url=base_url,
+            country_code=country_code,
+            active=active,
+        )
+
+    def set_ingestion_source_active(self, source_id: int, active: bool) -> IngestionSource:
+        """Convenience wrapper to toggle source activation."""
+
+        if not self.conn:
+            raise RuntimeError("DataStore sem ligação à base de dados.")
+        registry = SourceRegistry(self.conn)
+        return registry.set_active(source_id, active)
+
+    def delete_ingestion_source(self, source_id: int) -> None:
+        """Remove an ingestion source by id."""
+
+        if not self.conn:
+            return
+        registry = SourceRegistry(self.conn)
+        registry.delete_source(source_id)
 
     # ----------------------------
     # Cache / paginação

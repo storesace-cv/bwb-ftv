@@ -10,7 +10,6 @@ ApplicationWindow {
     width: 1180
     height: 860
     title: qsTr("Ficha Técnica (Qt Quick)")
-    color: "transparent"
 
     property var product: productModel ? productModel : ({})
     property bool showDevOverlays: overlayController ? overlayController.showOverlays : false
@@ -86,9 +85,7 @@ ApplicationWindow {
     }
 
     background: Rectangle {
-        color: "transparent"
-        border.color: "transparent"
-        border.width: 0
+        color: "#f3f6fb"
     }
 
     Window {
@@ -136,11 +133,6 @@ ApplicationWindow {
     }
 
     menuBar: MenuBar {
-        background: Rectangle {
-            color: "transparent"
-            border.color: "transparent"
-            border.width: 0
-        }
         Menu {
             title: qsTr("Ficheiro")
 
@@ -181,11 +173,6 @@ ApplicationWindow {
     }
 
     header: ToolBar {
-        background: Rectangle {
-            color: "transparent"
-            border.color: "transparent"
-            border.width: 0
-        }
         RowLayout {
             anchors.fill: parent
             anchors.margins: 8

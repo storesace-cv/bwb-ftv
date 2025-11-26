@@ -5,6 +5,7 @@ qrcode>=7.4.0
 reportbro-fpdf2>=1.0.0
 XlsxWriter>=3.1.0
 babel>=2.14.0,<3
+requests>=2.32.3,<3
 pytest==8.3.3
 flake8==7.1.1
 black==24.8.0

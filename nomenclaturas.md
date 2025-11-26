@@ -24,6 +24,7 @@ Este documento consolida os termos mais recorrentes encontrados no código-fonte
 | **Validade** | Referencial de durações padrão (ex.: “24h”, “48h”) associado a `Produtos`. | Tabela `Validade`. | Schema Maintenance Agent.
 | **Temperaturas** | Tabela com faixas de temperatura (ex.: “Quente”, “Frio”) para requisitos de conservação. | Tabela `Temperaturas`. | Schema Maintenance Agent.
 | **Localização** *("Parâmetros de Moeda")* | Catálogo com país, código ISO, moeda, símbolo e locale; exatamente um registo pode estar ativo para formatar valores monetários. | Tabela `Localizacao` documentada em `SCHEMA.md`. | Schema Maintenance Agent e equipa de Produto/Financeira. |
+| **Fonte de ingestão online** | Registo na tabela `IngestionSources` com URL, país e indicador de atividade para sincronização automática. | Configuração inicial contém Continente (PT), Shoprite (AO) e NosSuper (CV). | Data Import Agent e equipa de integrações Barcode Datacenter. |
 | **ProdutoPreparacao** | Armazena instruções HTML de preparação ligadas a um produto. | Tabela `ProdutoPreparacao` e migrações correspondentes. | Migration Agent garante existência da tabela; UI atualiza conteúdo.
 | **Uploads** | Registo histórico dos ficheiros importados, incluindo nome e data. | Tabela `Uploads` alimentada após importações. | Data Import Agent.
 
@@ -47,6 +48,7 @@ Este documento consolida os termos mais recorrentes encontrados no código-fonte
 | **FTV_DB_PATH** | Variável de ambiente que permite alterar o caminho da base de dados SQLite. | Seção de configuração no `README.md`. | Equipa de Operações; documentar em deploys.
 | **FTV_SEED_ALERGENIOS** | Variável de ambiente para popular a tabela `Alergenios` com dados padrão. | Instruções de seeding no `README.md`. | Equipa de Operações / Data Import Agent.
 | **FTV_REPORTBRO_EDITOR_KIOSK** | Variável de ambiente opcional que reativa o modo kiosk QtWebEngine para o editor ReportBro integrado. | Definir para `1`, `true`, `yes` ou `on` quando o QtWebEngine estiver disponível e o modo kiosk for desejado. | Equipa de UI e responsáveis pelas integrações de impressão.
+| **auto_online_sync** | Entrada na tabela `Config` que ativa (`1`/`true`) ou desativa (`0`/`false`) a sincronização automática com as fontes de ingestão. | Linha `Config` com `Key = 'auto_online_sync'`; manipulada pela UI/serviços de dados. | Data Import Agent e equipa de integrações Barcode Datacenter. |
 | **imports/history** | Diretório onde os ficheiros Excel importados são arquivados com carimbo temporal. | Processo descrito em `README.md` e `SCHEMA.md`. | Data Import Agent mantém histórico.
 | **FichasTecnicas_base.xlsx** | Ficheiro Excel obrigatório com componentes das fichas técnicas. | Listado na secção de importação do `README.md`. | Data Import Agent.
 | **PreçosTaxas_base.xlsx** | Ficheiro Excel com preços PVP e taxas de IVA por loja. | Listado na secção de importação do `README.md`. | Data Import Agent e equipa financeira.
