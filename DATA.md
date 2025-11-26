@@ -79,6 +79,20 @@
 | **Key** | Chave de configuração |
 | Value | Valor associado |
 
+### `IngestionSources`
+| Campo | Descrição |
+|-------|-----------|
+| **Id** | Identificador da fonte |
+| Name | Nome de apresentação (ex.: Continente PT) |
+| BaseUrl | Endpoint base para pedidos HTTP |
+| CountryCode | Código ISO opcional associado |
+| Active | Indicador se a fonte participa na sincronização |
+| CreatedAt | Timestamp de criação |
+
+> As bases recém-criadas incluem entradas para Continente (Portugal), Shoprite
+> (Angola) e NosSuper (Cabo Verde). A UI pode acrescentar novas fontes através
+> das operações expostas em `DataStore`.
+
 ## Tabelas auxiliares
 
 ### `Alergenios`

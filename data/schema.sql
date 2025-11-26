@@ -69,6 +69,27 @@ CREATE TABLE IF NOT EXISTS Config (
     Value TEXT
 );
 
+CREATE TABLE IF NOT EXISTS IngestionSources (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name TEXT NOT NULL,
+    BaseUrl TEXT NOT NULL,
+    CountryCode TEXT,
+    Active INTEGER NOT NULL DEFAULT 1 CHECK (Active IN (0,1)),
+    CreatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (BaseUrl)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ingestion_sources_active
+    ON IngestionSources(Active);
+
+INSERT OR IGNORE INTO Config (Key, Value)
+    VALUES ('auto_online_sync', '1');
+
+INSERT OR IGNORE INTO IngestionSources (Name, BaseUrl, CountryCode, Active) VALUES
+    ('Continente (PT)', 'https://www.continente.pt/api/catalog/search', 'PT', 1),
+    ('Shoprite Angola', 'https://www.shoprite.co.ao/api/catalog/search', 'AO', 1),
+    ('NosSuper (CV)', 'https://www.nossuper.cv/api/catalog/search', 'CV', 0);
+
 CREATE TABLE IF NOT EXISTS Localizacao (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
     Country TEXT NOT NULL,

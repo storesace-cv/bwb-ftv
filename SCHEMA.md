@@ -82,6 +82,20 @@
 | **Key** | Chave de configuração |
 | Value | Valor associado |
 
+### `IngestionSources`
+| Campo | Descrição |
+|---|---|
+| **Id** | Identificador interno |
+| Name | Nome descritivo da fonte |
+| BaseUrl | URL base das chamadas HTTP |
+| CountryCode | Código ISO opcional |
+| Active | Indicador se participa na sincronização |
+| CreatedAt | Data de criação |
+
+> **Seeding**: a criação de uma base de dados nova acrescenta entradas para os
+> marketplaces Continente (Portugal), Shoprite (Angola) e NosSuper (Cabo Verde),
+> todas editáveis via UI.
+
 ## Tabelas auxiliares
 
 ### `Alergenios`

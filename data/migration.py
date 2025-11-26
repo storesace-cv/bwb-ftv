@@ -40,6 +40,26 @@ DEFAULT_LOCALIZACOES = [
     ("Reino Unido", "GB", "GBP", "£", "en_GB", 0),
     ("Espanha", "ES", "EUR", "€", "es_ES", 0),
 ]
+DEFAULT_INGESTION_SOURCES = [
+    (
+        "Continente (PT)",
+        "https://www.continente.pt/api/catalog/search",
+        "PT",
+        1,
+    ),
+    (
+        "Shoprite Angola",
+        "https://www.shoprite.co.ao/api/catalog/search",
+        "AO",
+        1,
+    ),
+    (
+        "NosSuper (CV)",
+        "https://www.nossuper.cv/api/catalog/search",
+        "CV",
+        0,
+    ),
+]
 
 ALERGENIOS_SEED_FLAG = "FTV_SEED_ALERGENIOS"
 _TRUTHY_VALUES = {"1", "true", "yes", "on"}
@@ -125,6 +145,23 @@ LOCALIZACAO_INDEX = """
 CREATE UNIQUE INDEX IF NOT EXISTS idx_localizacao_active
     ON Localizacao(Active)
     WHERE Active = 1
+"""
+
+INGESTION_SOURCES_SCHEMA = """
+CREATE TABLE IF NOT EXISTS IngestionSources (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name TEXT NOT NULL,
+    BaseUrl TEXT NOT NULL,
+    CountryCode TEXT,
+    Active INTEGER NOT NULL DEFAULT 1 CHECK (Active IN (0,1)),
+    CreatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (BaseUrl)
+)
+"""
+
+INGESTION_SOURCES_INDEX = """
+CREATE INDEX IF NOT EXISTS idx_ingestion_sources_active
+    ON IngestionSources(Active)
 """
 
 
@@ -473,11 +510,15 @@ def ensure_core_tables(conn: sqlite3.Connection) -> None:
             )
             """
         ),
+        (INGESTION_SOURCES_SCHEMA),
+        (INGESTION_SOURCES_INDEX),
     ]
 
     for stmt in statements:
         conn.execute(stmt)
     conn.commit()
+    _ensure_config_defaults(conn)
+    _seed_ingestion_sources(conn)
     _seed_alergenios(conn)
     _seed_localizacao(conn)
     _seed_validade(conn)
@@ -511,6 +552,39 @@ def _seed_alergenios(conn: sqlite3.Connection) -> None:
     except sqlite3.Error:
         logger.exception(
             "Falha a inserir registos predefinidos na tabela Alergenios."
+        )
+        raise
+
+
+def _ensure_config_defaults(conn: sqlite3.Connection) -> None:
+    """Guarantee baseline configuration keys exist."""
+
+    try:
+        conn.execute(
+            "INSERT OR IGNORE INTO Config (Key, Value) VALUES (?, ?)",
+            ("auto_online_sync", "1"),
+        )
+        conn.commit()
+    except sqlite3.Error:
+        logger.exception("Falha ao garantir valores padrão na tabela Config.")
+        raise
+
+
+def _seed_ingestion_sources(conn: sqlite3.Connection) -> None:
+    """Populate ``IngestionSources`` with default endpoints if empty."""
+
+    try:
+        cur = conn.execute("SELECT COUNT(*) FROM IngestionSources")
+        if cur.fetchone()[0] == 0:
+            conn.executemany(
+                "INSERT INTO IngestionSources (Name, BaseUrl, CountryCode, Active)"
+                " VALUES (?, ?, ?, ?)",
+                DEFAULT_INGESTION_SOURCES,
+            )
+            conn.commit()
+    except sqlite3.Error:
+        logger.exception(
+            "Falha a inserir registos predefinidos na tabela IngestionSources."
         )
         raise
 
