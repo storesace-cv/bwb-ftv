@@ -14,13 +14,13 @@ This project uses a structured naming scheme for identifying overlay segments:
 Overlays can obscure the underlying UI, so these names should only be visible when the **Overlays** toggle is switched ON. Click the **Overlays** button or press **Ctrl+D** in the application to toggle these labels.
 
 
-## Interface QML
+## Interface QML (legado)
 
-A interface QML carrega os módulos `QtQuick 2.15`, `QtQuick.Controls 2.15`, `QtQuick.Layouts 1.15` e `QtQuick.Window 2.15`, garantindo que todos os elementos visuais são disponibilizados exclusivamente pela família Qt Quick.
-O contêiner principal é um `ApplicationWindow` com `id: root`, largura 1180, altura 860 e título "Ficha Técnica (Qt Quick)", que também expõe propriedades como `product`, `hasPrevious` e `hasNext` para gerir a navegação interna.
-Este `ApplicationWindow` define `background: Rectangle` para pintar o fundo e implementa funções como `loadPrevious()` e `loadNext()` que controlam os botões de navegação, ilustrando como a lógica fica embebida no próprio componente Qt Quick.
-A propriedade `menuBar` desse `ApplicationWindow` instancia um `MenuBar` que por sua vez cria um menu `Menu { title: "Ficheiro" }` recheado de `MenuItem` cuja ação `onTriggered` abre (`aboutWindow.open()`) ou fecha (`aboutWindow.close()`) a janela de informação e finaliza a aplicação com `Qt.quit()`.
-O segundo `Menu` chamado "Navegação" liga cada `MenuItem` às funções `root.loadPrevious()` e `root.loadNext()`, ativando-os com `enabled: root.hasPrevious` e `enabled: root.hasNext`, demonstrando a ligação direta entre estado e apresentação via propriedades Qt Quick.
+A interface QML permanece no repositório apenas como referência histórica. O
+arranque padrão da aplicação usa exclusivamente o front-end Qt Widgets e não
+há pontos de entrada que chamem ``load_qquick_app`` ou carreguem ``Main.qml``.
+Qualquer documentação anterior sobre navegação ou menus em Qt Quick deve ser
+interpretada como obsoleta.
 
 ### Hierarquia da barra de menus
 
