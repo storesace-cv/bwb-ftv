@@ -1,10 +1,8 @@
-# Ordem dos blocos na interface Qt Quick
+# Interface Qt Quick (legado)
 
-A interface experimental em Qt Quick apresenta os blocos de informação na seguinte ordem vertical:
-
-1. **Identificação do Produto** — código e designação do artigo (``Block`` `identificationBlock`).
-2. **Dados Técnicos** — estado e validade (``Block`` `technicalBlock`).
-3. **Ficha Técnica** — lista de ingredientes (``Block`` `ingredientsBlock`).
-4. **Informação Complementar** — observações do Food Cost (``Block`` `overlayBlock`).
-
-Os blocos estão declarados sequencialmente no ficheiro `ui/qml/Main.qml`, em ``ColumnLayout`` que estrutura a página.
+Mantemos os artefactos QML apenas por motivos históricos e de referência, mas
+o fluxo atual da aplicação está centrado no front-end Qt Widgets e no back-end
+Python. O ``Main.qml`` e os helpers em ``ui/qquick_app.py`` não são carregados
+no arranque normal (não há chamadas para ``load_qquick_app`` no código), pelo
+que quaisquer estruturas ou ordenações de blocos descritas para a interface Qt
+Quick já não refletem o produto entregue.
